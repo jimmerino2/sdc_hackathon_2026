@@ -6,7 +6,7 @@ from app.config import get_settings
 def chat(prompt: str) -> str:
     settings = get_settings()
     client = OpenAI(
-        base_url="https://openrouter.ai/api/v1",
+        base_url="https://llm.grafilab.ai/v1",
         api_key=settings.openrouter_api_key,
     )
     res = client.chat.completions.create(

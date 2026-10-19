@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_key: str = ""  # publishable key
     openrouter_api_key: str = ""
-    openrouter_model: str = "anthropic/claude-sonnet-5.5"
+    openrouter_model: str = "grafilab/deepseek-v4-flash"
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:5173"]
 
 
