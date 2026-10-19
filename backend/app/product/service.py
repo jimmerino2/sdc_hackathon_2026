@@ -1,13 +1,13 @@
-from supabase import Client
-
 from app.product.schemas import ProductCreate
 
-TABLE = "products"
+
+def list_products() -> list[dict]:
+    # PLACEHOLDER: replace with a Supabase query, e.g.
+    # supabase.table("products").select("*").execute().data
+    return []
 
 
-def list_products(supabase: Client) -> list[dict]:
-    return supabase.table(TABLE).select("*").execute().data
-
-
-def create_product(supabase: Client, data: ProductCreate) -> dict:
-    return supabase.table(TABLE).insert(data.model_dump()).execute().data[0]
+def create_product(data: ProductCreate) -> dict:
+    # PLACEHOLDER: replace with a Supabase insert, e.g.
+    # supabase.table("products").insert(data.model_dump()).execute().data[0]
+    return {"id": 0, **data.model_dump()}
