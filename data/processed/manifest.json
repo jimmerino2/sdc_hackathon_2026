@@ -1,0 +1,40 @@
+{
+  "generated_at": "2026-10-20T10:08:57+00:00",
+  "default_geo": "US",
+  "is_proxy_geo": true,
+  "signals_as_of": {
+    "ai_postings_share": "2026-09-30",
+    "job_postings_index": "2026-10-09"
+  },
+  "files": {
+    "ai_exposure.csv": {
+      "rows": 46
+    },
+    "ai_exposure_detail.csv": {
+      "rows": 746
+    },
+    "crosswalk.csv": {
+      "rows": 51
+    },
+    "model_table_US.csv": {
+      "rows": 3760
+    },
+    "my_vacancies.csv": {
+      "rows": 3969
+    },
+    "onet_role_skills.csv": {
+      "rows": 4548
+    },
+    "onet_roles.csv": {
+      "rows": 46
+    },
+    "onet_to_my_group.csv": {
+      "rows": 46
+    },
+    "signals.csv": {
+      "rows": 23118
+    }
+  },
+  "ai_exposure_as_of": "2026-06-26",
+  "jmi_as_of": "2026-08-18"
+}

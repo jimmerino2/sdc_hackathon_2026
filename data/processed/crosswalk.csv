@@ -1,0 +1,52 @@
+onet_code,title,indeed_sector,weight,rationale
+15-2051.00,Data Scientists,Data & Analytics,1.0,Data scientists and quantitative analysts sit in Data & Analytics
+15-2051.01,Business Intelligence Analysts,Data & Analytics,1.0,BI and data analyst work
+15-2031.00,Operations Research Analysts,Data & Analytics,1.0,Data scientists and quantitative analysts sit in Data & Analytics
+15-1252.00,Software Developers,Software Development,1.0,Direct match: software engineer example title
+15-1211.00,Computer Systems Analysts,IT Systems & Solutions,0.6,Systems analysis and solution design
+15-1211.00,Computer Systems Analysts,"IT Infrastructure, Operations & Support",0.4,Systems work overlaps IT operations
+15-1212.00,Information Security Analysts,"IT Infrastructure, Operations & Support",1.0,No dedicated security sector; closest is IT infrastructure/operations
+15-1232.00,Computer User Support Specialists,"IT Infrastructure, Operations & Support",1.0,User support is in the sector name
+15-1255.00,Web and Digital Interface Designers,Software Development,0.6,Front-end/UI build work
+15-1255.00,Web and Digital Interface Designers,Arts & Entertainment,0.4,Indeed lists designer under Arts & Entertainment
+19-2041.00,"Environmental Scientists and Specialists, Including Health",Scientific Research & Development,1.0,Scientist example title; environmental work supports SDG 13
+43-4051.00,Customer Service Representatives,Customer Service,1.0,Direct match
+43-6014.00,"Secretaries and Administrative Assistants, Except Legal, Medical, and Executive",Administrative Assistance,1.0,Administrative assistant example title
+43-9021.00,Data Entry Keyers,Administrative Assistance,1.0,Clerical data work grouped with admin assistance
+43-3031.00,"Bookkeeping, Accounting, and Auditing Clerks",Accounting,1.0,Accounting clerical work
+13-2011.00,Accountants and Auditors,Accounting,1.0,Accountant example title
+43-3071.00,Tellers,Banking & Finance,1.0,Relationship banker / branch work
+13-2072.00,Loan Officers,Banking & Finance,1.0,Banking sector
+13-2053.00,Insurance Underwriters,Insurance,1.0,Underwriter example title
+23-2011.00,Paralegals and Legal Assistants,Legal,1.0,Legal assistant example title
+27-3042.00,Technical Writers,Media & Communications,0.5,Writer example title
+27-3042.00,Technical Writers,IT Systems & Solutions,0.5,Technical documentation is mostly written for IT systems
+27-3091.00,Interpreters and Translators,Media & Communications,1.0,Language/writing work
+13-1161.00,Market Research Analysts and Marketing Specialists,Marketing,1.0,Digital marketer example title
+11-2021.00,Marketing Managers,Marketing,1.0,Marketing manager example title
+13-1071.00,Human Resources Specialists,Human Resources,1.0,Recruiter example title
+13-1082.00,Project Management Specialists,Project Management,1.0,Project manager example title
+41-2031.00,Retail Salespersons,Retail,1.0,Retail sales associate example title
+29-1141.00,Registered Nurses,Nursing,1.0,Direct match
+31-1122.00,Personal Care Aides,Personal Care & Home Health,1.0,Caregiver example title
+29-2052.00,Pharmacy Technicians,Pharmacy,1.0,Direct match
+29-1123.00,Physical Therapists,Therapy,1.0,Physical therapist example title
+29-9021.00,Health Information Technologists and Medical Registrars,Medical Information,1.0,Coding specialist example title
+25-2011.00,"Preschool Teachers, Except Special Education",Childcare,1.0,Preschool teacher example title
+25-2021.00,"Elementary School Teachers, Except Special Education",Education & Instruction,1.0,Teacher example title
+21-1093.00,Social and Human Service Assistants,Community & Social Service,1.0,Case manager / social work
+47-2231.00,Solar Photovoltaic Installers,Installation & Maintenance,0.6,Installation technician work
+47-2231.00,Solar Photovoltaic Installers,Construction,0.4,Rooftop/site construction work
+49-9081.00,Wind Turbine Service Technicians,Installation & Maintenance,1.0,Maintenance technician example title
+17-2081.00,Environmental Engineers,Civil Engineering,1.0,Indeed lists environmental health and safety under Civil Engineering
+17-2071.00,Electrical Engineers,Electrical Engineering,1.0,Direct match
+17-2112.00,Industrial Engineers,Industrial Engineering,1.0,Process engineer example title
+47-2111.00,Electricians,Installation & Maintenance,0.5,Electrical installation work
+47-2111.00,Electricians,Construction,0.5,Site construction work
+49-9071.00,"Maintenance and Repair Workers, General",Installation & Maintenance,1.0,Maintenance technician example title
+51-2022.00,Electrical and Electronic Equipment Assemblers,Production & Manufacturing,1.0,Assembler example title; large E&E workforce in Malaysia
+13-1081.00,Logisticians,Logistic Support,1.0,Supply chain specialist example title
+53-3032.00,Heavy and Tractor-Trailer Truck Drivers,Driving,1.0,Truck driver example title
+53-7062.00,"Laborers and Freight, Stock, and Material Movers, Hand",Loading & Stocking,1.0,Warehouse worker example title
+35-2014.00,"Cooks, Restaurant",Food Preparation & Service,1.0,Cook example title
+33-9032.00,Security Guards,Security & Public Safety,1.0,Security guard example title
