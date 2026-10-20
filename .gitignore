@@ -6,6 +6,7 @@ __pycache__/
 .pytest_cache/
 .DS_Store
 .vscode
+member5_app_demo_repo.md
 
 # raw downloads (large; fetched by pipeline/refresh.py or placed by hand)
 data/raw/
