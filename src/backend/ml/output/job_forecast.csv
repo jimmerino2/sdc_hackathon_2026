@@ -1,0 +1,553 @@
+onet_code,title,scenario,horizon_m,forecast_from,forecast_for,change_pct,change_low_pct,change_high_pct,model_change_pct,model_change_low_pct,model_change_high_pct,sectors,ai_exposure,automation_share,augmentation_share,ai_exposure_low_sample,model_status,country,is_proxy_geo,as_of_date
+11-2021.00,Marketing Managers,Baseline,3,2026-09,2026-12,-0.5,-4.4,7.5,3.1,0.3,12.0,Marketing (100%),0.934,0.581,0.419,False,indicative,US,True,2026-10-09
+11-2021.00,Marketing Managers,Baseline,6,2026-09,2027-03,-1.0,-5.5,12.5,0.8,-2.8,13.7,Marketing (100%),0.934,0.581,0.419,False,indicative,US,True,2026-10-09
+11-2021.00,Marketing Managers,Baseline,9,2026-09,2027-06,-1.4,-5.8,16.6,1.8,-3.0,18.2,Marketing (100%),0.934,0.581,0.419,False,indicative,US,True,2026-10-09
+11-2021.00,Marketing Managers,Baseline,12,2026-09,2027-09,-1.9,-6.3,20.1,3.2,-2.7,20.6,Marketing (100%),0.934,0.581,0.419,False,indicative,US,True,2026-10-09
+11-2021.00,Marketing Managers,Rapid AI,3,2026-09,2026-12,-1.2,-5.1,6.8,2.4,-0.4,11.3,Marketing (100%),0.934,0.581,0.419,False,indicative,US,True,2026-10-09
+11-2021.00,Marketing Managers,Rapid AI,6,2026-09,2027-03,-2.4,-6.9,11.1,-0.7,-4.2,12.2,Marketing (100%),0.934,0.581,0.419,False,indicative,US,True,2026-10-09
+11-2021.00,Marketing Managers,Rapid AI,9,2026-09,2027-06,-3.6,-8.0,14.5,-0.3,-5.2,16.1,Marketing (100%),0.934,0.581,0.419,False,indicative,US,True,2026-10-09
+11-2021.00,Marketing Managers,Rapid AI,12,2026-09,2027-09,-4.7,-9.1,17.3,0.4,-5.6,17.8,Marketing (100%),0.934,0.581,0.419,False,indicative,US,True,2026-10-09
+11-2021.00,Marketing Managers,Slow,3,2026-09,2026-12,0.2,-3.7,8.3,3.8,1.0,12.7,Marketing (100%),0.934,0.581,0.419,False,indicative,US,True,2026-10-09
+11-2021.00,Marketing Managers,Slow,6,2026-09,2027-03,0.5,-4.1,14.0,2.2,-1.4,15.1,Marketing (100%),0.934,0.581,0.419,False,indicative,US,True,2026-10-09
+11-2021.00,Marketing Managers,Slow,9,2026-09,2027-06,0.7,-3.7,18.7,3.9,-0.9,20.4,Marketing (100%),0.934,0.581,0.419,False,indicative,US,True,2026-10-09
+11-2021.00,Marketing Managers,Slow,12,2026-09,2027-09,1.0,-3.4,23.0,6.1,0.1,23.5,Marketing (100%),0.934,0.581,0.419,False,indicative,US,True,2026-10-09
+13-1071.00,Human Resources Specialists,Baseline,3,2026-09,2026-12,3.1,-0.9,11.1,4.8,2.0,13.8,Human Resources (100%),0.727,0.805,0.195,False,indicative,US,True,2026-10-09
+13-1071.00,Human Resources Specialists,Baseline,6,2026-09,2027-03,6.3,1.7,19.7,6.5,2.9,19.4,Human Resources (100%),0.727,0.805,0.195,False,indicative,US,True,2026-10-09
+13-1071.00,Human Resources Specialists,Baseline,9,2026-09,2027-06,9.6,5.1,27.6,10.8,6.0,27.3,Human Resources (100%),0.727,0.805,0.195,False,indicative,US,True,2026-10-09
+13-1071.00,Human Resources Specialists,Baseline,12,2026-09,2027-09,12.9,8.6,34.9,8.6,2.6,26.0,Human Resources (100%),0.727,0.805,0.195,False,indicative,US,True,2026-10-09
+13-1071.00,Human Resources Specialists,Rapid AI,3,2026-09,2026-12,2.9,-1.1,10.9,4.7,1.8,13.6,Human Resources (100%),0.727,0.805,0.195,False,indicative,US,True,2026-10-09
+13-1071.00,Human Resources Specialists,Rapid AI,6,2026-09,2027-03,5.9,1.3,19.4,6.1,2.5,19.0,Human Resources (100%),0.727,0.805,0.195,False,indicative,US,True,2026-10-09
+13-1071.00,Human Resources Specialists,Rapid AI,9,2026-09,2027-06,9.0,4.6,27.0,10.2,5.4,26.7,Human Resources (100%),0.727,0.805,0.195,False,indicative,US,True,2026-10-09
+13-1071.00,Human Resources Specialists,Rapid AI,12,2026-09,2027-09,12.2,7.8,34.2,7.8,1.8,25.2,Human Resources (100%),0.727,0.805,0.195,False,indicative,US,True,2026-10-09
+13-1071.00,Human Resources Specialists,Slow,3,2026-09,2026-12,3.3,-0.7,11.3,5.0,2.2,13.9,Human Resources (100%),0.727,0.805,0.195,False,indicative,US,True,2026-10-09
+13-1071.00,Human Resources Specialists,Slow,6,2026-09,2027-03,6.7,2.1,20.1,6.9,3.3,19.8,Human Resources (100%),0.727,0.805,0.195,False,indicative,US,True,2026-10-09
+13-1071.00,Human Resources Specialists,Slow,9,2026-09,2027-06,10.1,5.7,28.1,11.4,6.6,27.9,Human Resources (100%),0.727,0.805,0.195,False,indicative,US,True,2026-10-09
+13-1071.00,Human Resources Specialists,Slow,12,2026-09,2027-09,13.7,9.3,35.7,9.3,3.4,26.8,Human Resources (100%),0.727,0.805,0.195,False,indicative,US,True,2026-10-09
+13-1081.00,Logisticians,Baseline,3,2026-09,2026-12,1.2,-2.8,9.2,5.6,2.8,14.6,Logistic Support (100%),0.819,0.788,0.212,False,indicative,US,True,2026-10-09
+13-1081.00,Logisticians,Baseline,6,2026-09,2027-03,2.3,-2.3,15.8,7.7,4.2,20.6,Logistic Support (100%),0.819,0.788,0.212,False,indicative,US,True,2026-10-09
+13-1081.00,Logisticians,Baseline,9,2026-09,2027-06,3.5,-0.9,21.5,10.4,5.6,26.9,Logistic Support (100%),0.819,0.788,0.212,False,indicative,US,True,2026-10-09
+13-1081.00,Logisticians,Baseline,12,2026-09,2027-09,4.7,0.3,26.7,5.9,-0.0,23.3,Logistic Support (100%),0.819,0.788,0.212,False,indicative,US,True,2026-10-09
+13-1081.00,Logisticians,Rapid AI,3,2026-09,2026-12,0.7,-3.2,8.7,5.2,2.4,14.1,Logistic Support (100%),0.819,0.788,0.212,False,indicative,US,True,2026-10-09
+13-1081.00,Logisticians,Rapid AI,6,2026-09,2027-03,1.5,-3.1,15.0,6.9,3.3,19.8,Logistic Support (100%),0.819,0.788,0.212,False,indicative,US,True,2026-10-09
+13-1081.00,Logisticians,Rapid AI,9,2026-09,2027-06,2.2,-2.2,20.2,9.2,4.3,25.6,Logistic Support (100%),0.819,0.788,0.212,False,indicative,US,True,2026-10-09
+13-1081.00,Logisticians,Rapid AI,12,2026-09,2027-09,3.0,-1.4,25.0,4.2,-1.7,21.6,Logistic Support (100%),0.819,0.788,0.212,False,indicative,US,True,2026-10-09
+13-1081.00,Logisticians,Slow,3,2026-09,2026-12,1.6,-2.4,9.6,6.1,3.2,15.0,Logistic Support (100%),0.819,0.788,0.212,False,indicative,US,True,2026-10-09
+13-1081.00,Logisticians,Slow,6,2026-09,2027-03,3.2,-1.4,16.7,8.6,5.0,21.5,Logistic Support (100%),0.819,0.788,0.212,False,indicative,US,True,2026-10-09
+13-1081.00,Logisticians,Slow,9,2026-09,2027-06,4.8,0.4,22.8,11.7,6.9,28.2,Logistic Support (100%),0.819,0.788,0.212,False,indicative,US,True,2026-10-09
+13-1081.00,Logisticians,Slow,12,2026-09,2027-09,6.4,2.0,28.4,7.6,1.7,25.0,Logistic Support (100%),0.819,0.788,0.212,False,indicative,US,True,2026-10-09
+13-1082.00,Project Management Specialists,Baseline,3,2026-09,2026-12,4.1,0.1,12.1,3.4,0.6,12.3,Project Management (100%),0.858,0.727,0.273,False,indicative,US,True,2026-10-09
+13-1082.00,Project Management Specialists,Baseline,6,2026-09,2027-03,8.3,3.7,21.8,0.8,-2.7,13.7,Project Management (100%),0.858,0.727,0.273,False,indicative,US,True,2026-10-09
+13-1082.00,Project Management Specialists,Baseline,9,2026-09,2027-06,12.7,8.3,30.7,-0.2,-5.1,16.2,Project Management (100%),0.858,0.727,0.273,False,indicative,US,True,2026-10-09
+13-1082.00,Project Management Specialists,Baseline,12,2026-09,2027-09,17.3,13.0,39.3,-1.9,-7.8,15.5,Project Management (100%),0.858,0.727,0.273,False,indicative,US,True,2026-10-09
+13-1082.00,Project Management Specialists,Rapid AI,3,2026-09,2026-12,3.6,-0.4,11.6,2.9,0.1,11.8,Project Management (100%),0.858,0.727,0.273,False,indicative,US,True,2026-10-09
+13-1082.00,Project Management Specialists,Rapid AI,6,2026-09,2027-03,7.3,2.7,20.8,-0.2,-3.8,12.7,Project Management (100%),0.858,0.727,0.273,False,indicative,US,True,2026-10-09
+13-1082.00,Project Management Specialists,Rapid AI,9,2026-09,2027-06,11.2,6.8,29.2,-1.8,-6.6,14.7,Project Management (100%),0.858,0.727,0.273,False,indicative,US,True,2026-10-09
+13-1082.00,Project Management Specialists,Rapid AI,12,2026-09,2027-09,15.2,10.9,37.3,-4.0,-9.9,13.5,Project Management (100%),0.858,0.727,0.273,False,indicative,US,True,2026-10-09
+13-1082.00,Project Management Specialists,Slow,3,2026-09,2026-12,4.6,0.6,12.6,4.0,1.1,12.9,Project Management (100%),0.858,0.727,0.273,False,indicative,US,True,2026-10-09
+13-1082.00,Project Management Specialists,Slow,6,2026-09,2027-03,9.4,4.8,22.9,1.9,-1.7,14.7,Project Management (100%),0.858,0.727,0.273,False,indicative,US,True,2026-10-09
+13-1082.00,Project Management Specialists,Slow,9,2026-09,2027-06,14.3,9.9,32.3,1.3,-3.5,17.8,Project Management (100%),0.858,0.727,0.273,False,indicative,US,True,2026-10-09
+13-1082.00,Project Management Specialists,Slow,12,2026-09,2027-09,19.4,15.0,41.4,0.2,-5.7,17.6,Project Management (100%),0.858,0.727,0.273,False,indicative,US,True,2026-10-09
+13-1161.00,Market Research Analysts and Marketing Specialists,Baseline,3,2026-09,2026-12,-0.5,-4.4,7.5,3.1,0.3,12.0,Marketing (100%),0.886,0.739,0.261,False,indicative,US,True,2026-10-09
+13-1161.00,Market Research Analysts and Marketing Specialists,Baseline,6,2026-09,2027-03,-1.0,-5.5,12.5,0.8,-2.8,13.7,Marketing (100%),0.886,0.739,0.261,False,indicative,US,True,2026-10-09
+13-1161.00,Market Research Analysts and Marketing Specialists,Baseline,9,2026-09,2027-06,-1.4,-5.8,16.6,1.8,-3.0,18.2,Marketing (100%),0.886,0.739,0.261,False,indicative,US,True,2026-10-09
+13-1161.00,Market Research Analysts and Marketing Specialists,Baseline,12,2026-09,2027-09,-1.9,-6.3,20.1,3.2,-2.7,20.6,Marketing (100%),0.886,0.739,0.261,False,indicative,US,True,2026-10-09
+13-1161.00,Market Research Analysts and Marketing Specialists,Rapid AI,3,2026-09,2026-12,-1.1,-5.0,6.9,2.5,-0.3,11.4,Marketing (100%),0.886,0.739,0.261,False,indicative,US,True,2026-10-09
+13-1161.00,Market Research Analysts and Marketing Specialists,Rapid AI,6,2026-09,2027-03,-2.1,-6.7,11.4,-0.4,-4.0,12.5,Marketing (100%),0.886,0.739,0.261,False,indicative,US,True,2026-10-09
+13-1161.00,Market Research Analysts and Marketing Specialists,Rapid AI,9,2026-09,2027-06,-3.2,-7.6,14.8,0.0,-4.8,16.5,Marketing (100%),0.886,0.739,0.261,False,indicative,US,True,2026-10-09
+13-1161.00,Market Research Analysts and Marketing Specialists,Rapid AI,12,2026-09,2027-09,-4.3,-8.6,17.7,0.8,-5.1,18.3,Marketing (100%),0.886,0.739,0.261,False,indicative,US,True,2026-10-09
+13-1161.00,Market Research Analysts and Marketing Specialists,Slow,3,2026-09,2026-12,0.1,-3.8,8.1,3.7,0.9,12.6,Marketing (100%),0.886,0.739,0.261,False,indicative,US,True,2026-10-09
+13-1161.00,Market Research Analysts and Marketing Specialists,Slow,6,2026-09,2027-03,0.2,-4.3,13.7,1.9,-1.6,14.8,Marketing (100%),0.886,0.739,0.261,False,indicative,US,True,2026-10-09
+13-1161.00,Market Research Analysts and Marketing Specialists,Slow,9,2026-09,2027-06,0.4,-4.1,18.4,3.6,-1.3,20.0,Marketing (100%),0.886,0.739,0.261,False,indicative,US,True,2026-10-09
+13-1161.00,Market Research Analysts and Marketing Specialists,Slow,12,2026-09,2027-09,0.5,-3.9,22.5,5.6,-0.4,23.0,Marketing (100%),0.886,0.739,0.261,False,indicative,US,True,2026-10-09
+13-2011.00,Accountants and Auditors,Baseline,3,2026-09,2026-12,-1.8,-5.8,6.2,11.1,8.2,20.0,Accounting (100%),0.776,0.652,0.348,False,indicative,US,True,2026-10-09
+13-2011.00,Accountants and Auditors,Baseline,6,2026-09,2027-03,-3.6,-8.2,9.9,11.5,8.0,24.4,Accounting (100%),0.776,0.652,0.348,False,indicative,US,True,2026-10-09
+13-2011.00,Accountants and Auditors,Baseline,9,2026-09,2027-06,-5.4,-9.8,12.6,16.8,11.9,33.2,Accounting (100%),0.776,0.652,0.348,False,indicative,US,True,2026-10-09
+13-2011.00,Accountants and Auditors,Baseline,12,2026-09,2027-09,-7.1,-11.5,14.9,18.5,12.6,36.0,Accounting (100%),0.776,0.652,0.348,False,indicative,US,True,2026-10-09
+13-2011.00,Accountants and Auditors,Rapid AI,3,2026-09,2026-12,-2.1,-6.1,5.9,10.7,7.9,19.7,Accounting (100%),0.776,0.652,0.348,False,indicative,US,True,2026-10-09
+13-2011.00,Accountants and Auditors,Rapid AI,6,2026-09,2027-03,-4.3,-8.8,9.2,10.9,7.3,23.8,Accounting (100%),0.776,0.652,0.348,False,indicative,US,True,2026-10-09
+13-2011.00,Accountants and Auditors,Rapid AI,9,2026-09,2027-06,-6.3,-10.8,11.7,15.8,11.0,32.3,Accounting (100%),0.776,0.652,0.348,False,indicative,US,True,2026-10-09
+13-2011.00,Accountants and Auditors,Rapid AI,12,2026-09,2027-09,-8.4,-12.8,13.6,17.3,11.3,34.7,Accounting (100%),0.776,0.652,0.348,False,indicative,US,True,2026-10-09
+13-2011.00,Accountants and Auditors,Slow,3,2026-09,2026-12,-1.5,-5.5,6.5,11.4,8.5,20.3,Accounting (100%),0.776,0.652,0.348,False,indicative,US,True,2026-10-09
+13-2011.00,Accountants and Auditors,Slow,6,2026-09,2027-03,-3.0,-7.6,10.5,12.2,8.6,25.0,Accounting (100%),0.776,0.652,0.348,False,indicative,US,True,2026-10-09
+13-2011.00,Accountants and Auditors,Slow,9,2026-09,2027-06,-4.4,-8.9,13.6,17.7,12.9,34.2,Accounting (100%),0.776,0.652,0.348,False,indicative,US,True,2026-10-09
+13-2011.00,Accountants and Auditors,Slow,12,2026-09,2027-09,-5.9,-10.2,16.2,19.8,13.9,37.2,Accounting (100%),0.776,0.652,0.348,False,indicative,US,True,2026-10-09
+13-2053.00,Insurance Underwriters,Baseline,3,2026-09,2026-12,1.1,-2.8,9.2,3.3,0.5,12.2,Insurance (100%),0.338,0.997,0.003,True,indicative,US,True,2026-10-09
+13-2053.00,Insurance Underwriters,Baseline,6,2026-09,2027-03,2.3,-2.3,15.8,-0.3,-3.8,12.6,Insurance (100%),0.338,0.997,0.003,True,indicative,US,True,2026-10-09
+13-2053.00,Insurance Underwriters,Baseline,9,2026-09,2027-06,3.5,-1.0,21.5,-0.4,-5.3,16.0,Insurance (100%),0.338,0.997,0.003,True,indicative,US,True,2026-10-09
+13-2053.00,Insurance Underwriters,Baseline,12,2026-09,2027-09,4.6,0.3,26.6,-1.8,-7.7,15.6,Insurance (100%),0.338,0.997,0.003,True,indicative,US,True,2026-10-09
+13-2053.00,Insurance Underwriters,Rapid AI,3,2026-09,2026-12,1.9,-2.0,9.9,4.1,1.3,13.0,Insurance (100%),0.338,0.997,0.003,True,indicative,US,True,2026-10-09
+13-2053.00,Insurance Underwriters,Rapid AI,6,2026-09,2027-03,3.8,-0.7,17.3,1.3,-2.3,14.2,Insurance (100%),0.338,0.997,0.003,True,indicative,US,True,2026-10-09
+13-2053.00,Insurance Underwriters,Rapid AI,9,2026-09,2027-06,5.8,1.4,23.8,1.9,-2.9,18.3,Insurance (100%),0.338,0.997,0.003,True,indicative,US,True,2026-10-09
+13-2053.00,Insurance Underwriters,Rapid AI,12,2026-09,2027-09,7.7,3.4,29.8,1.3,-4.6,18.7,Insurance (100%),0.338,0.997,0.003,True,indicative,US,True,2026-10-09
+13-2053.00,Insurance Underwriters,Slow,3,2026-09,2026-12,0.4,-3.6,8.4,2.5,-0.3,11.5,Insurance (100%),0.338,0.997,0.003,True,indicative,US,True,2026-10-09
+13-2053.00,Insurance Underwriters,Slow,6,2026-09,2027-03,0.7,-3.8,14.2,-1.8,-5.4,11.1,Insurance (100%),0.338,0.997,0.003,True,indicative,US,True,2026-10-09
+13-2053.00,Insurance Underwriters,Slow,9,2026-09,2027-06,1.1,-3.3,19.1,-2.8,-7.6,13.7,Insurance (100%),0.338,0.997,0.003,True,indicative,US,True,2026-10-09
+13-2053.00,Insurance Underwriters,Slow,12,2026-09,2027-09,1.5,-2.9,23.5,-4.9,-10.9,12.5,Insurance (100%),0.338,0.997,0.003,True,indicative,US,True,2026-10-09
+13-2072.00,Loan Officers,Baseline,3,2026-09,2026-12,2.2,-1.8,10.2,3.9,1.1,12.8,Banking & Finance (100%),0.745,0.836,0.164,False,indicative,US,True,2026-10-09
+13-2072.00,Loan Officers,Baseline,6,2026-09,2027-03,4.4,-0.2,17.9,2.4,-1.1,15.3,Banking & Finance (100%),0.745,0.836,0.164,False,indicative,US,True,2026-10-09
+13-2072.00,Loan Officers,Baseline,9,2026-09,2027-06,6.7,2.3,24.7,3.9,-0.9,20.4,Banking & Finance (100%),0.745,0.836,0.164,False,indicative,US,True,2026-10-09
+13-2072.00,Loan Officers,Baseline,12,2026-09,2027-09,9.0,4.6,31.0,2.0,-3.9,19.4,Banking & Finance (100%),0.745,0.836,0.164,False,indicative,US,True,2026-10-09
+13-2072.00,Loan Officers,Rapid AI,3,2026-09,2026-12,1.9,-2.0,10.0,3.7,0.9,12.6,Banking & Finance (100%),0.745,0.836,0.164,False,indicative,US,True,2026-10-09
+13-2072.00,Loan Officers,Rapid AI,6,2026-09,2027-03,3.9,-0.6,17.4,1.9,-1.6,14.8,Banking & Finance (100%),0.745,0.836,0.164,False,indicative,US,True,2026-10-09
+13-2072.00,Loan Officers,Rapid AI,9,2026-09,2027-06,6.0,1.6,24.0,3.2,-1.6,19.7,Banking & Finance (100%),0.745,0.836,0.164,False,indicative,US,True,2026-10-09
+13-2072.00,Loan Officers,Rapid AI,12,2026-09,2027-09,8.1,3.7,30.1,1.1,-4.9,18.5,Banking & Finance (100%),0.745,0.836,0.164,False,indicative,US,True,2026-10-09
+13-2072.00,Loan Officers,Slow,3,2026-09,2026-12,2.4,-1.5,10.4,4.2,1.3,13.1,Banking & Finance (100%),0.745,0.836,0.164,False,indicative,US,True,2026-10-09
+13-2072.00,Loan Officers,Slow,6,2026-09,2027-03,4.9,0.3,18.4,2.9,-0.6,15.8,Banking & Finance (100%),0.745,0.836,0.164,False,indicative,US,True,2026-10-09
+13-2072.00,Loan Officers,Slow,9,2026-09,2027-06,7.4,3.0,25.4,4.7,-0.2,21.1,Banking & Finance (100%),0.745,0.836,0.164,False,indicative,US,True,2026-10-09
+13-2072.00,Loan Officers,Slow,12,2026-09,2027-09,10.0,5.6,32.0,3.0,-3.0,20.4,Banking & Finance (100%),0.745,0.836,0.164,False,indicative,US,True,2026-10-09
+15-1211.00,Computer Systems Analysts,Baseline,3,2026-09,2026-12,1.7,-2.3,9.7,3.8,1.0,12.7,"IT Systems & Solutions (60%), IT Infrastructure, Operations & Support (40%)",0.987,0.897,0.103,False,indicative,US,True,2026-10-09
+15-1211.00,Computer Systems Analysts,Baseline,6,2026-09,2027-03,3.3,-1.2,16.8,2.5,-1.1,15.4,"IT Systems & Solutions (60%), IT Infrastructure, Operations & Support (40%)",0.987,0.897,0.103,False,indicative,US,True,2026-10-09
+15-1211.00,Computer Systems Analysts,Baseline,9,2026-09,2027-06,5.0,0.6,23.0,4.4,-0.4,20.8,"IT Systems & Solutions (60%), IT Infrastructure, Operations & Support (40%)",0.987,0.897,0.103,False,indicative,US,True,2026-10-09
+15-1211.00,Computer Systems Analysts,Baseline,12,2026-09,2027-09,6.8,2.4,28.8,3.1,-2.8,20.6,"IT Systems & Solutions (60%), IT Infrastructure, Operations & Support (40%)",0.987,0.897,0.103,False,indicative,US,True,2026-10-09
+15-1211.00,Computer Systems Analysts,Rapid AI,3,2026-09,2026-12,0.8,-3.2,8.8,3.0,0.1,11.9,"IT Systems & Solutions (60%), IT Infrastructure, Operations & Support (40%)",0.987,0.897,0.103,False,indicative,US,True,2026-10-09
+15-1211.00,Computer Systems Analysts,Rapid AI,6,2026-09,2027-03,1.6,-2.9,15.1,0.8,-2.7,13.7,"IT Systems & Solutions (60%), IT Infrastructure, Operations & Support (40%)",0.987,0.897,0.103,False,indicative,US,True,2026-10-09
+15-1211.00,Computer Systems Analysts,Rapid AI,9,2026-09,2027-06,2.5,-1.9,20.5,1.9,-3.0,18.3,"IT Systems & Solutions (60%), IT Infrastructure, Operations & Support (40%)",0.987,0.897,0.103,False,indicative,US,True,2026-10-09
+15-1211.00,Computer Systems Analysts,Rapid AI,12,2026-09,2027-09,3.4,-1.0,25.4,-0.3,-6.2,17.2,"IT Systems & Solutions (60%), IT Infrastructure, Operations & Support (40%)",0.987,0.897,0.103,False,indicative,US,True,2026-10-09
+15-1211.00,Computer Systems Analysts,Slow,3,2026-09,2026-12,2.5,-1.5,10.5,4.7,1.8,13.6,"IT Systems & Solutions (60%), IT Infrastructure, Operations & Support (40%)",0.987,0.897,0.103,False,indicative,US,True,2026-10-09
+15-1211.00,Computer Systems Analysts,Slow,6,2026-09,2027-03,5.0,0.4,18.5,4.2,0.6,17.1,"IT Systems & Solutions (60%), IT Infrastructure, Operations & Support (40%)",0.987,0.897,0.103,False,indicative,US,True,2026-10-09
+15-1211.00,Computer Systems Analysts,Slow,9,2026-09,2027-06,7.6,3.2,25.6,6.9,2.1,23.4,"IT Systems & Solutions (60%), IT Infrastructure, Operations & Support (40%)",0.987,0.897,0.103,False,indicative,US,True,2026-10-09
+15-1211.00,Computer Systems Analysts,Slow,12,2026-09,2027-09,10.2,5.8,32.2,6.5,0.6,23.9,"IT Systems & Solutions (60%), IT Infrastructure, Operations & Support (40%)",0.987,0.897,0.103,False,indicative,US,True,2026-10-09
+15-1212.00,Information Security Analysts,Baseline,3,2026-09,2026-12,1.5,-2.4,9.5,2.3,-0.5,11.2,"IT Infrastructure, Operations & Support (100%)",0.511,0.849,0.151,False,indicative,US,True,2026-10-09
+15-1212.00,Information Security Analysts,Baseline,6,2026-09,2027-03,3.1,-1.5,16.5,-0.5,-4.0,12.4,"IT Infrastructure, Operations & Support (100%)",0.511,0.849,0.151,False,indicative,US,True,2026-10-09
+15-1212.00,Information Security Analysts,Baseline,9,2026-09,2027-06,4.6,0.2,22.6,-0.0,-4.9,16.4,"IT Infrastructure, Operations & Support (100%)",0.511,0.849,0.151,False,indicative,US,True,2026-10-09
+15-1212.00,Information Security Analysts,Baseline,12,2026-09,2027-09,6.2,1.8,28.2,-1.5,-7.4,15.9,"IT Infrastructure, Operations & Support (100%)",0.511,0.849,0.151,False,indicative,US,True,2026-10-09
+15-1212.00,Information Security Analysts,Rapid AI,3,2026-09,2026-12,1.9,-2.1,9.9,2.7,-0.2,11.6,"IT Infrastructure, Operations & Support (100%)",0.511,0.849,0.151,False,indicative,US,True,2026-10-09
+15-1212.00,Information Security Analysts,Rapid AI,6,2026-09,2027-03,3.7,-0.8,17.2,0.2,-3.3,13.1,"IT Infrastructure, Operations & Support (100%)",0.511,0.849,0.151,False,indicative,US,True,2026-10-09
+15-1212.00,Information Security Analysts,Rapid AI,9,2026-09,2027-06,5.7,1.3,23.7,1.0,-3.8,17.5,"IT Infrastructure, Operations & Support (100%)",0.511,0.849,0.151,False,indicative,US,True,2026-10-09
+15-1212.00,Information Security Analysts,Rapid AI,12,2026-09,2027-09,7.6,3.2,29.6,-0.1,-6.0,17.3,"IT Infrastructure, Operations & Support (100%)",0.511,0.849,0.151,False,indicative,US,True,2026-10-09
+15-1212.00,Information Security Analysts,Slow,3,2026-09,2026-12,1.2,-2.8,9.2,2.0,-0.9,10.9,"IT Infrastructure, Operations & Support (100%)",0.511,0.849,0.151,False,indicative,US,True,2026-10-09
+15-1212.00,Information Security Analysts,Slow,6,2026-09,2027-03,2.4,-2.2,15.9,-1.1,-4.7,11.7,"IT Infrastructure, Operations & Support (100%)",0.511,0.849,0.151,False,indicative,US,True,2026-10-09
+15-1212.00,Information Security Analysts,Slow,9,2026-09,2027-06,3.6,-0.8,21.6,-1.1,-5.9,15.4,"IT Infrastructure, Operations & Support (100%)",0.511,0.849,0.151,False,indicative,US,True,2026-10-09
+15-1212.00,Information Security Analysts,Slow,12,2026-09,2027-09,4.8,0.5,26.8,-2.9,-8.8,14.6,"IT Infrastructure, Operations & Support (100%)",0.511,0.849,0.151,False,indicative,US,True,2026-10-09
+15-1232.00,Computer User Support Specialists,Baseline,3,2026-09,2026-12,1.5,-2.4,9.5,2.3,-0.5,11.2,"IT Infrastructure, Operations & Support (100%)",0.98,0.722,0.278,False,indicative,US,True,2026-10-09
+15-1232.00,Computer User Support Specialists,Baseline,6,2026-09,2027-03,3.1,-1.5,16.5,-0.5,-4.0,12.4,"IT Infrastructure, Operations & Support (100%)",0.98,0.722,0.278,False,indicative,US,True,2026-10-09
+15-1232.00,Computer User Support Specialists,Baseline,9,2026-09,2027-06,4.6,0.2,22.6,-0.0,-4.9,16.4,"IT Infrastructure, Operations & Support (100%)",0.98,0.722,0.278,False,indicative,US,True,2026-10-09
+15-1232.00,Computer User Support Specialists,Baseline,12,2026-09,2027-09,6.2,1.8,28.2,-1.5,-7.4,15.9,"IT Infrastructure, Operations & Support (100%)",0.98,0.722,0.278,False,indicative,US,True,2026-10-09
+15-1232.00,Computer User Support Specialists,Rapid AI,3,2026-09,2026-12,0.7,-3.3,8.7,1.5,-1.4,10.4,"IT Infrastructure, Operations & Support (100%)",0.98,0.722,0.278,False,indicative,US,True,2026-10-09
+15-1232.00,Computer User Support Specialists,Rapid AI,6,2026-09,2027-03,1.4,-3.2,14.9,-2.1,-5.7,10.8,"IT Infrastructure, Operations & Support (100%)",0.98,0.722,0.278,False,indicative,US,True,2026-10-09
+15-1232.00,Computer User Support Specialists,Rapid AI,9,2026-09,2027-06,2.1,-2.3,20.2,-2.5,-7.3,14.0,"IT Infrastructure, Operations & Support (100%)",0.98,0.722,0.278,False,indicative,US,True,2026-10-09
+15-1232.00,Computer User Support Specialists,Rapid AI,12,2026-09,2027-09,2.9,-1.5,24.9,-4.8,-10.7,12.6,"IT Infrastructure, Operations & Support (100%)",0.98,0.722,0.278,False,indicative,US,True,2026-10-09
+15-1232.00,Computer User Support Specialists,Slow,3,2026-09,2026-12,2.3,-1.6,10.4,3.1,0.3,12.0,"IT Infrastructure, Operations & Support (100%)",0.98,0.722,0.278,False,indicative,US,True,2026-10-09
+15-1232.00,Computer User Support Specialists,Slow,6,2026-09,2027-03,4.7,0.1,18.2,1.2,-2.3,14.1,"IT Infrastructure, Operations & Support (100%)",0.98,0.722,0.278,False,indicative,US,True,2026-10-09
+15-1232.00,Computer User Support Specialists,Slow,9,2026-09,2027-06,7.1,2.7,25.1,2.5,-2.4,18.9,"IT Infrastructure, Operations & Support (100%)",0.98,0.722,0.278,False,indicative,US,True,2026-10-09
+15-1232.00,Computer User Support Specialists,Slow,12,2026-09,2027-09,9.5,5.1,31.5,1.8,-4.1,19.3,"IT Infrastructure, Operations & Support (100%)",0.98,0.722,0.278,False,indicative,US,True,2026-10-09
+15-1252.00,Software Developers,Baseline,3,2026-09,2026-12,4.5,0.5,12.5,5.2,2.4,14.1,Software Development (100%),0.941,0.738,0.262,False,indicative,US,True,2026-10-09
+15-1252.00,Software Developers,Baseline,6,2026-09,2027-03,9.1,4.6,22.6,7.7,4.1,20.6,Software Development (100%),0.941,0.738,0.262,False,indicative,US,True,2026-10-09
+15-1252.00,Software Developers,Baseline,9,2026-09,2027-06,14.0,9.6,32.0,12.2,7.4,28.7,Software Development (100%),0.941,0.738,0.262,False,indicative,US,True,2026-10-09
+15-1252.00,Software Developers,Baseline,12,2026-09,2027-09,19.1,14.7,41.1,10.4,4.5,27.9,Software Development (100%),0.941,0.738,0.262,False,indicative,US,True,2026-10-09
+15-1252.00,Software Developers,Rapid AI,3,2026-09,2026-12,3.7,-0.2,11.8,4.5,1.7,13.4,Software Development (100%),0.941,0.738,0.262,False,indicative,US,True,2026-10-09
+15-1252.00,Software Developers,Rapid AI,6,2026-09,2027-03,7.7,3.1,21.2,6.2,2.7,19.1,Software Development (100%),0.941,0.738,0.262,False,indicative,US,True,2026-10-09
+15-1252.00,Software Developers,Rapid AI,9,2026-09,2027-06,11.8,7.4,29.8,10.0,5.2,26.5,Software Development (100%),0.941,0.738,0.262,False,indicative,US,True,2026-10-09
+15-1252.00,Software Developers,Rapid AI,12,2026-09,2027-09,16.2,11.8,38.2,7.5,1.6,25.0,Software Development (100%),0.941,0.738,0.262,False,indicative,US,True,2026-10-09
+15-1252.00,Software Developers,Slow,3,2026-09,2026-12,5.2,1.2,13.2,5.9,3.1,14.9,Software Development (100%),0.941,0.738,0.262,False,indicative,US,True,2026-10-09
+15-1252.00,Software Developers,Slow,6,2026-09,2027-03,10.6,6.0,24.1,9.1,5.6,22.0,Software Development (100%),0.941,0.738,0.262,False,indicative,US,True,2026-10-09
+15-1252.00,Software Developers,Slow,9,2026-09,2027-06,16.2,11.8,34.2,14.4,9.6,30.8,Software Development (100%),0.941,0.738,0.262,False,indicative,US,True,2026-10-09
+15-1252.00,Software Developers,Slow,12,2026-09,2027-09,22.0,17.6,44.0,13.4,7.4,30.8,Software Development (100%),0.941,0.738,0.262,False,indicative,US,True,2026-10-09
+15-1255.00,Web and Digital Interface Designers,Baseline,3,2026-09,2026-12,3.6,-0.4,11.6,4.6,1.7,13.5,"Software Development (60%), Arts & Entertainment (40%)",0.985,0.681,0.319,False,indicative,US,True,2026-10-09
+15-1255.00,Web and Digital Interface Designers,Baseline,6,2026-09,2027-03,7.3,2.8,20.8,5.3,1.7,18.2,"Software Development (60%), Arts & Entertainment (40%)",0.985,0.681,0.319,False,indicative,US,True,2026-10-09
+15-1255.00,Web and Digital Interface Designers,Baseline,9,2026-09,2027-06,11.2,6.8,29.3,8.4,3.6,24.9,"Software Development (60%), Arts & Entertainment (40%)",0.985,0.681,0.319,False,indicative,US,True,2026-10-09
+15-1255.00,Web and Digital Interface Designers,Baseline,12,2026-09,2027-09,15.3,10.9,37.3,7.1,1.2,24.6,"Software Development (60%), Arts & Entertainment (40%)",0.985,0.681,0.319,False,indicative,US,True,2026-10-09
+15-1255.00,Web and Digital Interface Designers,Rapid AI,3,2026-09,2026-12,2.8,-1.2,10.8,3.7,0.9,12.6,"Software Development (60%), Arts & Entertainment (40%)",0.985,0.681,0.319,False,indicative,US,True,2026-10-09
+15-1255.00,Web and Digital Interface Designers,Rapid AI,6,2026-09,2027-03,5.7,1.1,19.2,3.6,0.0,16.5,"Software Development (60%), Arts & Entertainment (40%)",0.985,0.681,0.319,False,indicative,US,True,2026-10-09
+15-1255.00,Web and Digital Interface Designers,Rapid AI,9,2026-09,2027-06,8.7,4.3,26.7,5.9,1.1,22.3,"Software Development (60%), Arts & Entertainment (40%)",0.985,0.681,0.319,False,indicative,US,True,2026-10-09
+15-1255.00,Web and Digital Interface Designers,Rapid AI,12,2026-09,2027-09,11.9,7.6,33.9,3.8,-2.2,21.2,"Software Development (60%), Arts & Entertainment (40%)",0.985,0.681,0.319,False,indicative,US,True,2026-10-09
+15-1255.00,Web and Digital Interface Designers,Slow,3,2026-09,2026-12,4.4,0.5,12.5,5.4,2.6,14.3,"Software Development (60%), Arts & Entertainment (40%)",0.985,0.681,0.319,False,indicative,US,True,2026-10-09
+15-1255.00,Web and Digital Interface Designers,Slow,6,2026-09,2027-03,9.0,4.5,22.5,6.9,3.4,19.8,"Software Development (60%), Arts & Entertainment (40%)",0.985,0.681,0.319,False,indicative,US,True,2026-10-09
+15-1255.00,Web and Digital Interface Designers,Slow,9,2026-09,2027-06,13.8,9.4,31.8,10.9,6.1,27.4,"Software Development (60%), Arts & Entertainment (40%)",0.985,0.681,0.319,False,indicative,US,True,2026-10-09
+15-1255.00,Web and Digital Interface Designers,Slow,12,2026-09,2027-09,18.6,14.3,40.7,10.5,4.6,27.9,"Software Development (60%), Arts & Entertainment (40%)",0.985,0.681,0.319,False,indicative,US,True,2026-10-09
+15-2031.00,Operations Research Analysts,Baseline,3,2026-09,2026-12,1.0,-3.0,9.0,3.6,0.8,12.5,Data & Analytics (100%),0.966,0.891,0.109,False,indicative,US,True,2026-10-09
+15-2031.00,Operations Research Analysts,Baseline,6,2026-09,2027-03,2.0,-2.6,15.5,3.9,0.4,16.8,Data & Analytics (100%),0.966,0.891,0.109,False,indicative,US,True,2026-10-09
+15-2031.00,Operations Research Analysts,Baseline,9,2026-09,2027-06,3.0,-1.4,21.0,6.5,1.7,22.9,Data & Analytics (100%),0.966,0.891,0.109,False,indicative,US,True,2026-10-09
+15-2031.00,Operations Research Analysts,Baseline,12,2026-09,2027-09,4.0,-0.3,26.0,3.8,-2.2,21.2,Data & Analytics (100%),0.966,0.891,0.109,False,indicative,US,True,2026-10-09
+15-2031.00,Operations Research Analysts,Rapid AI,3,2026-09,2026-12,0.2,-3.7,8.2,2.8,-0.0,11.7,Data & Analytics (100%),0.966,0.891,0.109,False,indicative,US,True,2026-10-09
+15-2031.00,Operations Research Analysts,Rapid AI,6,2026-09,2027-03,0.4,-4.2,13.9,2.3,-1.2,15.2,Data & Analytics (100%),0.966,0.891,0.109,False,indicative,US,True,2026-10-09
+15-2031.00,Operations Research Analysts,Rapid AI,9,2026-09,2027-06,0.6,-3.8,18.7,4.1,-0.7,20.6,Data & Analytics (100%),0.966,0.891,0.109,False,indicative,US,True,2026-10-09
+15-2031.00,Operations Research Analysts,Rapid AI,12,2026-09,2027-09,0.9,-3.5,22.9,0.6,-5.3,18.0,Data & Analytics (100%),0.966,0.891,0.109,False,indicative,US,True,2026-10-09
+15-2031.00,Operations Research Analysts,Slow,3,2026-09,2026-12,1.8,-2.2,9.8,4.4,1.6,13.3,Data & Analytics (100%),0.966,0.891,0.109,False,indicative,US,True,2026-10-09
+15-2031.00,Operations Research Analysts,Slow,6,2026-09,2027-03,3.6,-1.0,17.1,5.5,2.0,18.4,Data & Analytics (100%),0.966,0.891,0.109,False,indicative,US,True,2026-10-09
+15-2031.00,Operations Research Analysts,Slow,9,2026-09,2027-06,5.4,1.0,23.4,8.9,4.0,25.3,Data & Analytics (100%),0.966,0.891,0.109,False,indicative,US,True,2026-10-09
+15-2031.00,Operations Research Analysts,Slow,12,2026-09,2027-09,7.2,2.8,29.2,6.9,1.0,24.4,Data & Analytics (100%),0.966,0.891,0.109,False,indicative,US,True,2026-10-09
+15-2051.00,Data Scientists,Baseline,3,2026-09,2026-12,1.0,-3.0,9.0,3.6,0.8,12.5,Data & Analytics (100%),0.94,0.703,0.297,False,indicative,US,True,2026-10-09
+15-2051.00,Data Scientists,Baseline,6,2026-09,2027-03,2.0,-2.6,15.5,3.9,0.4,16.8,Data & Analytics (100%),0.94,0.703,0.297,False,indicative,US,True,2026-10-09
+15-2051.00,Data Scientists,Baseline,9,2026-09,2027-06,3.0,-1.4,21.0,6.5,1.7,22.9,Data & Analytics (100%),0.94,0.703,0.297,False,indicative,US,True,2026-10-09
+15-2051.00,Data Scientists,Baseline,12,2026-09,2027-09,4.0,-0.3,26.0,3.8,-2.2,21.2,Data & Analytics (100%),0.94,0.703,0.297,False,indicative,US,True,2026-10-09
+15-2051.00,Data Scientists,Rapid AI,3,2026-09,2026-12,0.3,-3.7,8.3,2.9,0.0,11.8,Data & Analytics (100%),0.94,0.703,0.297,False,indicative,US,True,2026-10-09
+15-2051.00,Data Scientists,Rapid AI,6,2026-09,2027-03,0.5,-4.0,14.0,2.5,-1.1,15.4,Data & Analytics (100%),0.94,0.703,0.297,False,indicative,US,True,2026-10-09
+15-2051.00,Data Scientists,Rapid AI,9,2026-09,2027-06,0.8,-3.6,18.8,4.3,-0.5,20.8,Data & Analytics (100%),0.94,0.703,0.297,False,indicative,US,True,2026-10-09
+15-2051.00,Data Scientists,Rapid AI,12,2026-09,2027-09,1.1,-3.2,23.1,0.9,-5.1,18.3,Data & Analytics (100%),0.94,0.703,0.297,False,indicative,US,True,2026-10-09
+15-2051.00,Data Scientists,Slow,3,2026-09,2026-12,1.7,-2.2,9.7,4.3,1.5,13.2,Data & Analytics (100%),0.94,0.703,0.297,False,indicative,US,True,2026-10-09
+15-2051.00,Data Scientists,Slow,6,2026-09,2027-03,3.5,-1.1,16.9,5.4,1.8,18.3,Data & Analytics (100%),0.94,0.703,0.297,False,indicative,US,True,2026-10-09
+15-2051.00,Data Scientists,Slow,9,2026-09,2027-06,5.2,0.8,23.2,8.7,3.8,25.1,Data & Analytics (100%),0.94,0.703,0.297,False,indicative,US,True,2026-10-09
+15-2051.00,Data Scientists,Slow,12,2026-09,2027-09,7.0,2.6,29.0,6.7,0.7,24.1,Data & Analytics (100%),0.94,0.703,0.297,False,indicative,US,True,2026-10-09
+15-2051.01,Business Intelligence Analysts,Baseline,3,2026-09,2026-12,1.0,-3.0,9.0,3.6,0.8,12.5,Data & Analytics (100%),0.969,0.865,0.135,False,indicative,US,True,2026-10-09
+15-2051.01,Business Intelligence Analysts,Baseline,6,2026-09,2027-03,2.0,-2.6,15.5,3.9,0.4,16.8,Data & Analytics (100%),0.969,0.865,0.135,False,indicative,US,True,2026-10-09
+15-2051.01,Business Intelligence Analysts,Baseline,9,2026-09,2027-06,3.0,-1.4,21.0,6.5,1.7,22.9,Data & Analytics (100%),0.969,0.865,0.135,False,indicative,US,True,2026-10-09
+15-2051.01,Business Intelligence Analysts,Baseline,12,2026-09,2027-09,4.0,-0.3,26.0,3.8,-2.2,21.2,Data & Analytics (100%),0.969,0.865,0.135,False,indicative,US,True,2026-10-09
+15-2051.01,Business Intelligence Analysts,Rapid AI,3,2026-09,2026-12,0.2,-3.8,8.2,2.8,-0.0,11.7,Data & Analytics (100%),0.969,0.865,0.135,False,indicative,US,True,2026-10-09
+15-2051.01,Business Intelligence Analysts,Rapid AI,6,2026-09,2027-03,0.4,-4.2,13.9,2.3,-1.2,15.2,Data & Analytics (100%),0.969,0.865,0.135,False,indicative,US,True,2026-10-09
+15-2051.01,Business Intelligence Analysts,Rapid AI,9,2026-09,2027-06,0.6,-3.8,18.6,4.1,-0.7,20.5,Data & Analytics (100%),0.969,0.865,0.135,False,indicative,US,True,2026-10-09
+15-2051.01,Business Intelligence Analysts,Rapid AI,12,2026-09,2027-09,0.8,-3.5,22.8,0.6,-5.4,18.0,Data & Analytics (100%),0.969,0.865,0.135,False,indicative,US,True,2026-10-09
+15-2051.01,Business Intelligence Analysts,Slow,3,2026-09,2026-12,1.8,-2.2,9.8,4.4,1.6,13.3,Data & Analytics (100%),0.969,0.865,0.135,False,indicative,US,True,2026-10-09
+15-2051.01,Business Intelligence Analysts,Slow,6,2026-09,2027-03,3.6,-1.0,17.1,5.5,2.0,18.4,Data & Analytics (100%),0.969,0.865,0.135,False,indicative,US,True,2026-10-09
+15-2051.01,Business Intelligence Analysts,Slow,9,2026-09,2027-06,5.4,1.0,23.4,8.9,4.1,25.3,Data & Analytics (100%),0.969,0.865,0.135,False,indicative,US,True,2026-10-09
+15-2051.01,Business Intelligence Analysts,Slow,12,2026-09,2027-09,7.2,2.9,29.2,7.0,1.0,24.4,Data & Analytics (100%),0.969,0.865,0.135,False,indicative,US,True,2026-10-09
+17-2071.00,Electrical Engineers,Baseline,3,2026-09,2026-12,5.4,1.5,13.4,7.3,4.4,16.2,Electrical Engineering (100%),0.634,0.86,0.14,False,indicative,US,True,2026-10-09
+17-2071.00,Electrical Engineers,Baseline,6,2026-09,2027-03,11.1,6.5,24.6,3.0,-0.5,15.9,Electrical Engineering (100%),0.634,0.86,0.14,False,indicative,US,True,2026-10-09
+17-2071.00,Electrical Engineers,Baseline,9,2026-09,2027-06,17.1,12.7,35.1,0.2,-4.6,16.7,Electrical Engineering (100%),0.634,0.86,0.14,False,indicative,US,True,2026-10-09
+17-2071.00,Electrical Engineers,Baseline,12,2026-09,2027-09,23.5,19.1,45.5,-5.6,-11.6,11.8,Electrical Engineering (100%),0.634,0.86,0.14,False,indicative,US,True,2026-10-09
+17-2071.00,Electrical Engineers,Rapid AI,3,2026-09,2026-12,5.5,1.5,13.5,7.3,4.5,16.2,Electrical Engineering (100%),0.634,0.86,0.14,False,indicative,US,True,2026-10-09
+17-2071.00,Electrical Engineers,Rapid AI,6,2026-09,2027-03,11.2,6.6,24.7,3.1,-0.5,16.0,Electrical Engineering (100%),0.634,0.86,0.14,False,indicative,US,True,2026-10-09
+17-2071.00,Electrical Engineers,Rapid AI,9,2026-09,2027-06,17.2,12.8,35.3,0.3,-4.5,16.8,Electrical Engineering (100%),0.634,0.86,0.14,False,indicative,US,True,2026-10-09
+17-2071.00,Electrical Engineers,Rapid AI,12,2026-09,2027-09,23.6,19.2,45.6,-5.5,-11.4,12.0,Electrical Engineering (100%),0.634,0.86,0.14,False,indicative,US,True,2026-10-09
+17-2071.00,Electrical Engineers,Slow,3,2026-09,2026-12,5.4,1.4,13.4,7.2,4.4,16.1,Electrical Engineering (100%),0.634,0.86,0.14,False,indicative,US,True,2026-10-09
+17-2071.00,Electrical Engineers,Slow,6,2026-09,2027-03,11.0,6.5,24.5,2.9,-0.6,15.8,Electrical Engineering (100%),0.634,0.86,0.14,False,indicative,US,True,2026-10-09
+17-2071.00,Electrical Engineers,Slow,9,2026-09,2027-06,17.0,12.6,35.0,0.1,-4.7,16.6,Electrical Engineering (100%),0.634,0.86,0.14,False,indicative,US,True,2026-10-09
+17-2071.00,Electrical Engineers,Slow,12,2026-09,2027-09,23.3,18.9,45.3,-5.8,-11.7,11.6,Electrical Engineering (100%),0.634,0.86,0.14,False,indicative,US,True,2026-10-09
+17-2081.00,Environmental Engineers,Baseline,3,2026-09,2026-12,0.5,-3.4,8.6,7.4,4.6,16.3,Civil Engineering (100%),0.626,0.575,0.425,False,indicative,US,True,2026-10-09
+17-2081.00,Environmental Engineers,Baseline,6,2026-09,2027-03,1.1,-3.5,14.6,6.0,2.4,18.9,Civil Engineering (100%),0.626,0.575,0.425,False,indicative,US,True,2026-10-09
+17-2081.00,Environmental Engineers,Baseline,9,2026-09,2027-06,1.6,-2.8,19.6,3.5,-1.3,20.0,Civil Engineering (100%),0.626,0.575,0.425,False,indicative,US,True,2026-10-09
+17-2081.00,Environmental Engineers,Baseline,12,2026-09,2027-09,2.2,-2.2,24.2,0.1,-5.8,17.5,Civil Engineering (100%),0.626,0.575,0.425,False,indicative,US,True,2026-10-09
+17-2081.00,Environmental Engineers,Rapid AI,3,2026-09,2026-12,0.6,-3.4,8.6,7.5,4.6,16.4,Civil Engineering (100%),0.626,0.575,0.425,False,indicative,US,True,2026-10-09
+17-2081.00,Environmental Engineers,Rapid AI,6,2026-09,2027-03,1.2,-3.4,14.7,6.1,2.6,19.0,Civil Engineering (100%),0.626,0.575,0.425,False,indicative,US,True,2026-10-09
+17-2081.00,Environmental Engineers,Rapid AI,9,2026-09,2027-06,1.8,-2.6,19.8,3.7,-1.1,20.2,Civil Engineering (100%),0.626,0.575,0.425,False,indicative,US,True,2026-10-09
+17-2081.00,Environmental Engineers,Rapid AI,12,2026-09,2027-09,2.4,-2.0,24.4,0.3,-5.6,17.8,Civil Engineering (100%),0.626,0.575,0.425,False,indicative,US,True,2026-10-09
+17-2081.00,Environmental Engineers,Slow,3,2026-09,2026-12,0.5,-3.5,8.5,7.4,4.5,16.3,Civil Engineering (100%),0.626,0.575,0.425,False,indicative,US,True,2026-10-09
+17-2081.00,Environmental Engineers,Slow,6,2026-09,2027-03,1.0,-3.6,14.5,5.9,2.3,18.7,Civil Engineering (100%),0.626,0.575,0.425,False,indicative,US,True,2026-10-09
+17-2081.00,Environmental Engineers,Slow,9,2026-09,2027-06,1.5,-3.0,19.5,3.4,-1.5,19.8,Civil Engineering (100%),0.626,0.575,0.425,False,indicative,US,True,2026-10-09
+17-2081.00,Environmental Engineers,Slow,12,2026-09,2027-09,1.9,-2.4,24.0,-0.1,-6.1,17.3,Civil Engineering (100%),0.626,0.575,0.425,False,indicative,US,True,2026-10-09
+17-2112.00,Industrial Engineers,Baseline,3,2026-09,2026-12,7.3,3.4,15.4,7.9,5.1,16.8,Industrial Engineering (100%),0.704,0.863,0.137,False,indicative,US,True,2026-10-09
+17-2112.00,Industrial Engineers,Baseline,6,2026-09,2027-03,15.2,10.6,28.7,6.7,3.2,19.6,Industrial Engineering (100%),0.704,0.863,0.137,False,indicative,US,True,2026-10-09
+17-2112.00,Industrial Engineers,Baseline,9,2026-09,2027-06,23.6,19.2,41.7,8.7,3.8,25.1,Industrial Engineering (100%),0.704,0.863,0.137,False,indicative,US,True,2026-10-09
+17-2112.00,Industrial Engineers,Baseline,12,2026-09,2027-09,32.7,28.3,54.7,7.9,1.9,25.3,Industrial Engineering (100%),0.704,0.863,0.137,False,indicative,US,True,2026-10-09
+17-2112.00,Industrial Engineers,Rapid AI,3,2026-09,2026-12,7.2,3.2,15.2,7.8,5.0,16.7,Industrial Engineering (100%),0.704,0.863,0.137,False,indicative,US,True,2026-10-09
+17-2112.00,Industrial Engineers,Rapid AI,6,2026-09,2027-03,14.9,10.3,28.4,6.4,2.9,19.3,Industrial Engineering (100%),0.704,0.863,0.137,False,indicative,US,True,2026-10-09
+17-2112.00,Industrial Engineers,Rapid AI,9,2026-09,2027-06,23.2,18.8,41.2,8.3,3.4,24.7,Industrial Engineering (100%),0.704,0.863,0.137,False,indicative,US,True,2026-10-09
+17-2112.00,Industrial Engineers,Rapid AI,12,2026-09,2027-09,32.2,27.8,54.2,7.3,1.4,24.7,Industrial Engineering (100%),0.704,0.863,0.137,False,indicative,US,True,2026-10-09
+17-2112.00,Industrial Engineers,Slow,3,2026-09,2026-12,7.5,3.5,15.5,8.1,5.2,17.0,Industrial Engineering (100%),0.704,0.863,0.137,False,indicative,US,True,2026-10-09
+17-2112.00,Industrial Engineers,Slow,6,2026-09,2027-03,15.5,10.9,29.0,7.0,3.5,19.9,Industrial Engineering (100%),0.704,0.863,0.137,False,indicative,US,True,2026-10-09
+17-2112.00,Industrial Engineers,Slow,9,2026-09,2027-06,24.1,19.6,42.1,9.1,4.2,25.5,Industrial Engineering (100%),0.704,0.863,0.137,False,indicative,US,True,2026-10-09
+17-2112.00,Industrial Engineers,Slow,12,2026-09,2027-09,33.3,28.9,55.3,8.4,2.5,25.8,Industrial Engineering (100%),0.704,0.863,0.137,False,indicative,US,True,2026-10-09
+19-2041.00,"Environmental Scientists and Specialists, Including Health",Baseline,3,2026-09,2026-12,4.2,0.3,12.2,3.1,0.2,12.0,Scientific Research & Development (100%),0.689,0.342,0.658,False,indicative,US,True,2026-10-09
+19-2041.00,"Environmental Scientists and Specialists, Including Health",Baseline,6,2026-09,2027-03,8.6,4.1,22.1,2.6,-0.9,15.5,Scientific Research & Development (100%),0.689,0.342,0.658,False,indicative,US,True,2026-10-09
+19-2041.00,"Environmental Scientists and Specialists, Including Health",Baseline,9,2026-09,2027-06,13.2,8.8,31.2,3.4,-1.4,19.9,Scientific Research & Development (100%),0.689,0.342,0.658,False,indicative,US,True,2026-10-09
+19-2041.00,"Environmental Scientists and Specialists, Including Health",Baseline,12,2026-09,2027-09,18.0,13.6,40.0,3.0,-3.0,20.4,Scientific Research & Development (100%),0.689,0.342,0.658,False,indicative,US,True,2026-10-09
+19-2041.00,"Environmental Scientists and Specialists, Including Health",Rapid AI,3,2026-09,2026-12,4.1,0.2,12.1,3.0,0.1,11.9,Scientific Research & Development (100%),0.689,0.342,0.658,False,indicative,US,True,2026-10-09
+19-2041.00,"Environmental Scientists and Specialists, Including Health",Rapid AI,6,2026-09,2027-03,8.4,3.9,21.9,2.4,-1.1,15.3,Scientific Research & Development (100%),0.689,0.342,0.658,False,indicative,US,True,2026-10-09
+19-2041.00,"Environmental Scientists and Specialists, Including Health",Rapid AI,9,2026-09,2027-06,12.9,8.5,30.9,3.1,-1.7,19.6,Scientific Research & Development (100%),0.689,0.342,0.658,False,indicative,US,True,2026-10-09
+19-2041.00,"Environmental Scientists and Specialists, Including Health",Rapid AI,12,2026-09,2027-09,17.6,13.2,39.6,2.6,-3.4,20.0,Scientific Research & Development (100%),0.689,0.342,0.658,False,indicative,US,True,2026-10-09
+19-2041.00,"Environmental Scientists and Specialists, Including Health",Slow,3,2026-09,2026-12,4.3,0.4,12.3,3.2,0.3,12.1,Scientific Research & Development (100%),0.689,0.342,0.658,False,indicative,US,True,2026-10-09
+19-2041.00,"Environmental Scientists and Specialists, Including Health",Slow,6,2026-09,2027-03,8.8,4.3,22.3,2.8,-0.7,15.7,Scientific Research & Development (100%),0.689,0.342,0.658,False,indicative,US,True,2026-10-09
+19-2041.00,"Environmental Scientists and Specialists, Including Health",Slow,9,2026-09,2027-06,13.5,9.1,31.5,3.7,-1.1,20.2,Scientific Research & Development (100%),0.689,0.342,0.658,False,indicative,US,True,2026-10-09
+19-2041.00,"Environmental Scientists and Specialists, Including Health",Slow,12,2026-09,2027-09,18.4,14.0,40.4,3.4,-2.6,20.8,Scientific Research & Development (100%),0.689,0.342,0.658,False,indicative,US,True,2026-10-09
+21-1093.00,Social and Human Service Assistants,Baseline,3,2026-09,2026-12,-1.7,-5.7,6.3,2.7,-0.2,11.6,Community & Social Service (100%),0.416,0.815,0.185,True,indicative,US,True,2026-10-09
+21-1093.00,Social and Human Service Assistants,Baseline,6,2026-09,2027-03,-3.4,-8.0,10.1,0.5,-3.0,13.4,Community & Social Service (100%),0.416,0.815,0.185,True,indicative,US,True,2026-10-09
+21-1093.00,Social and Human Service Assistants,Baseline,9,2026-09,2027-06,-5.0,-9.5,13.0,0.9,-3.9,17.4,Community & Social Service (100%),0.416,0.815,0.185,True,indicative,US,True,2026-10-09
+21-1093.00,Social and Human Service Assistants,Baseline,12,2026-09,2027-09,-6.7,-11.1,15.3,1.2,-4.8,18.6,Community & Social Service (100%),0.416,0.815,0.185,True,indicative,US,True,2026-10-09
+21-1093.00,Social and Human Service Assistants,Rapid AI,3,2026-09,2026-12,-1.1,-5.1,6.9,3.3,0.4,12.2,Community & Social Service (100%),0.416,0.815,0.185,True,indicative,US,True,2026-10-09
+21-1093.00,Social and Human Service Assistants,Rapid AI,6,2026-09,2027-03,-2.2,-6.8,11.3,1.7,-1.9,14.6,Community & Social Service (100%),0.416,0.815,0.185,True,indicative,US,True,2026-10-09
+21-1093.00,Social and Human Service Assistants,Rapid AI,9,2026-09,2027-06,-3.3,-7.7,14.7,2.7,-2.1,19.1,Community & Social Service (100%),0.416,0.815,0.185,True,indicative,US,True,2026-10-09
+21-1093.00,Social and Human Service Assistants,Rapid AI,12,2026-09,2027-09,-4.3,-8.7,17.7,3.5,-2.4,20.9,Community & Social Service (100%),0.416,0.815,0.185,True,indicative,US,True,2026-10-09
+21-1093.00,Social and Human Service Assistants,Slow,3,2026-09,2026-12,-2.3,-6.3,5.7,2.1,-0.8,11.0,Community & Social Service (100%),0.416,0.815,0.185,True,indicative,US,True,2026-10-09
+21-1093.00,Social and Human Service Assistants,Slow,6,2026-09,2027-03,-4.6,-9.1,8.9,-0.6,-4.2,12.2,Community & Social Service (100%),0.416,0.815,0.185,True,indicative,US,True,2026-10-09
+21-1093.00,Social and Human Service Assistants,Slow,9,2026-09,2027-06,-6.8,-11.2,11.2,-0.8,-5.6,15.6,Community & Social Service (100%),0.416,0.815,0.185,True,indicative,US,True,2026-10-09
+21-1093.00,Social and Human Service Assistants,Slow,12,2026-09,2027-09,-9.0,-13.4,13.0,-1.2,-7.1,16.3,Community & Social Service (100%),0.416,0.815,0.185,True,indicative,US,True,2026-10-09
+23-2011.00,Paralegals and Legal Assistants,Baseline,3,2026-09,2026-12,0.3,-3.7,8.3,2.7,-0.1,11.7,Legal (100%),0.83,0.477,0.523,False,indicative,US,True,2026-10-09
+23-2011.00,Paralegals and Legal Assistants,Baseline,6,2026-09,2027-03,0.6,-4.0,14.1,0.4,-3.2,13.3,Legal (100%),0.83,0.477,0.523,False,indicative,US,True,2026-10-09
+23-2011.00,Paralegals and Legal Assistants,Baseline,9,2026-09,2027-06,0.9,-3.6,18.9,0.6,-4.2,17.1,Legal (100%),0.83,0.477,0.523,False,indicative,US,True,2026-10-09
+23-2011.00,Paralegals and Legal Assistants,Baseline,12,2026-09,2027-09,1.1,-3.2,23.2,-0.8,-6.8,16.6,Legal (100%),0.83,0.477,0.523,False,indicative,US,True,2026-10-09
+23-2011.00,Paralegals and Legal Assistants,Rapid AI,3,2026-09,2026-12,-0.2,-4.1,7.8,2.3,-0.5,11.2,Legal (100%),0.83,0.477,0.523,False,indicative,US,True,2026-10-09
+23-2011.00,Paralegals and Legal Assistants,Rapid AI,6,2026-09,2027-03,-0.3,-4.9,13.2,-0.5,-4.1,12.3,Legal (100%),0.83,0.477,0.523,False,indicative,US,True,2026-10-09
+23-2011.00,Paralegals and Legal Assistants,Rapid AI,9,2026-09,2027-06,-0.5,-4.9,17.5,-0.7,-5.5,15.7,Legal (100%),0.83,0.477,0.523,False,indicative,US,True,2026-10-09
+23-2011.00,Paralegals and Legal Assistants,Rapid AI,12,2026-09,2027-09,-0.7,-5.0,21.3,-2.6,-8.6,14.8,Legal (100%),0.83,0.477,0.523,False,indicative,US,True,2026-10-09
+23-2011.00,Paralegals and Legal Assistants,Slow,3,2026-09,2026-12,0.7,-3.2,8.8,3.2,0.4,12.1,Legal (100%),0.83,0.477,0.523,False,indicative,US,True,2026-10-09
+23-2011.00,Paralegals and Legal Assistants,Slow,6,2026-09,2027-03,1.5,-3.1,15.0,1.3,-2.3,14.2,Legal (100%),0.83,0.477,0.523,False,indicative,US,True,2026-10-09
+23-2011.00,Paralegals and Legal Assistants,Slow,9,2026-09,2027-06,2.2,-2.2,20.2,2.0,-2.8,18.5,Legal (100%),0.83,0.477,0.523,False,indicative,US,True,2026-10-09
+23-2011.00,Paralegals and Legal Assistants,Slow,12,2026-09,2027-09,3.0,-1.4,25.0,1.0,-5.0,18.4,Legal (100%),0.83,0.477,0.523,False,indicative,US,True,2026-10-09
+25-2011.00,"Preschool Teachers, Except Special Education",Baseline,3,2026-09,2026-12,-3.1,-7.0,5.0,1.9,-0.9,10.9,Childcare (100%),0.295,0.418,0.582,True,indicative,US,True,2026-10-09
+25-2011.00,"Preschool Teachers, Except Special Education",Baseline,6,2026-09,2027-03,-6.0,-10.6,7.4,-0.4,-3.9,12.5,Childcare (100%),0.295,0.418,0.582,True,indicative,US,True,2026-10-09
+25-2011.00,"Preschool Teachers, Except Special Education",Baseline,9,2026-09,2027-06,-8.9,-13.4,9.1,0.4,-4.5,16.8,Childcare (100%),0.295,0.418,0.582,True,indicative,US,True,2026-10-09
+25-2011.00,"Preschool Teachers, Except Special Education",Baseline,12,2026-09,2027-09,-11.7,-16.1,10.3,1.6,-4.4,19.0,Childcare (100%),0.295,0.418,0.582,True,indicative,US,True,2026-10-09
+25-2011.00,"Preschool Teachers, Except Special Education",Rapid AI,3,2026-09,2026-12,-2.2,-6.1,5.8,2.8,-0.0,11.7,Childcare (100%),0.295,0.418,0.582,True,indicative,US,True,2026-10-09
+25-2011.00,"Preschool Teachers, Except Special Education",Rapid AI,6,2026-09,2027-03,-4.3,-8.9,9.2,1.4,-2.1,14.3,Childcare (100%),0.295,0.418,0.582,True,indicative,US,True,2026-10-09
+25-2011.00,"Preschool Teachers, Except Special Education",Rapid AI,9,2026-09,2027-06,-6.3,-10.7,11.7,3.0,-1.8,19.5,Childcare (100%),0.295,0.418,0.582,True,indicative,US,True,2026-10-09
+25-2011.00,"Preschool Teachers, Except Special Education",Rapid AI,12,2026-09,2027-09,-8.2,-12.6,13.8,5.1,-0.8,22.5,Childcare (100%),0.295,0.418,0.582,True,indicative,US,True,2026-10-09
+25-2011.00,"Preschool Teachers, Except Special Education",Slow,3,2026-09,2026-12,-4.0,-7.9,4.1,1.1,-1.8,10.0,Childcare (100%),0.295,0.418,0.582,True,indicative,US,True,2026-10-09
+25-2011.00,"Preschool Teachers, Except Special Education",Slow,6,2026-09,2027-03,-7.8,-12.4,5.7,-2.1,-5.7,10.7,Childcare (100%),0.295,0.418,0.582,True,indicative,US,True,2026-10-09
+25-2011.00,"Preschool Teachers, Except Special Education",Slow,9,2026-09,2027-06,-11.6,-16.0,6.4,-2.3,-7.1,14.2,Childcare (100%),0.295,0.418,0.582,True,indicative,US,True,2026-10-09
+25-2011.00,"Preschool Teachers, Except Special Education",Slow,12,2026-09,2027-09,-15.3,-19.7,6.7,-2.0,-7.9,15.4,Childcare (100%),0.295,0.418,0.582,True,indicative,US,True,2026-10-09
+25-2021.00,"Elementary School Teachers, Except Special Education",Baseline,3,2026-09,2026-12,-2.6,-6.5,5.4,2.9,0.1,11.8,Education & Instruction (100%),0.453,0.465,0.535,False,indicative,US,True,2026-10-09
+25-2021.00,"Elementary School Teachers, Except Special Education",Baseline,6,2026-09,2027-03,-5.1,-9.7,8.4,-0.1,-3.7,12.7,Education & Instruction (100%),0.453,0.465,0.535,False,indicative,US,True,2026-10-09
+25-2021.00,"Elementary School Teachers, Except Special Education",Baseline,9,2026-09,2027-06,-7.6,-12.0,10.5,0.8,-4.0,17.3,Education & Instruction (100%),0.453,0.465,0.535,False,indicative,US,True,2026-10-09
+25-2021.00,"Elementary School Teachers, Except Special Education",Baseline,12,2026-09,2027-09,-9.9,-14.3,12.1,0.5,-5.4,17.9,Education & Instruction (100%),0.453,0.465,0.535,False,indicative,US,True,2026-10-09
+25-2021.00,"Elementary School Teachers, Except Special Education",Rapid AI,3,2026-09,2026-12,-2.1,-6.1,5.9,3.4,0.6,12.3,Education & Instruction (100%),0.453,0.465,0.535,False,indicative,US,True,2026-10-09
+25-2021.00,"Elementary School Teachers, Except Special Education",Rapid AI,6,2026-09,2027-03,-4.1,-8.7,9.4,0.8,-2.7,13.7,Education & Instruction (100%),0.453,0.465,0.535,False,indicative,US,True,2026-10-09
+25-2021.00,"Elementary School Teachers, Except Special Education",Rapid AI,9,2026-09,2027-06,-6.1,-10.5,11.9,2.3,-2.6,18.7,Education & Instruction (100%),0.453,0.465,0.535,False,indicative,US,True,2026-10-09
+25-2021.00,"Elementary School Teachers, Except Special Education",Rapid AI,12,2026-09,2027-09,-8.0,-12.4,14.0,2.5,-3.5,19.9,Education & Instruction (100%),0.453,0.465,0.535,False,indicative,US,True,2026-10-09
+25-2021.00,"Elementary School Teachers, Except Special Education",Slow,3,2026-09,2026-12,-3.1,-7.0,4.9,2.4,-0.4,11.3,Education & Instruction (100%),0.453,0.465,0.535,False,indicative,US,True,2026-10-09
+25-2021.00,"Elementary School Teachers, Except Special Education",Slow,6,2026-09,2027-03,-6.1,-10.7,7.4,-1.1,-4.7,11.8,Education & Instruction (100%),0.453,0.465,0.535,False,indicative,US,True,2026-10-09
+25-2021.00,"Elementary School Teachers, Except Special Education",Slow,9,2026-09,2027-06,-9.0,-13.4,9.0,-0.7,-5.5,15.8,Education & Instruction (100%),0.453,0.465,0.535,False,indicative,US,True,2026-10-09
+25-2021.00,"Elementary School Teachers, Except Special Education",Slow,12,2026-09,2027-09,-11.9,-16.3,10.1,-1.5,-7.4,16.0,Education & Instruction (100%),0.453,0.465,0.535,False,indicative,US,True,2026-10-09
+27-3042.00,Technical Writers,Baseline,3,2026-09,2026-12,2.4,-1.6,10.4,4.6,1.7,13.5,"Media & Communications (50%), IT Systems & Solutions (50%)",0.995,0.788,0.212,False,indicative,US,True,2026-10-09
+27-3042.00,Technical Writers,Baseline,6,2026-09,2027-03,4.8,0.2,18.3,2.5,-1.1,15.3,"Media & Communications (50%), IT Systems & Solutions (50%)",0.995,0.788,0.212,False,indicative,US,True,2026-10-09
+27-3042.00,Technical Writers,Baseline,9,2026-09,2027-06,7.3,2.9,25.3,3.7,-1.1,20.2,"Media & Communications (50%), IT Systems & Solutions (50%)",0.995,0.788,0.212,False,indicative,US,True,2026-10-09
+27-3042.00,Technical Writers,Baseline,12,2026-09,2027-09,9.9,5.5,31.9,3.5,-2.5,20.9,"Media & Communications (50%), IT Systems & Solutions (50%)",0.995,0.788,0.212,False,indicative,US,True,2026-10-09
+27-3042.00,Technical Writers,Rapid AI,3,2026-09,2026-12,1.5,-2.5,9.5,3.7,0.9,12.6,"Media & Communications (50%), IT Systems & Solutions (50%)",0.995,0.788,0.212,False,indicative,US,True,2026-10-09
+27-3042.00,Technical Writers,Rapid AI,6,2026-09,2027-03,3.1,-1.5,16.6,0.7,-2.8,13.6,"Media & Communications (50%), IT Systems & Solutions (50%)",0.995,0.788,0.212,False,indicative,US,True,2026-10-09
+27-3042.00,Technical Writers,Rapid AI,9,2026-09,2027-06,4.7,0.3,22.7,1.1,-3.7,17.6,"Media & Communications (50%), IT Systems & Solutions (50%)",0.995,0.788,0.212,False,indicative,US,True,2026-10-09
+27-3042.00,Technical Writers,Rapid AI,12,2026-09,2027-09,6.4,2.0,28.4,0.0,-5.9,17.5,"Media & Communications (50%), IT Systems & Solutions (50%)",0.995,0.788,0.212,False,indicative,US,True,2026-10-09
+27-3042.00,Technical Writers,Slow,3,2026-09,2026-12,3.2,-0.7,11.2,5.4,2.6,14.3,"Media & Communications (50%), IT Systems & Solutions (50%)",0.995,0.788,0.212,False,indicative,US,True,2026-10-09
+27-3042.00,Technical Writers,Slow,6,2026-09,2027-03,6.5,2.0,20.0,4.2,0.7,17.1,"Media & Communications (50%), IT Systems & Solutions (50%)",0.995,0.788,0.212,False,indicative,US,True,2026-10-09
+27-3042.00,Technical Writers,Slow,9,2026-09,2027-06,9.9,5.5,27.9,6.3,1.5,22.8,"Media & Communications (50%), IT Systems & Solutions (50%)",0.995,0.788,0.212,False,indicative,US,True,2026-10-09
+27-3042.00,Technical Writers,Slow,12,2026-09,2027-09,13.3,8.9,35.3,6.9,1.0,24.4,"Media & Communications (50%), IT Systems & Solutions (50%)",0.995,0.788,0.212,False,indicative,US,True,2026-10-09
+27-3091.00,Interpreters and Translators,Baseline,3,2026-09,2026-12,3.0,-1.0,11.0,4.3,1.5,13.2,Media & Communications (100%),0.977,0.899,0.101,False,indicative,US,True,2026-10-09
+27-3091.00,Interpreters and Translators,Baseline,6,2026-09,2027-03,6.1,1.5,19.6,0.5,-3.1,13.4,Media & Communications (100%),0.977,0.899,0.101,False,indicative,US,True,2026-10-09
+27-3091.00,Interpreters and Translators,Baseline,9,2026-09,2027-06,9.3,4.9,27.3,0.1,-4.7,16.6,Media & Communications (100%),0.977,0.899,0.101,False,indicative,US,True,2026-10-09
+27-3091.00,Interpreters and Translators,Baseline,12,2026-09,2027-09,12.6,8.2,34.6,0.8,-5.2,18.2,Media & Communications (100%),0.977,0.899,0.101,False,indicative,US,True,2026-10-09
+27-3091.00,Interpreters and Translators,Rapid AI,3,2026-09,2026-12,2.2,-1.8,10.2,3.5,0.7,12.4,Media & Communications (100%),0.977,0.899,0.101,False,indicative,US,True,2026-10-09
+27-3091.00,Interpreters and Translators,Rapid AI,6,2026-09,2027-03,4.5,-0.1,17.9,-1.2,-4.7,11.7,Media & Communications (100%),0.977,0.899,0.101,False,indicative,US,True,2026-10-09
+27-3091.00,Interpreters and Translators,Rapid AI,9,2026-09,2027-06,6.8,2.4,24.8,-2.3,-7.1,14.1,Media & Communications (100%),0.977,0.899,0.101,False,indicative,US,True,2026-10-09
+27-3091.00,Interpreters and Translators,Rapid AI,12,2026-09,2027-09,9.3,4.9,31.3,-2.5,-8.5,14.9,Media & Communications (100%),0.977,0.899,0.101,False,indicative,US,True,2026-10-09
+27-3091.00,Interpreters and Translators,Slow,3,2026-09,2026-12,3.8,-0.1,11.8,5.1,2.3,14.0,Media & Communications (100%),0.977,0.899,0.101,False,indicative,US,True,2026-10-09
+27-3091.00,Interpreters and Translators,Slow,6,2026-09,2027-03,7.7,3.2,21.2,2.1,-1.4,15.0,Media & Communications (100%),0.977,0.899,0.101,False,indicative,US,True,2026-10-09
+27-3091.00,Interpreters and Translators,Slow,9,2026-09,2027-06,11.7,7.3,29.7,2.6,-2.2,19.1,Media & Communications (100%),0.977,0.899,0.101,False,indicative,US,True,2026-10-09
+27-3091.00,Interpreters and Translators,Slow,12,2026-09,2027-09,15.8,11.5,37.8,4.0,-1.9,21.5,Media & Communications (100%),0.977,0.899,0.101,False,indicative,US,True,2026-10-09
+29-1123.00,Physical Therapists,Baseline,3,2026-09,2026-12,0.1,-3.8,8.2,4.2,1.4,13.1,Therapy (100%),0.5,0.833,0.167,False,indicative,US,True,2026-10-09
+29-1123.00,Physical Therapists,Baseline,6,2026-09,2027-03,0.3,-4.3,13.8,0.8,-2.7,13.7,Therapy (100%),0.5,0.833,0.167,False,indicative,US,True,2026-10-09
+29-1123.00,Physical Therapists,Baseline,9,2026-09,2027-06,0.4,-4.0,18.4,1.7,-3.2,18.1,Therapy (100%),0.5,0.833,0.167,False,indicative,US,True,2026-10-09
+29-1123.00,Physical Therapists,Baseline,12,2026-09,2027-09,0.6,-3.8,22.6,-1.4,-7.3,16.1,Therapy (100%),0.5,0.833,0.167,False,indicative,US,True,2026-10-09
+29-1123.00,Physical Therapists,Rapid AI,3,2026-09,2026-12,0.5,-3.4,8.5,4.6,1.8,13.5,Therapy (100%),0.5,0.833,0.167,False,indicative,US,True,2026-10-09
+29-1123.00,Physical Therapists,Rapid AI,6,2026-09,2027-03,1.0,-3.6,14.5,1.6,-2.0,14.4,Therapy (100%),0.5,0.833,0.167,False,indicative,US,True,2026-10-09
+29-1123.00,Physical Therapists,Rapid AI,9,2026-09,2027-06,1.5,-2.9,19.5,2.8,-2.0,19.2,Therapy (100%),0.5,0.833,0.167,False,indicative,US,True,2026-10-09
+29-1123.00,Physical Therapists,Rapid AI,12,2026-09,2027-09,2.0,-2.3,24.1,0.1,-5.8,17.6,Therapy (100%),0.5,0.833,0.167,False,indicative,US,True,2026-10-09
+29-1123.00,Physical Therapists,Slow,3,2026-09,2026-12,-0.2,-4.2,7.8,3.8,1.0,12.8,Therapy (100%),0.5,0.833,0.167,False,indicative,US,True,2026-10-09
+29-1123.00,Physical Therapists,Slow,6,2026-09,2027-03,-0.5,-5.0,13.0,0.1,-3.5,12.9,Therapy (100%),0.5,0.833,0.167,False,indicative,US,True,2026-10-09
+29-1123.00,Physical Therapists,Slow,9,2026-09,2027-06,-0.7,-5.1,17.3,0.6,-4.3,17.0,Therapy (100%),0.5,0.833,0.167,False,indicative,US,True,2026-10-09
+29-1123.00,Physical Therapists,Slow,12,2026-09,2027-09,-0.9,-5.3,21.1,-2.9,-8.8,14.6,Therapy (100%),0.5,0.833,0.167,False,indicative,US,True,2026-10-09
+29-1141.00,Registered Nurses,Baseline,3,2026-09,2026-12,-1.4,-5.4,6.6,3.0,0.1,11.9,Nursing (100%),0.249,0.427,0.573,True,indicative,US,True,2026-10-09
+29-1141.00,Registered Nurses,Baseline,6,2026-09,2027-03,-2.9,-7.4,10.6,1.7,-1.9,14.5,Nursing (100%),0.249,0.427,0.573,True,indicative,US,True,2026-10-09
+29-1141.00,Registered Nurses,Baseline,9,2026-09,2027-06,-4.3,-8.7,13.7,3.5,-1.4,19.9,Nursing (100%),0.249,0.427,0.573,True,indicative,US,True,2026-10-09
+29-1141.00,Registered Nurses,Baseline,12,2026-09,2027-09,-5.7,-10.0,16.4,3.2,-2.8,20.6,Nursing (100%),0.249,0.427,0.573,True,indicative,US,True,2026-10-09
+29-1141.00,Registered Nurses,Rapid AI,3,2026-09,2026-12,-0.4,-4.4,7.6,4.0,1.1,12.9,Nursing (100%),0.249,0.427,0.573,True,indicative,US,True,2026-10-09
+29-1141.00,Registered Nurses,Rapid AI,6,2026-09,2027-03,-0.9,-5.4,12.6,3.7,0.1,16.5,Nursing (100%),0.249,0.427,0.573,True,indicative,US,True,2026-10-09
+29-1141.00,Registered Nurses,Rapid AI,9,2026-09,2027-06,-1.3,-5.7,16.7,6.5,1.6,22.9,Nursing (100%),0.249,0.427,0.573,True,indicative,US,True,2026-10-09
+29-1141.00,Registered Nurses,Rapid AI,12,2026-09,2027-09,-1.6,-6.0,20.4,7.2,1.2,24.6,Nursing (100%),0.249,0.427,0.573,True,indicative,US,True,2026-10-09
+29-1141.00,Registered Nurses,Slow,3,2026-09,2026-12,-2.4,-6.4,5.6,2.0,-0.9,10.9,Nursing (100%),0.249,0.427,0.573,True,indicative,US,True,2026-10-09
+29-1141.00,Registered Nurses,Slow,6,2026-09,2027-03,-4.9,-9.4,8.6,-0.3,-3.9,12.5,Nursing (100%),0.249,0.427,0.573,True,indicative,US,True,2026-10-09
+29-1141.00,Registered Nurses,Slow,9,2026-09,2027-06,-7.3,-11.7,10.7,0.5,-4.4,16.9,Nursing (100%),0.249,0.427,0.573,True,indicative,US,True,2026-10-09
+29-1141.00,Registered Nurses,Slow,12,2026-09,2027-09,-9.7,-14.0,12.4,-0.8,-6.8,16.6,Nursing (100%),0.249,0.427,0.573,True,indicative,US,True,2026-10-09
+29-2052.00,Pharmacy Technicians,Baseline,3,2026-09,2026-12,0.6,-3.3,8.6,1.3,-1.5,10.2,Pharmacy (100%),0.682,0.759,0.241,False,indicative,US,True,2026-10-09
+29-2052.00,Pharmacy Technicians,Baseline,6,2026-09,2027-03,1.3,-3.3,14.8,-0.6,-4.1,12.3,Pharmacy (100%),0.682,0.759,0.241,False,indicative,US,True,2026-10-09
+29-2052.00,Pharmacy Technicians,Baseline,9,2026-09,2027-06,1.9,-2.5,19.9,-0.7,-5.6,15.7,Pharmacy (100%),0.682,0.759,0.241,False,indicative,US,True,2026-10-09
+29-2052.00,Pharmacy Technicians,Baseline,12,2026-09,2027-09,2.5,-1.8,24.6,-3.2,-9.2,14.2,Pharmacy (100%),0.682,0.759,0.241,False,indicative,US,True,2026-10-09
+29-2052.00,Pharmacy Technicians,Rapid AI,3,2026-09,2026-12,0.5,-3.4,8.6,1.2,-1.6,10.1,Pharmacy (100%),0.682,0.759,0.241,False,indicative,US,True,2026-10-09
+29-2052.00,Pharmacy Technicians,Rapid AI,6,2026-09,2027-03,1.1,-3.5,14.6,-0.7,-4.3,12.1,Pharmacy (100%),0.682,0.759,0.241,False,indicative,US,True,2026-10-09
+29-2052.00,Pharmacy Technicians,Rapid AI,9,2026-09,2027-06,1.7,-2.8,19.7,-1.0,-5.8,15.5,Pharmacy (100%),0.682,0.759,0.241,False,indicative,US,True,2026-10-09
+29-2052.00,Pharmacy Technicians,Rapid AI,12,2026-09,2027-09,2.2,-2.2,24.2,-3.6,-9.5,13.9,Pharmacy (100%),0.682,0.759,0.241,False,indicative,US,True,2026-10-09
+29-2052.00,Pharmacy Technicians,Slow,3,2026-09,2026-12,0.7,-3.2,8.7,1.4,-1.4,10.3,Pharmacy (100%),0.682,0.759,0.241,False,indicative,US,True,2026-10-09
+29-2052.00,Pharmacy Technicians,Slow,6,2026-09,2027-03,1.4,-3.1,14.9,-0.4,-4.0,12.5,Pharmacy (100%),0.682,0.759,0.241,False,indicative,US,True,2026-10-09
+29-2052.00,Pharmacy Technicians,Slow,9,2026-09,2027-06,2.2,-2.3,20.2,-0.5,-5.3,16.0,Pharmacy (100%),0.682,0.759,0.241,False,indicative,US,True,2026-10-09
+29-2052.00,Pharmacy Technicians,Slow,12,2026-09,2027-09,2.9,-1.5,24.9,-2.9,-8.9,14.5,Pharmacy (100%),0.682,0.759,0.241,False,indicative,US,True,2026-10-09
+29-9021.00,Health Information Technologists and Medical Registrars,Baseline,3,2026-09,2026-12,-1.8,-5.8,6.2,2.1,-0.7,11.1,Medical Information (100%),0.43,0.964,0.036,False,indicative,US,True,2026-10-09
+29-9021.00,Health Information Technologists and Medical Registrars,Baseline,6,2026-09,2027-03,-3.6,-8.1,9.9,0.0,-3.5,12.9,Medical Information (100%),0.43,0.964,0.036,False,indicative,US,True,2026-10-09
+29-9021.00,Health Information Technologists and Medical Registrars,Baseline,9,2026-09,2027-06,-5.3,-9.7,12.7,2.2,-2.6,18.7,Medical Information (100%),0.43,0.964,0.036,False,indicative,US,True,2026-10-09
+29-9021.00,Health Information Technologists and Medical Registrars,Baseline,12,2026-09,2027-09,-7.0,-11.4,15.0,2.3,-3.7,19.7,Medical Information (100%),0.43,0.964,0.036,False,indicative,US,True,2026-10-09
+29-9021.00,Health Information Technologists and Medical Registrars,Rapid AI,3,2026-09,2026-12,-1.2,-5.2,6.8,2.7,-0.1,11.6,Medical Information (100%),0.43,0.964,0.036,False,indicative,US,True,2026-10-09
+29-9021.00,Health Information Technologists and Medical Registrars,Rapid AI,6,2026-09,2027-03,-2.5,-7.0,11.0,1.1,-2.4,14.0,Medical Information (100%),0.43,0.964,0.036,False,indicative,US,True,2026-10-09
+29-9021.00,Health Information Technologists and Medical Registrars,Rapid AI,9,2026-09,2027-06,-3.7,-8.1,14.3,3.9,-0.9,20.3,Medical Information (100%),0.43,0.964,0.036,False,indicative,US,True,2026-10-09
+29-9021.00,Health Information Technologists and Medical Registrars,Rapid AI,12,2026-09,2027-09,-4.8,-9.2,17.2,4.5,-1.5,21.9,Medical Information (100%),0.43,0.964,0.036,False,indicative,US,True,2026-10-09
+29-9021.00,Health Information Technologists and Medical Registrars,Slow,3,2026-09,2026-12,-2.3,-6.3,5.7,1.6,-1.2,10.5,Medical Information (100%),0.43,0.964,0.036,False,indicative,US,True,2026-10-09
+29-9021.00,Health Information Technologists and Medical Registrars,Slow,6,2026-09,2027-03,-4.7,-9.2,8.8,-1.1,-4.6,11.8,Medical Information (100%),0.43,0.964,0.036,False,indicative,US,True,2026-10-09
+29-9021.00,Health Information Technologists and Medical Registrars,Slow,9,2026-09,2027-06,-6.9,-11.4,11.1,0.6,-4.2,17.0,Medical Information (100%),0.43,0.964,0.036,False,indicative,US,True,2026-10-09
+29-9021.00,Health Information Technologists and Medical Registrars,Slow,12,2026-09,2027-09,-9.2,-13.6,12.8,0.1,-5.9,17.5,Medical Information (100%),0.43,0.964,0.036,False,indicative,US,True,2026-10-09
+31-1122.00,Personal Care Aides,Baseline,3,2026-09,2026-12,1.1,-2.9,9.1,4.4,1.5,13.3,Personal Care & Home Health (100%),0.559,0.795,0.205,False,indicative,US,True,2026-10-09
+31-1122.00,Personal Care Aides,Baseline,6,2026-09,2027-03,2.1,-2.4,15.6,2.1,-1.4,15.0,Personal Care & Home Health (100%),0.559,0.795,0.205,False,indicative,US,True,2026-10-09
+31-1122.00,Personal Care Aides,Baseline,9,2026-09,2027-06,3.2,-1.2,21.2,0.5,-4.3,17.0,Personal Care & Home Health (100%),0.559,0.795,0.205,False,indicative,US,True,2026-10-09
+31-1122.00,Personal Care Aides,Baseline,12,2026-09,2027-09,4.3,-0.1,26.3,-2.1,-8.1,15.3,Personal Care & Home Health (100%),0.559,0.795,0.205,False,indicative,US,True,2026-10-09
+31-1122.00,Personal Care Aides,Rapid AI,3,2026-09,2026-12,1.3,-2.7,9.3,4.6,1.7,13.5,Personal Care & Home Health (100%),0.559,0.795,0.205,False,indicative,US,True,2026-10-09
+31-1122.00,Personal Care Aides,Rapid AI,6,2026-09,2027-03,2.6,-2.0,16.1,2.6,-1.0,15.5,Personal Care & Home Health (100%),0.559,0.795,0.205,False,indicative,US,True,2026-10-09
+31-1122.00,Personal Care Aides,Rapid AI,9,2026-09,2027-06,3.9,-0.5,21.9,1.2,-3.6,17.7,Personal Care & Home Health (100%),0.559,0.795,0.205,False,indicative,US,True,2026-10-09
+31-1122.00,Personal Care Aides,Rapid AI,12,2026-09,2027-09,5.2,0.8,27.2,-1.2,-7.2,16.2,Personal Care & Home Health (100%),0.559,0.795,0.205,False,indicative,US,True,2026-10-09
+31-1122.00,Personal Care Aides,Slow,3,2026-09,2026-12,0.8,-3.1,8.9,4.1,1.3,13.0,Personal Care & Home Health (100%),0.559,0.795,0.205,False,indicative,US,True,2026-10-09
+31-1122.00,Personal Care Aides,Slow,6,2026-09,2027-03,1.7,-2.9,15.2,1.7,-1.9,14.6,Personal Care & Home Health (100%),0.559,0.795,0.205,False,indicative,US,True,2026-10-09
+31-1122.00,Personal Care Aides,Slow,9,2026-09,2027-06,2.6,-1.9,20.6,-0.2,-5.0,16.3,Personal Care & Home Health (100%),0.559,0.795,0.205,False,indicative,US,True,2026-10-09
+31-1122.00,Personal Care Aides,Slow,12,2026-09,2027-09,3.4,-1.0,25.4,-3.0,-9.0,14.4,Personal Care & Home Health (100%),0.559,0.795,0.205,False,indicative,US,True,2026-10-09
+33-9032.00,Security Guards,Baseline,3,2026-09,2026-12,0.4,-3.5,8.4,3.2,0.4,12.1,Security & Public Safety (100%),0.117,,,True,indicative,US,True,2026-10-09
+33-9032.00,Security Guards,Baseline,6,2026-09,2027-03,0.8,-3.8,14.3,0.4,-3.1,13.3,Security & Public Safety (100%),0.117,,,True,indicative,US,True,2026-10-09
+33-9032.00,Security Guards,Baseline,9,2026-09,2027-06,1.2,-3.2,19.2,-0.2,-5.0,16.3,Security & Public Safety (100%),0.117,,,True,indicative,US,True,2026-10-09
+33-9032.00,Security Guards,Baseline,12,2026-09,2027-09,1.7,-2.7,23.7,-1.5,-7.5,15.9,Security & Public Safety (100%),0.117,,,True,indicative,US,True,2026-10-09
+33-9032.00,Security Guards,Rapid AI,3,2026-09,2026-12,1.7,-2.2,9.8,4.5,1.7,13.4,Security & Public Safety (100%),0.117,,,True,indicative,US,True,2026-10-09
+33-9032.00,Security Guards,Rapid AI,6,2026-09,2027-03,3.5,-1.1,17.0,3.1,-0.5,16.0,Security & Public Safety (100%),0.117,,,True,indicative,US,True,2026-10-09
+33-9032.00,Security Guards,Rapid AI,9,2026-09,2027-06,5.2,0.8,23.2,3.8,-1.0,20.2,Security & Public Safety (100%),0.117,,,True,indicative,US,True,2026-10-09
+33-9032.00,Security Guards,Rapid AI,12,2026-09,2027-09,7.0,2.6,29.0,3.8,-2.1,21.2,Security & Public Safety (100%),0.117,,,True,indicative,US,True,2026-10-09
+33-9032.00,Security Guards,Slow,3,2026-09,2026-12,-0.9,-4.9,7.1,1.9,-1.0,10.8,Security & Public Safety (100%),0.117,,,True,indicative,US,True,2026-10-09
+33-9032.00,Security Guards,Slow,6,2026-09,2027-03,-1.8,-6.4,11.7,-2.2,-5.8,10.6,Security & Public Safety (100%),0.117,,,True,indicative,US,True,2026-10-09
+33-9032.00,Security Guards,Slow,9,2026-09,2027-06,-2.7,-7.2,15.3,-4.2,-9.0,12.3,Security & Public Safety (100%),0.117,,,True,indicative,US,True,2026-10-09
+33-9032.00,Security Guards,Slow,12,2026-09,2027-09,-3.7,-8.0,18.3,-6.8,-12.8,10.6,Security & Public Safety (100%),0.117,,,True,indicative,US,True,2026-10-09
+35-2014.00,"Cooks, Restaurant",Baseline,3,2026-09,2026-12,-1.7,-5.7,6.3,2.5,-0.3,11.5,Food Preparation & Service (100%),0.273,0.722,0.278,True,indicative,US,True,2026-10-09
+35-2014.00,"Cooks, Restaurant",Baseline,6,2026-09,2027-03,-3.4,-7.9,10.1,0.5,-3.1,13.3,Food Preparation & Service (100%),0.273,0.722,0.278,True,indicative,US,True,2026-10-09
+35-2014.00,"Cooks, Restaurant",Baseline,9,2026-09,2027-06,-5.0,-9.4,13.0,0.7,-4.1,17.2,Food Preparation & Service (100%),0.273,0.722,0.278,True,indicative,US,True,2026-10-09
+35-2014.00,"Cooks, Restaurant",Baseline,12,2026-09,2027-09,-6.6,-11.0,15.4,1.5,-4.4,19.0,Food Preparation & Service (100%),0.273,0.722,0.278,True,indicative,US,True,2026-10-09
+35-2014.00,"Cooks, Restaurant",Rapid AI,3,2026-09,2026-12,-0.8,-4.7,7.3,3.5,0.7,12.4,Food Preparation & Service (100%),0.273,0.722,0.278,True,indicative,US,True,2026-10-09
+35-2014.00,"Cooks, Restaurant",Rapid AI,6,2026-09,2027-03,-1.5,-6.1,12.0,2.3,-1.2,15.2,Food Preparation & Service (100%),0.273,0.722,0.278,True,indicative,US,True,2026-10-09
+35-2014.00,"Cooks, Restaurant",Rapid AI,9,2026-09,2027-06,-2.2,-6.6,15.8,3.5,-1.3,20.0,Food Preparation & Service (100%),0.273,0.722,0.278,True,indicative,US,True,2026-10-09
+35-2014.00,"Cooks, Restaurant",Rapid AI,12,2026-09,2027-09,-2.9,-7.2,19.2,5.3,-0.6,22.7,Food Preparation & Service (100%),0.273,0.722,0.278,True,indicative,US,True,2026-10-09
+35-2014.00,"Cooks, Restaurant",Slow,3,2026-09,2026-12,-2.6,-6.6,5.4,1.6,-1.2,10.5,Food Preparation & Service (100%),0.273,0.722,0.278,True,indicative,US,True,2026-10-09
+35-2014.00,"Cooks, Restaurant",Slow,6,2026-09,2027-03,-5.2,-9.8,8.2,-1.4,-5.0,11.5,Food Preparation & Service (100%),0.273,0.722,0.278,True,indicative,US,True,2026-10-09
+35-2014.00,"Cooks, Restaurant",Slow,9,2026-09,2027-06,-7.8,-12.2,10.2,-2.1,-6.9,14.4,Food Preparation & Service (100%),0.273,0.722,0.278,True,indicative,US,True,2026-10-09
+35-2014.00,"Cooks, Restaurant",Slow,12,2026-09,2027-09,-10.4,-14.8,11.6,-2.2,-8.2,15.2,Food Preparation & Service (100%),0.273,0.722,0.278,True,indicative,US,True,2026-10-09
+41-2031.00,Retail Salespersons,Baseline,3,2026-09,2026-12,0.2,-3.8,8.2,2.7,-0.2,11.6,Retail (100%),0.772,0.761,0.239,False,indicative,US,True,2026-10-09
+41-2031.00,Retail Salespersons,Baseline,6,2026-09,2027-03,0.4,-4.2,13.9,0.6,-2.9,13.5,Retail (100%),0.772,0.761,0.239,False,indicative,US,True,2026-10-09
+41-2031.00,Retail Salespersons,Baseline,9,2026-09,2027-06,0.6,-3.8,18.6,1.9,-2.9,18.4,Retail (100%),0.772,0.761,0.239,False,indicative,US,True,2026-10-09
+41-2031.00,Retail Salespersons,Baseline,12,2026-09,2027-09,0.8,-3.6,22.8,2.1,-3.8,19.6,Retail (100%),0.772,0.761,0.239,False,indicative,US,True,2026-10-09
+41-2031.00,Retail Salespersons,Rapid AI,3,2026-09,2026-12,-0.1,-4.1,7.9,2.4,-0.5,11.3,Retail (100%),0.772,0.761,0.239,False,indicative,US,True,2026-10-09
+41-2031.00,Retail Salespersons,Rapid AI,6,2026-09,2027-03,-0.2,-4.8,13.3,-0.0,-3.5,12.9,Retail (100%),0.772,0.761,0.239,False,indicative,US,True,2026-10-09
+41-2031.00,Retail Salespersons,Rapid AI,9,2026-09,2027-06,-0.3,-4.7,17.7,1.0,-3.8,17.5,Retail (100%),0.772,0.761,0.239,False,indicative,US,True,2026-10-09
+41-2031.00,Retail Salespersons,Rapid AI,12,2026-09,2027-09,-0.4,-4.8,21.6,0.9,-5.0,18.3,Retail (100%),0.772,0.761,0.239,False,indicative,US,True,2026-10-09
+41-2031.00,Retail Salespersons,Slow,3,2026-09,2026-12,0.5,-3.5,8.5,3.0,0.1,11.9,Retail (100%),0.772,0.761,0.239,False,indicative,US,True,2026-10-09
+41-2031.00,Retail Salespersons,Slow,6,2026-09,2027-03,1.0,-3.6,14.5,1.2,-2.3,14.1,Retail (100%),0.772,0.761,0.239,False,indicative,US,True,2026-10-09
+41-2031.00,Retail Salespersons,Slow,9,2026-09,2027-06,1.5,-2.9,19.5,2.8,-2.0,19.3,Retail (100%),0.772,0.761,0.239,False,indicative,US,True,2026-10-09
+41-2031.00,Retail Salespersons,Slow,12,2026-09,2027-09,2.0,-2.4,24.0,3.4,-2.6,20.8,Retail (100%),0.772,0.761,0.239,False,indicative,US,True,2026-10-09
+43-3031.00,"Bookkeeping, Accounting, and Auditing Clerks",Baseline,3,2026-09,2026-12,-1.8,-5.8,6.2,11.1,8.2,20.0,Accounting (100%),0.912,0.857,0.143,False,indicative,US,True,2026-10-09
+43-3031.00,"Bookkeeping, Accounting, and Auditing Clerks",Baseline,6,2026-09,2027-03,-3.6,-8.2,9.9,11.5,8.0,24.4,Accounting (100%),0.912,0.857,0.143,False,indicative,US,True,2026-10-09
+43-3031.00,"Bookkeeping, Accounting, and Auditing Clerks",Baseline,9,2026-09,2027-06,-5.4,-9.8,12.6,16.8,11.9,33.2,Accounting (100%),0.912,0.857,0.143,False,indicative,US,True,2026-10-09
+43-3031.00,"Bookkeeping, Accounting, and Auditing Clerks",Baseline,12,2026-09,2027-09,-7.1,-11.5,14.9,18.5,12.6,36.0,Accounting (100%),0.912,0.857,0.143,False,indicative,US,True,2026-10-09
+43-3031.00,"Bookkeeping, Accounting, and Auditing Clerks",Rapid AI,3,2026-09,2026-12,-2.5,-6.4,5.5,10.4,7.6,19.3,Accounting (100%),0.912,0.857,0.143,False,indicative,US,True,2026-10-09
+43-3031.00,"Bookkeeping, Accounting, and Auditing Clerks",Rapid AI,6,2026-09,2027-03,-4.9,-9.5,8.5,10.2,6.7,23.1,Accounting (100%),0.912,0.857,0.143,False,indicative,US,True,2026-10-09
+43-3031.00,"Bookkeeping, Accounting, and Auditing Clerks",Rapid AI,9,2026-09,2027-06,-7.4,-11.8,10.6,14.8,10.0,31.2,Accounting (100%),0.912,0.857,0.143,False,indicative,US,True,2026-10-09
+43-3031.00,"Bookkeeping, Accounting, and Auditing Clerks",Rapid AI,12,2026-09,2027-09,-9.8,-14.1,12.3,15.9,10.0,33.3,Accounting (100%),0.912,0.857,0.143,False,indicative,US,True,2026-10-09
+43-3031.00,"Bookkeeping, Accounting, and Auditing Clerks",Slow,3,2026-09,2026-12,-1.2,-5.1,6.8,11.7,8.9,20.6,Accounting (100%),0.912,0.857,0.143,False,indicative,US,True,2026-10-09
+43-3031.00,"Bookkeeping, Accounting, and Auditing Clerks",Slow,6,2026-09,2027-03,-2.3,-6.9,11.2,12.8,9.3,25.7,Accounting (100%),0.912,0.857,0.143,False,indicative,US,True,2026-10-09
+43-3031.00,"Bookkeeping, Accounting, and Auditing Clerks",Slow,9,2026-09,2027-06,-3.4,-7.8,14.6,18.7,13.9,35.2,Accounting (100%),0.912,0.857,0.143,False,indicative,US,True,2026-10-09
+43-3031.00,"Bookkeeping, Accounting, and Auditing Clerks",Slow,12,2026-09,2027-09,-4.5,-8.9,17.5,21.2,15.2,38.6,Accounting (100%),0.912,0.857,0.143,False,indicative,US,True,2026-10-09
+43-3071.00,Tellers,Baseline,3,2026-09,2026-12,2.2,-1.8,10.2,3.9,1.1,12.8,Banking & Finance (100%),0.639,0.854,0.146,False,indicative,US,True,2026-10-09
+43-3071.00,Tellers,Baseline,6,2026-09,2027-03,4.4,-0.2,17.9,2.4,-1.1,15.3,Banking & Finance (100%),0.639,0.854,0.146,False,indicative,US,True,2026-10-09
+43-3071.00,Tellers,Baseline,9,2026-09,2027-06,6.7,2.3,24.7,3.9,-0.9,20.4,Banking & Finance (100%),0.639,0.854,0.146,False,indicative,US,True,2026-10-09
+43-3071.00,Tellers,Baseline,12,2026-09,2027-09,9.0,4.6,31.0,2.0,-3.9,19.4,Banking & Finance (100%),0.639,0.854,0.146,False,indicative,US,True,2026-10-09
+43-3071.00,Tellers,Rapid AI,3,2026-09,2026-12,2.2,-1.7,10.2,4.0,1.1,12.9,Banking & Finance (100%),0.639,0.854,0.146,False,indicative,US,True,2026-10-09
+43-3071.00,Tellers,Rapid AI,6,2026-09,2027-03,4.5,-0.1,18.0,2.5,-1.1,15.3,Banking & Finance (100%),0.639,0.854,0.146,False,indicative,US,True,2026-10-09
+43-3071.00,Tellers,Rapid AI,9,2026-09,2027-06,6.8,2.4,24.8,4.0,-0.8,20.5,Banking & Finance (100%),0.639,0.854,0.146,False,indicative,US,True,2026-10-09
+43-3071.00,Tellers,Rapid AI,12,2026-09,2027-09,9.1,4.7,31.1,2.1,-3.8,19.5,Banking & Finance (100%),0.639,0.854,0.146,False,indicative,US,True,2026-10-09
+43-3071.00,Tellers,Slow,3,2026-09,2026-12,2.2,-1.8,10.2,3.9,1.1,12.8,Banking & Finance (100%),0.639,0.854,0.146,False,indicative,US,True,2026-10-09
+43-3071.00,Tellers,Slow,6,2026-09,2027-03,4.4,-0.2,17.9,2.4,-1.2,15.2,Banking & Finance (100%),0.639,0.854,0.146,False,indicative,US,True,2026-10-09
+43-3071.00,Tellers,Slow,9,2026-09,2027-06,6.6,2.2,24.6,3.9,-1.0,20.3,Banking & Finance (100%),0.639,0.854,0.146,False,indicative,US,True,2026-10-09
+43-3071.00,Tellers,Slow,12,2026-09,2027-09,8.9,4.5,30.9,1.9,-4.0,19.3,Banking & Finance (100%),0.639,0.854,0.146,False,indicative,US,True,2026-10-09
+43-4051.00,Customer Service Representatives,Baseline,3,2026-09,2026-12,-0.3,-4.3,7.7,2.2,-0.6,11.1,Customer Service (100%),0.713,0.879,0.121,False,indicative,US,True,2026-10-09
+43-4051.00,Customer Service Representatives,Baseline,6,2026-09,2027-03,-0.6,-5.2,12.9,0.4,-3.1,13.3,Customer Service (100%),0.713,0.879,0.121,False,indicative,US,True,2026-10-09
+43-4051.00,Customer Service Representatives,Baseline,9,2026-09,2027-06,-0.9,-5.3,17.1,1.5,-3.3,18.0,Customer Service (100%),0.713,0.879,0.121,False,indicative,US,True,2026-10-09
+43-4051.00,Customer Service Representatives,Baseline,12,2026-09,2027-09,-1.2,-5.6,20.8,2.0,-3.9,19.5,Customer Service (100%),0.713,0.879,0.121,False,indicative,US,True,2026-10-09
+43-4051.00,Customer Service Representatives,Rapid AI,3,2026-09,2026-12,-0.5,-4.4,7.6,2.0,-0.8,11.0,Customer Service (100%),0.713,0.879,0.121,False,indicative,US,True,2026-10-09
+43-4051.00,Customer Service Representatives,Rapid AI,6,2026-09,2027-03,-0.9,-5.5,12.6,0.1,-3.4,13.0,Customer Service (100%),0.713,0.879,0.121,False,indicative,US,True,2026-10-09
+43-4051.00,Customer Service Representatives,Rapid AI,9,2026-09,2027-06,-1.4,-5.8,16.6,1.1,-3.8,17.5,Customer Service (100%),0.713,0.879,0.121,False,indicative,US,True,2026-10-09
+43-4051.00,Customer Service Representatives,Rapid AI,12,2026-09,2027-09,-1.8,-6.2,20.2,1.4,-4.5,18.8,Customer Service (100%),0.713,0.879,0.121,False,indicative,US,True,2026-10-09
+43-4051.00,Customer Service Representatives,Slow,3,2026-09,2026-12,-0.1,-4.1,7.9,2.4,-0.5,11.3,Customer Service (100%),0.713,0.879,0.121,False,indicative,US,True,2026-10-09
+43-4051.00,Customer Service Representatives,Slow,6,2026-09,2027-03,-0.3,-4.9,13.2,0.7,-2.8,13.6,Customer Service (100%),0.713,0.879,0.121,False,indicative,US,True,2026-10-09
+43-4051.00,Customer Service Representatives,Slow,9,2026-09,2027-06,-0.4,-4.8,17.6,2.0,-2.8,18.5,Customer Service (100%),0.713,0.879,0.121,False,indicative,US,True,2026-10-09
+43-4051.00,Customer Service Representatives,Slow,12,2026-09,2027-09,-0.6,-4.9,21.4,2.7,-3.2,20.1,Customer Service (100%),0.713,0.879,0.121,False,indicative,US,True,2026-10-09
+43-6014.00,"Secretaries and Administrative Assistants, Except Legal, Medical, and Executive",Baseline,3,2026-09,2026-12,0.2,-3.7,8.2,2.8,0.0,11.7,Administrative Assistance (100%),0.976,0.877,0.123,False,indicative,US,True,2026-10-09
+43-6014.00,"Secretaries and Administrative Assistants, Except Legal, Medical, and Executive",Baseline,6,2026-09,2027-03,0.4,-4.1,13.9,0.9,-2.6,13.8,Administrative Assistance (100%),0.976,0.877,0.123,False,indicative,US,True,2026-10-09
+43-6014.00,"Secretaries and Administrative Assistants, Except Legal, Medical, and Executive",Baseline,9,2026-09,2027-06,0.6,-3.8,18.7,1.8,-3.0,18.3,Administrative Assistance (100%),0.976,0.877,0.123,False,indicative,US,True,2026-10-09
+43-6014.00,"Secretaries and Administrative Assistants, Except Legal, Medical, and Executive",Baseline,12,2026-09,2027-09,0.9,-3.5,22.9,1.4,-4.6,18.8,Administrative Assistance (100%),0.976,0.877,0.123,False,indicative,US,True,2026-10-09
+43-6014.00,"Secretaries and Administrative Assistants, Except Legal, Medical, and Executive",Rapid AI,3,2026-09,2026-12,-0.6,-4.6,7.4,2.0,-0.8,10.9,Administrative Assistance (100%),0.976,0.877,0.123,False,indicative,US,True,2026-10-09
+43-6014.00,"Secretaries and Administrative Assistants, Except Legal, Medical, and Executive",Rapid AI,6,2026-09,2027-03,-1.2,-5.8,12.3,-0.7,-4.3,12.2,Administrative Assistance (100%),0.976,0.877,0.123,False,indicative,US,True,2026-10-09
+43-6014.00,"Secretaries and Administrative Assistants, Except Legal, Medical, and Executive",Rapid AI,9,2026-09,2027-06,-1.8,-6.2,16.2,-0.6,-5.5,15.8,Administrative Assistance (100%),0.976,0.877,0.123,False,indicative,US,True,2026-10-09
+43-6014.00,"Secretaries and Administrative Assistants, Except Legal, Medical, and Executive",Rapid AI,12,2026-09,2027-09,-2.4,-6.8,19.6,-1.9,-7.9,15.5,Administrative Assistance (100%),0.976,0.877,0.123,False,indicative,US,True,2026-10-09
+43-6014.00,"Secretaries and Administrative Assistants, Except Legal, Medical, and Executive",Slow,3,2026-09,2026-12,1.0,-2.9,9.1,3.7,0.8,12.6,Administrative Assistance (100%),0.976,0.877,0.123,False,indicative,US,True,2026-10-09
+43-6014.00,"Secretaries and Administrative Assistants, Except Legal, Medical, and Executive",Slow,6,2026-09,2027-03,2.1,-2.5,15.5,2.5,-1.0,15.4,Administrative Assistance (100%),0.976,0.877,0.123,False,indicative,US,True,2026-10-09
+43-6014.00,"Secretaries and Administrative Assistants, Except Legal, Medical, and Executive",Slow,9,2026-09,2027-06,3.1,-1.3,21.1,4.3,-0.5,20.7,Administrative Assistance (100%),0.976,0.877,0.123,False,indicative,US,True,2026-10-09
+43-6014.00,"Secretaries and Administrative Assistants, Except Legal, Medical, and Executive",Slow,12,2026-09,2027-09,4.1,-0.2,26.1,4.6,-1.3,22.0,Administrative Assistance (100%),0.976,0.877,0.123,False,indicative,US,True,2026-10-09
+43-9021.00,Data Entry Keyers,Baseline,3,2026-09,2026-12,0.2,-3.7,8.2,2.8,0.0,11.7,Administrative Assistance (100%),0.928,0.966,0.034,False,indicative,US,True,2026-10-09
+43-9021.00,Data Entry Keyers,Baseline,6,2026-09,2027-03,0.4,-4.1,13.9,0.9,-2.6,13.8,Administrative Assistance (100%),0.928,0.966,0.034,False,indicative,US,True,2026-10-09
+43-9021.00,Data Entry Keyers,Baseline,9,2026-09,2027-06,0.6,-3.8,18.7,1.8,-3.0,18.3,Administrative Assistance (100%),0.928,0.966,0.034,False,indicative,US,True,2026-10-09
+43-9021.00,Data Entry Keyers,Baseline,12,2026-09,2027-09,0.9,-3.5,22.9,1.4,-4.6,18.8,Administrative Assistance (100%),0.928,0.966,0.034,False,indicative,US,True,2026-10-09
+43-9021.00,Data Entry Keyers,Rapid AI,3,2026-09,2026-12,-0.5,-4.4,7.5,2.1,-0.7,11.0,Administrative Assistance (100%),0.928,0.966,0.034,False,indicative,US,True,2026-10-09
+43-9021.00,Data Entry Keyers,Rapid AI,6,2026-09,2027-03,-1.0,-5.5,12.5,-0.5,-4.0,12.4,Administrative Assistance (100%),0.928,0.966,0.034,False,indicative,US,True,2026-10-09
+43-9021.00,Data Entry Keyers,Rapid AI,9,2026-09,2027-06,-1.4,-5.9,16.6,-0.3,-5.1,16.2,Administrative Assistance (100%),0.928,0.966,0.034,False,indicative,US,True,2026-10-09
+43-9021.00,Data Entry Keyers,Rapid AI,12,2026-09,2027-09,-1.9,-6.3,20.1,-1.4,-7.4,16.0,Administrative Assistance (100%),0.928,0.966,0.034,False,indicative,US,True,2026-10-09
+43-9021.00,Data Entry Keyers,Slow,3,2026-09,2026-12,0.9,-3.0,8.9,3.5,0.7,12.4,Administrative Assistance (100%),0.928,0.966,0.034,False,indicative,US,True,2026-10-09
+43-9021.00,Data Entry Keyers,Slow,6,2026-09,2027-03,1.8,-2.7,15.3,2.3,-1.2,15.2,Administrative Assistance (100%),0.928,0.966,0.034,False,indicative,US,True,2026-10-09
+43-9021.00,Data Entry Keyers,Slow,9,2026-09,2027-06,2.7,-1.7,20.7,3.9,-0.9,20.4,Administrative Assistance (100%),0.928,0.966,0.034,False,indicative,US,True,2026-10-09
+43-9021.00,Data Entry Keyers,Slow,12,2026-09,2027-09,3.7,-0.7,25.7,4.1,-1.8,21.6,Administrative Assistance (100%),0.928,0.966,0.034,False,indicative,US,True,2026-10-09
+47-2111.00,Electricians,Baseline,3,2026-09,2026-12,0.5,-3.5,8.5,3.1,0.3,12.0,"Installation & Maintenance (50%), Construction (50%)",0.117,,,True,indicative,US,True,2026-10-09
+47-2111.00,Electricians,Baseline,6,2026-09,2027-03,0.9,-3.7,14.4,-1.3,-4.8,11.6,"Installation & Maintenance (50%), Construction (50%)",0.117,,,True,indicative,US,True,2026-10-09
+47-2111.00,Electricians,Baseline,9,2026-09,2027-06,1.4,-3.1,19.4,-0.8,-5.7,15.6,"Installation & Maintenance (50%), Construction (50%)",0.117,,,True,indicative,US,True,2026-10-09
+47-2111.00,Electricians,Baseline,12,2026-09,2027-09,1.8,-2.6,23.8,-1.5,-7.4,16.0,"Installation & Maintenance (50%), Construction (50%)",0.117,,,True,indicative,US,True,2026-10-09
+47-2111.00,Electricians,Rapid AI,3,2026-09,2026-12,1.8,-2.2,9.8,4.4,1.6,13.3,"Installation & Maintenance (50%), Construction (50%)",0.117,,,True,indicative,US,True,2026-10-09
+47-2111.00,Electricians,Rapid AI,6,2026-09,2027-03,3.6,-1.0,17.0,1.4,-2.1,14.3,"Installation & Maintenance (50%), Construction (50%)",0.117,,,True,indicative,US,True,2026-10-09
+47-2111.00,Electricians,Rapid AI,9,2026-09,2027-06,5.3,0.9,23.4,3.2,-1.7,19.6,"Installation & Maintenance (50%), Construction (50%)",0.117,,,True,indicative,US,True,2026-10-09
+47-2111.00,Electricians,Rapid AI,12,2026-09,2027-09,7.1,2.8,29.1,3.9,-2.1,21.3,"Installation & Maintenance (50%), Construction (50%)",0.117,,,True,indicative,US,True,2026-10-09
+47-2111.00,Electricians,Slow,3,2026-09,2026-12,-0.9,-4.8,7.1,1.8,-1.1,10.7,"Installation & Maintenance (50%), Construction (50%)",0.117,,,True,indicative,US,True,2026-10-09
+47-2111.00,Electricians,Slow,6,2026-09,2027-03,-1.8,-6.3,11.7,-3.9,-7.5,9.0,"Installation & Maintenance (50%), Construction (50%)",0.117,,,True,indicative,US,True,2026-10-09
+47-2111.00,Electricians,Slow,9,2026-09,2027-06,-2.6,-7.1,15.4,-4.8,-9.7,11.6,"Installation & Maintenance (50%), Construction (50%)",0.117,,,True,indicative,US,True,2026-10-09
+47-2111.00,Electricians,Slow,12,2026-09,2027-09,-3.5,-7.9,18.5,-6.8,-12.7,10.7,"Installation & Maintenance (50%), Construction (50%)",0.117,,,True,indicative,US,True,2026-10-09
+47-2231.00,Solar Photovoltaic Installers,Baseline,3,2026-09,2026-12,0.4,-3.5,8.4,3.0,0.2,12.0,"Installation & Maintenance (60%), Construction (40%)",0.55,0.991,0.009,False,indicative,US,True,2026-10-09
+47-2231.00,Solar Photovoltaic Installers,Baseline,6,2026-09,2027-03,0.8,-3.7,14.3,-1.1,-4.7,11.7,"Installation & Maintenance (60%), Construction (40%)",0.55,0.991,0.009,False,indicative,US,True,2026-10-09
+47-2231.00,Solar Photovoltaic Installers,Baseline,9,2026-09,2027-06,1.3,-3.2,19.3,-0.7,-5.6,15.7,"Installation & Maintenance (60%), Construction (40%)",0.55,0.991,0.009,False,indicative,US,True,2026-10-09
+47-2231.00,Solar Photovoltaic Installers,Baseline,12,2026-09,2027-09,1.7,-2.7,23.7,-1.5,-7.4,16.0,"Installation & Maintenance (60%), Construction (40%)",0.55,0.991,0.009,False,indicative,US,True,2026-10-09
+47-2231.00,Solar Photovoltaic Installers,Rapid AI,3,2026-09,2026-12,0.7,-3.3,8.7,3.3,0.5,12.2,"Installation & Maintenance (60%), Construction (40%)",0.55,0.991,0.009,False,indicative,US,True,2026-10-09
+47-2231.00,Solar Photovoltaic Installers,Rapid AI,6,2026-09,2027-03,1.3,-3.2,14.8,-0.7,-4.2,12.2,"Installation & Maintenance (60%), Construction (40%)",0.55,0.991,0.009,False,indicative,US,True,2026-10-09
+47-2231.00,Solar Photovoltaic Installers,Rapid AI,9,2026-09,2027-06,2.0,-2.4,20.0,0.0,-4.8,16.5,"Installation & Maintenance (60%), Construction (40%)",0.55,0.991,0.009,False,indicative,US,True,2026-10-09
+47-2231.00,Solar Photovoltaic Installers,Rapid AI,12,2026-09,2027-09,2.7,-1.7,24.7,-0.5,-6.4,17.0,"Installation & Maintenance (60%), Construction (40%)",0.55,0.991,0.009,False,indicative,US,True,2026-10-09
+47-2231.00,Solar Photovoltaic Installers,Slow,3,2026-09,2026-12,0.2,-3.8,8.2,2.8,-0.0,11.7,"Installation & Maintenance (60%), Construction (40%)",0.55,0.991,0.009,False,indicative,US,True,2026-10-09
+47-2231.00,Solar Photovoltaic Installers,Slow,6,2026-09,2027-03,0.3,-4.2,13.8,-1.6,-5.2,11.2,"Installation & Maintenance (60%), Construction (40%)",0.55,0.991,0.009,False,indicative,US,True,2026-10-09
+47-2231.00,Solar Photovoltaic Installers,Slow,9,2026-09,2027-06,0.5,-3.9,18.5,-1.5,-6.3,15.0,"Installation & Maintenance (60%), Construction (40%)",0.55,0.991,0.009,False,indicative,US,True,2026-10-09
+47-2231.00,Solar Photovoltaic Installers,Slow,12,2026-09,2027-09,0.7,-3.7,22.7,-2.4,-8.4,15.0,"Installation & Maintenance (60%), Construction (40%)",0.55,0.991,0.009,False,indicative,US,True,2026-10-09
+49-9071.00,"Maintenance and Repair Workers, General",Baseline,3,2026-09,2026-12,0.3,-3.7,8.3,2.8,-0.1,11.7,Installation & Maintenance (100%),0.256,0.75,0.25,True,indicative,US,True,2026-10-09
+49-9071.00,"Maintenance and Repair Workers, General",Baseline,6,2026-09,2027-03,0.6,-4.0,14.1,-0.7,-4.2,12.2,Installation & Maintenance (100%),0.256,0.75,0.25,True,indicative,US,True,2026-10-09
+49-9071.00,"Maintenance and Repair Workers, General",Baseline,9,2026-09,2027-06,0.9,-3.5,18.9,-0.4,-5.2,16.1,Installation & Maintenance (100%),0.256,0.75,0.25,True,indicative,US,True,2026-10-09
+49-9071.00,"Maintenance and Repair Workers, General",Baseline,12,2026-09,2027-09,1.2,-3.2,23.2,-1.5,-7.4,16.0,Installation & Maintenance (100%),0.256,0.75,0.25,True,indicative,US,True,2026-10-09
+49-9071.00,"Maintenance and Repair Workers, General",Rapid AI,3,2026-09,2026-12,1.3,-2.7,9.3,3.8,0.9,12.7,Installation & Maintenance (100%),0.256,0.75,0.25,True,indicative,US,True,2026-10-09
+49-9071.00,"Maintenance and Repair Workers, General",Rapid AI,6,2026-09,2027-03,2.6,-2.0,16.1,1.3,-2.2,14.2,Installation & Maintenance (100%),0.256,0.75,0.25,True,indicative,US,True,2026-10-09
+49-9071.00,"Maintenance and Repair Workers, General",Rapid AI,9,2026-09,2027-06,3.9,-0.6,21.9,2.6,-2.2,19.0,Installation & Maintenance (100%),0.256,0.75,0.25,True,indicative,US,True,2026-10-09
+49-9071.00,"Maintenance and Repair Workers, General",Rapid AI,12,2026-09,2027-09,5.1,0.8,27.2,2.5,-3.5,19.9,Installation & Maintenance (100%),0.256,0.75,0.25,True,indicative,US,True,2026-10-09
+49-9071.00,"Maintenance and Repair Workers, General",Slow,3,2026-09,2026-12,-0.7,-4.6,7.3,1.8,-1.1,10.7,Installation & Maintenance (100%),0.256,0.75,0.25,True,indicative,US,True,2026-10-09
+49-9071.00,"Maintenance and Repair Workers, General",Slow,6,2026-09,2027-03,-1.4,-5.9,12.1,-2.6,-6.2,10.2,Installation & Maintenance (100%),0.256,0.75,0.25,True,indicative,US,True,2026-10-09
+49-9071.00,"Maintenance and Repair Workers, General",Slow,9,2026-09,2027-06,-2.0,-6.5,16.0,-3.3,-8.1,13.1,Installation & Maintenance (100%),0.256,0.75,0.25,True,indicative,US,True,2026-10-09
+49-9071.00,"Maintenance and Repair Workers, General",Slow,12,2026-09,2027-09,-2.7,-7.1,19.3,-5.4,-11.3,12.0,Installation & Maintenance (100%),0.256,0.75,0.25,True,indicative,US,True,2026-10-09
+49-9081.00,Wind Turbine Service Technicians,Baseline,3,2026-09,2026-12,0.3,-3.7,8.3,2.8,-0.1,11.7,Installation & Maintenance (100%),0.0,,,True,indicative,US,True,2026-10-09
+49-9081.00,Wind Turbine Service Technicians,Baseline,6,2026-09,2027-03,0.6,-4.0,14.1,-0.7,-4.2,12.2,Installation & Maintenance (100%),0.0,,,True,indicative,US,True,2026-10-09
+49-9081.00,Wind Turbine Service Technicians,Baseline,9,2026-09,2027-06,0.9,-3.5,18.9,-0.4,-5.2,16.1,Installation & Maintenance (100%),0.0,,,True,indicative,US,True,2026-10-09
+49-9081.00,Wind Turbine Service Technicians,Baseline,12,2026-09,2027-09,1.2,-3.2,23.2,-1.5,-7.4,16.0,Installation & Maintenance (100%),0.0,,,True,indicative,US,True,2026-10-09
+49-9081.00,Wind Turbine Service Technicians,Rapid AI,3,2026-09,2026-12,1.9,-2.0,9.9,4.4,1.6,13.3,Installation & Maintenance (100%),0.0,,,True,indicative,US,True,2026-10-09
+49-9081.00,Wind Turbine Service Technicians,Rapid AI,6,2026-09,2027-03,3.8,-0.7,17.3,2.6,-1.0,15.5,Installation & Maintenance (100%),0.0,,,True,indicative,US,True,2026-10-09
+49-9081.00,Wind Turbine Service Technicians,Rapid AI,9,2026-09,2027-06,5.8,1.4,23.8,4.5,-0.3,21.0,Installation & Maintenance (100%),0.0,,,True,indicative,US,True,2026-10-09
+49-9081.00,Wind Turbine Service Technicians,Rapid AI,12,2026-09,2027-09,7.7,3.3,29.7,5.0,-0.9,22.5,Installation & Maintenance (100%),0.0,,,True,indicative,US,True,2026-10-09
+49-9081.00,Wind Turbine Service Technicians,Slow,3,2026-09,2026-12,-1.3,-5.3,6.7,1.1,-1.7,10.1,Installation & Maintenance (100%),0.0,,,True,indicative,US,True,2026-10-09
+49-9081.00,Wind Turbine Service Technicians,Slow,6,2026-09,2027-03,-2.6,-7.2,10.8,-3.9,-7.5,9.0,Installation & Maintenance (100%),0.0,,,True,indicative,US,True,2026-10-09
+49-9081.00,Wind Turbine Service Technicians,Slow,9,2026-09,2027-06,-4.0,-8.4,14.1,-5.2,-10.0,11.2,Installation & Maintenance (100%),0.0,,,True,indicative,US,True,2026-10-09
+49-9081.00,Wind Turbine Service Technicians,Slow,12,2026-09,2027-09,-5.3,-9.7,16.7,-8.0,-13.9,9.5,Installation & Maintenance (100%),0.0,,,True,indicative,US,True,2026-10-09
+51-2022.00,Electrical and Electronic Equipment Assemblers,Baseline,3,2026-09,2026-12,2.7,-1.3,10.7,3.2,0.3,12.1,Production & Manufacturing (100%),0.336,0.554,0.446,True,indicative,US,True,2026-10-09
+51-2022.00,Electrical and Electronic Equipment Assemblers,Baseline,6,2026-09,2027-03,5.4,0.8,18.9,0.9,-2.7,13.7,Production & Manufacturing (100%),0.336,0.554,0.446,True,indicative,US,True,2026-10-09
+51-2022.00,Electrical and Electronic Equipment Assemblers,Baseline,9,2026-09,2027-06,8.2,3.8,26.2,0.3,-4.5,16.8,Production & Manufacturing (100%),0.336,0.554,0.446,True,indicative,US,True,2026-10-09
+51-2022.00,Electrical and Electronic Equipment Assemblers,Baseline,12,2026-09,2027-09,11.1,6.7,33.1,-2.0,-8.0,15.4,Production & Manufacturing (100%),0.336,0.554,0.446,True,indicative,US,True,2026-10-09
+51-2022.00,Electrical and Electronic Equipment Assemblers,Rapid AI,3,2026-09,2026-12,3.4,-0.5,11.5,4.0,1.1,12.9,Production & Manufacturing (100%),0.336,0.554,0.446,True,indicative,US,True,2026-10-09
+51-2022.00,Electrical and Electronic Equipment Assemblers,Rapid AI,6,2026-09,2027-03,7.0,2.4,20.5,2.4,-1.1,15.3,Production & Manufacturing (100%),0.336,0.554,0.446,True,indicative,US,True,2026-10-09
+51-2022.00,Electrical and Electronic Equipment Assemblers,Rapid AI,9,2026-09,2027-06,10.6,6.1,28.6,2.7,-2.2,19.1,Production & Manufacturing (100%),0.336,0.554,0.446,True,indicative,US,True,2026-10-09
+51-2022.00,Electrical and Electronic Equipment Assemblers,Rapid AI,12,2026-09,2027-09,14.2,9.8,36.2,1.1,-4.8,18.5,Production & Manufacturing (100%),0.336,0.554,0.446,True,indicative,US,True,2026-10-09
+51-2022.00,Electrical and Electronic Equipment Assemblers,Slow,3,2026-09,2026-12,1.9,-2.1,9.9,2.4,-0.5,11.3,Production & Manufacturing (100%),0.336,0.554,0.446,True,indicative,US,True,2026-10-09
+51-2022.00,Electrical and Electronic Equipment Assemblers,Slow,6,2026-09,2027-03,3.8,-0.7,17.3,-0.7,-4.3,12.2,Production & Manufacturing (100%),0.336,0.554,0.446,True,indicative,US,True,2026-10-09
+51-2022.00,Electrical and Electronic Equipment Assemblers,Slow,9,2026-09,2027-06,5.9,1.4,23.9,-2.0,-6.9,14.4,Production & Manufacturing (100%),0.336,0.554,0.446,True,indicative,US,True,2026-10-09
+51-2022.00,Electrical and Electronic Equipment Assemblers,Slow,12,2026-09,2027-09,8.0,3.6,30.0,-5.2,-11.1,12.3,Production & Manufacturing (100%),0.336,0.554,0.446,True,indicative,US,True,2026-10-09
+53-3032.00,Heavy and Tractor-Trailer Truck Drivers,Baseline,3,2026-09,2026-12,-2.7,-6.7,5.3,1.8,-1.1,10.7,Driving (100%),0.475,0.98,0.02,False,indicative,US,True,2026-10-09
+53-3032.00,Heavy and Tractor-Trailer Truck Drivers,Baseline,6,2026-09,2027-03,-5.4,-10.0,8.1,-0.1,-3.7,12.8,Driving (100%),0.475,0.98,0.02,False,indicative,US,True,2026-10-09
+53-3032.00,Heavy and Tractor-Trailer Truck Drivers,Baseline,9,2026-09,2027-06,-8.0,-12.4,10.0,0.1,-4.7,16.6,Driving (100%),0.475,0.98,0.02,False,indicative,US,True,2026-10-09
+53-3032.00,Heavy and Tractor-Trailer Truck Drivers,Baseline,12,2026-09,2027-09,-10.5,-14.9,11.5,1.1,-4.8,18.5,Driving (100%),0.475,0.98,0.02,False,indicative,US,True,2026-10-09
+53-3032.00,Heavy and Tractor-Trailer Truck Drivers,Rapid AI,3,2026-09,2026-12,-2.3,-6.3,5.7,2.2,-0.6,11.1,Driving (100%),0.475,0.98,0.02,False,indicative,US,True,2026-10-09
+53-3032.00,Heavy and Tractor-Trailer Truck Drivers,Rapid AI,6,2026-09,2027-03,-4.5,-9.1,9.0,0.8,-2.8,13.6,Driving (100%),0.475,0.98,0.02,False,indicative,US,True,2026-10-09
+53-3032.00,Heavy and Tractor-Trailer Truck Drivers,Rapid AI,9,2026-09,2027-06,-6.7,-11.1,11.3,1.5,-3.4,17.9,Driving (100%),0.475,0.98,0.02,False,indicative,US,True,2026-10-09
+53-3032.00,Heavy and Tractor-Trailer Truck Drivers,Rapid AI,12,2026-09,2027-09,-8.8,-13.1,13.3,2.8,-3.1,20.3,Driving (100%),0.475,0.98,0.02,False,indicative,US,True,2026-10-09
+53-3032.00,Heavy and Tractor-Trailer Truck Drivers,Slow,3,2026-09,2026-12,-3.2,-7.1,4.8,1.3,-1.5,10.3,Driving (100%),0.475,0.98,0.02,False,indicative,US,True,2026-10-09
+53-3032.00,Heavy and Tractor-Trailer Truck Drivers,Slow,6,2026-09,2027-03,-6.3,-10.8,7.2,-1.0,-4.5,11.9,Driving (100%),0.475,0.98,0.02,False,indicative,US,True,2026-10-09
+53-3032.00,Heavy and Tractor-Trailer Truck Drivers,Slow,9,2026-09,2027-06,-9.3,-13.7,8.7,-1.2,-6.0,15.3,Driving (100%),0.475,0.98,0.02,False,indicative,US,True,2026-10-09
+53-3032.00,Heavy and Tractor-Trailer Truck Drivers,Slow,12,2026-09,2027-09,-12.2,-16.6,9.8,-0.7,-6.6,16.8,Driving (100%),0.475,0.98,0.02,False,indicative,US,True,2026-10-09
+53-7062.00,"Laborers and Freight, Stock, and Material Movers, Hand",Baseline,3,2026-09,2026-12,2.5,-1.5,10.5,3.6,0.7,12.5,Loading & Stocking (100%),0.394,0.981,0.019,True,indicative,US,True,2026-10-09
+53-7062.00,"Laborers and Freight, Stock, and Material Movers, Hand",Baseline,6,2026-09,2027-03,5.0,0.4,18.4,0.3,-3.2,13.2,Loading & Stocking (100%),0.394,0.981,0.019,True,indicative,US,True,2026-10-09
+53-7062.00,"Laborers and Freight, Stock, and Material Movers, Hand",Baseline,9,2026-09,2027-06,7.5,3.1,25.5,0.4,-4.5,16.8,Loading & Stocking (100%),0.394,0.981,0.019,True,indicative,US,True,2026-10-09
+53-7062.00,"Laborers and Freight, Stock, and Material Movers, Hand",Baseline,12,2026-09,2027-09,10.2,5.8,32.2,-1.1,-7.0,16.3,Loading & Stocking (100%),0.394,0.981,0.019,True,indicative,US,True,2026-10-09
+53-7062.00,"Laborers and Freight, Stock, and Material Movers, Hand",Rapid AI,3,2026-09,2026-12,3.1,-0.9,11.1,4.2,1.4,13.1,Loading & Stocking (100%),0.394,0.981,0.019,True,indicative,US,True,2026-10-09
+53-7062.00,"Laborers and Freight, Stock, and Material Movers, Hand",Rapid AI,6,2026-09,2027-03,6.2,1.7,19.7,1.6,-2.0,14.5,Loading & Stocking (100%),0.394,0.981,0.019,True,indicative,US,True,2026-10-09
+53-7062.00,"Laborers and Freight, Stock, and Material Movers, Hand",Rapid AI,9,2026-09,2027-06,9.4,5.0,27.5,2.3,-2.5,18.7,Loading & Stocking (100%),0.394,0.981,0.019,True,indicative,US,True,2026-10-09
+53-7062.00,"Laborers and Freight, Stock, and Material Movers, Hand",Rapid AI,12,2026-09,2027-09,12.7,8.3,34.7,1.5,-4.5,18.9,Loading & Stocking (100%),0.394,0.981,0.019,True,indicative,US,True,2026-10-09
+53-7062.00,"Laborers and Freight, Stock, and Material Movers, Hand",Slow,3,2026-09,2026-12,1.8,-2.1,9.8,2.9,0.1,11.8,Loading & Stocking (100%),0.394,0.981,0.019,True,indicative,US,True,2026-10-09
+53-7062.00,"Laborers and Freight, Stock, and Material Movers, Hand",Slow,6,2026-09,2027-03,3.7,-0.9,17.2,-1.0,-4.5,11.9,Loading & Stocking (100%),0.394,0.981,0.019,True,indicative,US,True,2026-10-09
+53-7062.00,"Laborers and Freight, Stock, and Material Movers, Hand",Slow,9,2026-09,2027-06,5.6,1.2,23.6,-1.5,-6.4,14.9,Loading & Stocking (100%),0.394,0.981,0.019,True,indicative,US,True,2026-10-09
+53-7062.00,"Laborers and Freight, Stock, and Material Movers, Hand",Slow,12,2026-09,2027-09,7.6,3.2,29.6,-3.6,-9.6,13.8,Loading & Stocking (100%),0.394,0.981,0.019,True,indicative,US,True,2026-10-09
