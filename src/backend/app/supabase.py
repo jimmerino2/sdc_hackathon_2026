@@ -10,3 +10,10 @@ def get_client() -> Client:
     """Shared client for data queries."""
     settings = get_settings()
     return create_client(settings.supabase_url, settings.supabase_key)
+
+
+@lru_cache
+def get_admin_client() -> Client:
+    """Service-role client that bypasses RLS. Only for endpoints that write."""
+    settings = get_settings()
+    return create_client(settings.supabase_url, settings.supabase_service_key)
