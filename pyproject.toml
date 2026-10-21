@@ -1,8 +1,9 @@
 [project]
-name = "repl-nix-workspace"
+name = "sdc-hackathon-2026"
 version = "0.1.0"
-description = "Add your description here"
+description = "Backend API and data pipeline for the SDC Hackathon 2026 project"
 requires-python = ">=3.12"
+# Union of src/backend/requirements.txt and pipeline/requirements.txt -- keep all three in sync.
 dependencies = [
     "fastapi[standard]>=0.153.0",
     "lightgbm>=4.7.0",

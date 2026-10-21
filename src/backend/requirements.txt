@@ -1,8 +1,8 @@
-fastapi[standard]
-pydantic-settings
-supabase
-openai
-pandas
-numpy
-lightgbm
-scikit-learn
+fastapi[standard]>=0.153.0
+pydantic-settings>=2.16.1
+supabase>=2.33.0
+openai>=3.35.1
+pandas>=2.0
+numpy>=2.5.4
+lightgbm>=4.7.0
+scikit-learn>=1.9.1

@@ -1938,7 +1938,7 @@ wheels = [
 ]
 
 [[package]]
-name = "repl-nix-workspace"
+name = "sdc-hackathon-2026"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
