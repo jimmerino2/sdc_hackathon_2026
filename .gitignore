@@ -10,3 +10,6 @@ __pycache__/
 
 # raw downloads (large; fetched by pipeline/refresh.py or placed by hand)
 data/raw/
+
+# graphify
+graphify-out
