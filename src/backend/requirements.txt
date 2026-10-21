@@ -2,3 +2,7 @@ fastapi[standard]
 pydantic-settings
 supabase
 openai
+pandas
+numpy
+lightgbm
+scikit-learn

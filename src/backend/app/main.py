@@ -3,8 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from app.config import get_settings
+from app.forecast.router import router as forecast_router
 from app.llm.router import router as llm_router
-from app.product.router import router as product_router
 
 
 def create_app() -> FastAPI:
@@ -26,8 +26,8 @@ def create_app() -> FastAPI:
     def index():
         return RedirectResponse(url="/docs")
 
+    app.include_router(forecast_router)
     app.include_router(llm_router)
-    app.include_router(product_router)
     return app
 
 
