@@ -15,7 +15,7 @@ const items: { id: 'learn' | 'roles' | 'resources' | 'profile'; label: string; i
 <template>
   <div class="layout">
     <aside>
-      <Logo class="brand" />
+      <Logo class="brand" to="pathway" />
       <nav>
         <RouterLink v-for="i in items" :key="i.id" :to="go(i.to)" :class="{ on: i.id === active }">
           <Icon :name="i.icon" :size="20" /> {{ i.label }}
