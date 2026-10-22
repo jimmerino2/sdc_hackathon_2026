@@ -1,22 +1,25 @@
 # Running on Replit
 
-This imported project contains a Python FastAPI backend and a separate data
-pipeline. There is no frontend application in the repository.
+This imported project contains a Vue 3/Vite frontend at `src/frontend`, a
+Python FastAPI backend at `src/backend`, and a separate data pipeline.
 
 ## Run
 
-Use the **Run** button to start the **Start application** workflow, or run from
-the repository root:
+Use the **Run** button to start the frontend and backend together. The frontend
+is served on port 5000; its `/api` requests are proxied to the backend on port
+8000. To run the services separately from the repository root:
 
 ```sh
-python -m uvicorn app.main:app --app-dir src/backend --host 0.0.0.0 --port 5000
+npm --prefix src/frontend run dev -- --host 0.0.0.0 --port 5000
+python -m uvicorn app.main:app --app-dir src/backend --host 0.0.0.0 --port 8000
 ```
 
-The preview opens the interactive API documentation at `/docs` (the root
-redirects there). `/health` returns `{"status":"ok"}`. The OpenAPI schema is at
-`/openapi.json`.
+The preview opens the frontend. The backend API docs and health check are
+available at `/docs` and `/health`; API requests from the frontend use `/api`.
 
-Replit dependencies are tracked in the root `pyproject.toml` and `uv.lock`.
+Frontend dependencies are tracked in `src/frontend/package.json` and
+`src/frontend/package-lock.json`; backend dependencies are tracked in the root
+`pyproject.toml` and `uv.lock`.
 The original backend and pipeline requirements files remain in their existing
 locations. No manually created virtual environment is needed.
 
