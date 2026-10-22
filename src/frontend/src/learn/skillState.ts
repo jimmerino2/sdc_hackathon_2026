@@ -82,7 +82,7 @@ export function learningLinks(n: RoadmapNode): { title: string; url: string; kin
 export const STAGE_W = 520;
 const CENTER = 190;
 const ROW = 100;
-const UNIT_H = 52;
+const UNIT_H = 76; // leaves room for the START tag that floats above the first node
 const PAD = 36;
 
 export type PathItem =
