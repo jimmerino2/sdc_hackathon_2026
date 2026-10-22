@@ -7,6 +7,8 @@ How the reference data gets into Supabase. Column meanings are in `data/document
 | File | Purpose |
 | ---- | ------- |
 | `0001_initial_schema.sql` | Creates the 7 tables, primary/foreign keys, and Row Level Security |
+| `0002_onet_role_skills_source.sql` | Adds nullable `onet_role_skills.source` (http(s) URL, checked) |
+| `0003_roadmap.sql` | Adds `roadmap` (one row per role; `section`/`unit` = current step) and `roadmap_detail` (skill nodes, each with its own `section`/`unit`, status and prerequisites), with RLS |
 | `../pipeline/load_supabase.py` | Loads `data/processed/*.csv` into those tables |
 
 Tables: `onet_roles`, `onet_role_skills`, `ai_exposure`, `ai_exposure_detail`, `crosswalk`, `onet_to_my_group`, `my_vacancies`.
@@ -19,6 +21,8 @@ Not included: `forecast_output` (shape not agreed yet) and the training files `s
 | --- | -------------- | ------ |
 | Publishable (anon) key | `src/backend/.env` as `SUPABASE_KEY` | **Read only.** Used by the app at runtime |
 | Service-role key | Your shell only, **never in a file or git** | Bypasses RLS, so it can create and write. Used only to load data |
+
+The one exception is `POST /roadmap`, which writes the roadmap tables and so needs the service-role key at runtime: set `SUPABASE_SERVICE_KEY` in the backend's environment (`src/backend/.env` is git-ignored; a shell variable also works). Without it the endpoint returns 503.
 
 The schema enables RLS with a select-only policy for `anon` and no write policies. So the publishable key cannot load data: an upsert with it is rejected. Do not add a write policy for `anon` to get around this, because the data would be publicly writable.
 
