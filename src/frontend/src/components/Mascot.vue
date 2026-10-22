@@ -71,7 +71,6 @@ const confetti = [
           <rect x="41" y="76" width="18" height="17" rx="3" fill="#fff" stroke="#1e1e1e" stroke-width="2" /><rect x="44" y="79" width="7" height="6" fill="#ff9800" />
         </svg>
         <span v-if="gear === 'suit'" class="suit"><b class="shirt" /><b class="tie l" /><b class="tie r" /><b class="knot" /></span>
-        <span class="hand" />
       </div>
       <span v-if="gear === 'magnifier'" class="mag"><span class="lens" /><span class="handle" /></span>
       <span class="fx zzz">z<small>z</small></span>
@@ -99,7 +98,6 @@ const confetti = [
 .cheek { position: absolute; top: 55%; width: .1em; height: .06em; border-radius: 50%; background: var(--orange); opacity: .45; }
 .cheek.l { left: 17%; } .cheek.r { right: 17%; }
 .mouth { position: absolute; left: 50%; top: 58%; width: .1em; height: .05em; margin-left: -.05em; border-bottom: .022em solid var(--ink); border-radius: 0 0 .1em .1em; opacity: .9; transition: all .2s; }
-.hand { position: absolute; right: -.06em; top: 50%; width: .13em; height: .13em; border-radius: 50%; background: var(--yellow); border: .02em solid var(--orange); opacity: 0; transform-origin: 0 100%; }
 
 /* wings */
 .wing { position: absolute; top: .1em; width: .4em; height: .28em; background: #fff; border: .025em solid var(--orange); border-radius: 60% 40% 60% 40%; z-index: 0; animation: flap .22s ease-in-out infinite alternate; }
@@ -151,7 +149,6 @@ const confetti = [
 .m-happy .cheek, .m-celebrate .cheek { opacity: .75; }
 
 /* wave */
-.m-wave .hand { opacity: 1; animation: wave 1.1s ease-in-out infinite; }
 .m-wave .mouth { width: .13em; height: .07em; margin-left: -.065em; border-bottom-width: .025em; }
 
 /* thinking */
@@ -181,7 +178,6 @@ const confetti = [
 @keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
 @keyframes squish { 0%, 100% { transform: scale(1, 1); } 25% { transform: scale(1.06, .92); } 55% { transform: scale(.96, 1.06); } }
 @keyframes hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-.28em) rotate(-4deg); } 70% { transform: translateY(-.05em) rotate(3deg); } }
-@keyframes wave { 0%, 100% { transform: rotate(-20deg) translateY(0); } 50% { transform: rotate(25deg) translateY(-.05em); } }
 @keyframes tilt { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-6deg); } }
 @keyframes breathe { 0%, 100% { transform: scale(1, .96); } 50% { transform: scale(1.03, 1); } }
 @keyframes zzz { 0% { opacity: 0; transform: translate(0, .1em) scale(.6); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(.12em, -.2em) scale(1.1); } }

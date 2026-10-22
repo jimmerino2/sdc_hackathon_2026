@@ -2,16 +2,15 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import FlowShell from '../components/FlowShell.vue';
-import Bubble from '../components/Bubble.vue';
-import ChartWatcher from '../components/ChartWatcher.vue';
 import Icon from '../components/Icon.vue';
 import { scenarios, type ScenarioKey } from '../data/flows';
 import { skillLabel } from '../data/skills';
 import { useFlow } from '../state';
+import { personaCopy } from '../data/personaCopy';
 import { backendScenario, fetchJobForecasts, SOFTWARE_DEVELOPERS_ONET, type JobForecast } from '../api/forecast';
 
 const route = useRoute();
-const { state } = useFlow();
+const { state, key } = useFlow();
 /** The role to show: ?role= from the roles page, else the chosen role, else Software Developers. */
 const onetCode = computed(() => (route.query.role as string | undefined) ?? state.value.chosenRoleId ?? SOFTWARE_DEVELOPERS_ONET);
 const icons = { accelerates: 'tup', steady: 'arrow', slows: 'tdown' } as const;
@@ -86,15 +85,14 @@ function outcome(k: ScenarioKey) {
 const title = computed(() => meta.value?.title ?? 'This role');
 /** This role's match from the roles page: skills the user has and still needs. Missing after a refresh. */
 const job = computed(() => state.value.jobs.data?.jobs.find((j) => j.onet_code === onetCode.value));
-const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
 </script>
 
 <template>
-  <FlowShell :progress="5" next="sync" next-label="Build my pathway" back="roles" @next="state.chosenRoleId = onetCode">
+  <FlowShell :progress="5" next="sync" next-label="Build my pathway" back="roles" gear="glasses" wide @next="state.chosenRoleId = onetCode">
+    <template #bubble>How could AI change demand for {{ meta?.title ?? 'this role' }}?</template>
     <div class="wrap">
       <section class="left">
         <p class="eyebrow">Your AI signal</p>
-        <h1>Here’s the AI outlook for {{ title }}</h1>
         <div class="card chart">
           <small>{{ title }} · postings outlook</small>
           <h2>Three possible futures, next 12 months</h2>
@@ -119,7 +117,8 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
         </div>
       </section>
       <section class="right">
-        <ChartWatcher class="bub">Nobody knows the future for sure, so I plan for all three.</ChartWatcher>
+        <p class="eyebrow">Possible AI futures</p>
+        <p class="signal-note">{{ personaCopy[key].signalNote }}</p>
         <button v-for="s in scenarios" :key="s.key" class="option sc" :class="{ selected: state.scenario === s.key }" @click="state.scenario = s.key">
           <span class="ic"><Icon :name="icons[s.key]" :size="22" /></span>
           <span>
@@ -128,27 +127,22 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
           </span>
           <span v-if="state.scenario === s.key" class="tick"><Icon name="check" :size="14" :stroke="3" /></span>
         </button>
-        <p class="hint">Tap a future to see how {{ title }} fares in it.</p>
       </section>
 
       <section class="gap-row">
         <p class="eyebrow">Your skill gap</p>
-        <h1>Here’s how close you are to {{ title }}</h1>
         <template v-if="job">
-          <Bubble class="b" :size="60">
-            You already have {{ job.skills_owned }} of {{ job.skills_total }} key skills.
-            Let’s close the rest{{ firstName ? `, ${firstName}` : '' }}.
-          </Bubble>
+          <h2 class="gap-title">{{ job.skills_owned }} of {{ job.skills_total }} key skills already yours</h2>
           <div class="gap-cards">
             <div class="card block">
-              <div class="head"><h2>Already yours</h2><span class="pill pill-dark">{{ job.skills_you_have.length }} skills</span></div>
+              <div class="head"><h2>{{ personaCopy[key].haveTitle }}</h2><span class="pill pill-dark">{{ job.skills_you_have.length }} skills</span></div>
               <div v-if="job.skills_you_have.length" class="chips">
                 <span v-for="s in job.skills_you_have" :key="s" class="chip chip-have"><Icon name="check" :size="14" :stroke="3" /> {{ skillLabel(s) }}</span>
               </div>
               <p v-else class="empty">None of this role’s key skills yet. Everyone starts somewhere.</p>
             </div>
             <div class="card block">
-              <div class="head"><h2>Close your gap</h2><span class="pill">{{ job.skills_to_learn.length }} to build</span></div>
+              <div class="head"><h2>{{ personaCopy[key].gapTitle }}</h2><span class="pill">{{ job.skills_to_learn.length }} to build</span></div>
               <div v-if="job.skills_to_learn.length" class="chips">
                 <span v-for="s in job.skills_to_learn" :key="s" class="chip chip-gap"><Icon name="sparkles" :size="14" /> {{ skillLabel(s) }}</span>
               </div>
@@ -163,9 +157,10 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
 </template>
 
 <style scoped>
-.wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 28px; width: min(1180px, 94vw); margin-left: 50%; transform: translateX(-50%); padding-top: 0; }
-:global(main:has(.wrap)) { max-width: none !important; padding-top: 16px !important; }
-h1 { font-size: 30px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
+.wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 28px; }
+.eyebrow { margin-bottom: 10px; }
+.signal-note { font-size: 14px; font-weight: 700; color: var(--muted); line-height: 1.4; margin: -6px 0 4px; }
+.gap-title { font-size: 22px; font-weight: 900; margin: 4px 0 16px; line-height: 1.2; }
 .chart { padding: 22px 24px; }
 .chart small { font-size: 11px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .chart h2 { font-weight: 900; font-size: 20px; margin: 6px 0 14px; }
@@ -174,12 +169,9 @@ svg { width: 100%; overflow: visible; margin-top: 16px; }
 .axis { display: flex; justify-content: space-between; font-size: 10px; font-weight: 900; color: var(--muted); letter-spacing: .05em; text-transform: uppercase; margin-top: 8px; }
 .note { margin-top: 14px; font-size: 11px; color: var(--muted); font-weight: 600; line-height: 1.4; }
 .right { display: flex; flex-direction: column; gap: 14px; }
-.bub { margin-bottom: 8px; flex-direction: row-reverse; }
 .sc { align-items: flex-start; } .sc h3 { margin-top: 4px; font-size: 17px; }
 .sc p { font-size: 13px; line-height: 1.35; }
-.hint { font-size: 12px; font-weight: 700; color: var(--muted); }
 .gap-row { grid-column: 1 / -1; margin-top: 12px; }
-.gap-row .b { margin-bottom: 18px; }
 .gap-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .block { padding: 20px 22px; }
 .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }

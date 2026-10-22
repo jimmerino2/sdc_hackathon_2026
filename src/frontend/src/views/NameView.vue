@@ -2,7 +2,6 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import FlowShell from '../components/FlowShell.vue';
-import Bubble from '../components/Bubble.vue';
 import { useFlow } from '../state';
 import { go } from '../router';
 
@@ -18,21 +17,21 @@ function submit() {
 </script>
 
 <template>
-  <FlowShell :progress="0" next="who" back="bee" :next-disabled="empty" @next="state.name = state.name.trim()">
-    <h1>What do we call you?</h1>
-    <Bubble class="b">Hi, I’m Jobee! Before we start, what should I call you?</Bubble>
+  <FlowShell :progress="0" next="who" back="bee" mood="happy" :next-disabled="empty" @next="state.name = state.name.trim()">
+    <template #bubble>What should I call you?</template>
     <form @submit.prevent="submit">
-      <input v-model="state.name" class="field" type="text" placeholder="Your first name or nickname" maxlength="40" autocomplete="given-name" autofocus />
+      <label for="name" class="label">First name or nickname</label>
+      <input id="name" v-model="state.name" class="field" type="text" placeholder="e.g. Aisyah" maxlength="40" autocomplete="given-name" autofocus />
     </form>
   </FlowShell>
 </template>
 
 <style scoped>
-h1 { font-size: 30px; font-weight: 900; margin-bottom: 24px; }
-.b { margin-bottom: 24px; }
+.label { display: block; font-weight: 800; font-size: 14px; margin-bottom: 8px; }
 .field {
   width: 100%; padding: 16px 18px; border: 2px solid var(--line-strong); border-radius: 16px; background: #fff;
-  font: 800 17px 'Nunito', sans-serif; color: var(--ink); outline: none;
+  font: 800 18px 'Nunito', sans-serif; color: var(--ink); outline: none; transition: border-color .15s, box-shadow .15s;
 }
-.field:focus { border-color: var(--orange); }
+.field::placeholder { color: #9a948a; font-weight: 700; }
+.field:focus-visible, .field:focus { border-color: var(--orange); box-shadow: 0 0 0 4px rgba(255, 193, 7, .3); outline: none; }
 </style>

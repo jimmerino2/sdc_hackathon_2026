@@ -1,66 +1,57 @@
 <script setup lang="ts">
 import Logo from '../components/Logo.vue';
 import Mascot from '../components/Mascot.vue';
-import Icon from '../components/Icon.vue';
 import { go } from '../router';
-
-const built = ['IT undergrads', 'Fresh grads', 'Working engineers'];
+import { BRAND_BEE } from '../bee';
 </script>
 
 <template>
   <div class="page">
-    <header><Logo /><span class="lang">Site language: English</span></header>
-    <section class="hero">
+    <header><Logo /></header>
+    <main class="hero">
       <div class="art">
-        <div class="disc" />
-        <p class="say">Psst, I read 2,431 job posts this week so you don’t have to.</p>
-        <span class="tag t1">Python</span>
-        <span class="tag t2"><Icon name="sparkles" :size="16" /> LLM apps</span>
-        <span class="tag t3">Cloud</span>
-        <span class="tag t4"><Icon name="check" :size="16" /> System design</span>
-        <Mascot :size="150" class="mas" mood="wave" wings />
+        <span class="disc" aria-hidden="true" />
+        <Mascot :size="190" :bee="BRAND_BEE" class="mas" mood="wave" wings />
       </div>
       <div class="copy">
-        <h1>AI is changing tech. Your future in it can be certain.</h1>
-        <p>See where software jobs are heading, which ones fit you, and exactly what to learn next.</p>
-        <RouterLink :to="go('bee')" class="btn btn-primary">Get started</RouterLink>
-        <RouterLink :to="go('login')" class="btn btn-secondary">I already have an account</RouterLink>
+        <h1>Get ready for how AI is changing your next tech role.</h1>
+        <div class="ctas">
+          <RouterLink :to="go('bee')" class="btn btn-primary">Get started</RouterLink>
+          <RouterLink :to="go('login')" class="btn btn-secondary">I already have an account</RouterLink>
+        </div>
       </div>
-    </section>
-    <footer>
-      <span>Built for</span>
-      <span v-for="b in built" :key="b" class="built">{{ b }}</span>
-    </footer>
+    </main>
   </div>
 </template>
 
 <style scoped>
-.page { min-height: 100vh; display: flex; flex-direction: column; }
-header { display: flex; justify-content: space-between; align-items: center; padding: 32px 80px; }
-.lang { font-size: 12px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
-.hero { flex: 1; display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 40px; padding: 20px 80px 60px; max-width: 1280px; margin: 0 auto; width: 100%; }
-.art { position: relative; height: 380px; }
-.disc { position: absolute; left: 12%; top: 18%; width: 330px; height: 330px; border-radius: 50%; background: var(--cream); }
-.mas { position: absolute; left: 24%; top: 30%; width: 150px; }
-.mas { animation: fly 9s ease-in-out infinite; }
-@keyframes fly { 0%,100% { transform: translate(0,0) rotate(0); } 15% { transform: translate(70px,-50px) rotate(6deg); } 30% { transform: translate(150px,-10px) rotate(-4deg); } 50% { transform: translate(60px,60px) rotate(5deg); } 70% { transform: translate(-70px,20px) rotate(-6deg); } 85% { transform: translate(-60px,-45px) rotate(4deg); } }
-@media (prefers-reduced-motion: reduce) { .mas { animation: none; } }
-.say { position: absolute; left: 14%; top: 0; width: 240px; background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 12px 16px; font-weight: 800; font-size: 14px; line-height: 1.35; }
-.tag { position: absolute; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 999px; background: #fff; border: 2px solid var(--line-strong); font-weight: 800; font-size: 14px; }
-.t1 { left: 0; top: 46%; } .t3 { left: 4%; top: 84%; }
-.t2 { right: 8%; top: 49%; background: var(--cream); border-color: var(--orange); }
-.t2 svg { color: var(--orange); }
-.t4 { right: 22%; top: 90%; background: var(--ink); color: #fff; border-color: var(--ink); }
-.t4 svg { color: var(--yellow); }
-.copy { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; max-width: 380px; margin: 0 auto; }
-h1 { font-size: 40px; line-height: 1.15; font-weight: 900; margin-bottom: 6px; letter-spacing: -.01em; }
-.copy p { color: var(--muted); font-weight: 600; font-size: 15px; line-height: 1.5; margin-bottom: 14px; }
-.copy .btn { width: 100%; }
-footer { border-top: 2px solid var(--line); padding: 22px; display: flex; gap: 12px; justify-content: center; align-items: center; flex-wrap: wrap; font-size: 11px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
-.built { padding: 8px 16px; border-radius: 999px; border: 2px solid var(--line-strong); background: #fff; color: var(--ink); }
-@media (max-width: 900px) {
-  header { padding: 20px; } .hero { grid-template-columns: 1fr; padding: 10px 20px 40px; } h1 { font-size: 32px; }
-  .art { height: 340px; max-width: 420px; margin: 0 auto; width: 100%; }
-  .disc { left: 15%; width: 260px; height: 260px; } .mas { left: 28%; top: 34%; }
+.page { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+header { padding: 28px 48px; }
+.hero {
+  flex: 1; display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 56px;
+  width: 100%; max-width: 1080px; margin: 0 auto; padding: 0 40px 72px;
 }
+.art { position: relative; height: 380px; display: grid; place-items: center; }
+.disc { position: absolute; width: 320px; height: 320px; border-radius: 50%; background: var(--cream); animation: breathe 6s ease-in-out infinite; }
+.mas { position: relative; animation: hover 5s ease-in-out infinite; }
+.copy { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 36px; max-width: 420px; margin: 0 auto; width: 100%; }
+h1 { text-wrap: balance; font-size: 40px; line-height: 1.18; font-weight: 900; letter-spacing: -.015em; color: var(--ink); animation: rise .5s cubic-bezier(.2, .8, .3, 1) both; }
+.ctas { display: flex; flex-direction: column; gap: 14px; width: 100%; animation: rise .5s .08s cubic-bezier(.2, .8, .3, 1) both; }
+.ctas .btn { width: 100%; white-space: normal; text-align: center; }
+@keyframes hover { 0%, 100% { transform: translate(0, 0) rotate(-2deg); } 50% { transform: translate(6px, -14px) rotate(2deg); } }
+@keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } }
+@media (max-width: 860px) {
+  header { padding: 18px 20px; }
+  .hero { grid-template-columns: 1fr; gap: 20px; padding: 0 20px 40px; align-content: center; }
+  .art { height: 240px; }
+  .disc { width: 220px; height: 220px; }
+  .mas { font-size: 140px !important; }
+  h1 { font-size: 30px; }
+  .copy { gap: 28px; }
+}
+@media (max-height: 640px) and (max-width: 860px) {
+  .art { height: 170px; } .disc { width: 160px; height: 160px; } .mas { font-size: 100px !important; }
+}
+@media (prefers-reduced-motion: reduce) { .mas, .disc, h1, .ctas { animation: none; } }
 </style>

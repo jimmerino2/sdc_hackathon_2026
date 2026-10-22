@@ -1,0 +1,1 @@
+- [Jobee brand & copy](jobee-brand-and-copy.md) — brand bee fixed on landing/logo; bubbles are persona-aware questions; no certainty claims.

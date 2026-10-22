@@ -2,7 +2,6 @@
 import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import FlowShell from '../components/FlowShell.vue';
-import Bubble from '../components/Bubble.vue';
 import Icon from '../components/Icon.vue';
 import PositionChart from '../components/PositionChart.vue';
 import { scenarios } from '../data/flows';
@@ -11,12 +10,13 @@ import { backendScenario } from '../api/forecast';
 import { readProfileId } from '../api/profile';
 import type { JobMatch } from '../api/jobs';
 import { loadJobs, useFlow } from '../state';
+import { personaCopy } from '../data/personaCopy';
 import { go } from '../router';
 
 const CHIPS = 3; // skills shown per side on a card
 
 const router = useRouter();
-const { state, scenario } = useFlow();
+const { state, scenario, key } = useFlow();
 const sIcon = { accelerates: 'tup', steady: 'arrow', slows: 'tdown' } as const;
 const trendIcon = { growing: 'tup', stable: 'arrow', shrinking: 'tdown' } as const;
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -71,14 +71,28 @@ onMounted(() => {
 </script>
 
 <template>
-  <FlowShell :progress="5" next="signal" next-label="Choose this role" skip-label="Save for later" skip-to="resources" :next-disabled="!selected" @next="choose">
+  <FlowShell
+    :progress="5"
+    next="signal"
+    next-label="Choose this role"
+    skip-label="Save for later"
+    skip-to="resources"
+    :next-disabled="!selected"
+    wide
+    :mood="state.jobs.status === 'error' ? 'surprised' : state.jobs.status === 'done' ? 'happy' : 'thinking'"
+    @next="choose"
+  >
+    <template #bubble>
+      <template v-if="state.jobs.status === 'loading' || state.jobs.status === 'idle'">{{ personaCopy[key].rolesLoading }}</template>
+      <template v-else-if="state.jobs.status === 'error'">{{ state.jobs.error }}</template>
+      <template v-else>{{ personaCopy[key].roles }}</template>
+    </template>
     <div class="wrap">
-      <div v-if="state.jobs.status === 'loading' || state.jobs.status === 'idle'" class="state">
-        <Bubble :size="70">Matching your skills against every role. This can take up to half a minute…</Bubble>
+      <div v-if="state.jobs.status === 'loading' || state.jobs.status === 'idle'" class="skel" aria-hidden="true">
+        <span v-for="n in 3" :key="n" />
       </div>
 
       <div v-else-if="state.jobs.status === 'error'" class="state">
-        <Bubble :size="70">{{ state.jobs.error }}</Bubble>
         <button type="button" class="btn btn-secondary retry" @click="retry"><Icon name="refresh" :size="18" /> Try again</button>
       </div>
 
@@ -94,7 +108,7 @@ onMounted(() => {
             <button :class="{ on: state.rolesView === 'chart' }" :aria-pressed="state.rolesView === 'chart'" @click="state.rolesView = 'chart'">Chart</button>
           </div>
         </div>
-        <h1>{{ heading }}</h1>
+        <h2 class="lead">{{ heading }}</h2>
         <div v-if="state.rolesView === 'chart'" class="card chart-card">
           <h2 class="chart-title">Demand vs AI automation exposure</h2>
           <PositionChart
@@ -138,8 +152,11 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.wrap { width: min(1100px, 94vw); margin-left: 50%; transform: translateX(-50%); }
-:global(main:has(.wrap)) { max-width: none !important; padding-top: 16px !important; }
+.wrap { width: 100%; }
+.skel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.skel span { height: 300px; border-radius: 22px; background: linear-gradient(100deg, #fff 30%, var(--cream) 50%, #fff 70%) 0 0 / 300% 100%; border: 2px solid var(--line); animation: shimmer 1.6s linear infinite; }
+@keyframes shimmer { to { background-position: -150% 0; } }
+@media (max-width: 960px) { .skel { grid-template-columns: 1fr; } .skel span { height: 160px; } }
 .bar { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 22px; }
 .tabs { display: flex; gap: 10px; flex-wrap: wrap; }
 .view { display: flex; padding: 4px; border-radius: 14px; background: var(--line); }
@@ -150,7 +167,7 @@ onMounted(() => {
 .foot { margin-top: 12px; font-size: 12px; font-weight: 600; color: var(--muted); line-height: 1.5; }
 .tabs button { display: flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 14px; border: 2px solid var(--line-strong); background: #fff; box-shadow: 0 4px 0 rgba(30,30,30,.1); font-weight: 900; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
 .tabs button.on { background: var(--yellow); border-color: var(--yellow); box-shadow: 0 4px 0 var(--orange); }
-h1 { font-size: 30px; font-weight: 900; margin-bottom: 22px; }
+h2.lead { font-size: 24px; font-weight: 900; margin-bottom: 18px; line-height: 1.25; }
 .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
 .rc { text-align: left; background: #fff; border: 2px solid var(--line-strong); border-radius: 22px; padding: 22px; box-shadow: 0 5px 0 var(--line); display: flex; flex-direction: column; gap: 10px; transition: transform .12s; }
 .rc:hover { transform: translateY(-2px); }
@@ -167,8 +184,8 @@ h2 { font-size: 21px; font-weight: 800; margin-top: 6px; }
 .best { align-self: flex-start; }
 .big svg { color: var(--orange); align-self: center; flex: none; }
 .big.shrinking b, .big.shrinking svg { color: var(--muted); }
-.state { max-width: 560px; margin: 40px auto; display: flex; flex-direction: column; align-items: flex-start; gap: 18px; }
-.retry { display: inline-flex; align-items: center; gap: 8px; margin-left: 82px; }
+.state { display: flex; justify-content: center; padding: 24px 0; }
+.retry { display: inline-flex; align-items: center; gap: 8px; }
 .note { margin-top: 22px; font-size: 12px; font-weight: 600; color: var(--muted); line-height: 1.5; max-width: 760px; }
 .blurb { font-size: 13px; color: var(--muted); font-weight: 600; line-height: 1.4; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
