@@ -1,11 +1,12 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import PlainTextResponse
 from supabase import Client
 
 from app.deps import get_supabase_admin
 from app.profile import service
-from app.profile.schemas import ProfileIn, ProfileOut, ProfileUpdate, SyncIn, SyncOut, SyncVerifyIn
+from app.profile.schemas import Bee, ProfileIn, ProfileOut, ProfileUpdate, SyncIn, SyncOut, SyncVerifyIn
 
 router = APIRouter(prefix="/profile", tags=["profile"])
 
@@ -34,6 +35,20 @@ def verify_sync(body: SyncVerifyIn, db: Client = Depends(get_supabase_admin)):
     """Step 2: send the code from the email. If it is right, the email is written to the profile and the updated profile is returned."""
     try:
         return service.confirm_code(db, body.profile_id, body.email, body.token)
+    except service.ProfileError as e:
+        raise HTTPException(e.status_code, e.message)
+
+
+# Declared before /{profile_id} so "bee" is not read as an id.
+@router.patch("/bee", response_class=PlainTextResponse)
+def change_bee(
+    profile_id: UUID = Query(description="The profile_id returned from POST /profile"),
+    bee: Bee = Query(description="The companion to switch to"),
+    db: Client = Depends(get_supabase_admin),
+):
+    """Switch a profile's companion bee (Libbee, Phoebee, Tobee or Barnabee; 422 otherwise). Returns the new bee's name as plain text; 404 if there is no such profile."""
+    try:
+        return service.set_bee(db, profile_id, bee).bee
     except service.ProfileError as e:
         raise HTTPException(e.status_code, e.message)
 

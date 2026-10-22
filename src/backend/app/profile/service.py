@@ -41,6 +41,17 @@ def update_profile(db: Client, profile_id: UUID, changes: ProfileUpdate) -> Prof
     return ProfileOut(**data[0])
 
 
+def set_bee(db: Client, profile_id: UUID, bee: str) -> ProfileOut:
+    """Switch the profile's companion bee."""
+    try:
+        data = db.table("profiles").update({"bee": bee}).eq("profile_id", str(profile_id)).execute().data
+    except Exception as e:
+        raise ProfileError(502, f"The profile could not be saved: {getattr(e, 'message', type(e).__name__)}") from e
+    if not data:
+        raise ProfileError(404, "No such profile.")
+    return ProfileOut(**data[0])
+
+
 def send_code(db: Client, profile_id: UUID, email: str) -> None:
     """Email a one-time code through Supabase Auth. Nothing is stored on the profile until the code is confirmed."""
     profile = get_profile(db, profile_id)  # 404 if there is no such profile

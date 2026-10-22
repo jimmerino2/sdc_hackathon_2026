@@ -41,7 +41,9 @@ class ProfileUpdate(BaseModel):
     experience: list[ExperienceEntry] | None = Field(None, description="Work / project experience")
 
 
+Bee = Literal["Libbee", "Phoebee", "Tobee", "Barnabee"]
 class ProfileOut(ProfileIn):
+    bee: Bee = Field("Libbee", description="The learner's companion bee")
     profile_id: UUID
 
 
