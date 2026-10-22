@@ -1,0 +1,48 @@
+from typing import Literal
+from uuid import UUID
+
+from pydantic import BaseModel, Field
+
+
+class ExperienceEntry(BaseModel):
+    """One job, internship or project."""
+
+    title: str = Field(description="Role or project name")
+    organisation: str | None = Field(None, description="Company or school")
+    start: str | None = Field(None, description="Start, e.g. 2024-06")
+    end: str | None = Field(None, description="End, e.g. 2025-01; null if ongoing")
+    summary: str | None = Field(None, description="What they did")
+
+
+class ProfileIn(BaseModel):
+    """Everything the caller sets. The id is generated."""
+
+    email: str | None = Field(None, min_length=3, description="Optional email address; if given, one profile per email")
+    name: str = Field(min_length=1, description="Full name")
+    stage: Literal["under", "fresh", "working"] = Field(
+        description="under = undergraduate, fresh = fresh graduate, working = working (beginner)"
+    )
+    concerns: str = Field(description="Their worries / feelings about their career")
+    skills: list[str] = Field(description="Skill names")
+    experience: list[ExperienceEntry] = Field(description="Work / project experience")
+
+
+class ProfileOut(ProfileIn):
+    profile_id: UUID
+
+
+class SyncIn(BaseModel):
+    """Step 1 of binding an email to a profile: ask for a one-time code to be emailed."""
+
+    profile_id: UUID = Field(description="The profile_id returned from POST /profile")
+    email: str = Field(min_length=3, description="The email to bind; a code is sent to it")
+
+
+class SyncVerifyIn(SyncIn):
+    """Step 2: the code from the email."""
+
+    token: str = Field(min_length=1, description="The one-time code from the email")
+
+
+class SyncOut(BaseModel):
+    message: str
