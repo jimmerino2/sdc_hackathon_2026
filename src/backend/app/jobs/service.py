@@ -1,4 +1,5 @@
 import time
+from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
 
@@ -221,4 +222,5 @@ def recommend(req: RecommendRequest, profile_id: str, source: str = "auto", hori
             outlook=outlook, **exposure,
         ))
     return RecommendResponse(profile_id=profile_id, jobs=jobs, context=_context(horizon), horizon_months=horizon, note=NOTE,
+                             generated_at=datetime.now(timezone.utc).isoformat(),
                              engine=Engine(source=engine, model=model, jobs_considered=len(shortlist), seconds=seconds))

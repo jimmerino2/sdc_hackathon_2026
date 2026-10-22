@@ -120,3 +120,30 @@ export function readProfileId(): string | null {
   const hit = document.cookie.split('; ').find((c) => c.startsWith(`${PROFILE_COOKIE}=`));
   return hit ? decodeURIComponent(hit.slice(PROFILE_COOKIE.length + 1)) : null;
 }
+
+const LOGGED_IN_COOKIE = 'jobee_logged_in';
+
+/** Remember that this browser has an account (an email confirmed by sync or login), not just a half-finished profile. */
+export function markLoggedIn() {
+  document.cookie = `${LOGGED_IN_COOKIE}=1; Max-Age=${ONE_YEAR}; Path=/; SameSite=Lax`;
+}
+
+export function isLoggedIn(): boolean {
+  return document.cookie.split('; ').some((c) => c === `${LOGGED_IN_COOKIE}=1`);
+}
+
+const ONBOARDED_COOKIE = 'jobee_onboarded';
+
+/** Remember that this browser has finished onboarding: its profile has a roadmap. The question pages are closed to it from then on. */
+export function markOnboarded() {
+  document.cookie = `${ONBOARDED_COOKIE}=1; Max-Age=${ONE_YEAR}; Path=/; SameSite=Lax`;
+}
+
+/** Forget it, e.g. when the roadmap turns out not to exist, so the user can go through the questions again. */
+export function clearOnboarded() {
+  document.cookie = `${ONBOARDED_COOKIE}=; Max-Age=0; Path=/; SameSite=Lax`;
+}
+
+export function isOnboarded(): boolean {
+  return document.cookie.split('; ').some((c) => c === `${ONBOARDED_COOKIE}=1`);
+}

@@ -23,6 +23,7 @@ class Node(BaseModel):
     skill_type: Literal["skill", "knowledge", "tech"]
     importance: float | None = Field(None, description="1-5")
     level: float | None = Field(None, description="0-7, null for tech (software)")
+    skill_group: str | None = Field(None, description="The area this skill belongs to, e.g. 'Web Development'; null until migration 0012 is applied")
     source: str | None = Field(None, description="URL of the learning material")
     sources: list[Source] = Field(default_factory=list, description="Where to learn it, best first; empty if none are known")
     status: Literal["locked", "available", "completed"]
@@ -61,3 +62,22 @@ class RoadmapCreate(BaseModel):
     profile_id: UUID = Field(description="The profile_id returned from POST /profile")
     onet_code: str = Field(description="O*NET code, e.g. 15-2051.00")
     replace: bool = Field(False, description="Rebuild if a roadmap already exists (discards its progress)")
+
+
+class RoadmapSummary(BaseModel):
+    """One of a profile's roadmaps in brief: which role, how far along."""
+
+    onet_code: str
+    title: str
+    status: Literal["locked", "available", "in_progress", "completed"]
+    total: int = Field(description="Skill nodes in the roadmap")
+    completed: int = Field(description="Skill nodes finished so far")
+
+
+class LearnedSkill(BaseModel):
+    """A skill the learner has completed on a roadmap."""
+
+    skill_name: str
+    skill_type: Literal["skill", "knowledge", "tech"]
+    skill_group: str | None = Field(None, description="The area it belongs to, e.g. 'Web Development'")
+    completed_at: datetime = Field(description="When it was completed; the latest if it was completed on more than one roadmap")

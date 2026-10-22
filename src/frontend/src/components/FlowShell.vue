@@ -2,9 +2,9 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import Icon from './Icon.vue';
-import { go, type Step } from '../router';
-import { readProfileId } from '../api/profile';
+import { isLoggedIn } from '../api/profile';
 import { useFlow } from '../state';
+import { go, type Step } from '../router';
 
 const props = defineProps<{
   progress: number;
@@ -17,10 +17,10 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{ next: [] }>();
 const router = useRouter();
-const pct = computed(() => (props.progress / 5) * 100);
 const { state } = useFlow();
-/** Where the close button goes: back to the learner's roadmap once they have a profile (logged in or saved), else the landing page. */
-const closeTo = computed<Step>(() => (state.value.profileId ?? readProfileId() ? 'pathway' : 'landing'));
+const pct = computed(() => (props.progress / 5) * 100);
+/** Where the close button goes: to the learner's pathway once they have an account (a confirmed email), else back to the start. */
+const closeTo = computed<Step>(() => (state.value.email || isLoggedIn() ? 'pathway' : 'landing'));
 
 function onNext() {
   emit('next');

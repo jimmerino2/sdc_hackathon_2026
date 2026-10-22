@@ -37,6 +37,23 @@ def recommend(
     req = RecommendRequest(top_skills=skills[:TOP_N], skills=skills)
     engine = "llm" if source in ("openai", "grafilab") else source
     try:
-        return service.recommend(req, str(profile_id), engine, horizon)
+        result = service.recommend(req, str(profile_id), engine, horizon)
     except service.RecommendError as e:
         raise HTTPException(502, str(e))
+    try:  # keep it so GET /jobs/suggested can show it again; failing to save must not lose the result
+        profiles.save_suggestions(db, profile_id, result.model_dump(mode="json"))
+    except profiles.ProfileError as e:
+        print(f"Suggestions not saved: {e.message}")
+    return result
+
+
+@router.get("/suggested", response_model=RecommendResponse)
+def suggested(profile_id: UUID = Query(description="The profile_id returned from POST /profile"), db: Client = Depends(get_supabase_admin)):
+    """The roles last suggested to this profile by GET /jobs/recommend, as they were then (nothing is recomputed). 404 if the profile does not exist or has no suggestions yet."""
+    try:
+        saved = profiles.get_suggestions(db, profile_id)
+    except profiles.ProfileError as e:
+        raise HTTPException(e.status_code, e.message)
+    if not saved:
+        raise HTTPException(404, "No roles have been suggested for this profile yet.")
+    return RecommendResponse(**saved)

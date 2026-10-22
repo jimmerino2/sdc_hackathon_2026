@@ -3,12 +3,11 @@ import Icon from './Icon.vue';
 import Logo from './Logo.vue';
 import { go, type Step } from '../router';
 
-defineProps<{ active: 'learn' | 'roles' | 'resources' | 'profile' }>();
-const items: { id: 'learn' | 'roles' | 'resources' | 'profile'; label: string; icon: string; to: Step }[] = [
+defineProps<{ active: 'learn' | 'roles' | 'profile' }>();
+const items: { id: 'learn' | 'roles' | 'profile'; label: string; icon: string; to: Step }[] = [
   { id: 'learn', label: 'Learn', icon: 'route', to: 'pathway' },
-  { id: 'roles', label: 'Future roles', icon: 'tup', to: 'roles' },
-  { id: 'resources', label: 'Resources', icon: 'book', to: 'resources' },
-  { id: 'profile', label: 'Profile', icon: 'user', to: 'who' },
+  { id: 'roles', label: 'Roles', icon: 'tup', to: 'suggested' },
+  { id: 'profile', label: 'Profile', icon: 'user', to: 'profile' },
 ];
 </script>
 

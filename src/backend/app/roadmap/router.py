@@ -5,9 +5,27 @@ from supabase import Client
 
 from app.deps import get_supabase_admin
 from app.roadmap import service
-from app.roadmap.schemas import Roadmap, RoadmapCreate
+from app.roadmap.schemas import LearnedSkill, Roadmap, RoadmapCreate, RoadmapSummary
 
 router = APIRouter(prefix="/roadmap", tags=["roadmap"])
+
+
+@router.get("/summary", response_model=list[RoadmapSummary])
+def roadmap_summary(
+    profile_id: UUID = Query(description="The profile_id returned from POST /profile"),
+    db: Client = Depends(get_supabase_admin),
+):
+    """Every roadmap the profile has, newest first, with its status and progress (completed of total nodes). An empty list if it has none."""
+    return service.list_roadmaps(db, str(profile_id))
+
+
+@router.get("/learned", response_model=list[LearnedSkill])
+def learned_skills(
+    profile_id: UUID = Query(description="The profile_id returned from POST /profile"),
+    db: Client = Depends(get_supabase_admin),
+):
+    """The skills the profile has completed on its roadmaps, each once, ordered by skill group then name. An empty list if it has completed none."""
+    return service.learned_skills(db, str(profile_id))
 
 
 @router.get("", response_model=Roadmap)

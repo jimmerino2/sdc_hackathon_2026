@@ -126,7 +126,6 @@ onMounted(() => {
                 <h2>{{ sec.section === 1 ? roadmap.title : `Level up · part ${sec.section}` }}</h2>
                 <p class="meta">{{ sectionSkills(sec.units) }} skills · {{ sec.units.length }} {{ sec.units.length === 1 ? 'unit' : 'units' }}</p>
               </div>
-              <RouterLink v-if="sec.section === 1" :to="go('resources')" class="guide"><Icon name="book" :size="16" /> Guidebook</RouterLink>
             </div>
           </section>
 
@@ -151,7 +150,7 @@ onMounted(() => {
                 </button>
                 <span class="lbl-wrap">
                   <span class="lbl" :class="{ dim: n.status === 'locked' }">{{ skillLabel(n.skill_name) }}</span>
-                  <small>{{ typeLabel[n.skill_type] }}</small>
+                  <small>{{ n.skill_group ?? typeLabel[n.skill_type] }}</small>
                   <button class="more" @click="openId = n.roadmap_detail_id">
                     {{ n.sources.length ? `${n.sources.length} ${n.sources.length === 1 ? 'resource' : 'resources'}` : 'Details' }}
                   </button>
@@ -248,7 +247,6 @@ onMounted(() => {
 .gold { background: var(--yellow); box-shadow: 0 5px 0 var(--orange); }
 .gold h2 { font-size: 24px; font-weight: 900; margin: 4px 0; } .meta { font-size: 12px; font-weight: 800; }
 .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.guide { display: inline-flex; gap: 8px; align-items: center; border: 2px solid var(--ink); border-radius: 12px; padding: 10px 14px; font-weight: 900; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
 .path { position: relative; display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 18px 0 40px; }
 .unit-label { font-size: 11px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .node { position: relative; display: flex; align-items: center; gap: 14px; width: 240px; transition: transform .2s; }

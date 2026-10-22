@@ -65,3 +65,4 @@ class RecommendResponse(BaseModel):
     horizon_months: int
     note: str
     engine: Engine
+    generated_at: str | None = Field(None, description="When these roles were worked out (UTC, ISO 8601); null on sets saved before this was recorded")
