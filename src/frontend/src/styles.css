@@ -26,6 +26,12 @@ h1, h2, h3, p { font-weight: inherit; }
 .screen-enter-active, .screen-leave-active { transition: opacity .18s ease, transform .18s ease; }
 .screen-enter-from { opacity: 0; transform: translateY(8px); }
 .screen-leave-to { opacity: 0; transform: translateY(-4px); }
+.tab-enter-active, .tab-leave-active { transition: opacity .14s ease, transform .14s ease; }
+.tab-enter-from { opacity: 0; transform: translateY(6px); }
+.tab-leave-to { opacity: 0; }
+
+/* press: every clickable thing dips a little while held down */
+:where(button, a.btn, .option, [role="button"]:not(circle)):not(:disabled):active { translate: 0 1px; scale: .985; }
 
 /* buttons */
 .btn {
@@ -35,7 +41,7 @@ h1, h2, h3, p { font-weight: inherit; }
   transition: transform .08s ease, box-shadow .08s ease;
 }
 .btn:hover { transform: translateY(-1px); }
-.btn:active { transform: translateY(3px); }
+.btn:active { transform: translateY(3px); scale: 1 !important; translate: none !important; }
 .btn-primary { background: var(--yellow); box-shadow: 0 4px 0 var(--orange); }
 .btn-primary:active { box-shadow: 0 1px 0 var(--orange); }
 .btn-secondary { background: #fff; border: 2px solid var(--line-strong); box-shadow: 0 4px 0 var(--line-strong); }
@@ -43,12 +49,22 @@ h1, h2, h3, p { font-weight: inherit; }
 .btn[disabled] { opacity: .5; pointer-events: none; }
 
 /* chips */
-.chip { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px 8px 12px; border-radius: 999px; font-weight: 700; font-size: 14px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; max-width: 100%; padding: 8px 14px 8px 12px; border-radius: 999px; font-weight: 700; font-size: 14px; }
+.chip svg { flex: none; }
 .chip-have { background: var(--ink); color: #fff; }
 .chip-have svg { color: var(--yellow); }
 .chip-gap { background: var(--cream); border: 2px solid rgba(255, 152, 0, .7); }
 .chip-gap svg { color: var(--orange); }
 .chip-neutral { background: #fff; border: 2px solid var(--line-strong); }
+
+/* skeletons: placeholder shapes while content loads */
+.skel { display: block; border-radius: 14px; background: linear-gradient(100deg, var(--line) 30%, #f6f4ef 50%, var(--line) 70%) 0 0 / 300% 100%; animation: shimmer 1.4s linear infinite; }
+.skel.line { height: 14px; border-radius: 8px; }
+.skel.card { background-color: #fff; border: 2px solid var(--line); background-image: linear-gradient(100deg, #fff 30%, var(--cream) 50%, #fff 70%); background-size: 300% 100%; }
+@keyframes shimmer { to { background-position: -150% 0; } }
+
+/* trend colours: up is green, down is red */
+.trend-up { color: #2e7d4f; } .trend-down { color: #c62828; } .trend-flat { color: var(--muted); }
 
 /* cards */
 .card { background: #fff; border: 2px solid var(--line); border-radius: 20px; }
@@ -58,6 +74,8 @@ h1, h2, h3, p { font-weight: inherit; }
   box-shadow: 0 4px 0 var(--line-strong); transition: transform .1s ease, box-shadow .1s ease, background .1s ease;
 }
 .option:hover { transform: translateY(-1px); }
+.option:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--line-strong); translate: none !important; scale: 1 !important; }
+.option.selected:active { box-shadow: 0 1px 0 var(--orange); }
 .option.selected { background: var(--cream); border-color: var(--yellow); box-shadow: 0 4px 0 var(--orange); }
 .option .ic { width: 40px; height: 40px; border-radius: 10px; background: var(--cream); display: grid; place-items: center; flex: none; }
 .option.selected .ic { background: var(--yellow); }
@@ -83,4 +101,5 @@ h1, h2, h3, p { font-weight: inherit; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: .01ms !important; animation-iteration-count: 1 !important; }
   .btn:hover, .option:hover { transform: none; }
+  .skel { animation: none; }
 }

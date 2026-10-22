@@ -19,7 +19,6 @@ const props = defineProps<{
 }>();
 
 const { state, key } = useFlow();
-const icons = { accelerates: 'tup', steady: 'arrow', slows: 'tdown' } as const;
 const active = computed(() => state.value.scenario);
 
 const forecasts = ref<JobForecast[]>([]);
@@ -91,6 +90,13 @@ function outcome(k: ScenarioKey) {
   const month = new Date(Number(y), Number(m) - 1).toLocaleString('en', { month: 'short' });
   return `${last.change_pct > 0 ? '+' : ''}${last.change_pct}% postings by ${month} ${y}`;
 }
+/** Which way postings head under one scenario, so the eye goes to ups (green) and downs (red). */
+function trendOf(k: ScenarioKey) {
+  const v = byScenario.value[k]?.outlook.at(-1)?.change_pct ?? 0;
+  if (v >= 0.5) return { icon: 'tup', cls: 'trend-up' };
+  if (v <= -0.5) return { icon: 'tdown', cls: 'trend-down' };
+  return { icon: 'arrow', cls: 'trend-flat' };
+}
 const title = computed(() => meta.value?.title ?? 'This role');
 const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
 </script>
@@ -98,13 +104,12 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
 <template>
   <div class="wrap" :class="{ compact }">
       <section class="left">
-        <p class="eyebrow">Your AI signal</p>
         <h1 v-if="!compact">Here’s the AI outlook for {{ title }}</h1>
         <p v-else class="signal-note">{{ personaCopy[key].signalNote }}</p>
         <div class="card chart">
           <small>{{ title }} · postings outlook</small>
           <h2>Three possible futures, next 12 months</h2>
-          <p v-if="status === 'loading'" class="state">Loading the LightGBM forecast…</p>
+          <div v-if="status === 'loading'" class="chart-skel" aria-hidden="true"><span class="skel" /><span class="skel line" /></div>
           <p v-else-if="status === 'error'" class="state">Couldn’t reach the forecast service. Make sure the backend is running on port 8000.</p>
           <template v-else>
             <svg viewBox="0 0 440 190" role="img" :aria-label="`Forecast of ${title} job postings under three AI scenarios`">
@@ -127,7 +132,7 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
       <section class="right">
         <ChartWatcher v-if="!compact" class="bub">Nobody knows the future for sure, so I plan for all three.</ChartWatcher>
         <button v-for="s in scenarios" :key="s.key" class="option sc" :class="{ selected: state.scenario === s.key }" @click="state.scenario = s.key">
-          <span class="ic"><Icon :name="icons[s.key]" :size="22" /></span>
+          <span class="ic" :class="trendOf(s.key).cls"><Icon :name="trendOf(s.key).icon" :size="22" :stroke="2.6" /></span>
           <span>
             <em class="pill" :class="{ 'pill-yellow': state.scenario === s.key }">{{ outcome(s.key) }}</em>
             <h3>{{ s.title }}</h3><p>{{ s.blurb }}</p>
@@ -137,7 +142,7 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
         <p v-if="!compact" class="hint">Tap a future to see how {{ title }} fares in it.</p>
       </section>
 
-      <section class="gap-row">
+      <section v-if="!compact" class="gap-row">
         <p class="eyebrow">Your skill gap</p>
         <h1 v-if="!compact">Here’s how close you are to {{ title }}</h1>
         <template v-if="job">
@@ -172,19 +177,24 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
 .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 28px; }
 h1 { font-size: 30px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 
-.compact .eyebrow { margin-bottom: 10px; }
-.signal-note { font-size: 14px; font-weight: 700; color: var(--muted); line-height: 1.4; margin: -6px 0 14px; }
+.compact { grid-template-columns: 1fr; gap: 16px; }
+.chart-skel { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+.chart-skel .skel:first-child { height: 170px; }
+.chart-skel .line { width: 60%; }
+.sc .ic { align-self: center; }
+.signal-note { font-size: 14px; font-weight: 700; color: var(--muted); line-height: 1.4; margin: 0 0 4px; }
 .gap-title { font-size: 22px; font-weight: 900; margin: 4px 0 16px; line-height: 1.2; }
 .chart { padding: 22px 24px; }
 .chart small { font-size: 11px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .chart h2 { font-weight: 900; font-size: 20px; margin: 6px 0 14px; }
-svg { width: 100%; overflow: visible; margin-top: 16px; }
+.chart > svg { width: 100%; overflow: visible; margin-top: 16px; }
 .state { margin: 18px 0 6px; font-size: 13px; font-weight: 700; color: var(--muted); }
 .axis { display: flex; justify-content: space-between; font-size: 10px; font-weight: 900; color: var(--muted); letter-spacing: .05em; text-transform: uppercase; margin-top: 8px; }
 .note { margin-top: 14px; font-size: 11px; color: var(--muted); font-weight: 600; line-height: 1.4; }
 .right { display: flex; flex-direction: column; gap: 14px; }
 .bub { margin-bottom: 8px; flex-direction: row-reverse; }
-.sc { align-items: flex-start; } .sc h3 { margin-top: 4px; font-size: 17px; }
+.sc { align-items: center; } .sc h3 { margin-top: 4px; font-size: 17px; }
+.sc .tick { align-self: center; }
 .sc p { font-size: 13px; line-height: 1.35; }
 .hint { font-size: 12px; font-weight: 700; color: var(--muted); }
 .gap-row { grid-column: 1 / -1; margin-top: 12px; }

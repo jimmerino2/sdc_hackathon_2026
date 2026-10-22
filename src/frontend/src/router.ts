@@ -14,6 +14,7 @@ export const steps = [
   'loading',
   'roles',
   'signal',
+  'gap',
   'sync',
   'building',
   'pathway',
@@ -36,7 +37,8 @@ export const stepLabels: Record<Step, string> = {
   skills: '05 Skill check',
   loading: '06 Loading',
   roles: '07 Future roles',
-  signal: '08 Forecast & skill gap',
+  signal: '08 Forecast',
+  gap: '08a Skill gap',
   sync: '09 Sync your email',
   building: '10 Building roadmap',
   pathway: '11 Reskill pathway',
@@ -45,6 +47,9 @@ export const stepLabels: Record<Step, string> = {
   generating: '14 Generating a roadmap',
   profile: '15 Profile',
 };
+
+/** Pages that live inside the sidebar layout. */
+const tabSteps: readonly Step[] = ['pathway', 'suggested', 'role', 'profile'];
 
 const views = import.meta.glob('./views/*.vue');
 const viewFor = (s: Step) => {
@@ -57,7 +62,7 @@ export const router = createRouter({
   routes: [
     { path: '/mascot', name: 'mascot', component: () => import('./views/MascotView.vue') },
     // The landing page lives at the site root; every other step keeps its own path.
-    ...steps.map((s) => ({ path: s === 'landing' ? '/' : `/${s}`, name: s, component: viewFor(s) })),
+    ...steps.map((s) => ({ path: s === 'landing' ? '/' : `/${s}`, name: s, component: viewFor(s), meta: { tabs: tabSteps.includes(s) } })),
     { path: '/landing', redirect: '/' },
     // Old links from when the address started with the persona (/a/landing).
     { path: '/:persona(a|b|c)/:step', redirect: (to) => (to.params.step === 'landing' ? '/' : `/${to.params.step}`) },

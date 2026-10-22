@@ -16,6 +16,21 @@ const sentTo = ref('');
 const emailOk = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim()));
 const codeOk = computed(() => /^\d{6,8}$/.test(code.value.trim()));
 
+/** Jobee follows along: perks up when the input looks right, thinks while waiting, startles on an error, cheers when saved. */
+const mood = computed(() => {
+  if (error.value) return 'surprised';
+  if (busy.value) return 'thinking';
+  if (step.value === 'done') return 'celebrate';
+  if (step.value === 'code') return codeOk.value ? 'happy' : 'idle';
+  return emailOk.value ? 'happy' : 'wave';
+});
+const say = computed(() => {
+  if (busy.value) return step.value === 'code' ? 'Checking your code…' : 'Sending you a code…';
+  if (step.value === 'done') return 'All saved. Let’s build your roadmap!';
+  if (step.value === 'code') return 'Check your inbox! I just sent you a code.';
+  return 'Where should I save your roadmap?';
+});
+
 function profileId() {
   state.value.profileId ??= readProfileId();
   return state.value.profileId;
@@ -84,8 +99,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <FlowShell :progress="5" next="building" next-label="Build my roadmap" back="signal" mood="happy" :next-disabled="step !== 'done'">
-    <template #bubble>Where should I save your roadmap?</template>
+  <FlowShell :progress="5" next="building" next-label="Build my roadmap" back="gap" :mood="mood" :next-disabled="step !== 'done'">
+    <template #bubble>{{ say }}</template>
 
     <form v-if="step === 'email'" class="card block" @submit.prevent="sendCode">
       <label for="email">Email address</label>
@@ -96,7 +111,7 @@ onMounted(async () => {
 
     <form v-else-if="step === 'code'" class="card block" @submit.prevent="verify">
       <label for="code">Enter the code we sent to <strong>{{ sentTo }}</strong></label>
-      <input id="code" v-model="code" class="field code" type="text" inputmode="numeric" maxlength="8" placeholder="123456" autocomplete="one-time-code" autofocus />
+      <input id="code" v-model="code" class="field code" type="text" inputmode="numeric" maxlength="8" placeholder="12345678" autocomplete="one-time-code" autofocus />
       <button class="btn btn-primary" type="submit" :disabled="!codeOk || busy">{{ busy ? 'Checking…' : 'Verify' }}</button>
       <div class="links">
         <button type="button" :disabled="busy" @click="sendCode">Resend code</button>

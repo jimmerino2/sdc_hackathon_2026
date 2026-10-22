@@ -1,9 +1,14 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
 import Icon from './Icon.vue';
 import Logo from './Logo.vue';
 import { go, type Step } from '../router';
 
-defineProps<{ active: 'learn' | 'roles' | 'profile' }>();
+/** The app layout after onboarding. It stays mounted while the learner switches tabs; only the content slot changes. */
+const route = useRoute();
+const tabFor: Record<string, 'learn' | 'roles' | 'profile'> = { pathway: 'learn', suggested: 'roles', role: 'roles', profile: 'profile' };
+const active = computed(() => tabFor[route.name as string]);
 const items: { id: 'learn' | 'roles' | 'profile'; label: string; icon: string; to: Step }[] = [
   { id: 'learn', label: 'Learn', icon: 'route', to: 'pathway' },
   { id: 'roles', label: 'Roles', icon: 'tup', to: 'suggested' },
@@ -34,7 +39,9 @@ nav a {
   display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 14px; border: 2px solid transparent;
   font-weight: 900; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
 }
-nav a:hover { background: rgba(255, 193, 7, .1); }
+nav a { transition: background .15s, color .15s; }
+nav a:hover { background: rgba(255, 193, 7, .1); color: var(--ink); }
+nav a:active { translate: 0 1px; }
 nav a.on { background: var(--cream); border-color: var(--yellow); color: var(--ink); }
 .content { flex: 1; min-width: 0; padding: 32px 40px 80px; }
 @media (max-width: 860px) {
