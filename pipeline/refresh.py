@@ -11,8 +11,13 @@ Steps:
   5. ai_exposure.csv        (build_ai_exposure.py; skipped if its source files are missing)
   6. model_table_<geo>.csv  (build_model_table.py)
   7. my_vacancies.csv, onet_to_my_group.csv  (build_jmi.py; downloads the DOSM workbook if missing)
-  8. cross-table checks     same jobs everywhere, unique keys, crosswalk weights (exit 1 on a problem)
-  9. manifest.json          as-of date and row count of every output, for the app's "last updated" badge
+  8. ai_adoption.csv, ai_adoption_jobs.csv   (build_ai_adoption.py; downloads FRED + the RPS index if missing)
+  9. btos_ai.csv            (build_btos_ai.py; downloads the Census BTOS files if missing)
+ 10. cross-table checks     same jobs everywhere, unique keys, crosswalk weights (exit 1 on a problem)
+ 11. manifest.json          as-of date and row count of every output, for the app's "last updated" badge
+
+Steps 7-9 download from the web; if one fails, a warning is printed, the old tables stay in place and the
+run still exits with an error. Steps 8-9 feed the AI adoption forecast, never the job-postings forecast.
 """
 from __future__ import annotations
 
@@ -62,6 +67,9 @@ def manifest(geo: str) -> dict:
     mv = PROCESSED / "my_vacancies.csv"
     if mv.exists():
         m["jmi_as_of"] = pd.read_csv(mv)["as_of_date"].max()
+    for name, key in (("ai_adoption.csv", "ai_adoption_as_of"), ("btos_ai.csv", "btos_ai_as_of")):
+        if (PROCESSED / name).exists():
+            m[key] = pd.read_csv(PROCESSED / name)["as_of_date"].max()
     return m
 
 
@@ -70,11 +78,12 @@ def check(geo: str) -> list[str]:
     problems = []
     t = {f.stem: pd.read_csv(f, dtype=str, keep_default_na=False) for f in PROCESSED.glob("*.csv")}
     jobs = {n: set(t[n].onet_code) for n in
-            ("crosswalk", "onet_roles", "onet_role_skills", "ai_exposure", "onet_to_my_group") if n in t}
+            ("crosswalk", "onet_roles", "onet_role_skills", "ai_exposure", "onet_to_my_group", "ai_adoption_jobs") if n in t}
     if len({frozenset(s) for s in jobs.values()}) > 1:
         problems.append("job lists (onet_code) differ between: " + ", ".join(jobs))
     for name, keys in {"onet_role_skills": ["onet_code", "skill_id"], f"model_table_{geo}": ["sector", "month"],
-                       "my_vacancies": ["freq", "period", "group_type", "group"]}.items():
+                       "my_vacancies": ["freq", "period", "group_type", "group"],
+                       "ai_adoption": ["soc_major", "quarter"], "btos_ai": ["sector", "period", "wording"]}.items():
         if name in t and t[name].duplicated(keys).any():
             problems.append(f"{name}.csv: duplicate rows on {keys}")
     return problems
@@ -106,6 +115,12 @@ def main() -> None:
     jmi = subprocess.run([py, str(PIPE / "build_jmi.py")], cwd=ROOT)
     if jmi.returncode != 0:
         print("WARNING: build_jmi.py failed; my_vacancies.csv / onet_to_my_group.csv were not refreshed")
+    web_failed = jmi.returncode != 0
+    for script, raw, outputs in (("build_ai_adoption.py", "rps", "ai_adoption.csv / ai_adoption_jobs.csv"),
+                                 ("build_btos_ai.py", "btos", "btos_ai.csv")):
+        if subprocess.run([py, str(PIPE / script), "--raw", str(RAW / raw), "--processed", str(PROCESSED)], cwd=ROOT).returncode:
+            print(f"WARNING: {script} failed; {outputs} were not refreshed")
+            web_failed = True
     problems = check(a.geo)
     for pr in problems:
         print("CHECK FAILED:", pr)
@@ -113,7 +128,7 @@ def main() -> None:
     m = manifest(a.geo)
     (PROCESSED / "manifest.json").write_text(json.dumps(m, indent=2))
     print("\nDone. Data as of:", m["signals_as_of"])
-    if problems or jmi.returncode != 0:
+    if problems or web_failed:
         sys.exit(1)
 
 

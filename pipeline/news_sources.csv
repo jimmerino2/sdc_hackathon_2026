@@ -1,0 +1,57 @@
+domain,tier,name,region
+census.gov,1,U.S. Census Bureau,US
+bls.gov,1,U.S. Bureau of Labor Statistics,US
+stlouisfed.org,1,Federal Reserve Bank of St. Louis,US
+federalreserve.gov,1,Federal Reserve Board,US
+oecd.org,1,OECD,GLOBAL
+ilo.org,1,International Labour Organization,GLOBAL
+imf.org,1,International Monetary Fund,GLOBAL
+worldbank.org,1,World Bank,GLOBAL
+europa.eu,1,European Union,EU
+gov.uk,1,UK Government,GB
+dosm.gov.my,1,Department of Statistics Malaysia,MY
+mdec.my,1,Malaysia Digital Economy Corporation,MY
+bernama.com,2,Bernama (Malaysian national news agency),MY
+reuters.com,2,Reuters,GLOBAL
+apnews.com,2,Associated Press,GLOBAL
+bloomberg.com,2,Bloomberg,GLOBAL
+ft.com,2,Financial Times,GLOBAL
+wsj.com,2,The Wall Street Journal,US
+nytimes.com,2,The New York Times,US
+washingtonpost.com,2,The Washington Post,US
+bbc.com,2,BBC,GLOBAL
+bbc.co.uk,2,BBC,GB
+theguardian.com,2,The Guardian,GB
+economist.com,2,The Economist,GLOBAL
+cnbc.com,2,CNBC,US
+npr.org,2,NPR,US
+axios.com,2,Axios,US
+fortune.com,2,Fortune,US
+nikkei.com,2,Nikkei Asia,ASIA
+asia.nikkei.com,2,Nikkei Asia,ASIA
+scmp.com,2,South China Morning Post,ASIA
+straitstimes.com,2,The Straits Times,SG
+channelnewsasia.com,2,CNA,SG
+thestar.com.my,2,The Star,MY
+nst.com.my,2,New Straits Times,MY
+malaymail.com,2,Malay Mail,MY
+theedgemalaysia.com,2,The Edge Malaysia,MY
+freemalaysiatoday.com,2,Free Malaysia Today,MY
+thesun.my,2,The Sun Malaysia,MY
+businesstoday.com.my,2,Business Today Malaysia,MY
+technologyreview.com,3,MIT Technology Review,GLOBAL
+techcrunch.com,3,TechCrunch,US
+theverge.com,3,The Verge,US
+wired.com,3,Wired,US
+arstechnica.com,3,Ars Technica,US
+venturebeat.com,3,VentureBeat,US
+zdnet.com,3,ZDNET,US
+infoworld.com,3,InfoWorld,US
+computerworld.com,3,Computerworld,US
+computerweekly.com,3,Computer Weekly,GB
+theregister.com,3,The Register,GB
+businessinsider.com,3,Business Insider,US
+forbes.com,3,Forbes,US
+hbr.org,3,Harvard Business Review,US
+digitalnewsasia.com,3,Digital News Asia,MY
+techwireasia.com,3,Tech Wire Asia,ASIA

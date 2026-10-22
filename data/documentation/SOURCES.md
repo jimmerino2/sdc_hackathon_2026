@@ -1,6 +1,6 @@
 # Dataset for the LightGBM Algorithm and Monte Carlo Simulations
 
-Four external datasets, one per question the app has to answer, plus one Malaysian context source (5). Last checked: 20 Oct 2026.
+Four external datasets, one per question the app has to answer, plus one Malaysian context source (5) and four sources for the AI adoption scenarios (6-9, added 22 Oct 2026; see `AI_ADOPTION_PLAN.md`). Last checked: 22 Oct 2026.
 
 | #   | Dataset                   | Question it answers                        | Used for in the app                                         |
 | --- | ------------------------- | ------------------------------------------ | ----------------------------------------------------------- |
@@ -9,6 +9,10 @@ Four external datasets, one per question the app has to answer, plus one Malaysi
 | 3   | Anthropic Economic Index  | How much is AI touching each specific job? | Y-axis of quadrant (Screen 4)                               |
 | 4   | O\*NET 31.0 Database      | What skills does each job need?            | Skills gap and reskilling roadmap (Screens 4–5)             |
 | 5   | DOSM Job Market Insights  | How many jobs are advertised in Malaysia?  | Malaysia context panel (display only, not a model input)    |
+| 6   | Real-Time Population Survey | How many workers use AI at work, per occupation group? | Starting point of the AI adoption Monte Carlo        |
+| 7   | Census BTOS               | How many businesses use AI, per sector, every two weeks? | Structured part of the weekly scenario score       |
+| 8   | Adzuna API                | How many live job ads mention AI, or each skill? | Structured part of the score; skill demand per job  |
+| 9   | GDELT DOC 2.0 API         | What does recent news say about AI adoption? | News part of the weekly scenario score (capped)          |
 
 ---
 
@@ -82,6 +86,52 @@ Four external datasets, one per question the app has to answer, plus one Malaysi
 
 ---
 
+## 6. Real-Time Population Survey: Generative AI Adoption Tracker
+
+- **URL:** quarterly series on FRED (`RPSGENAIUSAGESHAREOCC1` to `OCC22`, `RPSGENAIUSAGESHAREWORK`, e.g. https://fred.stlouisfed.org/series/RPSGENAIUSAGESHAREWORK); occupation adoption index at https://sites.google.com/view/covid-rps/data
+- **Publisher:** Alexander Bick, Adam Blandin, David Deming; series hosted by the Federal Reserve Bank of St. Louis
+- **License:** FRED marks the series "Copyrighted: Citation Required". Cite "Bick, A., Blandin, A. and Deming, D., The Rapid Adoption of Generative AI, Management Science (2026), retrieved from FRED". The index workbook states no licence; cite the same paper.
+- **What it contains:** share of employed US adults aged 18-64 who answer yes to "Do you use Generative AI for your job?". FRED: one quarterly series per 2018 SOC major group (22) plus all workers. Index: the same rate pooled over four waves (Aug 2025 - May 2026) by SOC major, minor and broad occupation, with respondent counts.
+- **Coverage:** United States; Q3 2024 - Q3 2026 (9 quarters). Respondents per group and quarter range from about 25 (Legal) to about 740 (Management).
+- **Update frequency:** quarterly
+- **As of:** 2026-07 (latest quarter)
+- **Files used:** the 23 FRED CSVs and the index workbook, downloaded by `build_ai_adoption.py` into `data/raw/rps/`
+- **Why this one:** the only open source found that tracks AI adoption per occupation over time, from real workers.
+
+## 7. Census Business Trends and Outlook Survey (BTOS): AI use
+
+- **URL:** https://www.census.gov/hfp/btos/data_downloads (`Sector.xlsx`, `National.xlsx`, `AI Core Questions.xlsx`)
+- **Publisher:** U.S. Census Bureau
+- **License:** U.S. federal government data (public domain); cite "U.S. Census Bureau, Business Trends and Outlook Survey"
+- **What it contains:** share of US businesses that used AI in the last two weeks (question 7) and expect to in the next six months (question 24), with standard errors, by NAICS sector and nationally.
+- **Coverage:** United States, 19 sectors plus multi-unit companies; every two weeks from Sep 2023, with a gap for the Oct-Nov 2025 shutdown.
+- **Watch out:** the question changed in Nov 2025 from AI "in producing goods or services" to AI "in any of its business functions" (Census now writes "Super Intelligence or SI (formerly referred to as Artificial Intelligence or AI)"). The level jumps from about 9% to 17% at the change, so `btos_ai.csv` keeps the two wordings apart and changes are never compared across them.
+- **Update frequency:** every two weeks
+- **As of:** 2026-10-04 (reference period end)
+- **Why this one:** the most frequent official AI adoption measure, by industry.
+
+## 8. Adzuna API
+
+- **URL:** https://developer.adzuna.com
+- **Publisher:** Adzuna
+- **License:** API terms of service; free key. Keys live in `src/backend/.env` (`ADZUNA_APP_ID`, `ADZUNA_APP_KEY`), never in git.
+- **What it contains:** live job ads per country, searchable by keyword and category; we only read the total `count` of matching ads.
+- **Coverage:** the countries Adzuna runs (we use us only by default, to stay within the free tier). **No Malaysia site.**
+- **Update frequency:** live; `collect_adzuna.py` takes a weekly snapshot, so history starts from the first run.
+- **Why this one:** the only ad source with keyword counts by category, for AI mentions and for skill demand.
+
+## 9. GDELT DOC 2.0 API
+
+- **URL:** https://api.gdeltproject.org/api/v2/doc/doc
+- **Publisher:** The GDELT Project
+- **License:** free and open, with attribution; one request every 5 seconds.
+- **What it contains:** metadata of news articles worldwide (URL, title, domain, source country, date) matching a query; no article text.
+- **Coverage:** global, with a `sourcecountry:malaysia` filter for Malaysian outlets.
+- **How we use it:** `collect_news.py` keeps only articles from the trusted domains in `pipeline/news_sources.csv` (tiered), and `ml/ai_signal_score.py` has one LLM read each headline once.
+- **Not used:** Google News RSS (its terms allow personal, non-commercial use only).
+
+---
+
 ## Plus two files we built
 
 ### The Malaysia map
@@ -96,8 +146,15 @@ Four external datasets, one per question the app has to answer, plus one Malaysi
 
 ---
 
+## Kept for later (not wired in)
+
+| Dataset | Why kept, and the condition for using it |
+| ------- | ---------------------------------------- |
+| Job-SDF ([arXiv 2406.11920](https://arxiv.org/abs/2406.11920), checked 22 Oct 2026) | Monthly skill-demand series from 10.35 million job ads, 2,300+ skills, China 2021-2023: the only open dataset found built for skill-demand forecasting. Needs a mapping to O\*NET. If used, keep it separate from the job-postings forecast (`train_lgbm.py`). |
+
 ## Evaluated and not used
 
 | Dataset | Why not |
 | ------- | ------- |
+| GitHub Innovation Graph ([github/innovationgraph](https://github.com/github/innovationgraph), CC0, checked 22 Oct 2026) | Considered as a Malaysian AI signal. Malaysia has only 2-8 topics per quarter (the "ai" topic first appears in 2026 Q1), and the share of developers on Jupyter Notebook stays flat (about 0.25%), so it carries no adoption trend. |
 | Techsalerator "Job Posting Data in Malaysia" ([Kaggle](https://www.kaggle.com/datasets/techsalerator/job-posting-data-in-malaysia), checked 20 Oct 2026) | Not Malaysian data: 9,919 postings, only 123 (~1%) in Malaysia, the rest global. Covers Mar–Sep 2024 (six months) from just 8 employers (Bosch and ZF are ~89%). Many duplicates, salary mostly empty and garbled. Too short and skewed to be a demand index or to feed the forecast. At most usable for skill-phrase mining or example postings. |

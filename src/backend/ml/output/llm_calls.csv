@@ -1,0 +1,17 @@
+at,model,articles_in,articles_out,error
+2026-10-22T15:02:05+00:00,qwen/qwen3.7-flash,36,0,APITimeoutError: Request timed out.
+2026-10-22T15:05:23+00:00,qwen/qwen3.7-flash,12,0,"ValidationError: 6 validation errors for Readings
+items.2.direction
+  Input should be 'accelerate', 'hold' or 'decline' [type=literal_error, input_value=None, input_type=NoneType]
+    For further information visit htt"
+2026-10-22T15:06:02+00:00,qwen/qwen3.7-flash,12,0,"ValidationError: 60 validation errors for Readings
+items.0.direction
+  Input should be 'accelerate', 'hold' or 'decline' [type=literal_error, input_value=None, input_type=NoneType]
+    For further information visit ht"
+2026-10-22T15:06:38+00:00,qwen/qwen3.7-flash,12,0,"ValidationError: 28 validation errors for Readings
+items.0.direction
+  Input should be 'accelerate', 'hold' or 'decline' [type=literal_error, input_value=None, input_type=NoneType]
+    For further information visit ht"
+2026-10-22T15:07:35+00:00,qwen/qwen3.7-flash,12,12,
+2026-10-22T15:08:13+00:00,qwen/qwen3.7-flash,12,12,
+2026-10-22T15:08:51+00:00,qwen/qwen3.7-flash,12,12,

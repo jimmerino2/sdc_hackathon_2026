@@ -86,3 +86,77 @@ class JobForecast(BaseModel):
     note: str = Field(description="How to read this number")
     data_as_of: str | None = None
     outlook: list[JobHorizon] = Field(description="One entry per horizon, shortest first")
+
+
+class AdoptionPoint(BaseModel):
+    """Simulated share of workers using AI at work at one horizon, as percentiles of the Monte Carlo paths."""
+
+    horizon_months: int = Field(description="3, 6, 9 or 12")
+    forecast_for: str = Field(description="Quarter being forecast, YYYY-MM (first month of the quarter)")
+    p10: float
+    p25: float
+    p50: float = Field(description="Middle of the simulated paths, 0-1")
+    p75: float
+    p90: float
+
+
+class AdoptionExpected(BaseModel):
+    horizon_months: int
+    forecast_for: str
+    rate: float = Field(description="Sum over scenarios of probability x p50, 0-1")
+
+
+class AdoptionScenario(BaseModel):
+    scenario: Literal["AI accelerates", "AI holds", "AI declines"]
+    probability: float = Field(description="This week's odds of this scenario, 0-1 (the three sum to 1)")
+    outlook: list[AdoptionPoint] = Field(description="One entry per horizon, shortest first")
+
+
+class AdoptionSignal(BaseModel):
+    kind: Literal["structured", "news"]
+    source: str
+    value: float = Field(description="Its push on the score: + toward faster adoption, - toward slower")
+    label: str
+    url: str | None = None
+
+
+class AdoptionScore(BaseModel):
+    week: str = Field(description="ISO week the odds were computed, e.g. 2026-W43")
+    score: float = Field(description="-1 (evidence points to adoption slowing) to +1 (speeding up)")
+    structured_part: float | None = Field(None, description="From job ads and business surveys")
+    news_part: float | None = Field(None, description="From validated news")
+    news_items: int
+    signals: list[AdoptionSignal] = Field(description="What moved the score this week")
+
+
+class AdoptionOutlook(BaseModel):
+    """AI adoption at work for one occupation group or job: now, three scenarios with odds, and why."""
+
+    soc_major: str = Field(description="2018 SOC major group, e.g. '15'. '00' = all workers")
+    group: str
+    onet_code: str | None = None
+    title: str | None = None
+    country: str = Field(description="Country the adoption data covers")
+    is_proxy_for_malaysia: bool
+    forecast_from: str = Field(description="Latest survey quarter, YYYY-MM")
+    current_rate: float = Field(description="Estimated share using AI at work now, 0-1 (survey noise filtered out)")
+    expected: list[AdoptionExpected] = Field(description="Odds-weighted middle estimate per horizon")
+    scenarios: list[AdoptionScenario]
+    score: AdoptionScore | None = Field(None, description="This week's external score; null before the first scoring run")
+    data_as_of: str
+    note: str
+
+
+class OddsWeek(BaseModel):
+    week: str
+    p_accelerates: float
+    p_holds: float
+    p_declines: float
+
+
+class SkillDemandPoint(BaseModel):
+    week: str
+    skill: str
+    country: str
+    ads: int = Field(description="Live ads matching the skill in the job's Adzuna category")
+    share: float = Field(description="ads / all live ads in that category, 0-1")

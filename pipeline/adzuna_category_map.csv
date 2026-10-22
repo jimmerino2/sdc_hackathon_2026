@@ -1,0 +1,27 @@
+category,soc_major,weight,rationale
+it-jobs,15,1.0,IT jobs are computer and mathematical occupations
+accounting-finance-jobs,13,1.0,Accounting and finance roles are business and financial operations occupations
+consultancy-jobs,13,0.5,Consultancy roles are mostly business and financial operations
+consultancy-jobs,11,0.5,and management
+hr-jobs,13,1.0,HR specialists are business and financial operations occupations
+engineering-jobs,17,1.0,Engineering jobs are architecture and engineering occupations
+scientific-qa-jobs,19,1.0,Scientific and QA jobs are life physical and social science occupations
+social-work-jobs,21,1.0,Social work is community and social service
+legal-jobs,23,1.0,Legal jobs are legal occupations
+teaching-jobs,25,1.0,Teaching jobs are educational instruction and library occupations
+creative-design-jobs,27,0.5,Creative and design jobs are arts design and media
+pr-advertising-marketing-jobs,27,0.5,PR and marketing creatives are arts design and media
+pr-advertising-marketing-jobs,11,0.5,and marketing managers are management
+healthcare-nursing-jobs,29,0.7,Healthcare and nursing jobs are mostly healthcare practitioners
+healthcare-nursing-jobs,31,0.3,with healthcare support roles
+hospitality-catering-jobs,35,1.0,Hospitality and catering jobs are mostly food preparation and serving
+domestic-help-cleaning-jobs,37,0.6,Cleaning jobs are building and grounds cleaning
+domestic-help-cleaning-jobs,39,0.4,and domestic help is personal care and service
+sales-jobs,41,1.0,Sales jobs are sales and related occupations
+retail-jobs,41,1.0,Retail jobs are mostly sales and related occupations
+customer-services-jobs,43,1.0,Customer service jobs are office and administrative support
+admin-jobs,43,1.0,Admin jobs are office and administrative support
+trade-construction-jobs,47,1.0,Trade and construction jobs are construction and extraction occupations
+maintenance-jobs,49,1.0,Maintenance jobs are installation maintenance and repair occupations
+manufacturing-jobs,51,1.0,Manufacturing jobs are mostly production occupations
+logistics-warehouse-jobs,53,1.0,Logistics and warehouse jobs are transportation and material moving occupations

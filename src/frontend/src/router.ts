@@ -37,6 +37,11 @@ export const stepLabels: Record<Step, string> = {
   resources: '12 Skill resources',
 };
 
+/** Test pages outside the flow (no progress step): the AI adoption scenarios, still being tested. */
+export const labPages = ['adoption-roles', 'adoption-signal'] as const;
+export type LabPage = (typeof labPages)[number];
+export type Page = Step | LabPage;
+
 const views = import.meta.glob('./views/*.vue');
 const viewFor = (s: Step) => {
   const name = s.charAt(0).toUpperCase() + s.slice(1);
@@ -48,6 +53,8 @@ export const router = createRouter({
   routes: [
     { path: '/', redirect: '/landing' },
     { path: '/mascot', name: 'mascot', component: () => import('./views/MascotView.vue') },
+    { path: '/lab/adoption-roles', alias: '/adoption-roles', name: 'adoption-roles', component: () => import('./views/AdoptionRolesView.vue') },
+    { path: '/lab/adoption-signal', alias: '/adoption-signal', name: 'adoption-signal', component: () => import('./views/AdoptionSignalView.vue') },
     ...steps.map((s) => ({ path: `/${s}`, name: s, component: viewFor(s) })),
     // Old links from when the address started with the persona (/a/landing).
     { path: '/:persona(a|b|c)/:step', redirect: (to) => `/${to.params.step}` },
@@ -56,6 +63,6 @@ export const router = createRouter({
   scrollBehavior: () => ({ top: 0 }),
 });
 
-export function go(step: Step) {
+export function go(step: Page) {
   return { name: step };
 }

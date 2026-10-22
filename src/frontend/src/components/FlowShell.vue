@@ -2,16 +2,16 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import Icon from './Icon.vue';
-import { go, type Step } from '../router';
+import { go, type Page } from '../router';
 
 const props = defineProps<{
   progress: number;
-  next: Step;
-  skipTo?: Step;
+  next: Page;
+  skipTo?: Page;
   nextLabel?: string;
   skipLabel?: string;
   nextDisabled?: boolean;
-  back?: Step;
+  back?: Page;
 }>();
 const emit = defineEmits<{ next: [] }>();
 const router = useRouter();

@@ -11,6 +11,10 @@ All tables live in `data/processed/` and are rebuilt with `python pipeline/refre
 | Anthropic Economic Index | Anthropic Economic Index (release 2026-06-26) — https://huggingface.co/datasets/Anthropic/EconomicIndex |
 | O\*NET                   | O\*NET 31.0 Database — https://www.onetcenter.org/database.html                                         |
 | DOSM JMI                 | DOSM Job Market Insights, Q2 2026 — https://www.dosm.gov.my/portal-main/release-content/big-data-analytics-job-market-insights-q22026 |
+| RPS                      | Real-Time Population Survey, Generative AI Adoption Tracker (Bick, Blandin & Deming), via FRED — https://sites.google.com/view/covid-rps/data |
+| BTOS                     | Census Business Trends and Outlook Survey — https://www.census.gov/hfp/btos/data_downloads               |
+| Adzuna                   | Adzuna job-ads API — https://developer.adzuna.com                                                       |
+| GDELT                    | GDELT DOC 2.0 news API — https://api.gdeltproject.org/api/v2/doc/doc                                     |
 | Ours                     | Computed in our pipeline, or hand-written by the team                                                   |
 
 ## What each table is for
@@ -25,6 +29,14 @@ All tables live in `data/processed/` and are rebuilt with `python pipeline/refre
 | `ai_exposure.csv`      | **The AI meter:** how much AI is already used for each job's work                                                           |
 | `my_vacancies.csv`     | **The Malaysia context:** online job vacancies in Malaysia by occupation group and industry (display only, not a model input) |
 | `onet_to_my_group.csv` | **The Malaysia translator:** which Malaysian occupation group each of the 46 jobs belongs to                                |
+| `ai_adoption.csv`      | **The AI adoption history:** share of US workers using AI for their job, per occupation group, quarter by quarter           |
+| `ai_adoption_jobs.csv` | **The AI adoption per job:** the same survey's rate for each of the 46 jobs, and its group's rate                         |
+| `btos_ai.csv`          | **The business AI meter:** share of US businesses using AI, per sector, every two weeks                                      |
+| `news_articles.csv`    | **The news feed:** AI-adoption headlines from trusted outlets (GDELT), before the LLM reads them                            |
+| `adzuna_ai_share.csv`  | **The live ad AI meter:** share of live job ads mentioning AI, per Adzuna category, weekly (from the first Adzuna run)      |
+| `skill_demand.csv`     | **The skill demand meter:** live ads matching each job's key skills, weekly (from the first Adzuna run)                      |
+
+The last six feed the AI adoption scenarios (`src/backend/ml/ai_adoption_mc.py`, `ai_signal_score.py`), never the job-postings forecast.
 
 ---
 
@@ -177,9 +189,90 @@ Join: `onet_to_my_group.my_occupation_group` = `my_vacancies.group` where `group
 
 ---
 
+## 9. `ai_adoption.csv`
+
+One row per **SOC major group × quarter**. 207 rows (22 groups + all workers, 9 quarters from 2024-07). Built by `pipeline/build_ai_adoption.py`.
+
+| Column                    | Source | Type | Derived from                                                                                                   |
+| ------------------------- | ------ | ---- | -------------------------------------------------------------------------------------------------------------- |
+| `soc_major`               | RPS    | text | 2018 SOC major group: the first two digits of an O\*NET code (`15` = Computer and Mathematical). `00` = all workers |
+| `soc_major_name`          | RPS    | text | Official SOC major group title                                                                                 |
+| `quarter`                 | RPS    | text | First month of the quarter, `YYYY-MM`                                                                          |
+| `adoption_rate`           | RPS    | 0–1  | FRED `RPSGENAIUSAGESHAREOCC1..22` / `RPSGENAIUSAGESHAREWORK` ÷ 100                                             |
+| `respondents_per_quarter` | Ours   | int  | The group's pooled respondents in the index workbook ÷ 4 waves (an estimate; all workers = the sum)           |
+| `fred_series`, `source`, `as_of_date` | RPS / Ours | text | FRED id; source name; latest quarter                                                          |
+
+Single quarters are noisy for small groups (Legal went 17% → 68% → 40%); `ai_adoption_mc.py` filters that noise using `respondents_per_quarter`.
+
+---
+
+## 10. `ai_adoption_jobs.csv`
+
+One row per **job**. 46 rows. Built by `pipeline/build_ai_adoption.py` from the RPS index (pooled over Aug 2025 – May 2026; no time dimension).
+
+| Column                | Source     | Type | Derived from                                                                                          |
+| --------------------- | ---------- | ---- | ----------------------------------------------------------------------------------------------------- |
+| `onet_code`, `title`  | O\*NET     | text | Same as `onet_roles.csv`                                                                              |
+| `soc_major`, `soc_major_name` | Ours / RPS | text | First two digits of `onet_code`; joins to `ai_adoption.soc_major`                               |
+| `adoption_rate`       | RPS + Ours | 0–1  | Rate of the most detailed SOC level published: broad occupation (35 jobs), minor group (8), major group (3). The authors blank cells under 20 respondents |
+| `adoption_level`      | Ours       | text | `broad`, `minor` or `major`                                                                           |
+| `number_observations` | RPS        | int  | Respondents behind the rate                                                                           |
+| `group_pooled_rate`   | RPS        | 0–1  | The job's SOC major group over the same waves, so a job keeps its gap to its group                   |
+| `source`, `as_of_date`| Ours / RPS | text | Source name; latest FRED quarter                                                                      |
+
+---
+
+## 11. `btos_ai.csv`
+
+One row per **sector × fortnight × question wording**. Built by `pipeline/build_btos_ai.py`.
+
+| Column           | Source | Type | Derived from                                                                                              |
+| ---------------- | ------ | ---- | --------------------------------------------------------------------------------------------------------- |
+| `sector`, `sector_name` | BTOS | text | NAICS 2-digit sector (`31` = manufacturing 31–33, `44` = retail 44–45, `48` = transport 48–49), `XX` = multi-unit companies, `US` = all businesses |
+| `period`         | BTOS   | text | Census sample date `YYYYNN` (year + fortnight)                                                            |
+| `ref_start`, `ref_end` | BTOS | date | The two weeks the answer refers to                                                                    |
+| `wording`        | Ours   | text | `AI in any business function (since Nov 2025)` or `AI in producing goods or services (Sep 2023 - Oct 2025)`. **Never compare across the two** |
+| `ai_use_rate`    | BTOS   | 0–1  | Question 7, answer Yes. Blank where Census suppressed the cell                                             |
+| `ai_use_se`      | BTOS   | 0–1  | Its standard error                                                                                        |
+| `ai_expect_rate` | BTOS   | 0–1  | Question 24 (use AI in the next six months), answer Yes                                                   |
+| `source`, `as_of_date` | Ours | text | Source name; latest `ref_end`                                                                       |
+
+Join to occupation groups through `pipeline/btos_sector_soc_map.csv` (hand-written: each SOC major group → the sectors that employ most of it, with weights and a rationale).
+
+---
+
+## 12. `news_articles.csv`
+
+One row per **article**, appended by `pipeline/collect_news.py`. Only domains in `pipeline/news_sources.csv` are kept; one row per URL and per normalised title + domain.
+
+| Column           | Source | Type | Derived from                                               |
+| ---------------- | ------ | ---- | ---------------------------------------------------------- |
+| `url`, `title`, `domain`, `source_country` | GDELT | text | Article metadata (no article text)        |
+| `seen_date`      | GDELT  | date | When GDELT first saw it                                    |
+| `query`          | Ours   | text | Which of the five queries found it (`adoption`, `cost_capability`, `regulation`, `jobs`, `malaysia`) |
+| `tier`           | Ours   | 1–3  | From `news_sources.csv`: 1 official, 2 established news, 3 tech and trade press |
+| `fetched_at`     | Ours   | time | When we fetched it                                         |
+
+---
+
+## 13. `adzuna_ai_share.csv` and 14. `skill_demand.csv`
+
+Weekly snapshots from `pipeline/collect_adzuna.py`; rerunning a week replaces that week. Both start empty and build history from the first run.
+
+| Table | One row per | Columns |
+| ----- | ----------- | ------- |
+| `adzuna_ai_share.csv` | week × country × Adzuna category | `total_ads`, `ai_ads` (ads with any of *ai, llm, chatgpt, copilot, genai, openai*), `ai_share` = ai_ads ÷ total_ads, `fetched_at` |
+| `skill_demand.csv` | week × country × job × skill | `category` (the job's main category from `pipeline/adzuna_category_map.csv`), `skill` (exact phrase: the job's top software tools and skill phrases in `onet_role_skills.csv`), `ads`, `share` = ads ÷ the category's ads, `fetched_at` |
+
+Adzuna has no Malaysia site: rows are for the countries collected (us only by default, free tier).
+
+---
+
 ## Supporting files
 
 | File                     | Source                          | What it is                                                                                                                                |
 | ------------------------ | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `ai_exposure_detail.csv` | Anthropic Economic Index + Ours | All 746 occupations with the raw Economic Index metrics per source, `usage_share`, and a `low_sample` flag (automation split unreliable) |
 | `manifest.json`          | Ours                            | As-of date of each source and row count of each table; feeds the app's "last updated" badge                                               |
+| `pipeline/btos_sector_soc_map.csv`, `pipeline/adzuna_category_map.csv` | Ours | Hand-written maps from BTOS sectors and Adzuna categories to SOC major groups, with weights and a rationale per row |
+| `pipeline/news_sources.csv` | Ours                         | Trusted news domains with a tier (1–3) and region; anything else is dropped                                                              |

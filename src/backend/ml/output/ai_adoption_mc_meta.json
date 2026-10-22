@@ -1,0 +1,238 @@
+{
+  "data_as_of": "2026-07",
+  "quarters": [
+    "2024-07",
+    "2024-10",
+    "2025-01",
+    "2025-04",
+    "2025-07",
+    "2025-10",
+    "2026-01",
+    "2026-04",
+    "2026-07"
+  ],
+  "target": "share of employed US adults (18-64) in the group who use generative AI for their job",
+  "seed": 202607,
+  "n_paths": 10000,
+  "design_effect": 3.0,
+  "scenarios": {
+    "AI accelerates": "group slope + 0.5 x national slope (logit per quarter)",
+    "AI holds": "group slope + 0.0 x national slope (logit per quarter)",
+    "AI declines": "group slope + -1.5 x national slope (logit per quarter)"
+  },
+  "national_slope_logit_per_quarter": 0.0695,
+  "process_noise_q": 0.00599,
+  "between_group_slope_variance": 0.0,
+  "groups": {
+    "00": {
+      "name": "All workers",
+      "raw_slope": 0.0695,
+      "slope": 0.0695,
+      "shrink_to_own": 1.0,
+      "rate_now": 0.4234,
+      "latest_reading": 0.4055
+    },
+    "11": {
+      "name": "Management Occupations",
+      "raw_slope": 0.0964,
+      "slope": 0.0695,
+      "shrink_to_own": 0.0,
+      "rate_now": 0.6674,
+      "latest_reading": 0.633
+    },
+    "13": {
+      "name": "Business and Financial Operations Occupations",
+      "raw_slope": 0.1064,
+      "slope": 0.0695,
+      "shrink_to_own": 0.0,
+      "rate_now": 0.602,
+      "latest_reading": 0.6073
+    },
+    "15": {
+      "name": "Computer and Mathematical Occupations",
+      "raw_slope": 0.126,
+      "slope": 0.0695,
+      "shrink_to_own": 0.0,
+      "rate_now": 0.7269,
+      "latest_reading": 0.6879
+    },
+    "17": {
+      "name": "Architecture and Engineering Occupations",
+      "raw_slope": 0.165,
+      "slope": 0.0695,
+      "shrink_to_own": 0.0,
+      "rate_now": 0.5317,
+      "latest_reading": 0.6087
+    },
+    "19": {
+      "name": "Life, Physical, and Social Science Occupations",
+      "raw_slope": 0.109,
+      "slope": 0.0695,
+      "shrink_to_own": 0.0,
+      "rate_now": 0.527,
+      "latest_reading": 0.4286
+    },
+    "21": {
+      "name": "Community and Social Service Occupations",
+      "raw_slope": 0.1276,
+      "slope": 0.0695,
+      "shrink_to_own": 0.0,
+      "rate_now": 0.469,
+      "latest_reading": 0.4624
+    },
+    "23": {
+      "name": "Legal Occupations",
+      "raw_slope": 0.1377,
+      "slope": 0.0695,
+      "shrink_to_own": 0.0,
+      "rate_now": 0.5636,
+      "latest_reading": 0.4024
+    },
+    "25": {
+      "name": "Educational Instruction and Library Occupations",
+      "raw_slope": 0.0692,
+      "slope": 0.0695,
+      "shrink_to_own": 0.0,
+      "rate_now": 0.5331,
+      "latest_reading": 0.4583
+    },
+    "27": {
+      "name": "Arts, Design, Entertainment, Sports, and Media Occupations",
+      "raw_slope": 0.043,
+      "slope": 0.0695,
+      "shrink_to_own": 0.0,
+      "rate_now": 0.5217,
+      "latest_reading": 0.4054
+    },
+    "29": {
+      "name": "Healthcare Practitioners and Technical Occupations",
+      "raw_slope": 0.038,
+      "slope": 0.0695,
+      "shrink_to_own": 0.0,
+      "rate_now": 0.4197,
+      "latest_reading": 0.3458
+    },
+    "31": {
+      "name": "Healthcare Support Occupations",
+      "raw_slope": 0.0396,
+      "slope": 0.0695,
+      "shrink_to_own": 0.0,
+      "rate_now": 0.2752,
+      "latest_reading": 0.3081
+    },
+    "33": {
+      "name": "Protective Service Occupations",
+      "raw_slope": 0.09,
+      "slope": 0.0695,
+      "shrink_to_own": 0.0,
+      "rate_now": 0.2506,
+      "latest_reading": 0.2585
+    },
+    "35": {
+      "name": "Food Preparation and Serving Related Occupations",
+      "raw_slope": 0.1215,
+      "slope": 0.0695,
+      "shrink_to_own": 0.0,
+      "rate_now": 0.2536,
+      "latest_reading": 0.266
+    },
+    "37": {
+      "name": "Building and Grounds Cleaning and Maintenance Occupations",
+      "raw_slope": -0.0328,
+      "slope": 0.0695,
+      "shrink_to_own": 0.0,
+      "rate_now": 0.1888,
+      "latest_reading": 0.1354
+    },
+    "39": {
+      "name": "Personal Care and Service Occupations",
+      "raw_slope": 0.0253,
+      "slope": 0.0695,
+      "shrink_to_own": 0.0,
+      "rate_now": 0.2912,
+      "latest_reading": 0.2248
+    },
+    "41": {
+      "name": "Sales and Related Occupations",
+      "raw_slope": 0.0848,
+      "slope": 0.0695,
+      "shrink_to_own": 0.0,
+      "rate_now": 0.404,
+      "latest_reading": 0.3491
+    },
+    "43": {
+      "name": "Office and Administrative Support Occupations",
+      "raw_slope": 0.0992,
+      "slope": 0.0695,
+      "shrink_to_own": 0.0,
+      "rate_now": 0.3686,
+      "latest_reading": 0.3677
+    },
+    "45": {
+      "name": "Farming, Fishing, and Forestry Occupations",
+      "raw_slope": 0.0639,
+      "slope": 0.0695,
+      "shrink_to_own": 0.0,
+      "rate_now": 0.4916,
+      "latest_reading": 0.5228
+    },
+    "47": {
+      "name": "Construction and Extraction Occupations",
+      "raw_slope": -0.0042,
+      "slope": 0.0695,
+      "shrink_to_own": 0.0,
+      "rate_now": 0.3815,
+      "latest_reading": 0.3615
+    },
+    "49": {
+      "name": "Installation, Maintenance, and Repair Occupations",
+      "raw_slope": 0.02,
+      "slope": 0.0695,
+      "shrink_to_own": 0.0,
+      "rate_now": 0.3743,
+      "latest_reading": 0.2301
+    },
+    "51": {
+      "name": "Production Occupations",
+      "raw_slope": 0.0506,
+      "slope": 0.0695,
+      "shrink_to_own": 0.0,
+      "rate_now": 0.3706,
+      "latest_reading": 0.2853
+    },
+    "53": {
+      "name": "Transportation and Material Moving Occupations",
+      "raw_slope": 0.0611,
+      "slope": 0.0695,
+      "shrink_to_own": 0.0,
+      "rate_now": 0.258,
+      "latest_reading": 0.2374
+    }
+  },
+  "backtest_ai_holds": {
+    "3": {
+      "coverage_10_90": 0.835,
+      "n": 115,
+      "mae_pts_p50": 6.48,
+      "mae_pts_last_reading": 6.43
+    },
+    "6": {
+      "coverage_10_90": 0.793,
+      "n": 92,
+      "mae_pts_p50": 7.13,
+      "mae_pts_last_reading": 7.13
+    },
+    "9": {
+      "coverage_10_90": 0.812,
+      "n": 69,
+      "mae_pts_p50": 7.71,
+      "mae_pts_last_reading": 8.12
+    },
+    "12": {
+      "coverage_10_90": 0.804,
+      "n": 46,
+      "mae_pts_p50": 7.45,
+      "mae_pts_last_reading": 9.11
+    }
+  }
+}

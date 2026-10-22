@@ -150,3 +150,34 @@ Use the output as a rough sense of up, flat or down, not as a precise percentage
 - Real Malaysia postings data to replace the US proxy.
 - More history or more sectors, since the training set is the main limit.
 - Report the LightGBM versus headline disagreement in the UI as a confidence signal.
+
+---
+
+# ML: AI adoption scenarios
+
+A separate forecast of a different thing: the **share of workers who use AI for their job**, per SOC major group and per job, 3 to 12 months ahead, under three scenarios (**AI accelerates**, **AI holds**, **AI declines**), with odds recomputed every week. It shares nothing with the job-postings model above. Plan and decisions: `data/documentation/AI_ADOPTION_PLAN.md`.
+
+```
+data/processed/ai_adoption*.csv (RPS survey) ──► ai_adoption_mc.py ──► ai_adoption_mc.csv / _jobs.csv   (quarterly)
+btos_ai.csv, signals.csv (Indeed AI share),
+adzuna_ai_share.csv, news_articles.csv ─────────► ai_signal_score.py ──► ai_signal_score.csv
+                                                                     └─► scenario_odds_history.csv     (weekly)
+                                  backend/app/forecast  /forecast/ai-adoption, /ai-adoption/jobs, /ai-adoption/odds-history
+```
+
+| File | What it does |
+|---|---|
+| `ai_adoption_mc.py` | Kalman filter on the logit of each group's rate (survey noise from respondent counts), trend shrunk to the national one, 10,000 paths per group and scenario. Writes p10 / p25 / p50 / p75 / p90 per horizon, and a backtest of how often the "AI holds" 10–90% range held the next survey readings |
+| `ai_signal_score.py` | Weekly score S (−1..+1) per group: structured part (Indeed, BTOS, Adzuna changes as z-scores) and news part (one LLM call per batch of headlines, then fixed rules). S tilts the odds from 25 / 50 / 25, each kept within 10–60% |
+| `output/ai_adoption_mc*.csv`, `ai_adoption_mc_meta.json` | Scenario percentiles per group and per job; parameters, seed, fitted trends, backtest |
+| `output/ai_signal_score.csv`, `scenario_odds_history.csv` | One row per week and group: the score with the signals behind it, and the three odds. History is kept |
+| `output/news_signals.csv`, `llm_calls.csv` | Every headline the LLM read (each read once) and every LLM call |
+
+```
+cd src/backend
+python ml/ai_adoption_mc.py            # after a new survey quarter
+python ml/ai_signal_score.py           # weekly, after pipeline/collect_news.py and pipeline/collect_adzuna.py
+python ml/ai_signal_score.py --no-llm  # rescore without calling the LLM
+```
+
+**How to read it.** The scenario drifts and the 25 / 50 / 25 prior are assumptions. The ranges are checked (the backtest's 10–90% ranges hold about 80% of past readings, which set the survey design effect to 3.0), but the odds are not a tested prediction: they exist to stay current and to show what moved them. US data stands in for Malaysia.

@@ -1,0 +1,31 @@
+soc_major,btos_sector,weight,rationale
+11,US,1.0,Managers work in every industry: use all businesses
+13,52,0.5,Business and financial operations staff cluster in finance and insurance
+13,54,0.5,and in professional services (accounting and consulting firms)
+15,51,0.5,Computer and mathematical jobs cluster in the information sector
+15,54,0.5,and in professional services (computer systems design)
+17,54,0.5,Engineers cluster in professional services (engineering firms)
+17,31,0.5,and in manufacturing
+19,54,1.0,Life and social scientists mostly work in scientific research and development services
+21,62,1.0,Community and social service jobs mostly sit in social assistance
+23,54,1.0,Legal jobs sit in professional services (legal services)
+25,61,1.0,Teachers work in educational services
+27,51,0.5,Arts and media jobs cluster in information (publishing and broadcasting)
+27,71,0.5,and in arts and entertainment
+29,62,1.0,Healthcare practitioners work in health care
+31,62,1.0,Healthcare support jobs work in health care
+33,56,1.0,Private security guards are employed by security services in administrative and support services
+35,72,1.0,Food preparation and serving jobs work in accommodation and food services
+37,56,1.0,Building cleaning and maintenance staff are employed by services to buildings in administrative and support services
+39,81,0.5,Personal care and service jobs cluster in other services (personal care services)
+39,62,0.5,and in social assistance (care for the elderly and children)
+41,44,0.6,Sales jobs cluster in retail trade
+41,42,0.4,and in wholesale trade
+43,56,0.5,Office and administrative support jobs spread across industries: administrative and support services
+43,52,0.5,and finance and insurance hold the largest shares
+45,11,1.0,Farming fishing and forestry jobs sit in agriculture
+47,23,1.0,Construction jobs sit in construction
+49,81,0.5,Installation and repair jobs cluster in other services (repair and maintenance)
+49,23,0.5,and in construction
+51,31,1.0,Production jobs sit in manufacturing
+53,48,1.0,Transportation and material moving jobs sit in transportation and warehousing
