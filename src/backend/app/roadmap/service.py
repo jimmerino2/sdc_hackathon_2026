@@ -6,7 +6,7 @@ from supabase import Client
 
 from app.profile import service as profiles
 from app.roadmap import planner
-from app.roadmap.schemas import CurrentStep, Node, Roadmap, Section, Unit
+from app.roadmap.schemas import CurrentStep, Node, Roadmap, Section, Source, Unit
 
 
 def _role(db: Client, onet_code: str) -> dict:
@@ -17,11 +17,31 @@ def _role(db: Client, onet_code: str) -> dict:
 
 
 # One request: the roadmap row, its role, and every node with the skill it points at (PostgREST embedding).
+# onet_role_skills.source is not read: it needs migration 0002 and learning links now come from skill_sources.
 ROADMAP_SELECT = (
     "roadmap_id,onet_code,section,unit,status,onet_roles(title,description),"
     "roadmap_detail(roadmap_detail_id,skill_id,section,unit,status,completed_at,previous_nodes,previous_nodes_required,"
-    "onet_role_skills(skill_name,skill_type,importance,level,source))"
+    "onet_role_skills(skill_name,skill_type,importance,level))"
 )
+
+
+def _sources(db: Client, skill_names: list[str]) -> dict[str, list[Source]]:
+    """Learning sources for these skills (table skill_sources, matched on skill_name), best first.
+
+    A missing table or a failed read gives no sources instead of breaking the roadmap.
+    """
+    if not skill_names:
+        return {}
+    try:
+        rows = (db.table("skill_sources").select("skill_name,source_type,rank,title,url")
+                .in_("skill_name", sorted(set(skill_names))).order("rank").execute().data)
+    except Exception as e:
+        print(f"skill_sources could not be read ({type(e).__name__}); nodes will have no sources")
+        return {}
+    found: dict[str, list[Source]] = {}
+    for r in rows:
+        found.setdefault(r["skill_name"], []).append(Source(**{k: r[k] for k in ("source_type", "rank", "title", "url")}))
+    return found
 
 
 def get_roadmap(db: Client, profile_id: str, onet_code: str | None = None) -> Roadmap:
@@ -47,12 +67,14 @@ def get_roadmap(db: Client, profile_id: str, onet_code: str | None = None) -> Ro
             depth[skill_id] = 1 + max((depth_of(p) for p in prev.get(skill_id, []) if p in prev), default=-1)
         return depth[skill_id]
 
+    sources = _sources(db, [d["onet_role_skills"]["skill_name"] for d in details])
     grouped: dict[int, dict[int, list[Node]]] = {}
     for d in details:
         node = Node(
             roadmap_detail_id=d["roadmap_detail_id"],
             skill_id=d["skill_id"],
             **d["onet_role_skills"],
+            sources=sources.get(d["onet_role_skills"]["skill_name"], []),
             status=d["status"],
             completed_at=d["completed_at"],
             previous_nodes=d["previous_nodes"],

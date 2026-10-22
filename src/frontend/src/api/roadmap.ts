@@ -1,5 +1,14 @@
 import { API_URL } from './config';
 
+/** One place to learn a skill. */
+export interface RoadmapSource {
+  source_type: 'project' | 'certificate' | 'video' | 'activity';
+  /** 1 = first pick. */
+  rank: number;
+  title: string;
+  url: string;
+}
+
 export interface RoadmapNode {
   roadmap_detail_id: string;
   skill_id: string;
@@ -9,6 +18,8 @@ export interface RoadmapNode {
   level: number | null;
   /** URL of the learning material, if any. */
   source: string | null;
+  /** Where to learn it, best first. Empty when none are known. */
+  sources: RoadmapSource[];
   status: 'locked' | 'available' | 'completed';
   completed_at: string | null;
   previous_nodes: string[];

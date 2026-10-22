@@ -5,6 +5,17 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
+class Source(BaseModel):
+    """One place to learn a skill (a row of skill_sources)."""
+
+    source_type: Literal["project", "certificate", "video", "activity"] = Field(
+        description="project = build something, certificate = a credential or course, video = watch, activity = practise"
+    )
+    rank: int = Field(description="1 = first pick")
+    title: str
+    url: str
+
+
 class Node(BaseModel):
     roadmap_detail_id: str = Field(description="Id of this node, used by POST /roadmap/complete/{roadmap_detail_id}")
     skill_id: str
@@ -13,6 +24,7 @@ class Node(BaseModel):
     importance: float | None = Field(None, description="1-5")
     level: float | None = Field(None, description="0-7, null for tech (software)")
     source: str | None = Field(None, description="URL of the learning material")
+    sources: list[Source] = Field(default_factory=list, description="Where to learn it, best first; empty if none are known")
     status: Literal["locked", "available", "completed"]
     completed_at: datetime | None = None
     previous_nodes: list[str] = Field(description="skill_ids that come before this node")
