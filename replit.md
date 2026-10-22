@@ -1,24 +1,35 @@
 # Running on Replit
 
-This imported project contains a Python FastAPI backend and a separate data
-pipeline. There is no frontend application in the repository.
+This project contains a Vue 3/Vite frontend in `src/frontend`, a Python FastAPI
+backend in `src/backend`, and a separate data pipeline. The frontend currently
+uses sample flow data and does not call the backend yet.
 
 ## Run
 
-Use the **Run** button to start the **Start application** workflow, or run from
-the repository root:
+Use the **Run** button to start the Vue frontend preview. To run it manually:
 
 ```sh
-python -m uvicorn app.main:app --app-dir src/backend --host 0.0.0.0 --port 5000
+cd src/frontend
+npm ci
+PORT=5000 npm run dev
 ```
 
-The preview opens the interactive API documentation at `/docs` (the root
-redirects there). `/health` returns `{"status":"ok"}`. The OpenAPI schema is at
-`/openapi.json`.
+The frontend README's default development port is 5173; the Replit workflow sets
+port 5000 for the web preview. Frontend routes follow `/:persona/:step`.
 
-Replit dependencies are tracked in the root `pyproject.toml` and `uv.lock`.
-The original backend and pipeline requirements files remain in their existing
-locations. No manually created virtual environment is needed.
+To run the backend separately on port 8000:
+
+```sh
+python -m uvicorn app.main:app --app-dir src/backend --host 0.0.0.0 --port 8000
+```
+
+Its interactive API documentation is at `/docs`, `/health` returns
+`{"status":"ok"}`, and the OpenAPI schema is at `/openapi.json`.
+
+Backend and pipeline Python dependencies are tracked in the root `pyproject.toml`
+and `uv.lock`; frontend dependencies are tracked in
+`src/frontend/package.json` and `src/frontend/package-lock.json`. The original
+backend and pipeline requirements files remain in their existing locations.
 
 ## External services and current limits
 
@@ -33,8 +44,8 @@ Secrets, not source files:
 - `SUPABASE_URL` and `SUPABASE_KEY`: needed when using the existing Supabase
   client. The current product endpoints do not call it: listing returns an
   empty list and creation returns a placeholder record without saving it.
-- `CORS_ORIGINS`: optional JSON list of allowed frontend origins if a separate
-  frontend is connected.
+- `CORS_ORIGINS`: optional JSON list of allowed origins if the frontend is later
+  connected to the backend.
 
 Chat requires the API key and was not tested against the external provider.
 Supabase persistence is not implemented in the imported product service.
