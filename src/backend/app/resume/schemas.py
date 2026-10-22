@@ -22,6 +22,7 @@ class Engine(BaseModel):
 
 
 class ResumeOut(BaseModel):
+    resume_id: str | None = None  # id of the saved copy (file in Storage + row in resumes)
     """Result of reading an uploaded resume."""
 
     filename: str | None = Field(None, description="Name of the uploaded file")
