@@ -11,7 +11,7 @@ const { state, checkSkills, levelOf } = useFlow();
 <template>
   <FlowShell :progress="4" next="loading" next-label="Analyze my profile" back="resume">
     <h1>How comfortable are you with these?</h1>
-    <Bubble class="b" :size="60">Be honest! I only use this to find your starting point.</Bubble>
+    <Bubble class="b" :size="60" mood="serious" gear="suit">Be honest! I only use this to find your starting point.</Bubble>
     <div class="rows">
       <div v-for="s in checkSkills" :key="s" class="row">
         <span class="name">{{ skillLabel(s) }}</span>

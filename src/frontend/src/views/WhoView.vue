@@ -9,9 +9,9 @@ const { persona, state } = useFlow();
 </script>
 
 <template>
-  <FlowShell :progress="1" next="mind" back="name">
+  <FlowShell :progress="1" next="mind" back="bee">
     <h1>Which one sounds like you?</h1>
-    <Bubble class="b">{{ persona.mascotWelcome }}</Bubble>
+    <Bubble class="b" gear="magnifier">{{ persona.mascotWelcome }}</Bubble>
     <div class="list">
       <button v-for="(o, i) in whoOptions" :key="o.title" class="option" :class="{ selected: state.who === i }" @click="state.who = i">
         <span class="ic"><Icon :name="o.icon" :size="22" /></span>

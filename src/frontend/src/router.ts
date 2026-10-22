@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 
 export const steps = [
   'landing',
-  'name',
+  'bee',
   'who',
   'mind',
   'resume',
@@ -19,7 +19,7 @@ export type Step = (typeof steps)[number];
 
 export const stepLabels: Record<Step, string> = {
   landing: '01 Landing',
-  name: '01b What do we call you',
+  bee: '01b Pick your bee',
   who: '02 Who are you',
   mind: '03 What’s on your mind',
   resume: '04 Resume upload',
@@ -43,6 +43,7 @@ export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', redirect: '/landing' },
+    { path: '/mascot', name: 'mascot', component: () => import('./views/MascotView.vue') },
     ...steps.map((s) => ({ path: `/${s}`, name: s, component: viewFor(s) })),
     // Old links from when the address started with the persona (/a/landing).
     { path: '/:persona(a|b|c)/:step', redirect: (to) => `/${to.params.step}` },

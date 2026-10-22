@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import FlowShell from '../components/FlowShell.vue';
 import Bubble from '../components/Bubble.vue';
+import ChartWatcher from '../components/ChartWatcher.vue';
 import Icon from '../components/Icon.vue';
 import { scenarios, type ScenarioKey } from '../data/flows';
 import { skillLabel } from '../data/skills';
@@ -118,7 +119,7 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
         </div>
       </section>
       <section class="right">
-        <Bubble :size="56" class="bub">Nobody knows the future for sure, so I plan for all three.</Bubble>
+        <ChartWatcher class="bub">Nobody knows the future for sure, so I plan for all three.</ChartWatcher>
         <button v-for="s in scenarios" :key="s.key" class="option sc" :class="{ selected: state.scenario === s.key }" @click="state.scenario = s.key">
           <span class="ic"><Icon :name="icons[s.key]" :size="22" /></span>
           <span>

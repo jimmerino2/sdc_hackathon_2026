@@ -18,12 +18,12 @@ const built = ['IT undergrads', 'Fresh grads', 'Working engineers'];
         <span class="tag t2"><Icon name="sparkles" :size="16" /> LLM apps</span>
         <span class="tag t3">Cloud</span>
         <span class="tag t4"><Icon name="check" :size="16" /> System design</span>
-        <Mascot :size="150" class="mas" />
+        <Mascot :size="150" class="mas" mood="wave" wings />
       </div>
       <div class="copy">
         <h1>AI is changing tech. Your future in it can be certain.</h1>
         <p>See where software jobs are heading, which ones fit you, and exactly what to learn next.</p>
-        <RouterLink :to="go('name')" class="btn btn-primary">Get started</RouterLink>
+        <RouterLink :to="go('bee')" class="btn btn-primary">Get started</RouterLink>
         <button type="button" class="btn btn-secondary">I already have an account</button>
       </div>
     </section>
@@ -42,7 +42,9 @@ header { display: flex; justify-content: space-between; align-items: center; pad
 .art { position: relative; height: 380px; }
 .disc { position: absolute; left: 12%; top: 18%; width: 330px; height: 330px; border-radius: 50%; background: var(--cream); }
 .mas { position: absolute; left: 24%; top: 30%; width: 150px; }
-.mas :deep(i) { }
+.mas { animation: fly 9s ease-in-out infinite; }
+@keyframes fly { 0%,100% { transform: translate(0,0) rotate(0); } 15% { transform: translate(70px,-50px) rotate(6deg); } 30% { transform: translate(150px,-10px) rotate(-4deg); } 50% { transform: translate(60px,60px) rotate(5deg); } 70% { transform: translate(-70px,20px) rotate(-6deg); } 85% { transform: translate(-60px,-45px) rotate(4deg); } }
+@media (prefers-reduced-motion: reduce) { .mas { animation: none; } }
 .say { position: absolute; left: 14%; top: 0; width: 240px; background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 12px 16px; font-weight: 800; font-size: 14px; line-height: 1.35; }
 .tag { position: absolute; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 999px; background: #fff; border: 2px solid var(--line-strong); font-weight: 800; font-size: 14px; }
 .t1 { left: 0; top: 46%; } .t3 { left: 4%; top: 84%; }

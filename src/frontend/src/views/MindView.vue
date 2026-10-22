@@ -16,7 +16,7 @@ function toggle(i: number) {
 <template>
   <FlowShell :progress="2" next="resume" back="who" :next-disabled="!state.mind.length">
     <h1>What’s been on your mind lately?</h1>
-    <Bubble class="b">{{ persona.mindBubble }}</Bubble>
+    <Bubble class="b" mood="thinking" thought>{{ persona.mindBubble }}</Bubble>
     <div class="grid">
       <button v-for="(o, i) in mindOptions" :key="o.title" class="option" :class="{ selected: state.mind.includes(i) }" @click="toggle(i)">
         <span class="ic"><Icon :name="o.icon" :size="22" /></span>

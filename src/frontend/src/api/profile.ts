@@ -51,6 +51,12 @@ export async function updateProfile(id: string, body: Partial<Omit<ProfileIn, 'e
   return res.json();
 }
 
+/** Save the learner's companion bee on their profile. */
+export async function setBee(id: string, bee: string): Promise<void> {
+  const res = await fetch(`${API_URL}/profile/bee?profile_id=${encodeURIComponent(id)}&bee=${encodeURIComponent(bee)}`, { method: 'PATCH' });
+  if (!res.ok) throw new Error(`Bee update failed (${res.status})`);
+}
+
 export async function getProfile(id: string): Promise<Profile> {
   const res = await fetch(`${API_URL}/profile/${encodeURIComponent(id)}`);
   if (res.status === 404) throw new ProfileNotFound(`No profile ${id}`);

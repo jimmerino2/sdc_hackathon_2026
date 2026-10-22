@@ -129,7 +129,7 @@ onMounted(() => {
           <p>{{ doneCount }} of {{ allNodes.length }} roadmap skills done</p>
         </div>
         <div class="signal"><Icon name="tup" :size="20" /><div><strong>Signal: {{ scenario.label }}</strong><p>Rechecked weekly against live job postings.</p></div></div>
-        <div class="cheer"><Mascot :size="72" /><p class="bubble">{{ cheer }}</p></div>
+        <div class="cheer"><Mascot :size="72" :mood="doneCount === 0 ? 'wave' : doneCount < allNodes.length ? 'happy' : 'celebrate'" /><p class="bubble">{{ cheer }}</p></div>
       </aside>
     </div>
   </SideNav>

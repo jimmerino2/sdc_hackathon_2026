@@ -43,7 +43,7 @@ onBeforeUnmount(() => clearInterval(timer));
 
 <template>
   <div class="page">
-    <div class="halo"><Mascot :size="100" class="m" /></div>
+    <div class="halo"><Mascot :size="100" class="m" mood="thinking" /></div>
     <h1>Building your roadmap…</h1>
     <p class="sub">Jobee is planning your path to {{ roleTitle }}. This can take up to half a minute.</p>
     <div class="progress"><i :style="{ width: Math.min(100, 12 + (stage * 88) / items.length) + '%' }" /></div>
