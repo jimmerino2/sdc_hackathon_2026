@@ -6,7 +6,7 @@ from supabase import Client
 
 from app.deps import get_supabase_admin
 from app.profile import service
-from app.profile.schemas import Bee, ProfileIn, ProfileOut, ProfileUpdate, SyncIn, SyncOut, SyncVerifyIn
+from app.profile.schemas import Bee, LoginIn, LoginVerifyIn, ProfileIn, ProfileOut, ProfileUpdate, SyncIn, SyncOut, SyncVerifyIn
 
 router = APIRouter(prefix="/profile", tags=["profile"])
 
@@ -35,6 +35,25 @@ def verify_sync(body: SyncVerifyIn, db: Client = Depends(get_supabase_admin)):
     """Step 2: send the code from the email. If it is right, the email is written to the profile and the updated profile is returned."""
     try:
         return service.confirm_code(db, body.profile_id, body.email, body.token)
+    except service.ProfileError as e:
+        raise HTTPException(e.status_code, e.message)
+
+
+@router.post("/login", response_model=SyncOut)
+def login(body: LoginIn, db: Client = Depends(get_supabase_admin)):
+    """Step 1 of logging in to an existing profile: Supabase emails a one-time code to the address it was synced with. 404 if no profile has that email (nothing is sent or created)."""
+    try:
+        service.send_login_code(db, body.email)
+    except service.ProfileError as e:
+        raise HTTPException(e.status_code, e.message)
+    return SyncOut(message="Code sent. Confirm it with POST /profile/login/verify.")
+
+
+@router.post("/login/verify", response_model=ProfileOut)
+def verify_login(body: LoginVerifyIn, db: Client = Depends(get_supabase_admin)):
+    """Step 2: send the code from the email. If it is right, the profile is returned; keep its profile_id to use the other /profile and /roadmap routes. 400 if the code is wrong or expired."""
+    try:
+        return service.confirm_login(db, body.email, body.token)
     except service.ProfileError as e:
         raise HTTPException(e.status_code, e.message)
 

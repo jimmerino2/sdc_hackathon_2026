@@ -14,6 +14,7 @@ How the reference data gets into Supabase. Column meanings are in `data/document
 | `0006_onet_roles_icon.sql` | Adds `onet_roles.icon`, a Lucide icon name per role for the frontend (kept when `onet_roles` is reloaded) |
 | `0007_profiles_skill_scores.sql` | Changes `profiles.skills` from `text[]` to a jsonb array of `{name, score}` (O*NET names, score 0-1) |
 | `0008_roadmap_profile.sql` | Ties each `roadmap` to a profile (`profile_id`, one roadmap per profile and role) and makes roadmaps private (service role only). Older ownerless roadmaps are kept with a null `profile_id` and ignored |
+| `0010_roadmap_created_at.sql` | Adds `roadmap.created_at`, so a profile's most recent roadmap can be found without naming the role |
 | `0009_profiles_bee.sql` | Adds `profiles.bee`, the learner's companion (Libbee by default; Phoebee, Tobee or Barnabee), checked against that list |
 | `../pipeline/load_supabase.py` | Loads `data/processed/*.csv` into those tables |
 

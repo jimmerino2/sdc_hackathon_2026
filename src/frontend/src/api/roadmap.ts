@@ -37,9 +37,10 @@ async function call(path: string, init?: RequestInit): Promise<Response> {
   }
 }
 
-/** This profile's roadmap for the role, or null if none has been built yet. */
-export async function getRoadmap(profileId: string, onetCode: string): Promise<Roadmap | null> {
-  const res = await call(`?profile_id=${encodeURIComponent(profileId)}&onet_code=${encodeURIComponent(onetCode)}`);
+/** This profile's roadmap for the role, or its most recently built one when no role is given. Null if there is none. */
+export async function getRoadmap(profileId: string, onetCode?: string): Promise<Roadmap | null> {
+  const role = onetCode ? `&onet_code=${encodeURIComponent(onetCode)}` : '';
+  const res = await call(`?profile_id=${encodeURIComponent(profileId)}${role}`);
   if (res.status === 404) return null;
   if (!res.ok) throw new RoadmapError('Jobee couldn’t load your roadmap. Try again in a moment.');
   return res.json();

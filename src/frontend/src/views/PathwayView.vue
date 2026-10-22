@@ -17,10 +17,12 @@ const error = ref<string | null>(null);
 
 const roadmap = computed(() => state.value.roadmap.data);
 const job = computed(() => state.value.jobs.data?.jobs.find((j) => j.onet_code === state.value.chosenRoleId));
-/** Skills the user already has for this role (from matching), else their strongest profile skills. */
-const have = computed(() =>
-  (job.value?.skills_you_have ?? profileSkills.value.map((s) => s.name)).slice(0, 6).map(skillLabel),
-);
+/** Skills the user already has for this role (from matching); after a login, their strongest saved skills. */
+const have = computed(() => {
+  const saved = [...state.value.savedSkills].sort((a, b) => b.score - a.score).map((s) => s.name);
+  const names = job.value?.skills_you_have ?? (saved.length ? saved : profileSkills.value.map((s) => s.name));
+  return names.slice(0, 6).map(skillLabel);
+});
 const allNodes = computed(() => roadmap.value?.sections.flatMap((s) => s.units.flatMap((u) => u.nodes)) ?? []);
 const doneCount = computed(() => allNodes.value.filter((n) => n.status === 'completed').length);
 const nextUp = computed(() => allNodes.value.find((n) => n.status === 'available') ?? null);
@@ -66,7 +68,7 @@ onMounted(() => {
       <div class="main">
         <section class="unit dark">
           <p class="eyebrow">Already yours</p>
-          <h2>You already have {{ job ? `${job.skills_owned} of ${job.skills_total}` : have.length }} key skills</h2>
+          <h2>{{ job ? `You already have ${job.skills_owned} of ${job.skills_total} key skills` : 'Skills you already bring' }}</h2>
           <div class="chips"><span v-for="s in have" :key="s" class="chip">{{ s }}</span></div>
         </section>
 

@@ -60,5 +60,17 @@ class SyncVerifyIn(SyncIn):
     token: str = Field(min_length=1, description="The one-time code from the email")
 
 
+class LoginIn(BaseModel):
+    """Step 1 of logging in: the email on an existing profile."""
+
+    email: str = Field(min_length=3, description="The email the profile was synced with; a code is sent to it")
+
+
+class LoginVerifyIn(LoginIn):
+    """Step 2: the code from the email."""
+
+    token: str = Field(min_length=1, description="The one-time code from the email")
+
+
 class SyncOut(BaseModel):
     message: str

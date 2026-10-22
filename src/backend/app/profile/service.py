@@ -52,6 +52,51 @@ def set_bee(db: Client, profile_id: UUID, bee: str) -> ProfileOut:
     return ProfileOut(**data[0])
 
 
+def _profile_by_email(db: Client, email: str) -> ProfileOut | None:
+    """The profile synced with this email (also matched in lower case, since Supabase lower-cases emails)."""
+    try:
+        data = db.table("profiles").select("*").in_("email", list({email, email.lower()})).limit(1).execute().data
+    except Exception as e:
+        raise ProfileError(502, f"The profile could not be read: {getattr(e, 'message', type(e).__name__)}") from e
+    return ProfileOut(**data[0]) if data else None
+
+
+def send_login_code(db: Client, email: str) -> None:
+    """Email a one-time code to log in, only if a profile is synced with that email (nothing is created otherwise)."""
+    email = email.strip()
+    if _profile_by_email(db, email) is None:
+        raise ProfileError(404, "No account found for that email. Use Get started to create one.")
+    try:
+        _auth_client().auth.sign_in_with_otp({"email": email, "options": {"should_create_user": False}})
+    except AuthApiError as e:
+        raise ProfileError(e.status if e.status in (400, 422, 429) else 400, e.message) from e
+    except AuthError as e:
+        raise ProfileError(502, e.message) from e
+    except AuthFailure as e:
+        raise ProfileError(e.status_code, e.message) from e
+
+
+def confirm_login(db: Client, email: str, token: str) -> ProfileOut:
+    """Check the code; if it is right, return the profile for that email (its profile_id is what the app keeps)."""
+    email = email.strip()
+    try:
+        res = _auth_client().auth.verify_otp({"email": email, "token": token.strip(), "type": "email"})
+    except AuthApiError as e:
+        if e.status == 429:
+            raise ProfileError(429, e.message) from e
+        raise ProfileError(400, "The code is wrong or has expired.") from e
+    except AuthError as e:
+        raise ProfileError(502, e.message) from e
+    except AuthFailure as e:
+        raise ProfileError(e.status_code, e.message) from e
+    if res is None or res.user is None:
+        raise ProfileError(400, "The code is wrong or has expired.")
+    profile = _profile_by_email(db, email)
+    if profile is None:
+        raise ProfileError(404, "No account found for that email. Use Get started to create one.")
+    return profile
+
+
 def send_code(db: Client, profile_id: UUID, email: str) -> None:
     """Email a one-time code through Supabase Auth. Nothing is stored on the profile until the code is confirmed."""
     profile = get_profile(db, profile_id)  # 404 if there is no such profile

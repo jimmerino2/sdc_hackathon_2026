@@ -13,10 +13,14 @@ router = APIRouter(prefix="/roadmap", tags=["roadmap"])
 @router.get("", response_model=Roadmap)
 def get_roadmap(
     profile_id: UUID = Query(description="The profile_id returned from POST /profile"),
-    onet_code: str = Query(..., description="O*NET code, e.g. 15-2051.00"),
+    onet_code: str | None = Query(None, description="O*NET code, e.g. 15-2051.00. Leave out for the profile's most recently built roadmap"),
     db: Client = Depends(get_supabase_admin),
 ):
-    """This profile's roadmap for a role: sections, then units, then skill nodes with status and prerequisites. 404 if none yet."""
+    """A profile's roadmap: sections, then units, then skill nodes with status and prerequisites.
+
+    With onet_code it is that role's roadmap; without it, the most recently built one (what a returning user
+    resumes). 404 if there is none.
+    """
     return service.get_roadmap(db, str(profile_id), onet_code)
 
 

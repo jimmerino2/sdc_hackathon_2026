@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 
 export const steps = [
   'landing',
+  'login',
   'name',
   'who',
   'mind',
@@ -19,6 +20,7 @@ export type Step = (typeof steps)[number];
 
 export const stepLabels: Record<Step, string> = {
   landing: '01 Landing',
+  login: '01a Log in',
   name: '01b What do we call you',
   who: '02 Who are you',
   mind: '03 What’s on your mind',

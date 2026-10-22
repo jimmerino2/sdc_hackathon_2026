@@ -24,7 +24,7 @@ const built = ['IT undergrads', 'Fresh grads', 'Working engineers'];
         <h1>AI is changing tech. Your future in it can be certain.</h1>
         <p>See where software jobs are heading, which ones fit you, and exactly what to learn next.</p>
         <RouterLink :to="go('name')" class="btn btn-primary">Get started</RouterLink>
-        <button type="button" class="btn btn-secondary">I already have an account</button>
+        <RouterLink :to="go('login')" class="btn btn-secondary">I already have an account</RouterLink>
       </div>
     </section>
     <footer>

@@ -18,18 +18,23 @@ def _role(db: Client, onet_code: str) -> dict:
 
 # One request: the roadmap row, its role, and every node with the skill it points at (PostgREST embedding).
 ROADMAP_SELECT = (
-    "roadmap_id,section,unit,status,onet_roles(title,description),"
+    "roadmap_id,onet_code,section,unit,status,onet_roles(title,description),"
     "roadmap_detail(roadmap_detail_id,skill_id,section,unit,status,completed_at,previous_nodes,previous_nodes_required,"
     "onet_role_skills(skill_name,skill_type,importance,level,source))"
 )
 
 
-def get_roadmap(db: Client, profile_id: str, onet_code: str) -> Roadmap:
-    rows = (db.table("roadmap").select(ROADMAP_SELECT).eq("profile_id", profile_id).eq("onet_code", onet_code)
-            .limit(1).execute().data)
+def get_roadmap(db: Client, profile_id: str, onet_code: str | None = None) -> Roadmap:
+    """The profile's roadmap for a role, or its most recently built one when no role is given."""
+    query = db.table("roadmap").select(ROADMAP_SELECT).eq("profile_id", profile_id)
+    if onet_code:
+        query = query.eq("onet_code", onet_code)
+    rows = query.order("created_at", desc=True).limit(1).execute().data
     if not rows:
-        raise HTTPException(status_code=404, detail=f"no roadmap for {onet_code!r} on this profile; build one with POST /roadmap")
+        what = f"for {onet_code!r} " if onet_code else ""
+        raise HTTPException(status_code=404, detail=f"no roadmap {what}on this profile; build one with POST /roadmap")
     roadmap = rows[0]
+    onet_code = roadmap["onet_code"]
     details = roadmap["roadmap_detail"]
 
     # Learning order inside a unit: prerequisites first (depth in the dependency graph), then most important.

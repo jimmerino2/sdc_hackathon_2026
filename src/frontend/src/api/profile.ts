@@ -61,7 +61,7 @@ export async function getProfile(id: string): Promise<Profile> {
 /** A failed email sync step, with a message that can be shown to the user as is. */
 export class SyncError extends Error {}
 
-async function syncPost(path: string, body: object): Promise<Response> {
+async function syncPost(path: string, body: object, notFound?: string): Promise<Response> {
   let res: Response;
   try {
     res = await fetch(`${API_URL}/profile/${path}`, {
@@ -75,7 +75,7 @@ async function syncPost(path: string, body: object): Promise<Response> {
   if (res.ok) return res;
   const detail = await res.json().then((b) => (typeof b?.detail === 'string' ? b.detail : null)).catch(() => null);
   if (res.status === 429) throw new SyncError('Too many tries. Wait a minute, then try again.');
-  if (res.status === 404) throw new SyncError('Jobee couldn’t find your profile. Go back and finish the questions again.');
+  if (res.status === 404) throw new SyncError(notFound ?? detail ?? 'Jobee couldn’t find your profile. Go back and finish the questions again.');
   if (res.status === 409) throw new SyncError(detail ?? 'That email is already linked to another profile.');
   if (res.status === 400 || res.status === 422) throw new SyncError(detail ?? 'That didn’t work. Check it and try again.');
   throw new SyncError('Something went wrong. Try again in a moment.');
@@ -89,6 +89,16 @@ export async function sendSyncCode(profileId: string, email: string): Promise<vo
 /** Step 2: confirm the code; the email is then saved on the profile. */
 export async function verifySyncCode(profileId: string, email: string, token: string): Promise<Profile> {
   return (await syncPost('sync/verify', { profile_id: profileId, email, token })).json();
+}
+
+/** Step 1 of logging in: a one-time code is emailed if a profile is synced with that email. */
+export async function sendLoginCode(email: string): Promise<void> {
+  await syncPost('login', { email });
+}
+
+/** Step 2: confirm the code; the matching profile comes back. */
+export async function verifyLoginCode(email: string, token: string): Promise<Profile> {
+  return (await syncPost('login/verify', { email, token })).json();
 }
 
 const PROFILE_COOKIE = 'jobee_profile_id';

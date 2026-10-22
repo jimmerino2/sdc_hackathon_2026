@@ -3,8 +3,8 @@ import { personas, scenarios, type PersonaKey, type Role, type ScenarioKey } fro
 import { DEFAULT_SKILLS, LEVEL_SCORES, levelFromScore, mergeSkills, SKILL_CHECK_SIZE } from './data/skills';
 import type { SkillScore } from './api/resume';
 import { fetchRecommendations, JobsError, type Recommendations } from './api/jobs';
-import { ensureRoadmap, RoadmapError, type Roadmap } from './api/roadmap';
-import { readProfileId } from './api/profile';
+import { ensureRoadmap, getRoadmap, RoadmapError, type Roadmap } from './api/roadmap';
+import { readProfileId, saveProfileId, stageForWho, type Profile } from './api/profile';
 
 interface FlowState {
   name: string;
@@ -21,6 +21,8 @@ interface FlowState {
   jobs: { status: 'idle' | 'loading' | 'done' | 'error'; data: Recommendations | null; error: string | null };
   /** The email confirmed on the profile, once synced. */
   email: string | null;
+  /** Skills already saved on the profile, when the user came back by logging in. */
+  savedSkills: SkillScore[];
   roadmap: { status: 'idle' | 'loading' | 'done' | 'error'; data: Roadmap | null; error: string | null };
 }
 
@@ -44,12 +46,25 @@ function init(k: PersonaKey): FlowState {
     resume: null,
     jobs: { status: 'idle', data: null, error: null },
     email: null,
+    savedSkills: [],
     roadmap: { status: 'idle', data: null, error: null },
   };
 }
 
 export function resetPersona(k: PersonaKey) {
   Object.assign(store[k], init(k));
+}
+
+/** Start the app as a returning user: keep their profile id and restore what the profile holds. */
+export function signIn(profile: Profile) {
+  const s = store.a;
+  Object.assign(s, init('a'));
+  s.profileId = profile.profile_id;
+  s.name = profile.name;
+  s.email = profile.email ?? null;
+  s.savedSkills = profile.skills;
+  s.who = Math.max(stageForWho.indexOf(profile.stage), 0);
+  saveProfileId(profile.profile_id);
 }
 
 /** Fetch the matched roles for the saved profile into state.jobs. Never throws. */
@@ -69,10 +84,6 @@ export async function loadJobs(s: FlowState) {
 
 /** Load the chosen role's roadmap into state.roadmap, building it first if needed. Never throws. */
 export async function loadRoadmap(s: FlowState) {
-  if (!s.chosenRoleId) {
-    s.roadmap = { status: 'error', data: null, error: 'Pick a role first, then Jobee can build your roadmap.' };
-    return;
-  }
   s.profileId ??= readProfileId();
   if (!s.profileId) {
     s.roadmap = { status: 'error', data: null, error: 'Your profile wasn’t saved. Go back and finish the questions again.' };
@@ -80,6 +91,17 @@ export async function loadRoadmap(s: FlowState) {
   }
   s.roadmap = { status: 'loading', data: null, error: null };
   try {
+    if (!s.chosenRoleId) {
+      // No role picked in this session (e.g. after logging in): resume the profile's latest saved roadmap.
+      const saved = await getRoadmap(s.profileId);
+      if (!saved) {
+        s.roadmap = { status: 'error', data: null, error: 'You haven’t built a roadmap yet. Pick a role first, then Jobee can build it.' };
+        return;
+      }
+      s.chosenRoleId = saved.onet_code;
+      s.roadmap = { status: 'done', data: saved, error: null };
+      return;
+    }
     s.roadmap = { status: 'done', data: await ensureRoadmap(s.profileId, s.chosenRoleId), error: null };
   } catch (e) {
     console.error(e);
