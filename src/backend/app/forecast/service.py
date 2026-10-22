@@ -139,6 +139,7 @@ def list_jobs(
             change_pct=r["change_pct"],
             range=Range(low=r["change_low_pct"], high=r["change_high_pct"]),
             model_change_pct=r["model_change_pct"],
+            model_range=Range(low=r["model_change_low_pct"], high=r["model_change_high_pct"]),
             reliability=_reliability(r["model_status"]),
         ) for r in recs]
         out.append(JobForecast(

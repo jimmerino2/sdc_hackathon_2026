@@ -1,20 +1,74 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import FlowShell from '../components/FlowShell.vue';
 import Bubble from '../components/Bubble.vue';
 import Icon from '../components/Icon.vue';
-import { scenarios } from '../data/flows';
+import { scenarios, type ScenarioKey } from '../data/flows';
 import { useFlow } from '../state';
+import { backendScenario, fetchJobForecasts, SOFTWARE_DEVELOPERS_ONET, type JobForecast } from '../api/forecast';
 
 const { state } = useFlow();
 const icons = { accelerates: 'tup', steady: 'arrow', slows: 'tdown' } as const;
-const hist = '0,150 60,140 130,120 200,95 260,70';
-const lines = {
-  accelerates: '260,70 340,35 420,0',
-  steady: '260,70 340,68 420,64',
-  slows: '260,70 340,85 420,108',
-};
 const active = computed(() => state.value.scenario);
+
+const forecasts = ref<JobForecast[]>([]);
+const status = ref<'loading' | 'ready' | 'error'>('loading');
+
+onMounted(async () => {
+  try {
+    forecasts.value = await fetchJobForecasts(SOFTWARE_DEVELOPERS_ONET);
+    status.value = forecasts.value.length ? 'ready' : 'error';
+  } catch {
+    status.value = 'error';
+  }
+});
+
+const byScenario = computed(() => {
+  const out = {} as Record<ScenarioKey, JobForecast | undefined>;
+  for (const s of scenarios) out[s.key] = forecasts.value.find((f) => f.scenario === backendScenario[s.key]);
+  return out;
+});
+
+/** LightGBM growth (%) at months 0, 3, 6, 9, 12 for one scenario. */
+function series(k: ScenarioKey): { m: number; v: number }[] {
+  const f = byScenario.value[k];
+  if (!f) return [];
+  return [{ m: 0, v: 0 }, ...f.outlook.map((o) => ({ m: o.horizon_months, v: o.model_change_pct }))];
+}
+
+// Chart geometry: x = months ahead, y = % change in postings.
+const X0 = 34, X1 = 420, Y0 = 8, Y1 = 172;
+const band = computed(() => byScenario.value[active.value]?.outlook ?? []);
+const yRange = computed(() => {
+  const vals = [0, ...scenarios.flatMap((s) => series(s.key).map((p) => p.v))];
+  for (const o of band.value) vals.push(o.model_range.low, o.model_range.high);
+  return { lo: Math.floor(Math.min(...vals) / 10) * 10, hi: Math.ceil(Math.max(...vals) / 10) * 10 };
+});
+const sx = (m: number) => X0 + (m / 12) * (X1 - X0);
+const sy = (v: number) => Y1 - ((v - yRange.value.lo) / (yRange.value.hi - yRange.value.lo)) * (Y1 - Y0);
+const ticks = computed(() => {
+  const out: number[] = [];
+  for (let t = yRange.value.lo; t <= yRange.value.hi; t += 10) out.push(t);
+  return out;
+});
+const pts = (k: ScenarioKey) => series(k).map((p) => `${sx(p.m)},${sy(p.v)}`).join(' ');
+const rangePoly = computed(() => {
+  const o = band.value;
+  if (!o.length) return '';
+  const up = [{ m: 0, v: 0 }, ...o.map((h) => ({ m: h.horizon_months, v: h.model_range.high }))];
+  const dn = [{ m: 0, v: 0 }, ...o.map((h) => ({ m: h.horizon_months, v: h.model_range.low }))].reverse();
+  return [...up, ...dn].map((p) => `${sx(p.m)},${sy(p.v)}`).join(' ');
+});
+const endLabel = computed(() => {
+  const s = series(active.value);
+  const last = s[s.length - 1];
+  return last ? `${last.v > 0 ? '+' : ''}${last.v}%` : '';
+});
+const axis = computed(() => {
+  const f = forecasts.value[0];
+  return f ? [`${f.forecast_from} · today`, ...f.outlook.map((o) => o.forecast_for)] : [];
+});
+const meta = computed(() => forecasts.value[0]);
 </script>
 
 <template>
@@ -24,23 +78,26 @@ const active = computed(() => state.value.scenario);
         <p class="eyebrow">Your AI signal</p>
         <h1>Here’s where AI is taking software work</h1>
         <div class="card chart">
-          <small>AI adoption in software work</small>
-          <h2>Three possible futures, 2026 → 2030</h2>
-          <svg viewBox="0 0 440 190" role="img" aria-label="Three scenarios for AI adoption">
-            <g stroke="#eceae5"><line v-for="y in [30, 80, 130, 175]" :key="y" x1="0" x2="440" :y1="y" :y2="y" /></g>
-            <line x1="260" x2="260" y1="0" y2="180" stroke="#c2bfba" stroke-dasharray="3 4" />
-            <polyline :points="hist" fill="none" stroke="#1e1e1e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
-            <polygon points="260,70 420,0 420,108" fill="#fff3cc" opacity=".7" />
-            <polyline :points="lines.steady" fill="none" stroke="#ffe08a" stroke-width="3" />
-            <polyline :points="lines.slows" fill="none" stroke="#c2bfba" stroke-width="3" stroke-dasharray="2 5" stroke-linecap="round" />
-            <polyline :points="lines.accelerates" fill="none" :stroke="active === 'accelerates' ? '#ff9800' : '#ffcf66'" stroke-width="5" stroke-linecap="round" />
-            <polyline v-if="active === 'steady'" :points="lines.steady" fill="none" stroke="#ff9800" stroke-width="5" stroke-linecap="round" />
-            <polyline v-if="active === 'slows'" :points="lines.slows" fill="none" stroke="#ff9800" stroke-width="5" stroke-linecap="round" />
-            <circle cx="260" cy="70" r="12" fill="#fff3cc" stroke="#ffc107" stroke-width="2" /><circle cx="260" cy="70" r="6" fill="#1e1e1e" />
-            <text x="425" y="-4" font-size="10" font-weight="900" text-anchor="end" fill="#1e1e1e" letter-spacing="1">ACCELERATES</text>
-          </svg>
-          <div class="axis"><span>2020</span><span>2023</span><span>2026 · today</span><span>2030</span></div>
-          <p class="note">Blends Indeed job-posting trends, O*NET task exposure and AI-adoption research. Scenarios are illustrative, not predictions.</p>
+          <small>Software Developers · postings outlook</small>
+          <h2>Three possible futures, next 12 months</h2>
+          <p v-if="status === 'loading'" class="state">Loading the LightGBM forecast…</p>
+          <p v-else-if="status === 'error'" class="state">Couldn’t reach the forecast service. Make sure the backend is running on port 8000.</p>
+          <template v-else>
+            <svg viewBox="0 0 440 190" role="img" aria-label="LightGBM forecast of software developer job postings under three AI scenarios">
+              <g stroke="#eceae5"><line v-for="t in ticks" :key="t" :x1="X0" :x2="X1" :y1="sy(t)" :y2="sy(t)" :stroke="t === 0 ? '#c2bfba' : '#eceae5'" /></g>
+              <text v-for="t in ticks" :key="'l' + t" :x="X0 - 6" :y="sy(t) + 3" font-size="9" font-weight="800" text-anchor="end" fill="#8a8782">{{ t > 0 ? '+' : '' }}{{ t }}%</text>
+              <polygon :points="rangePoly" fill="#fff3cc" opacity=".7" />
+              <polyline v-for="s in scenarios.filter((x) => x.key !== active)" :key="s.key" :points="pts(s.key)" fill="none" stroke="#c2bfba" stroke-width="3" stroke-dasharray="2 5" stroke-linecap="round" />
+              <polyline :points="pts(active)" fill="none" stroke="#ff9800" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+              <circle v-for="p in series(active)" :key="p.m" :cx="sx(p.m)" :cy="sy(p.v)" r="4" fill="#1e1e1e" />
+              <text :x="X1" :y="sy(series(active).at(-1)?.v ?? 0) - 10" font-size="11" font-weight="900" text-anchor="end" fill="#1e1e1e">{{ endLabel }}</text>
+            </svg>
+            <div class="axis"><span v-for="a in axis" :key="a">{{ a }}</span></div>
+            <p class="note">
+              Change in Software Developer job postings vs today, from our LightGBM model, shifted by each AI scenario. Shaded band is the likely range for the selected future.
+              {{ meta?.is_proxy_for_malaysia ? 'Uses US postings data as a stand-in for Malaysia. ' : '' }}Indicative, not a prediction.
+            </p>
+          </template>
         </div>
       </section>
       <section class="right">
@@ -67,6 +124,7 @@ h1 { font-size: 30px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .chart small { font-size: 11px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .chart h2 { font-weight: 900; font-size: 20px; margin: 6px 0 14px; }
 svg { width: 100%; overflow: visible; margin-top: 16px; }
+.state { margin: 18px 0 6px; font-size: 13px; font-weight: 700; color: var(--muted); }
 .axis { display: flex; justify-content: space-between; font-size: 10px; font-weight: 900; color: var(--muted); letter-spacing: .05em; text-transform: uppercase; margin-top: 8px; }
 .note { margin-top: 14px; font-size: 11px; color: var(--muted); font-weight: 600; line-height: 1.4; }
 .right { display: flex; flex-direction: column; gap: 14px; }

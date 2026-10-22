@@ -65,6 +65,7 @@ class JobHorizon(BaseModel):
     change_pct: float = Field(description="Main forecast: expected change in postings, in percent")
     range: Range = Field(description="Likely range of change_pct, in percent")
     model_change_pct: float = Field(description="Machine-learning (LightGBM) forecast, for comparison")
+    model_range: Range = Field(description="Likely range of model_change_pct, in percent")
     reliability: Reliability
 
 
