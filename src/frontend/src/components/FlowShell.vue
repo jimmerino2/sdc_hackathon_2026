@@ -2,7 +2,9 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import Icon from './Icon.vue';
-import { go, type Page } from '../router';
+import { isLoggedIn } from '../api/profile';
+import { useFlow } from '../state';
+import { go, type Step } from '../router';
 
 const props = defineProps<{
   progress: number;
@@ -15,7 +17,10 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{ next: [] }>();
 const router = useRouter();
+const { state } = useFlow();
 const pct = computed(() => (props.progress / 5) * 100);
+/** Where the close button goes: to the learner's pathway once they have an account (a confirmed email), else back to the start. */
+const closeTo = computed<Step>(() => (state.value.email || isLoggedIn() ? 'pathway' : 'landing'));
 
 function onNext() {
   emit('next');
@@ -26,7 +31,7 @@ function onNext() {
 <template>
   <div class="shell">
     <header>
-      <RouterLink :to="go('landing')" class="x" aria-label="Close"><Icon name="x" :size="22" /></RouterLink>
+      <RouterLink :to="go(closeTo)" class="x" aria-label="Close"><Icon name="x" :size="22" /></RouterLink>
       <div class="progress"><i :style="{ width: pct + '%' }" /></div>
       <div class="streak"><Icon name="flame" :size="18" /> {{ progress }}/5</div>
     </header>

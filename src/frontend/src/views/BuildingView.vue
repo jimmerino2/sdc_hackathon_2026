@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Icon from '../components/Icon.vue';
 import Mascot from '../components/Mascot.vue';
+import { isOnboarded } from '../api/profile';
 import { loadRoadmap, useFlow } from '../state';
 import { go } from '../router';
 
@@ -56,6 +57,7 @@ onBeforeUnmount(() => clearInterval(timer));
     <div v-if="failed" class="fail" role="alert">
       <p>{{ state.roadmap.error }}</p>
       <button type="button" class="btn btn-secondary" @click="start"><Icon name="refresh" :size="18" /> Try again</button>
+      <RouterLink :to="go(isOnboarded() ? 'suggested' : 'signal')" class="back">Back</RouterLink>
     </div>
     <div v-else class="know">
       <small>Did you know?</small>
@@ -83,4 +85,6 @@ li { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size:
 .fail { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 14px; }
 .fail p { width: 100%; padding: 12px 16px; border-radius: 14px; background: #fdecea; color: #b3261e; font-weight: 800; font-size: 14px; line-height: 1.4; }
 .fail .btn { display: inline-flex; align-items: center; gap: 8px; }
+.back { font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.back:hover { color: var(--ink); }
 </style>

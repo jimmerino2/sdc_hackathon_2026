@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import Mascot from './Mascot.vue';
+import { go, type Step } from '../router';
+
+withDefaults(defineProps<{ to?: Step }>(), { to: 'landing' });
 </script>
 
 <template>
-  <RouterLink :to="{ name: 'landing', params: $route.params }" class="logo">
+  <RouterLink :to="go(to)" class="logo">
     <Mascot :size="30" />
     <span>jobee</span>
   </RouterLink>

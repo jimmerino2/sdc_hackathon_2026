@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from uuid import UUID
 
 from supabase import Client
@@ -95,6 +96,27 @@ def confirm_login(db: Client, email: str, token: str) -> ProfileOut:
     if profile is None:
         raise ProfileError(404, "No account found for that email. Use Get started to create one.")
     return profile
+
+
+def save_suggestions(db: Client, profile_id: UUID, suggestions: dict) -> None:
+    """Keep the roles last suggested to this profile (a JSON-ready RecommendResponse)."""
+    try:
+        db.table("profiles").update(
+            {"suggested_roles": suggestions, "suggested_at": datetime.now(timezone.utc).isoformat()}
+        ).eq("profile_id", str(profile_id)).execute()
+    except Exception as e:
+        raise ProfileError(502, f"The suggestions could not be saved: {getattr(e, 'message', type(e).__name__)}") from e
+
+
+def get_suggestions(db: Client, profile_id: UUID) -> dict | None:
+    """The roles last suggested to this profile, or None if there are none yet. 404 if the profile does not exist."""
+    try:
+        data = db.table("profiles").select("suggested_roles").eq("profile_id", str(profile_id)).limit(1).execute().data
+    except Exception as e:
+        raise ProfileError(502, f"The suggestions could not be read: {getattr(e, 'message', type(e).__name__)}") from e
+    if not data:
+        raise ProfileError(404, "No such profile.")
+    return data[0]["suggested_roles"]
 
 
 def send_code(db: Client, profile_id: UUID, email: str) -> None:

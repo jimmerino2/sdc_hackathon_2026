@@ -43,6 +43,8 @@ export interface Recommendations {
   context: ContextRole[];
   horizon_months: number;
   note: string;
+  /** When the roles were worked out (ISO 8601). Missing on sets saved before this was recorded. */
+  generated_at?: string | null;
 }
 
 /** A failed request, with a message that can be shown to the user as is. */
@@ -59,4 +61,17 @@ export async function fetchRecommendations(profileId: string): Promise<Recommend
   if (res.status === 404) throw new JobsError('Jobee couldn’t find your profile. Go back and finish the questions again.');
   if (res.status === 409) throw new JobsError('Jobee needs at least one skill to match roles. Go back and rate a few skills.');
   throw new JobsError('Jobee couldn’t match roles just now. Try again in a moment.');
+}
+
+/** The roles last suggested to this profile, as they were then (nothing is recomputed). Null if none were saved. */
+export async function fetchSuggested(profileId: string): Promise<Recommendations | null> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/jobs/suggested?profile_id=${encodeURIComponent(profileId)}`);
+  } catch {
+    throw new JobsError('Couldn’t reach Jobee. Check your connection and try again.');
+  }
+  if (res.ok) return res.json();
+  if (res.status === 404) return null;
+  throw new JobsError('Jobee couldn’t load your suggested roles. Try again in a moment.');
 }

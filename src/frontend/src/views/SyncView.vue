@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import FlowShell from '../components/FlowShell.vue';
 import Bubble from '../components/Bubble.vue';
 import Icon from '../components/Icon.vue';
-import { getProfile, readProfileId, sendSyncCode, SyncError, verifySyncCode } from '../api/profile';
+import { getProfile, markLoggedIn, readProfileId, sendSyncCode, SyncError, verifySyncCode } from '../api/profile';
 import { useFlow } from '../state';
 
 const { state } = useFlow();
@@ -57,6 +57,7 @@ function verify() {
   run(async () => {
     const profile = await verifySyncCode(id, sentTo.value, code.value.trim());
     state.value.email = profile.email ?? sentTo.value;
+    markLoggedIn();
     step.value = 'done';
   });
 }
@@ -74,6 +75,7 @@ onMounted(async () => {
     const profile = await getProfile(id);
     if (profile.email) {
       state.value.email = profile.email;
+      markLoggedIn();
       email.value = profile.email;
       step.value = 'done';
     }
