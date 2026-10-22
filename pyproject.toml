@@ -12,6 +12,7 @@ dependencies = [
     "openpyxl>=3.1",
     "pandas>=2.0",
     "pydantic-settings>=2.16.1",
+    "pypdf>=6.21.1",
     "scikit-learn>=1.9.1",
     "supabase>=2.33.0",
 ]

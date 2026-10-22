@@ -112,6 +112,8 @@ One row per **job × skill**. 4,548 rows (22 to 219 per job, about 99 on average
 | `importance` | O\*NET + Ours | 1–5  | Skills and knowledge: O*NET `Data Value` where `Scale ID = IM`. Software: set by us from O*NET flags (4.0 In Demand, 3.5 Hot Technology, 2.5 neither). The 2.5 tier is currently unused: every job has at least one Hot or In Demand item                                       |
 | `level`      | O\*NET        | 0–7  | O*NET `Data Value` where `Scale ID = LV`. Blank for software (O*NET has no level for it)                                                                                                    |
 
+Database only: Supabase's `onet_role_skills` also has a nullable `source` column (an http(s) URL), added by `migrations/0002_onet_role_skills_source.sql`. It is not in the CSV and the loader leaves it alone.
+
 Filters we apply:
 
 - Software is limited to "Hot" or "In Demand" items; jobs with none would keep up to 10 (no job needs this fallback today, so software rows per job range from 1 to 151).
