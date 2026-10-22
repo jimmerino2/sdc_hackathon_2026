@@ -7,3 +7,5 @@ description: Which mascot is fixed branding vs user-chosen, and the tone rules f
 - Jobee's bubbles are short Duolingo-style questions, tailored to persona a/b/c (undergrad / fresh grad / working engineer).
 - Copy must not promise certainty or "future-proof" jobs; forecasts are indicative job-posting trends.
   **How to apply:** any new onboarding screen or outcome copy.
+- Onboarding Jobee should look friendly (glasses/happy), never the serious+suit look on question screens.
+  **Why:** user said the resume-page bee looked "depressed and like a beggar".
