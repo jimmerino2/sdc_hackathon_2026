@@ -5,7 +5,7 @@ from supabase import Client
 
 from app.deps import get_supabase_admin
 from app.profile import service
-from app.profile.schemas import ProfileIn, ProfileOut, SyncIn, SyncOut, SyncVerifyIn
+from app.profile.schemas import ProfileIn, ProfileOut, ProfileUpdate, SyncIn, SyncOut, SyncVerifyIn
 
 router = APIRouter(prefix="/profile", tags=["profile"])
 
@@ -43,5 +43,14 @@ def read_profile(profile_id: UUID, db: Client = Depends(get_supabase_admin)):
     """Read a profile by the profile_id returned from POST. 404 if there is none."""
     try:
         return service.get_profile(db, profile_id)
+    except service.ProfileError as e:
+        raise HTTPException(e.status_code, e.message)
+
+
+@router.patch("/{profile_id}", response_model=ProfileOut)
+def update_profile(profile_id: UUID, body: ProfileUpdate, db: Client = Depends(get_supabase_admin)):
+    """Update a profile. Only the fields sent are changed; the email is changed through /profile/sync. Returns the updated profile; 404 if there is none."""
+    try:
+        return service.update_profile(db, profile_id, body)
     except service.ProfileError as e:
         raise HTTPException(e.status_code, e.message)

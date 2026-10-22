@@ -3,6 +3,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from app.resume.schemas import SkillScore
+
 
 class ExperienceEntry(BaseModel):
     """One job, internship or project."""
@@ -23,8 +25,20 @@ class ProfileIn(BaseModel):
         description="under = undergraduate, fresh = fresh graduate, working = working (beginner)"
     )
     concerns: str = Field(description="Their worries / feelings about their career")
-    skills: list[str] = Field(description="Skill names")
+    skills: list[SkillScore] = Field(description="O*NET skill names, each with how strong it is (0-1)")
     experience: list[ExperienceEntry] = Field(description="Work / project experience")
+
+
+class ProfileUpdate(BaseModel):
+    """Fields to change; anything left out stays as it is. The email is changed through /profile/sync instead."""
+
+    name: str | None = Field(None, min_length=1, description="Full name")
+    stage: Literal["under", "fresh", "working"] | None = Field(
+        None, description="under = undergraduate, fresh = fresh graduate, working = working (beginner)"
+    )
+    concerns: str | None = Field(None, description="Their worries / feelings about their career")
+    skills: list[SkillScore] | None = Field(None, description="O*NET skill names, each with how strong it is (0-1)")
+    experience: list[ExperienceEntry] | None = Field(None, description="Work / project experience")
 
 
 class ProfileOut(ProfileIn):

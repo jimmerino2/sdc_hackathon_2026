@@ -2,17 +2,11 @@
 import Logo from '../components/Logo.vue';
 import Mascot from '../components/Mascot.vue';
 import Icon from '../components/Icon.vue';
-import { personas, type PersonaKey } from '../data/flows';
 import { useFlow } from '../state';
 import { go } from '../router';
 
 const { key } = useFlow();
-const built: { k: PersonaKey; label: string }[] = [
-  { k: 'a', label: 'IT undergrads' },
-  { k: 'b', label: 'Fresh grads' },
-  { k: 'c', label: 'Working engineers' },
-];
-void personas;
+const built = ['IT undergrads', 'Fresh grads', 'Working engineers'];
 </script>
 
 <template>
@@ -31,13 +25,13 @@ void personas;
       <div class="copy">
         <h1>AI is changing tech. Your future in it can be certain.</h1>
         <p>See where software jobs are heading, which ones fit you, and exactly what to learn next.</p>
-        <RouterLink :to="go(key, 'who')" class="btn btn-primary">Get started</RouterLink>
-        <RouterLink :to="go(key, 'pathway')" class="btn btn-secondary">I already have an account</RouterLink>
+        <RouterLink :to="go(key, 'name')" class="btn btn-primary">Get started</RouterLink>
+        <button type="button" class="btn btn-secondary">I already have an account</button>
       </div>
     </section>
     <footer>
       <span>Built for</span>
-      <RouterLink v-for="b in built" :key="b.k" :to="go(b.k, 'landing')" class="built" :class="{ on: key === b.k }">{{ b.label }}</RouterLink>
+      <span v-for="b in built" :key="b" class="built">{{ b }}</span>
     </footer>
   </div>
 </template>
@@ -64,7 +58,6 @@ h1 { font-size: 40px; line-height: 1.15; font-weight: 900; margin-bottom: 6px; l
 .copy .btn { width: 100%; }
 footer { border-top: 2px solid var(--line); padding: 22px; display: flex; gap: 12px; justify-content: center; align-items: center; flex-wrap: wrap; font-size: 11px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .built { padding: 8px 16px; border-radius: 999px; border: 2px solid var(--line-strong); background: #fff; color: var(--ink); }
-.built.on { background: var(--yellow); border-color: var(--yellow); }
 @media (max-width: 900px) {
   header { padding: 20px; } .hero { grid-template-columns: 1fr; padding: 10px 20px 40px; } h1 { font-size: 32px; }
   .art { height: 340px; max-width: 420px; margin: 0 auto; width: 100%; }

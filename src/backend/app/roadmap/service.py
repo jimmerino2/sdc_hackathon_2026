@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from fastapi import HTTPException
 from supabase import Client
 
+from app.profile import service as profiles
 from app.roadmap import planner
 from app.roadmap.schemas import CurrentStep, Node, Roadmap, Section, Unit
 
@@ -23,10 +24,11 @@ ROADMAP_SELECT = (
 )
 
 
-def get_roadmap(db: Client, onet_code: str) -> Roadmap:
-    rows = db.table("roadmap").select(ROADMAP_SELECT).eq("onet_code", onet_code).limit(1).execute().data
+def get_roadmap(db: Client, profile_id: str, onet_code: str) -> Roadmap:
+    rows = (db.table("roadmap").select(ROADMAP_SELECT).eq("profile_id", profile_id).eq("onet_code", onet_code)
+            .limit(1).execute().data)
     if not rows:
-        raise HTTPException(status_code=404, detail=f"no roadmap for {onet_code!r}; build one with POST /roadmap")
+        raise HTTPException(status_code=404, detail=f"no roadmap for {onet_code!r} on this profile; build one with POST /roadmap")
     roadmap = rows[0]
     details = roadmap["roadmap_detail"]
 
@@ -64,6 +66,7 @@ def get_roadmap(db: Client, onet_code: str) -> Roadmap:
         for sec, units in sorted(grouped.items())
     ]
     return Roadmap(
+        profile_id=profile_id,
         onet_code=onet_code,
         title=roadmap["onet_roles"]["title"],
         description=roadmap["onet_roles"]["description"],
@@ -74,43 +77,66 @@ def get_roadmap(db: Client, onet_code: str) -> Roadmap:
     )
 
 
-def complete_node(db: Client, roadmap_detail_id: str) -> Roadmap:
-    """Mark one node completed, then move the roadmap's current step to the first unit that still has open nodes.
+def complete_node(db: Client, profile_id: str, roadmap_detail_id: str) -> Roadmap:
+    """Mark one node completed, move the roadmap's current step to the first unit that still has open nodes,
+    and unlock the nodes that are now reachable.
 
     When every node is completed the section/unit stay where they are and only the status becomes completed.
     """
     found = (
         db.table("roadmap_detail")
-        .select("roadmap_id,onet_code,skill_id,status")
+        .select("roadmap_id,onet_code,skill_id,status,roadmap(profile_id)")
         .eq("roadmap_detail_id", roadmap_detail_id)
         .limit(1)
         .execute()
         .data
     )
-    if not found:
-        raise HTTPException(status_code=404, detail=f"no roadmap node {roadmap_detail_id!r}")
+    if not found or (found[0]["roadmap"] or {}).get("profile_id") != profile_id:
+        raise HTTPException(status_code=404, detail=f"no roadmap node {roadmap_detail_id!r} on this profile")
     node = found[0]
+    if node["status"] == "locked":
+        raise HTTPException(status_code=409, detail="that node is still locked; finish the ones before it first")
     if node["status"] != "completed":
         db.table("roadmap_detail").update(
             {"status": "completed", "completed_at": datetime.now(timezone.utc).isoformat()}
         ).eq("roadmap_detail_id", roadmap_detail_id).execute()
 
-    nodes = db.table("roadmap_detail").select("section,unit,status").eq("roadmap_id", node["roadmap_id"]).execute().data
+    nodes = (db.table("roadmap_detail").select("skill_id,section,unit,status,previous_nodes,previous_nodes_required")
+             .eq("roadmap_id", node["roadmap_id"]).execute().data)
     open_nodes = [(n["section"], n["unit"]) for n in nodes if n["status"] != "completed"]
     if open_nodes:
         section, unit = min(open_nodes)
         update = {"section": section, "unit": unit, "status": "in_progress"}
+        # Unlock nodes up to the current unit whose required prerequisites are all completed.
+        done = {n["skill_id"] for n in nodes if n["status"] == "completed"}
+        unlock = [
+            n["skill_id"] for n in nodes
+            if n["status"] == "locked" and (n["section"], n["unit"]) <= (section, unit)
+            and (not n["previous_nodes_required"] or set(n["previous_nodes"]) <= done)
+        ]
+        if unlock:
+            (db.table("roadmap_detail").update({"status": "available"})
+             .eq("roadmap_id", node["roadmap_id"]).in_("skill_id", unlock).execute())
     else:
         update = {"status": "completed"}
     db.table("roadmap").update(update).eq("roadmap_id", node["roadmap_id"]).execute()
-    return get_roadmap(db, node["onet_code"])
+    return get_roadmap(db, profile_id, node["onet_code"])
 
 
-def create_roadmap(db: Client, onet_code: str, replace: bool) -> Roadmap:
-    """Have the model plan a roadmap from the role's skills, store it, and return it."""
+def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool) -> Roadmap:
+    """Have the model plan a roadmap from the role's skills, store it for this profile, and return it."""
+    try:
+        profiles.get_profile(db, profile_id)
+    except profiles.ProfileError as e:
+        raise HTTPException(e.status_code, e.message) from e
     role = _role(db, onet_code)
-    if db.table("roadmap").select("roadmap_id").eq("onet_code", onet_code).limit(1).execute().data and not replace:
-        raise HTTPException(status_code=409, detail="roadmap already exists; send replace=true to rebuild it")
+
+    def mine(query):
+        """Limit a query to this profile's roadmap for the role."""
+        return query.eq("profile_id", profile_id).eq("onet_code", onet_code)
+
+    if mine(db.table("roadmap").select("roadmap_id")).limit(1).execute().data and not replace:
+        raise HTTPException(status_code=409, detail="this profile already has a roadmap for that role; send replace=true to rebuild it")
 
     skills = db.table("onet_role_skills").select("skill_id,skill_name,skill_type,importance,level").eq("onet_code", onet_code).execute().data
     relevant = planner.candidates(skills)
@@ -120,7 +146,8 @@ def create_roadmap(db: Client, onet_code: str, replace: bool) -> Roadmap:
 
     # One roadmap row per role; its section/unit are the current step, starting at the first unit.
     roadmap_id = str(uuid.uuid4())
-    roadmap = {"roadmap_id": roadmap_id, "onet_code": onet_code, "section": 1, "unit": 1, "status": "available"}
+    roadmap = {"roadmap_id": roadmap_id, "profile_id": profile_id, "onet_code": onet_code, "section": 1, "unit": 1,
+               "status": "available"}
     details = []
     for si, section in enumerate(plan, start=1):
         for ui, nodes in enumerate(section, start=1):
@@ -140,11 +167,11 @@ def create_roadmap(db: Client, onet_code: str, replace: bool) -> Roadmap:
                 )
 
     # No transaction support in the client: if a write fails, remove the partial roadmap.
-    db.table("roadmap").delete().eq("onet_code", onet_code).execute()  # details go with it (on delete cascade)
+    mine(db.table("roadmap").delete()).execute()  # details go with it (on delete cascade)
     try:
         db.table("roadmap").insert(roadmap).execute()
         db.table("roadmap_detail").insert(details).execute()
     except Exception as e:
-        db.table("roadmap").delete().eq("onet_code", onet_code).execute()
+        mine(db.table("roadmap").delete()).execute()
         raise HTTPException(status_code=502, detail=f"could not store roadmap: {e}")
-    return get_roadmap(db, onet_code)
+    return get_roadmap(db, profile_id, onet_code)

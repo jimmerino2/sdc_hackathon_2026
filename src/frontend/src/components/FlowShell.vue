@@ -12,6 +12,7 @@ const props = defineProps<{
   nextLabel?: string;
   skipLabel?: string;
   nextDisabled?: boolean;
+  back?: Step;
 }>();
 const emit = defineEmits<{ next: [] }>();
 const router = useRouter();
@@ -33,7 +34,8 @@ function onNext() {
     </header>
     <main><slot /></main>
     <footer>
-      <RouterLink :to="go(key, skipTo ?? next)" class="btn btn-secondary">{{ skipLabel ?? 'Skip' }}</RouterLink>
+      <RouterLink v-if="back" :to="go(key, back)" class="btn btn-secondary">Back</RouterLink>
+      <RouterLink v-else :to="go(key, skipTo ?? next)" class="btn btn-secondary">{{ skipLabel ?? 'Skip' }}</RouterLink>
       <button class="btn btn-primary" :disabled="nextDisabled" @click="onNext">{{ nextLabel ?? 'Continue' }}</button>
     </footer>
   </div>

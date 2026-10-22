@@ -11,6 +11,9 @@ How the reference data gets into Supabase. Column meanings are in `data/document
 | `0003_roadmap.sql` | Adds `roadmap` (one row per role; `section`/`unit` = current step) and `roadmap_detail` (skill nodes, each with its own `section`/`unit`, status and prerequisites), with RLS |
 | `0004_profiles.sql` | Adds `profiles` (one row per email: name, career stage, concerns, skills, experience), service-role access only |
 | `0005_roadmap_detail_id.sql` | Adds a unique `roadmap_detail.roadmap_detail_id` (uuid) so one node can be addressed by a single id |
+| `0006_onet_roles_icon.sql` | Adds `onet_roles.icon`, a Lucide icon name per role for the frontend (kept when `onet_roles` is reloaded) |
+| `0007_profiles_skill_scores.sql` | Changes `profiles.skills` from `text[]` to a jsonb array of `{name, score}` (O*NET names, score 0-1) |
+| `0008_roadmap_profile.sql` | Ties each `roadmap` to a profile (`profile_id`, one roadmap per profile and role) and makes roadmaps private (service role only). Older ownerless roadmaps are kept with a null `profile_id` and ignored |
 | `../pipeline/load_supabase.py` | Loads `data/processed/*.csv` into those tables |
 
 Tables: `onet_roles`, `onet_role_skills`, `ai_exposure`, `ai_exposure_detail`, `crosswalk`, `onet_to_my_group`, `my_vacancies`.

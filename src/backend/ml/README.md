@@ -102,9 +102,9 @@ final_growth = model_growth + shift
 
 | Scenario | `scenario_effect` | Meaning |
 |---|---|---|
-| Slow | **+0.10** | AI adoption is slow: exposed jobs do better than average, unexposed worse |
+| Slow | **+0.25** | AI adoption is slow: exposed jobs do better than average, unexposed worse |
 | Baseline | **0** | No shift, the plain model forecast |
-| Rapid AI | **−0.10** | AI adoption is fast: exposed jobs do worse than average, unexposed better |
+| Rapid AI | **−0.25** | AI adoption is fast: exposed jobs do worse than average, unexposed better |
 
 - `SCENARIO_EFFECT` lives in `train_lgbm.py`. It is a typed-in assumption, **not learned from data**. Doubling it doubles the gap between the lines without any new evidence.
 - **Sector level:** the exposure is the sector's average, weighted by `crosswalk.weight`, centred on the mean across sectors.
@@ -146,7 +146,7 @@ Use the output as a rough sense of up, flat or down, not as a precise percentage
 
 ## Ideas to improve it
 
-- Learn the AI effect: add per-sector AI-adoption features and fit the effect instead of assuming ±0.10 (needs more data to avoid noise).
+- Learn the AI effect: add per-sector AI-adoption features and fit the effect instead of assuming ±0.25 (needs more data to avoid noise).
 - Real Malaysia postings data to replace the US proxy.
 - More history or more sectors, since the training set is the main limit.
 - Report the LightGBM versus headline disagreement in the UI as a confidence signal.

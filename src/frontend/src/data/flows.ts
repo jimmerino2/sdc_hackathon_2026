@@ -26,13 +26,9 @@ export interface Persona {
   feels: string;
   needs: string;
   whoIndex: number;
-  mindPicks: number[];
   mascotWelcome: string;
   mindBubble: string;
-  skills: { name: string; level: number }[];
-  resume: { file: string; size: string; pages: number; found: string[]; more: number };
   timeline: string;
-  loading: { skillsFound: number };
   roles: Record<ScenarioKey, Role[]>;
   weeksToGo: number;
   minutesPerDay: number;
@@ -56,7 +52,6 @@ export const levels = ['New', 'Basic', 'Good', 'Strong'] as const;
 export const scenarios: {
   key: ScenarioKey;
   label: string;
-  chance: number;
   title: string;
   blurb: string;
   heading: string;
@@ -64,7 +59,6 @@ export const scenarios: {
   {
     key: 'accelerates',
     label: 'AI accelerates',
-    chance: 45,
     title: 'AI accelerates',
     blurb: 'Agents take over routine coding. People who direct AI do well.',
     heading: 'If AI accelerates, these roles grow, and they fit you.',
@@ -72,7 +66,6 @@ export const scenarios: {
   {
     key: 'steady',
     label: 'AI holds steady',
-    chance: 35,
     title: 'AI holds steady',
     blurb: 'Copilots stay helpers. Core engineering still matters most.',
     heading: 'If AI holds steady, these roles stay strong for you.',
@@ -80,7 +73,6 @@ export const scenarios: {
   {
     key: 'slows',
     label: 'AI slows down',
-    chance: 20,
     title: 'AI slows down',
     blurb: 'Cost and regulation slow adoption. Fundamentals win.',
     heading: 'If AI slows down, fundamentals carry these roles.',
@@ -123,25 +115,9 @@ export const personas: Record<PersonaKey, Persona> = {
     feels: 'Anxious. Doom-scrolls layoff news.',
     needs: 'Certainty and confidence: proof of what to learn.',
     whoIndex: 0,
-    mindPicks: [0, 1, 3],
     mascotWelcome: 'Hi, I’m Jobee! First, tell me where you are right now.',
     mindBubble: 'You’re not alone. Most CS students we talk to feel the same.',
-    skills: [
-      { name: 'Python', level: 2 },
-      { name: 'Java', level: 2 },
-      { name: 'Data structures & algorithms', level: 2 },
-      { name: 'SQL & databases', level: 1 },
-      { name: 'Git & GitHub', level: 1 },
-    ],
-    resume: {
-      file: 'amir_resume_2026.pdf',
-      size: '182 KB',
-      pages: 2,
-      found: ['Python', 'Java', 'Data structures', 'SQL', 'Git', 'REST APIs', 'Flask', 'Team project'],
-      more: 4,
-    },
     timeline: 'Graduating in 2027',
-    loading: { skillsFound: 12 },
     weeksToGo: 10,
     minutesPerDay: 30,
     roles: {
@@ -173,25 +149,9 @@ export const personas: Record<PersonaKey, Persona> = {
     feels: 'Frustrated. Unsure what recruiters want.',
     needs: 'A clear target role and a fast way to close gaps.',
     whoIndex: 1,
-    mindPicks: [1, 3],
     mascotWelcome: 'Hi, I’m Jobee! First, tell me where you are right now.',
     mindBubble: 'Job hunting is tough right now. Let’s find what actually gets interviews.',
-    skills: [
-      { name: 'Python', level: 2 },
-      { name: 'JavaScript', level: 2 },
-      { name: 'Data structures & algorithms', level: 1 },
-      { name: 'SQL & databases', level: 2 },
-      { name: 'Git & GitHub', level: 3 },
-    ],
-    resume: {
-      file: 'sara_tan_cv.pdf',
-      size: '214 KB',
-      pages: 1,
-      found: ['Python', 'JavaScript', 'React', 'SQL', 'Git', 'REST APIs', 'Internship', 'Agile'],
-      more: 5,
-    },
     timeline: 'Graduated 8 months ago',
-    loading: { skillsFound: 13 },
     weeksToGo: 8,
     minutesPerDay: 45,
     roles: {
@@ -223,25 +183,9 @@ export const personas: Record<PersonaKey, Persona> = {
     feels: 'Curious but stretched thin. Little time to study.',
     needs: 'A short, targeted path that builds on 9 years of experience.',
     whoIndex: 2,
-    mindPicks: [0, 3],
     mascotWelcome: 'Hi, I’m Jobee! First, tell me where you are right now.',
     mindBubble: 'Experience counts for a lot. Let’s point it somewhere that lasts.',
-    skills: [
-      { name: 'Java', level: 3 },
-      { name: 'System design', level: 3 },
-      { name: 'SQL & databases', level: 3 },
-      { name: 'Cloud (AWS)', level: 2 },
-      { name: 'Python', level: 1 },
-    ],
-    resume: {
-      file: 'daniel_lim_resume.pdf',
-      size: '256 KB',
-      pages: 3,
-      found: ['Java', 'Spring Boot', 'Microservices', 'SQL', 'AWS', 'Kafka', 'CI/CD', 'Mentoring'],
-      more: 9,
-    },
     timeline: '9 years in industry',
-    loading: { skillsFound: 17 },
     weeksToGo: 12,
     minutesPerDay: 25,
     roles: {

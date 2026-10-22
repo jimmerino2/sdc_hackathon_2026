@@ -14,7 +14,7 @@ function toggle(i: number) {
 </script>
 
 <template>
-  <FlowShell :progress="2" next="skills">
+  <FlowShell :progress="2" next="resume" back="who" :next-disabled="!state.mind.length">
     <h1>What’s been on your mind lately?</h1>
     <Bubble class="b">{{ persona.mindBubble }}</Bubble>
     <div class="grid">

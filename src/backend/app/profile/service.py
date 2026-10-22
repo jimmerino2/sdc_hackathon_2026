@@ -4,7 +4,7 @@ from supabase import Client
 from supabase_auth.errors import AuthApiError, AuthError
 
 from app.auth.service import AuthFailure, _client as _auth_client
-from app.profile.schemas import ProfileIn, ProfileOut
+from app.profile.schemas import ProfileIn, ProfileOut, ProfileUpdate
 
 
 class ProfileError(Exception):
@@ -24,6 +24,20 @@ def create_profile(db: Client, profile: ProfileIn) -> ProfileOut:
         if getattr(e, "code", None) == "23505":
             raise ProfileError(409, "A profile with this email already exists.") from e
         raise ProfileError(502, f"The profile could not be saved: {getattr(e, 'message', type(e).__name__)}") from e
+    return ProfileOut(**data[0])
+
+
+def update_profile(db: Client, profile_id: UUID, changes: ProfileUpdate) -> ProfileOut:
+    """Change only the fields that were sent."""
+    fields = changes.model_dump(mode="json", exclude_unset=True)
+    if not fields:
+        return get_profile(db, profile_id)
+    try:
+        data = db.table("profiles").update(fields).eq("profile_id", str(profile_id)).execute().data
+    except Exception as e:
+        raise ProfileError(502, f"The profile could not be saved: {getattr(e, 'message', type(e).__name__)}") from e
+    if not data:
+        raise ProfileError(404, "No such profile.")
     return ProfileOut(**data[0])
 
 

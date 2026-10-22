@@ -1,6 +1,5 @@
 import type { ScenarioKey } from '../data/flows';
-
-const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8000';
+import { API_URL } from './config';
 
 /** O*NET code for Software Developers. */
 export const SOFTWARE_DEVELOPERS_ONET = '15-1252.00';

@@ -3,14 +3,16 @@ import type { PersonaKey } from './data/flows';
 
 export const steps = [
   'landing',
+  'name',
   'who',
   'mind',
-  'skills',
   'resume',
+  'skills',
   'loading',
-  'signal',
   'roles',
-  'gap',
+  'signal',
+  'sync',
+  'building',
   'pathway',
   'resources',
 ] as const;
@@ -18,16 +20,18 @@ export type Step = (typeof steps)[number];
 
 export const stepLabels: Record<Step, string> = {
   landing: '01 Landing',
+  name: '01b What do we call you',
   who: '02 Who are you',
   mind: '03 What’s on your mind',
-  skills: '04 Skill check',
-  resume: '05 Resume upload',
+  resume: '04 Resume upload',
+  skills: '05 Skill check',
   loading: '06 Loading',
-  signal: '07 AI signal',
-  roles: '08 Future roles',
-  gap: '09 Skill gap',
-  pathway: '10 Reskill pathway',
-  resources: '11 Skill resources',
+  roles: '07 Future roles',
+  signal: '08 Forecast & skill gap',
+  sync: '09 Sync your email',
+  building: '10 Building roadmap',
+  pathway: '11 Reskill pathway',
+  resources: '12 Skill resources',
 };
 
 const views = import.meta.glob('./views/*.vue');

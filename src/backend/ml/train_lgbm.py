@@ -45,7 +45,7 @@ FEATURES = NUMERIC + CATS
 # Scenario assumption (NOT learned from data): shift in 12-month growth, per unit of a sector's
 # AI exposure above/below the average sector. Rapid AI: exposed sectors post less than average,
 # unexposed ones more. Slow: the reverse. Baseline: no shift. Change these to tune the spread.
-SCENARIO_EFFECT = {"Slow": +0.10, "Baseline": 0.0, "Rapid AI": -0.10}
+SCENARIO_EFFECT = {"Slow": +0.25, "Baseline": 0.0, "Rapid AI": -0.25}
 
 # Small, heavily regularised trees: ~1.5-2.6k rows from 47 series with overlapping targets.
 PARAMS = dict(

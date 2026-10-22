@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -34,6 +35,7 @@ class CurrentStep(BaseModel):
 
 
 class Roadmap(BaseModel):
+    profile_id: str = Field(description="The profile this roadmap and its progress belong to")
     onet_code: str
     title: str
     description: str | None = None
@@ -44,5 +46,6 @@ class Roadmap(BaseModel):
 
 
 class RoadmapCreate(BaseModel):
+    profile_id: UUID = Field(description="The profile_id returned from POST /profile")
     onet_code: str = Field(description="O*NET code, e.g. 15-2051.00")
     replace: bool = Field(False, description="Rebuild if a roadmap already exists (discards its progress)")

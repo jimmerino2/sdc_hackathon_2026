@@ -1,31 +1,64 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Icon from '../components/Icon.vue';
 import Mascot from '../components/Mascot.vue';
-import { useFlow } from '../state';
+import { mindOptions } from '../data/flows';
+import { createProfile, ProfileNotFound, readProfileId, saveProfileId, stageForWho, updateProfile } from '../api/profile';
+import { loadJobs, useFlow } from '../state';
 import { go } from '../router';
 
-const { persona, key } = useFlow();
+const { key, state, profileSkills } = useFlow();
 const router = useRouter();
 const stage = ref(0);
+const working = ref(true);
 let timer: number | undefined;
 
-const items = () => [
-  `Read your resume · ${persona.value.loading.skillsFound} skills found`,
+const items = computed(() => [
+  `${state.value.resume ? 'Read your resume' : 'Read your skill check'} · ${profileSkills.value.length} skills found`,
   'Matched your skills to O*NET 31.0',
-  'Scanning 2,431 software job postings',
-  'Forecasting 3 possible AI futures',
-];
+  'Finding your best-fit roles across 3 AI futures',
+]);
 
-onMounted(() => {
+async function saveProfile() {
+  const s = state.value;
+  const body = {
+    name: s.name,
+    stage: stageForWho[s.who]!,
+    concerns: s.mind.map((i) => mindOptions[i]!.title).join('; '),
+    skills: profileSkills.value,
+    experience: [],
+  };
+  const id = readProfileId();
+  try {
+    // A stored id means this browser already has a profile: update it instead of making another.
+    const profile = id
+      ? await updateProfile(id, body).catch((e) => {
+          if (e instanceof ProfileNotFound) return createProfile(body);
+          throw e;
+        })
+      : await createProfile(body);
+    s.profileId = profile.profile_id;
+    saveProfileId(profile.profile_id);
+  } catch (e) {
+    console.error(e);
+    s.profileId = null;
+  }
+}
+
+onMounted(async () => {
+  // The last step waits on the real work (saving the profile, then matching roles), so the roles page opens ready.
   timer = window.setInterval(() => {
-    stage.value++;
-    if (stage.value >= 5) {
+    if (stage.value < items.value.length - 1) stage.value++;
+    else if (!working.value) {
       clearInterval(timer);
-      router.push(go(key.value, 'signal'));
+      stage.value = items.value.length;
+      router.push(go(key.value, 'roles'));
     }
   }, 1400);
+  await saveProfile();
+  await loadJobs(state.value);
+  working.value = false;
 });
 onBeforeUnmount(() => clearInterval(timer));
 </script>
@@ -34,10 +67,10 @@ onBeforeUnmount(() => clearInterval(timer));
   <div class="page">
     <div class="halo"><Mascot :size="100" class="m" /></div>
     <h1>Mapping your future…</h1>
-    <p class="sub">Hang tight, this takes about 10 seconds.</p>
-    <div class="progress"><i :style="{ width: Math.min(100, 12 + stage * 21) + '%' }" /></div>
+    <p class="sub">Hang tight, this can take up to half a minute.</p>
+    <div class="progress"><i :style="{ width: Math.min(100, 12 + (stage * 88) / items.length) + '%' }" /></div>
     <ul class="card">
-      <li v-for="(t, i) in items()" :key="t" :class="{ done: i < stage, now: i === stage, wait: i > stage }">
+      <li v-for="(t, i) in items" :key="t" :class="{ done: i < stage, now: i === stage, wait: i > stage }">
         <span class="dot"><Icon v-if="i <= stage" :name="i < stage ? 'check' : 'sparkles'" :size="13" :stroke="3" /></span>
         {{ t }}
       </li>
@@ -46,7 +79,7 @@ onBeforeUnmount(() => clearInterval(timer));
       <small>Did you know?</small>
       <p>Software roles that use AI tools are growing faster than the ones that don’t. That’s your opening.</p>
     </div>
-    <RouterLink :to="go(key, 'signal')" class="skip">Skip</RouterLink>
+    <RouterLink :to="go(key, 'roles')" class="skip">Skip</RouterLink>
   </div>
 </template>
 

@@ -2,20 +2,21 @@
 import FlowShell from '../components/FlowShell.vue';
 import Bubble from '../components/Bubble.vue';
 import { levels } from '../data/flows';
+import { skillLabel } from '../data/skills';
 import { useFlow } from '../state';
 
-const { persona, state } = useFlow();
+const { state, checkSkills, levelOf } = useFlow();
 </script>
 
 <template>
-  <FlowShell :progress="3" next="resume">
+  <FlowShell :progress="4" next="loading" next-label="Analyze my profile" back="resume">
     <h1>How comfortable are you with these?</h1>
     <Bubble class="b" :size="60">Be honest! I only use this to find your starting point.</Bubble>
     <div class="rows">
-      <div v-for="(s, i) in persona.skills" :key="s.name" class="row">
-        <span class="name">{{ s.name }}</span>
+      <div v-for="s in checkSkills" :key="s" class="row">
+        <span class="name">{{ skillLabel(s) }}</span>
         <div class="lv">
-          <button v-for="(l, li) in levels" :key="l" :class="{ on: state.levels[i] === li }" @click="state.levels[i] = li">{{ l }}</button>
+          <button v-for="(l, li) in levels" :key="l" :class="{ on: levelOf(s) === li }" @click="state.levels[s] = li">{{ l }}</button>
         </div>
       </div>
     </div>

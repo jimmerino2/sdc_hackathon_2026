@@ -96,9 +96,9 @@
   "post_only": false,
   "headline_method": "yoy (last year's pace repeats, scaled to the horizon); chosen because the LightGBM model did not beat simple baselines across rolling-window backtests run during development",
   "scenario_effect_assumption_12m": {
-    "Slow": 0.1,
+    "Slow": 0.25,
     "Baseline": 0.0,
-    "Rapid AI": -0.1
+    "Rapid AI": -0.25
   },
   "by_horizon": {
     "3": {
