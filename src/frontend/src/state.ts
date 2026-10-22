@@ -4,7 +4,7 @@ import { DEFAULT_SKILLS, LEVEL_SCORES, levelFromScore, mergeSkills, SKILL_CHECK_
 import type { SkillScore } from './api/resume';
 import { fetchRecommendations, JobsError, type Recommendations } from './api/jobs';
 import { ensureRoadmap, getRoadmap, RoadmapError, type Roadmap } from './api/roadmap';
-import { readProfileId, saveProfileId, stageForWho, type Profile } from './api/profile';
+import { clearOnboarded, markLoggedIn, markOnboarded, readProfileId, saveProfileId, stageForWho, type Profile } from './api/profile';
 import { bee, BEES, type BeeName } from './bee';
 
 interface FlowState {
@@ -22,6 +22,8 @@ interface FlowState {
   jobs: { status: 'idle' | 'loading' | 'done' | 'error'; data: Recommendations | null; error: string | null };
   /** The email confirmed on the profile, once synced. */
   email: string | null;
+  /** The saved suggested roles, kept so the role pages don't refetch them. */
+  suggested: Recommendations | null;
   /** Skills already saved on the profile, when the user came back by logging in. */
   savedSkills: SkillScore[];
   roadmap: { status: 'idle' | 'loading' | 'done' | 'error'; data: Roadmap | null; error: string | null };
@@ -48,12 +50,19 @@ function init(k: PersonaKey): FlowState {
     jobs: { status: 'idle', data: null, error: null },
     email: null,
     savedSkills: [],
+    suggested: null,
     roadmap: { status: 'idle', data: null, error: null },
   };
 }
 
 export function resetPersona(k: PersonaKey) {
   Object.assign(store[k], init(k));
+}
+
+/** Point the pathway at one role's roadmap. It loads (or is built) the next time the pathway or the building screen opens. */
+export function openRoadmap(s: FlowState, onetCode: string) {
+  s.chosenRoleId = onetCode;
+  s.roadmap = { status: 'idle', data: null, error: null };
 }
 
 /** Start the app as a returning user: keep their profile id and restore what the profile holds. */
@@ -67,6 +76,7 @@ export function signIn(profile: Profile) {
   s.who = Math.max(stageForWho.indexOf(profile.stage), 0);
   if ((BEES as readonly string[]).includes(profile.bee ?? '')) bee.value = profile.bee as BeeName; // their bee, not this browser's
   saveProfileId(profile.profile_id);
+  markLoggedIn();
 }
 
 /** Fetch the matched roles for the saved profile into state.jobs. Never throws. */
@@ -97,14 +107,17 @@ export async function loadRoadmap(s: FlowState) {
       // No role picked in this session (e.g. after logging in): resume the profile's latest saved roadmap.
       const saved = await getRoadmap(s.profileId);
       if (!saved) {
+        clearOnboarded(); // no roadmap after all, so the questions must stay open
         s.roadmap = { status: 'error', data: null, error: 'You haven’t built a roadmap yet. Pick a role first, then Jobee can build it.' };
         return;
       }
       s.chosenRoleId = saved.onet_code;
       s.roadmap = { status: 'done', data: saved, error: null };
+      markOnboarded();
       return;
     }
     s.roadmap = { status: 'done', data: await ensureRoadmap(s.profileId, s.chosenRoleId), error: null };
+    markOnboarded();
   } catch (e) {
     console.error(e);
     s.roadmap = { status: 'error', data: null, error: e instanceof RoadmapError ? e.message : 'Jobee couldn’t build your roadmap just now. Try again in a moment.' };

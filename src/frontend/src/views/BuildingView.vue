@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Icon from '../components/Icon.vue';
 import PollenField from '../components/PollenField.vue';
+import { isOnboarded } from '../api/profile';
 import { loadRoadmap, useFlow } from '../state';
 import { go } from '../router';
 
@@ -53,6 +54,7 @@ const status = computed(() => (failed.value ? state.value.roadmap.error : items.
         <Transition name="swap" mode="out-in"><span :key="status ?? ''">{{ status }}</span></Transition>
       </p>
       <button v-if="failed" type="button" class="btn btn-secondary" @click="start"><Icon name="refresh" :size="18" /> Try again</button>
+      <RouterLink v-if="failed" :to="go(isOnboarded() ? 'suggested' : 'signal')" class="back">Back</RouterLink>
     </div>
   </div>
 </template>
@@ -69,4 +71,6 @@ const status = computed(() => (failed.value ? state.value.roadmap.error : items.
 .swap-enter-active, .swap-leave-active { transition: opacity .2s ease, transform .2s ease; }
 .swap-enter-from { opacity: 0; transform: translateY(6px); }
 .swap-leave-to { opacity: 0; transform: translateY(-6px); }
+.back { font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.back:hover { color: var(--ink); }
 </style>

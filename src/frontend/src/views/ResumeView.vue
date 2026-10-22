@@ -2,7 +2,6 @@
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import FlowShell from '../components/FlowShell.vue';
-import Bubble from '../components/Bubble.vue';
 import Icon from '../components/Icon.vue';
 import { checkResumeFile, extractResume, ResumeUploadError } from '../api/resume';
 import { skillLabel } from '../data/skills';
@@ -20,6 +19,8 @@ const dragging = ref(false);
 const error = ref<string | null>(null);
 let attempt = 0; // a newer upload wins over one still in flight
 
+/** Jobee reads along while the resume is processed, cheers when it's done, and is startled by an error. */
+const mood = computed(() => (reading.value ? 'busy' : error.value ? 'surprised' : state.value.resume ? 'happy' : 'wave'));
 const shown = computed(() => state.value.resume?.skills.slice(0, SHOWN_SKILLS) ?? []);
 const more = computed(() => Math.max((state.value.resume?.skills.length ?? 0) - SHOWN_SKILLS, 0));
 
@@ -71,8 +72,12 @@ function skip() {
 </script>
 
 <template>
-  <FlowShell :progress="3" next="skills" back="outcome" mood="serious" gear="suit" :next-disabled="!state.resume || reading">
-    <template #bubble>{{ personaCopy[key].resume }}</template>
+  <FlowShell :progress="3" next="skills" back="outcome" :mood="mood" :gear="reading ? 'none' : 'glasses'" :next-disabled="!state.resume || reading">
+    <template #bubble>
+      <template v-if="reading">Give me a sec, I’m reading it…</template>
+      <template v-else-if="state.resume">Nice! Here’s what I found.</template>
+      <template v-else>{{ personaCopy[key].resume }}</template>
+    </template>
     <button
       type="button"
       class="drop"

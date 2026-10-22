@@ -9,7 +9,7 @@ const { state, key, checkSkills, levelOf } = useFlow();
 </script>
 
 <template>
-  <FlowShell :progress="4" next="loading" next-label="Analyze my profile" back="resume" mood="serious" gear="suit">
+  <FlowShell :progress="4" next="loading" next-label="Analyze my profile" back="resume" gear="glasses">
     <template #bubble>{{ personaCopy[key].skills }}</template>
     <div class="rows">
       <div v-for="(s, si) in checkSkills" :key="s" class="row">

@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import { isOnboarded } from './api/profile';
 
 export const steps = [
   'landing',
@@ -16,7 +17,10 @@ export const steps = [
   'sync',
   'building',
   'pathway',
-  'resources',
+  'suggested',
+  'role',
+  'generating',
+  'profile',
 ] as const;
 export type Step = (typeof steps)[number];
 
@@ -36,7 +40,10 @@ export const stepLabels: Record<Step, string> = {
   sync: '09 Sync your email',
   building: '10 Building roadmap',
   pathway: '11 Reskill pathway',
-  resources: '12 Skill resources',
+  suggested: '12 My roles',
+  role: '13 Role details',
+  generating: '14 Generating a roadmap',
+  profile: '15 Profile',
 };
 
 const views = import.meta.glob('./views/*.vue');
@@ -57,6 +64,13 @@ export const router = createRouter({
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
   scrollBehavior: () => ({ top: 0 }),
+});
+
+/** The question pages and everything up to building the roadmap. Once a browser has a roadmap these are closed to it. */
+const onboardingSteps: readonly string[] = steps.slice(0, steps.indexOf('pathway'));
+
+router.beforeEach((to) => {
+  if (isOnboarded() && onboardingSteps.includes(to.name as string)) return { name: 'pathway', replace: true };
 });
 
 export function go(step: Step) {

@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { bee as currentBee, type BeeName } from '../bee';
 
 export type Gear = 'none' | 'magnifier' | 'suit' | 'glasses';
-export type Mood = 'idle' | 'serious' | 'wave' | 'happy' | 'thinking' | 'sleepy' | 'celebrate' | 'surprised';
+export type Mood = 'idle' | 'serious' | 'wave' | 'happy' | 'thinking' | 'sleepy' | 'celebrate' | 'surprised' | 'busy';
 
 const props = withDefaults(defineProps<{ size?: number; mood?: Mood; look?: boolean; wings?: boolean; bee?: BeeName; gear?: Gear; gaze?: [number, number] | null }>(), {
   size: 70,
@@ -72,10 +72,12 @@ const confetti = [
         </svg>
         <span v-if="gear === 'suit'" class="suit"><b class="shirt" /><b class="tie l" /><b class="tie r" /><b class="knot" /></span>
       </div>
+      <span v-if="mood === 'busy'" class="doc" aria-hidden="true"><i /><i /><i /><i /></span>
       <span v-if="gear === 'magnifier'" class="mag"><span class="lens" /><span class="handle" /></span>
       <span class="fx zzz">z<small>z</small></span>
       <span class="fx q">?</span>
       <span class="fx bang">!</span>
+      <span class="fx dots"><i /><i /><i /></span>
       <span v-for="(c, i) in confetti" :key="i" class="fx conf" :style="{ background: c[0], '--tx': c[1] / 100 + 'em', '--ty': c[2] / 100 + 'em', animationDelay: i * 0.07 + 's' }" />
     </div>
   </div>
@@ -172,6 +174,32 @@ const confetti = [
 /* celebrate */
 .m-celebrate .jump { animation: hop 1.1s cubic-bezier(.3, .7, .4, 1) infinite; }
 .m-celebrate .conf { animation: confetti 1.1s ease-out infinite; }
+
+/* busy: reading a document, eyes scanning the lines */
+.m-busy .body { animation: bob .9s ease-in-out infinite; }
+.m-busy .eye { animation: read 1.4s ease-in-out infinite; top: 40%; height: .12em; }
+.m-busy .mouth { width: .06em; height: .04em; margin-left: -.03em; border: .02em solid var(--ink); border-radius: 50%; }
+.m-busy .cheek { opacity: .6; }
+.doc {
+  position: absolute; z-index: 3; left: 50%; bottom: -.04em; width: .5em; height: .36em; margin-left: -.25em;
+  background: #fff; border: .025em solid var(--ink); border-radius: .04em; transform-origin: 50% 100%;
+  animation: hold .9s ease-in-out infinite; padding: .05em .06em; display: flex; flex-direction: column; gap: .035em;
+}
+.doc i { display: block; height: .03em; border-radius: .02em; background: #d8d3c8; }
+.doc i:nth-child(1) { width: 60%; background: var(--ink); }
+.doc i:nth-child(3) { width: 80%; }
+.doc i:nth-child(4) { width: 50%; }
+.doc i { animation: lit 2.8s steps(1, end) infinite; }
+.doc i:nth-child(2) { animation-delay: .7s; } .doc i:nth-child(3) { animation-delay: 1.4s; } .doc i:nth-child(4) { animation-delay: 2.1s; }
+.doc i:nth-child(1) { animation: none; }
+.dots { right: -.12em; top: -.16em; display: flex; gap: .03em; }
+.dots i { width: .07em; height: .07em; border-radius: 50%; background: var(--orange); animation: dot 1s ease-in-out infinite; }
+.dots i:nth-child(2) { animation-delay: .15s; } .dots i:nth-child(3) { animation-delay: .3s; }
+.m-busy .dots { opacity: 1; }
+@keyframes read { 0%, 100% { transform: translate(-.035em, .02em); } 50% { transform: translate(.035em, .02em); } }
+@keyframes hold { 0%, 100% { transform: rotate(-3deg) translateY(0); } 50% { transform: rotate(2deg) translateY(-.015em); } }
+@keyframes lit { 0%, 24% { background: var(--orange); } 25%, 100% { background: #d8d3c8; } }
+@keyframes dot { 0%, 100% { transform: translateY(0); opacity: .4; } 50% { transform: translateY(-.04em); opacity: 1; } }
 
 @keyframes bob { 0%, 100% { transform: translateY(0) scale(1, 1); } 50% { transform: translateY(-.025em) scale(1.015, .985); } }
 @keyframes shadow { 0%, 100% { transform: scaleX(1); opacity: 1; } 50% { transform: scaleX(.92); opacity: .75; } }

@@ -6,7 +6,7 @@ import {
   Play, RefreshCw, Megaphone, Users, Boxes, ClipboardList, ChartPie, Calculator, ShieldCheck, Landmark, Monitor,
   Headset, Palette, Sigma, Brain, ChartBar, Zap, Leaf, Factory, Microscope, HandHeart, Scale, Baby, School, PenTool,
   Languages, Activity, Stethoscope, Pill, ClipboardPlus, HeartHandshake, ShieldAlert, ChefHat, ShoppingBag, Receipt,
-  Banknote, Headphones, Keyboard, Plug, Sun, Wrench, Wind, Truck, Package,
+  Banknote, Headphones, Keyboard, Plug, Sun, Wrench, Wind, Truck, Package, Pencil,
 } from 'lucide-vue-next';
 
 const map = {
@@ -22,7 +22,7 @@ const map = {
   languages: Languages, activity: Activity, stethoscope: Stethoscope, pill: Pill, 'clipboard-plus': ClipboardPlus,
   'heart-handshake': HeartHandshake, 'shield-alert': ShieldAlert, 'chef-hat': ChefHat, 'shopping-bag': ShoppingBag,
   receipt: Receipt, banknote: Banknote, headphones: Headphones, keyboard: Keyboard, plug: Plug, sun: Sun,
-  wrench: Wrench, wind: Wind, truck: Truck, package: Package,
+  wrench: Wrench, wind: Wind, truck: Truck, package: Package, pencil: Pencil,
 } as const;
 
 const props = withDefaults(defineProps<{ name: string; size?: number; stroke?: number }>(), { size: 20, stroke: 2.2 });

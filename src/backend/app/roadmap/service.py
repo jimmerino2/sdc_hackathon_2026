@@ -6,7 +6,7 @@ from supabase import Client
 
 from app.profile import service as profiles
 from app.roadmap import planner
-from app.roadmap.schemas import CurrentStep, Node, Roadmap, Section, Unit
+from app.roadmap.schemas import CurrentStep, LearnedSkill, Node, Roadmap, RoadmapSummary, Section, Source, Unit
 
 
 def _role(db: Client, onet_code: str) -> dict:
@@ -17,11 +17,86 @@ def _role(db: Client, onet_code: str) -> dict:
 
 
 # One request: the roadmap row, its role, and every node with the skill it points at (PostgREST embedding).
+# onet_role_skills.source is not read: it needs migration 0002 and learning links now come from skill_sources.
 ROADMAP_SELECT = (
     "roadmap_id,onet_code,section,unit,status,onet_roles(title,description),"
     "roadmap_detail(roadmap_detail_id,skill_id,section,unit,status,completed_at,previous_nodes,previous_nodes_required,"
-    "onet_role_skills(skill_name,skill_type,importance,level,source))"
+    "onet_role_skills(skill_name,skill_type,importance,level))"
 )
+
+
+def _sources(db: Client, skill_names: list[str]) -> dict[str, list[Source]]:
+    """Learning sources for these skills (table skill_sources, matched on skill_name), best first.
+
+    A missing table or a failed read gives no sources instead of breaking the roadmap.
+    """
+    if not skill_names:
+        return {}
+    try:
+        rows = (db.table("skill_sources").select("skill_name,source_type,rank,title,url")
+                .in_("skill_name", sorted(set(skill_names))).order("rank").execute().data)
+    except Exception as e:
+        print(f"skill_sources could not be read ({type(e).__name__}); nodes will have no sources")
+        return {}
+    found: dict[str, list[Source]] = {}
+    for r in rows:
+        found.setdefault(r["skill_name"], []).append(Source(**{k: r[k] for k in ("source_type", "rank", "title", "url")}))
+    return found
+
+
+def _groups(db: Client, skill_names: list[str]) -> dict[str, str]:
+    """The skill_group of each of these skills (onet_role_skills.skill_group, migration 0012).
+
+    A column that is not there yet, or a failed read, gives no groups instead of breaking the roadmap.
+    """
+    if not skill_names:
+        return {}
+    try:
+        rows = (db.table("onet_role_skills").select("skill_name,skill_group")
+                .in_("skill_name", sorted(set(skill_names))).execute().data)
+    except Exception as e:
+        print(f"skill_group could not be read ({type(e).__name__}); nodes will have no group")
+        return {}
+    return {r["skill_name"]: r["skill_group"] for r in rows if r.get("skill_group")}
+
+
+def learned_skills(db: Client, profile_id: str) -> list[LearnedSkill]:
+    """The skills this profile has completed across all its roadmaps, once each, grouped by skill_group then name."""
+    ids = [r["roadmap_id"] for r in db.table("roadmap").select("roadmap_id").eq("profile_id", profile_id).execute().data]
+    if not ids:
+        return []
+    rows = (db.table("roadmap_detail").select("completed_at,onet_role_skills(skill_name,skill_type)")
+            .in_("roadmap_id", ids).eq("status", "completed").execute().data)
+    latest: dict[str, dict] = {}
+    for r in rows:  # the same skill can be done on two roadmaps; keep the later one
+        name = r["onet_role_skills"]["skill_name"]
+        if name not in latest or r["completed_at"] > latest[name]["completed_at"]:
+            latest[name] = {**r["onet_role_skills"], "completed_at": r["completed_at"]}
+    groups = _groups(db, list(latest))
+    out = [LearnedSkill(skill_group=groups.get(n), **v) for n, v in latest.items()]
+    return sorted(out, key=lambda s: (s.skill_group is None, s.skill_group or "", s.skill_name))
+
+
+def list_roadmaps(db: Client, profile_id: str) -> list[RoadmapSummary]:
+    """Every roadmap this profile has, newest first, each with its status and how many nodes are done."""
+    rows = (
+        db.table("roadmap")
+        .select("onet_code,status,created_at,onet_roles(title),roadmap_detail(status)")
+        .eq("profile_id", profile_id)
+        .order("created_at", desc=True)
+        .execute()
+        .data
+    )
+    return [
+        RoadmapSummary(
+            onet_code=r["onet_code"],
+            title=r["onet_roles"]["title"],
+            status=r["status"],
+            total=len(r["roadmap_detail"]),
+            completed=sum(1 for d in r["roadmap_detail"] if d["status"] == "completed"),
+        )
+        for r in rows
+    ]
 
 
 def get_roadmap(db: Client, profile_id: str, onet_code: str | None = None) -> Roadmap:
@@ -47,12 +122,17 @@ def get_roadmap(db: Client, profile_id: str, onet_code: str | None = None) -> Ro
             depth[skill_id] = 1 + max((depth_of(p) for p in prev.get(skill_id, []) if p in prev), default=-1)
         return depth[skill_id]
 
+    names = [d["onet_role_skills"]["skill_name"] for d in details]
+    sources = _sources(db, names)
+    groups = _groups(db, names)
     grouped: dict[int, dict[int, list[Node]]] = {}
     for d in details:
         node = Node(
             roadmap_detail_id=d["roadmap_detail_id"],
             skill_id=d["skill_id"],
             **d["onet_role_skills"],
+            skill_group=groups.get(d["onet_role_skills"]["skill_name"]),
+            sources=sources.get(d["onet_role_skills"]["skill_name"], []),
             status=d["status"],
             completed_at=d["completed_at"],
             previous_nodes=d["previous_nodes"],
