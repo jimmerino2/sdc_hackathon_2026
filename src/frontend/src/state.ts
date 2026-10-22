@@ -5,6 +5,7 @@ import type { SkillScore } from './api/resume';
 import { fetchRecommendations, JobsError, type Recommendations } from './api/jobs';
 import { ensureRoadmap, getRoadmap, RoadmapError, type Roadmap } from './api/roadmap';
 import { readProfileId, saveProfileId, stageForWho, type Profile } from './api/profile';
+import { bee, BEES, type BeeName } from './bee';
 
 interface FlowState {
   name: string;
@@ -64,6 +65,7 @@ export function signIn(profile: Profile) {
   s.email = profile.email ?? null;
   s.savedSkills = profile.skills;
   s.who = Math.max(stageForWho.indexOf(profile.stage), 0);
+  if ((BEES as readonly string[]).includes(profile.bee ?? '')) bee.value = profile.bee as BeeName; // their bee, not this browser's
   saveProfileId(profile.profile_id);
 }
 

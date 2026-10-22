@@ -72,7 +72,7 @@ function skip() {
 <template>
   <FlowShell :progress="3" next="skills" back="mind" :next-disabled="!state.resume || reading">
     <h1>Got a resume? Let Jobee read it.</h1>
-    <Bubble class="b" :size="60">Upload your resume, or even a list of class projects. I’ll pull out the skills.</Bubble>
+    <Bubble class="b" :size="60" mood="serious" gear="suit">Upload your resume, or even a list of class projects. I’ll pull out the skills.</Bubble>
     <button
       type="button"
       class="drop"

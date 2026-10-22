@@ -2,9 +2,10 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Icon from '../components/Icon.vue';
-import Mascot from '../components/Mascot.vue';
+import PollenField from '../components/PollenField.vue';
 import { mindOptions } from '../data/flows';
-import { createProfile, ProfileNotFound, readProfileId, saveProfileId, stageForWho, updateProfile } from '../api/profile';
+import { bee } from '../bee';
+import { setBee, createProfile, ProfileNotFound, readProfileId, saveProfileId, stageForWho, updateProfile } from '../api/profile';
 import { loadJobs, useFlow } from '../state';
 import { go } from '../router';
 
@@ -23,7 +24,7 @@ const items = computed(() => [
 async function saveProfile() {
   const s = state.value;
   const body = {
-    name: s.name,
+    name: s.name.trim() || 'Jobee learner',
     stage: stageForWho[s.who]!,
     concerns: s.mind.map((i) => mindOptions[i]!.title).join('; '),
     skills: profileSkills.value,
@@ -40,6 +41,7 @@ async function saveProfile() {
       : await createProfile(body);
     s.profileId = profile.profile_id;
     saveProfileId(profile.profile_id);
+    await setBee(profile.profile_id, bee.value).catch((e) => console.error(e));
   } catch (e) {
     console.error(e);
     s.profileId = null;
@@ -65,7 +67,7 @@ onBeforeUnmount(() => clearInterval(timer));
 
 <template>
   <div class="page">
-    <div class="halo"><Mascot :size="100" class="m" /></div>
+    <PollenField />
     <h1>Mapping your future…</h1>
     <p class="sub">Hang tight, this can take up to half a minute.</p>
     <div class="progress"><i :style="{ width: Math.min(100, 12 + (stage * 88) / items.length) + '%' }" /></div>

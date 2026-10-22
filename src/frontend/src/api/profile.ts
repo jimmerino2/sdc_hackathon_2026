@@ -25,6 +25,8 @@ export interface ProfileIn {
 
 export interface Profile extends ProfileIn {
   profile_id: string;
+  /** The learner's companion bee (Libbee, Tobee, Barnabee or Phoebee). */
+  bee?: string;
 }
 
 export async function createProfile(body: ProfileIn): Promise<Profile> {
@@ -49,6 +51,12 @@ export async function updateProfile(id: string, body: Partial<Omit<ProfileIn, 'e
   if (res.status === 404) throw new ProfileNotFound(`No profile ${id}`);
   if (!res.ok) throw new Error(`Profile update failed (${res.status})`);
   return res.json();
+}
+
+/** Save the learner's companion bee on their profile. */
+export async function setBee(id: string, bee: string): Promise<void> {
+  const res = await fetch(`${API_URL}/profile/bee?profile_id=${encodeURIComponent(id)}&bee=${encodeURIComponent(bee)}`, { method: 'PATCH' });
+  if (!res.ok) throw new Error(`Bee update failed (${res.status})`);
 }
 
 export async function getProfile(id: string): Promise<Profile> {

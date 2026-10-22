@@ -60,7 +60,7 @@ function changeEmail() {
     <header><Logo /></header>
     <main>
       <h1>Welcome back</h1>
-      <Bubble class="b" :size="60">
+      <Bubble class="b" :size="60" mood="wave">
         {{ step === 'email' ? 'Enter the email you saved your roadmap with and I’ll send you a code.' : 'Check your inbox! I just sent you a code.' }}
       </Bubble>
 
