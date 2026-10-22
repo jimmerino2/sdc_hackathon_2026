@@ -22,9 +22,9 @@ class Engine(BaseModel):
 
 
 class ResumeOut(BaseModel):
-    resume_id: str | None = None  # id of the saved copy (file in Storage + row in resumes)
     """Result of reading an uploaded resume."""
 
+    resume_id: str | None = Field(None, description="Id of the saved copy (file in Storage + row in resumes)")
     filename: str | None = Field(None, description="Name of the uploaded file")
     page_count: int = Field(description="Number of pages in the PDF")
     char_count: int = Field(description="Length of the extracted text; 0 usually means a scanned PDF")

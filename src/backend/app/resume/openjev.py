@@ -23,7 +23,7 @@ def score_resume(text: str) -> dict:
         settings.openjev_url.rstrip("/") + "/v1/systemone",
         json={"model": "openjev", "state": text, "questions": questions},
         headers=headers,
-        timeout=60,
+        timeout=httpx.Timeout(60, connect=5),  # a stopped pod fails fast so the fallback starts at once
     )
     res.raise_for_status()
     answers = res.json()["answers"]

@@ -60,3 +60,19 @@ def save_resume(access_token: str, user_id: str, data: bytes, filename: str, par
             pass
         raise SaveError(f"The resume could not be saved: {getattr(e, 'message', type(e).__name__)}") from e
     return resume_id
+
+
+def load_skills(access_token: str, resume_id: str | None = None) -> dict | None:
+    """The user's saved skills: their newest resume, or the one with this id. None if there is no such resume.
+
+    Reads as the logged-in user, so row-level security guarantees it is theirs. Returns
+    {"resume_id", "filename", "skills", "top_skills"}.
+    """
+    query = _client(access_token).table("resumes").select("resume_id, filename, skills, top_skills")
+    if resume_id:
+        query = query.eq("resume_id", resume_id)
+    try:
+        rows = query.order("created_at", desc=True).limit(1).execute().data
+    except Exception as e:
+        raise SaveError(f"The resume could not be read: {getattr(e, 'message', type(e).__name__)}") from e
+    return rows[0] if rows else None
