@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 
 class Node(BaseModel):
+    roadmap_detail_id: str = Field(description="Id of this node, used by POST /roadmap/complete/{roadmap_detail_id}")
     skill_id: str
     skill_name: str
     skill_type: Literal["skill", "knowledge", "tech"]

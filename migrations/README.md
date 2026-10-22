@@ -10,6 +10,7 @@ How the reference data gets into Supabase. Column meanings are in `data/document
 | `0002_onet_role_skills_source.sql` | Adds nullable `onet_role_skills.source` (http(s) URL, checked) |
 | `0003_roadmap.sql` | Adds `roadmap` (one row per role; `section`/`unit` = current step) and `roadmap_detail` (skill nodes, each with its own `section`/`unit`, status and prerequisites), with RLS |
 | `0004_profiles.sql` | Adds `profiles` (one row per email: name, career stage, concerns, skills, experience), service-role access only |
+| `0005_roadmap_detail_id.sql` | Adds a unique `roadmap_detail.roadmap_detail_id` (uuid) so one node can be addressed by a single id |
 | `../pipeline/load_supabase.py` | Loads `data/processed/*.csv` into those tables |
 
 Tables: `onet_roles`, `onet_role_skills`, `ai_exposure`, `ai_exposure_detail`, `crosswalk`, `onet_to_my_group`, `my_vacancies`.

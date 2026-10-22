@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import HTTPException
 from supabase import Client
@@ -17,7 +18,7 @@ def _role(db: Client, onet_code: str) -> dict:
 # One request: the roadmap row, its role, and every node with the skill it points at (PostgREST embedding).
 ROADMAP_SELECT = (
     "roadmap_id,section,unit,status,onet_roles(title,description),"
-    "roadmap_detail(skill_id,section,unit,status,completed_at,previous_nodes,previous_nodes_required,"
+    "roadmap_detail(roadmap_detail_id,skill_id,section,unit,status,completed_at,previous_nodes,previous_nodes_required,"
     "onet_role_skills(skill_name,skill_type,importance,level,source))"
 )
 
@@ -42,6 +43,7 @@ def get_roadmap(db: Client, onet_code: str) -> Roadmap:
     grouped: dict[int, dict[int, list[Node]]] = {}
     for d in details:
         node = Node(
+            roadmap_detail_id=d["roadmap_detail_id"],
             skill_id=d["skill_id"],
             **d["onet_role_skills"],
             status=d["status"],
@@ -70,6 +72,38 @@ def get_roadmap(db: Client, onet_code: str) -> Roadmap:
         current=CurrentStep(section=roadmap["section"], unit=roadmap["unit"]),
         sections=sections,
     )
+
+
+def complete_node(db: Client, roadmap_detail_id: str) -> Roadmap:
+    """Mark one node completed, then move the roadmap's current step to the first unit that still has open nodes.
+
+    When every node is completed the section/unit stay where they are and only the status becomes completed.
+    """
+    found = (
+        db.table("roadmap_detail")
+        .select("roadmap_id,onet_code,skill_id,status")
+        .eq("roadmap_detail_id", roadmap_detail_id)
+        .limit(1)
+        .execute()
+        .data
+    )
+    if not found:
+        raise HTTPException(status_code=404, detail=f"no roadmap node {roadmap_detail_id!r}")
+    node = found[0]
+    if node["status"] != "completed":
+        db.table("roadmap_detail").update(
+            {"status": "completed", "completed_at": datetime.now(timezone.utc).isoformat()}
+        ).eq("roadmap_detail_id", roadmap_detail_id).execute()
+
+    nodes = db.table("roadmap_detail").select("section,unit,status").eq("roadmap_id", node["roadmap_id"]).execute().data
+    open_nodes = [(n["section"], n["unit"]) for n in nodes if n["status"] != "completed"]
+    if open_nodes:
+        section, unit = min(open_nodes)
+        update = {"section": section, "unit": unit, "status": "in_progress"}
+    else:
+        update = {"status": "completed"}
+    db.table("roadmap").update(update).eq("roadmap_id", node["roadmap_id"]).execute()
+    return get_roadmap(db, node["onet_code"])
 
 
 def create_roadmap(db: Client, onet_code: str, replace: bool) -> Roadmap:

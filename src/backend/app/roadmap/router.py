@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query
 from supabase import Client
 
@@ -26,3 +28,14 @@ def create_roadmap(body: RoadmapCreate, db: Client = Depends(get_supabase_admin)
     already has a roadmap unless replace=true.
     """
     return service.create_roadmap(db, body.onet_code, body.replace)
+
+
+@router.post("/complete/{roadmap_detail_id}", response_model=Roadmap)
+def complete_node(roadmap_detail_id: UUID, db: Client = Depends(get_supabase_admin)):
+    """Mark a node completed (status completed, completed_at now) and return the updated roadmap.
+
+    The roadmap's section/unit then move to the first unit that still has open nodes and its status becomes
+    in_progress. When the last node is completed only the status changes, to completed. Calling it again on a
+    completed node changes nothing. Needs SUPABASE_SERVICE_KEY.
+    """
+    return service.complete_node(db, str(roadmap_detail_id))
