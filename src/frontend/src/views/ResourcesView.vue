@@ -6,7 +6,7 @@ import { resourceCatalog, pathwayFor } from '../data/flows';
 import { useFlow } from '../state';
 import { go } from '../router';
 
-const { key, chosenRole } = useFlow();
+const { chosenRole } = useFlow();
 const groups = computed(() =>
   pathwayFor(chosenRole.value).map((skill) => ({ skill, items: resourceCatalog[skill] ?? resourceCatalog.default! })),
 );
@@ -24,7 +24,7 @@ const groups = computed(() =>
           <article v-for="r in g.items" :key="r.title" class="card item">
             <span class="ic"><Icon :name="r.kind === 'Project' ? 'code' : r.kind === 'Reading' ? 'book' : 'play'" :size="20" /></span>
             <div class="txt"><strong>{{ r.title }}</strong><small>{{ r.provider }} · {{ r.kind }} · {{ r.duration }}</small></div>
-            <RouterLink :to="go(key, 'pathway')" class="btn btn-secondary go">Open</RouterLink>
+            <RouterLink :to="go('pathway')" class="btn btn-secondary go">Open</RouterLink>
           </article>
         </div>
       </section>

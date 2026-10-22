@@ -12,7 +12,7 @@ import { go } from '../router';
 const SHOWN_SKILLS = 8;
 
 const router = useRouter();
-const { key, state } = useFlow();
+const { state } = useFlow();
 const input = ref<HTMLInputElement>();
 const reading = ref(false);
 const dragging = ref(false);
@@ -65,7 +65,7 @@ function onDrop(e: DragEvent) {
 function skip() {
   attempt++;
   state.value.resume = null;
-  router.push(go(key.value, 'skills'));
+  router.push(go('skills'));
 }
 </script>
 

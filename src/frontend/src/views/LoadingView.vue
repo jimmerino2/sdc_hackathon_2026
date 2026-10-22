@@ -8,7 +8,7 @@ import { createProfile, ProfileNotFound, readProfileId, saveProfileId, stageForW
 import { loadJobs, useFlow } from '../state';
 import { go } from '../router';
 
-const { key, state, profileSkills } = useFlow();
+const { state, profileSkills } = useFlow();
 const router = useRouter();
 const stage = ref(0);
 const working = ref(true);
@@ -53,7 +53,7 @@ onMounted(async () => {
     else if (!working.value) {
       clearInterval(timer);
       stage.value = items.value.length;
-      router.push(go(key.value, 'roles'));
+      router.push(go('roles'));
     }
   }, 1400);
   await saveProfile();
@@ -79,7 +79,7 @@ onBeforeUnmount(() => clearInterval(timer));
       <small>Did you know?</small>
       <p>Software roles that use AI tools are growing faster than the ones that don’t. That’s your opening.</p>
     </div>
-    <RouterLink :to="go(key, 'roles')" class="skip">Skip</RouterLink>
+    <RouterLink :to="go('roles')" class="skip">Skip</RouterLink>
   </div>
 </template>
 

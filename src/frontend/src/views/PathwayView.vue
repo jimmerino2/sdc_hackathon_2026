@@ -9,7 +9,7 @@ import { skillLabel } from '../data/skills';
 import { loadRoadmap, useFlow } from '../state';
 import { go } from '../router';
 
-const { key, state, scenario, profileSkills } = useFlow();
+const { state, scenario, profileSkills } = useFlow();
 const offsets = [0, -40, -75, -40, 0, 40, 75, 40];
 const typeLabel = { tech: 'Tool', skill: 'Ability', knowledge: 'Knowledge' } as const;
 const busyId = ref<string | null>(null);
@@ -59,7 +59,7 @@ onMounted(() => {
   <SideNav active="learn">
     <div v-if="!roadmap" class="state">
       <Bubble :size="64">{{ state.roadmap.status === 'error' ? state.roadmap.error : 'Loading your roadmap…' }}</Bubble>
-      <RouterLink v-if="state.roadmap.status === 'error'" :to="go(key, 'roles')" class="btn btn-secondary">Back to my roles</RouterLink>
+      <RouterLink v-if="state.roadmap.status === 'error'" :to="go('roles')" class="btn btn-secondary">Back to my roles</RouterLink>
     </div>
 
     <div v-else class="grid">
@@ -78,7 +78,7 @@ onMounted(() => {
                 <h2>{{ sec.section === 1 ? roadmap.title : `Level up · part ${sec.section}` }}</h2>
                 <p class="meta">{{ sectionSkills(sec.units) }} skills · {{ sec.units.length }} {{ sec.units.length === 1 ? 'unit' : 'units' }}</p>
               </div>
-              <RouterLink v-if="sec.section === 1" :to="go(key, 'resources')" class="guide"><Icon name="book" :size="16" /> Guidebook</RouterLink>
+              <RouterLink v-if="sec.section === 1" :to="go('resources')" class="guide"><Icon name="book" :size="16" /> Guidebook</RouterLink>
             </div>
           </section>
 

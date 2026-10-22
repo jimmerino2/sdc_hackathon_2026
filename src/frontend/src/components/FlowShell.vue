@@ -2,7 +2,6 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import Icon from './Icon.vue';
-import { useFlow } from '../state';
 import { go, type Step } from '../router';
 
 const props = defineProps<{
@@ -16,26 +15,25 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{ next: [] }>();
 const router = useRouter();
-const { key } = useFlow();
 const pct = computed(() => (props.progress / 5) * 100);
 
 function onNext() {
   emit('next');
-  router.push(go(key.value, props.next));
+  router.push(go(props.next));
 }
 </script>
 
 <template>
   <div class="shell">
     <header>
-      <RouterLink :to="go(key, 'landing')" class="x" aria-label="Close"><Icon name="x" :size="22" /></RouterLink>
+      <RouterLink :to="go('landing')" class="x" aria-label="Close"><Icon name="x" :size="22" /></RouterLink>
       <div class="progress"><i :style="{ width: pct + '%' }" /></div>
       <div class="streak"><Icon name="flame" :size="18" /> {{ progress }}/5</div>
     </header>
     <main><slot /></main>
     <footer>
-      <RouterLink v-if="back" :to="go(key, back)" class="btn btn-secondary">Back</RouterLink>
-      <RouterLink v-else :to="go(key, skipTo ?? next)" class="btn btn-secondary">{{ skipLabel ?? 'Skip' }}</RouterLink>
+      <RouterLink v-if="back" :to="go(back)" class="btn btn-secondary">Back</RouterLink>
+      <RouterLink v-else :to="go(skipTo ?? next)" class="btn btn-secondary">{{ skipLabel ?? 'Skip' }}</RouterLink>
       <button class="btn btn-primary" :disabled="nextDisabled" @click="onNext">{{ nextLabel ?? 'Continue' }}</button>
     </footer>
   </div>

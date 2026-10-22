@@ -2,10 +2,8 @@
 import Logo from '../components/Logo.vue';
 import Mascot from '../components/Mascot.vue';
 import Icon from '../components/Icon.vue';
-import { useFlow } from '../state';
 import { go } from '../router';
 
-const { key } = useFlow();
 const built = ['IT undergrads', 'Fresh grads', 'Working engineers'];
 </script>
 
@@ -25,7 +23,7 @@ const built = ['IT undergrads', 'Fresh grads', 'Working engineers'];
       <div class="copy">
         <h1>AI is changing tech. Your future in it can be certain.</h1>
         <p>See where software jobs are heading, which ones fit you, and exactly what to learn next.</p>
-        <RouterLink :to="go(key, 'name')" class="btn btn-primary">Get started</RouterLink>
+        <RouterLink :to="go('name')" class="btn btn-primary">Get started</RouterLink>
         <button type="button" class="btn btn-secondary">I already have an account</button>
       </div>
     </section>

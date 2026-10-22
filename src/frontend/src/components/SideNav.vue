@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import Icon from './Icon.vue';
 import Logo from './Logo.vue';
-import { useFlow } from '../state';
 import { go, type Step } from '../router';
 
 defineProps<{ active: 'learn' | 'roles' | 'resources' | 'profile' }>();
-const { key } = useFlow();
 const items: { id: 'learn' | 'roles' | 'resources' | 'profile'; label: string; icon: string; to: Step }[] = [
   { id: 'learn', label: 'Learn', icon: 'route', to: 'pathway' },
   { id: 'roles', label: 'Future roles', icon: 'tup', to: 'roles' },
@@ -19,7 +17,7 @@ const items: { id: 'learn' | 'roles' | 'resources' | 'profile'; label: string; i
     <aside>
       <Logo class="brand" />
       <nav>
-        <RouterLink v-for="i in items" :key="i.id" :to="go(key, i.to)" :class="{ on: i.id === active }">
+        <RouterLink v-for="i in items" :key="i.id" :to="go(i.to)" :class="{ on: i.id === active }">
           <Icon :name="i.icon" :size="20" /> {{ i.label }}
         </RouterLink>
       </nav>

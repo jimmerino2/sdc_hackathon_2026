@@ -1,5 +1,4 @@
 import { computed, reactive } from 'vue';
-import { useRoute } from 'vue-router';
 import { personas, scenarios, type PersonaKey, type Role, type ScenarioKey } from './data/flows';
 import { DEFAULT_SKILLS, LEVEL_SCORES, levelFromScore, mergeSkills, SKILL_CHECK_SIZE } from './data/skills';
 import type { SkillScore } from './api/resume';
@@ -89,8 +88,7 @@ export async function loadRoadmap(s: FlowState) {
 }
 
 export function useFlow() {
-  const route = useRoute();
-  const key = computed(() => (route.params.persona as PersonaKey) || 'a');
+  const key = computed<PersonaKey>(() => 'a'); // one persona's copy for now; the address no longer carries it
   const persona = computed(() => personas[key.value]);
   const state = computed(() => store[key.value]);
   const scenario = computed(() => scenarios.find((s) => s.key === state.value.scenario)!);

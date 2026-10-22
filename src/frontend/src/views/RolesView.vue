@@ -16,7 +16,7 @@ import { go } from '../router';
 const CHIPS = 3; // skills shown per side on a card
 
 const router = useRouter();
-const { key, state, scenario } = useFlow();
+const { state, scenario } = useFlow();
 const sIcon = { accelerates: 'tup', steady: 'arrow', slows: 'tdown' } as const;
 const trendIcon = { growing: 'tup', stable: 'arrow', shrinking: 'tdown' } as const;
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -52,7 +52,7 @@ const heading = computed(() => {
 /** Open the forecast page for this role. */
 function openForecast(code: string) {
   state.value.chosenRoleId = code;
-  router.push({ ...go(key.value, 'signal'), query: { role: code } });
+  router.push({ ...go('signal'), query: { role: code } });
 }
 
 function choose() {

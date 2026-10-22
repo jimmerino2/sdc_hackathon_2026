@@ -7,13 +7,13 @@ import { useFlow } from '../state';
 import { go } from '../router';
 
 const router = useRouter();
-const { key, state } = useFlow();
+const { state } = useFlow();
 const empty = computed(() => !state.value.name.trim());
 
 function submit() {
   if (empty.value) return;
   state.value.name = state.value.name.trim();
-  router.push(go(key.value, 'who'));
+  router.push(go('who'));
 }
 </script>
 

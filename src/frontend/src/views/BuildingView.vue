@@ -6,7 +6,7 @@ import Mascot from '../components/Mascot.vue';
 import { loadRoadmap, useFlow } from '../state';
 import { go } from '../router';
 
-const { key, state } = useFlow();
+const { state } = useFlow();
 const router = useRouter();
 const stage = ref(0);
 let timer: number | undefined;
@@ -31,7 +31,7 @@ function start() {
     else if (state.value.roadmap.status === 'done') {
       clearInterval(timer);
       stage.value = items.value.length;
-      router.push(go(key.value, 'pathway'));
+      router.push(go('pathway'));
     } else if (failed.value) clearInterval(timer);
   }, 1400);
   loadRoadmap(state.value);

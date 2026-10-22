@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import type { PersonaKey } from './data/flows';
 
 export const steps = [
   'landing',
@@ -43,17 +42,15 @@ const viewFor = (s: Step) => {
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', redirect: '/a/landing' },
-    ...steps.map((s) => ({
-      path: `/:persona(a|b|c)/${s}`,
-      name: s,
-      component: viewFor(s),
-    })),
-    { path: '/:pathMatch(.*)*', redirect: '/a/landing' },
+    { path: '/', redirect: '/landing' },
+    ...steps.map((s) => ({ path: `/${s}`, name: s, component: viewFor(s) })),
+    // Old links from when the address started with the persona (/a/landing).
+    { path: '/:persona(a|b|c)/:step', redirect: (to) => `/${to.params.step}` },
+    { path: '/:pathMatch(.*)*', redirect: '/landing' },
   ],
   scrollBehavior: () => ({ top: 0 }),
 });
 
-export function go(persona: PersonaKey, step: Step) {
-  return { name: step, params: { persona } };
+export function go(step: Step) {
+  return { name: step };
 }
