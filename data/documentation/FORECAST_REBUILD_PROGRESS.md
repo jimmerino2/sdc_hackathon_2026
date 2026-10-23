@@ -55,13 +55,19 @@ occupation adoption (RPS), on a generic engine shared with skill demand.
 
 | # | Step | Status |
 |---|------|--------|
-| 10 | Generic engine: TargetSpec, per-target output dirs (`output/<target>/`) | todo |
-| 11 | BTOS ingestion with publication dates, wording segments, SE, `.` vs `S` codes (`forecasting/btos.py`) | todo |
-| 12 | RPS ingestion with fetch-time snapshots, optional FRED_API_KEY vintages (`forecasting/rps.py`) | todo |
-| 13 | Business- and occupation-adoption targets, run, tests | todo |
+| 10 | Generic engine: TargetSpec, per-target output dirs (`output/<target>/`) | done |
+| 11 | BTOS ingestion with publication dates, wording segments, SE, `.` vs `S` codes (`forecasting/btos.py`) | done |
+| 12 | RPS ingestion with fetch-time snapshots, optional FRED_API_KEY vintages (`forecasting/rps.py`) | done |
+| 13 | Business- and occupation-adoption targets, run, tests | done |
 | 14 | Docs update (FORECAST_REBUILD.md, STRUCTURE.md) | todo |
 
 Facts: BTOS Q7/Q24 old wording 202319-202520 (54 fortnights), not asked 202521-202523 ("."), new wording
 202524-202621 (24 fortnights; 10.0% -> 17.3% jump). Dates sheet has Publication Date per smpdt (also future
 schedule rows: drop those after today). RPS: 9 quarters 2024Q3-2026Q3 per SOC group; no FRED key, so no
 historical vintages (FRED csv ignores vintage_date).
+- 2026-10-24: engine generalised (forecasting/targets/, TargetSpec); skill-demand results reproduced exactly
+  (26,040 identical predictions). btos.py + targets/business_adoption.py, rps.py + targets/occupation_adoption.py.
+  `python -m forecasting.run --skip-ingest` runs all three (~3 min); outputs in output/<target>/. "validated" now
+  needs holdout MASE <= 0.95 (an RPS 0.03% "gain" had been labelled validated). 50 tests pass.
+  Results: BTOS h6 naive (baseline), h13 ridge validated (MASE 0.89); RPS h1 pooled_mean not_demonstrably_better,
+  h2 not promoted (insufficient history). NEXT: step 14 docs.

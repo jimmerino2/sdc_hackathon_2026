@@ -53,23 +53,26 @@ SOURCES: dict[str, Source] = {s.id: s for s in [
     Source("census_btos", "Census Business Trends and Outlook Survey", "https://www.census.gov/hfp/btos/data_downloads",
            "share of US businesses using AI in the last two weeks / expecting to in six months", "percent of firms",
            "US, national and NAICS sector, biweekly from 2023-09", 14, "xlsx download", "none", "public domain",
-           label_for=("business_adoption",),
+           label_for=("business_adoption",), implemented=True,
            limitations=("measures firms, not workers or occupations",
                         "question wording changed Nov 2025: a structural break, series not joined across it",
                         "US only; no transfer to other countries without separate evidence",
-                        "old adapter pipeline/build_btos_ai.py lives on feat/ai-adoption-mc, not yet ported")),
+                        "estimates assumed unrevised once published; checked from now on via dated downloads",
+                        "fortnights 202521-202523 not asked (published as '.')")),
     Source("rps_genai", "Real-Time Population Survey, GenAI adoption (Bick, Blandin & Deming)",
            "https://sites.google.com/view/covid-rps/data",
            "share of employed US adults using generative AI for their job", "percent of workers",
            "US, SOC major group, quarterly", 92, "FRED csv", "none", "see source",
-           label_for=("occupation_adoption",),
-           limitations=("self-reported use; small samples per group",)),
+           label_for=("occupation_adoption",), implemented=True,
+           limitations=("self-reported use; small samples per group",
+                        "9 quarters (2024-Q3 on): too short for a strong backtest",
+                        "no historical vintages without FRED_API_KEY: availability dates assumed")),
     Source("adzuna", "Adzuna job-ads API", "https://developer.adzuna.com",
            "live job ads matching a query (counts and ad text)", "ads", "US/GB/..., live ads only", 7,
            "REST API, snapshots stored by date", "ADZUNA_APP_ID / ADZUNA_APP_KEY", "API terms",
            feature_for=("skill_demand",),
-           limitations=("no history before our first snapshot (2026-10); too short to train on yet",
-                        "free tier 25 calls/day")),
+           limitations=("free tier only (25 calls/day): snapshots stay too thin to train or backtest on; "
+                        "context only, by decision of 2026-10-24",)),
     Source("gdelt_doc", "GDELT DOC 2.0", "https://api.gdeltproject.org/api/v2/doc/doc",
            "news coverage matching a query; timeline volume is normalised by all monitored coverage",
            "share of monitored articles", "global, from 2017", 1, "REST API", "none", "GDELT terms",
@@ -82,14 +85,21 @@ SOURCES: dict[str, Source] = {s.id: s for s in [
 ]}
 
 
-def health(source_id: str, vintages: pd.DataFrame, now: pd.Timestamp) -> dict:
-    """Freshness of a source from its vintage table: stale when no vintage for 2 x its cadence."""
-    s = SOURCES[source_id]
-    if vintages.empty:
+def health(source_id: str, last_available_at: pd.Timestamp | None, last_period: str | None,
+           now: pd.Timestamp) -> dict:
+    """Freshness of a source: stale when nothing new has been published for 2 x its cadence."""
+    if last_available_at is None or pd.isna(last_available_at):
         return {"source_id": source_id, "status": "no_data"}
+    age = (now - last_available_at).days
+    return {"source_id": source_id, "last_available_at": last_available_at.isoformat(),
+            "last_complete_period": last_period, "age_days": age,
+            "status": "stale" if age > 2 * SOURCES[source_id].cadence_days else "fresh"}
+
+
+def vintage_health(source_id: str, vintages: pd.DataFrame, now: pd.Timestamp) -> dict:
+    """health() for a vintage table (vintages.py layout)."""
+    if vintages.empty:
+        return health(source_id, None, None, now)
     last = vintages["available_at"].max()
     complete = vintages[(vintages["available_at"] == last) & ~vintages["is_partial"].astype(bool)]
-    age = (now - last).days
-    return {"source_id": source_id, "last_vintage_at": last.isoformat(),
-            "last_complete_period": complete["month"].max() if not complete.empty else None,
-            "age_days": age, "status": "stale" if age > 2 * s.cadence_days else "fresh"}
+    return health(source_id, last, complete["month"].max() if not complete.empty else None, now)

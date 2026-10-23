@@ -1,10 +1,10 @@
-"""Candidate models for the h-month change in logit share. Ordered simplest first: selection prefers the
+"""Candidate models for the h-period change in logit share. Ordered simplest first: selection prefers the
 simpler model when two score within NEAR_BEST, so complexity has to earn its place.
 
   naive         no change (the last published value carries forward)
-  drift         the country's last 12-month change continues, scaled to h months
+  drift         the unit's change over the last trend_steps periods continues, scaled to h periods
   damped_drift  drift with a damping factor fitted on the snapshot's own history
-  pooled_mean   the average h-month change of all countries over the last 12 anchor months
+  pooled_mean   the average h-period change of all units over the last trend_steps anchor periods
   ridge         ridge regression on the feature groups; alpha by time-ordered CV inside the snapshot
   lightgbm      small, heavily regularised trees; a challenger only
 
@@ -33,8 +33,8 @@ class Model:
     complexity = 0
     uses_features = False
 
-    def fit(self, train: pd.DataFrame, h: int, features: list[str]) -> "Model":
-        self.h, self.features = h, features
+    def fit(self, train: pd.DataFrame, h: int, features: list[str], trend_steps: int = 12) -> "Model":
+        self.h, self.features, self.trend_steps = h, features, trend_steps
         return self
 
     def predict(self, rows: pd.DataFrame) -> np.ndarray:
@@ -52,33 +52,35 @@ class Drift(Model):
     name, complexity = "drift", 1
 
     def predict(self, rows):
-        return rows["d12"].fillna(0).to_numpy() * self.h / 12  # missing trend -> no change, not a guess
+        return rows["trend"].fillna(0).to_numpy() * self.h / self.trend_steps  # missing trend -> no change
 
 
 class DampedDrift(Model):
     name, complexity = "damped_drift", 2
 
-    @staticmethod
-    def _path(d12: np.ndarray, h: int, phi: float) -> np.ndarray:
-        return d12 / 12 * sum(phi ** k for k in range(1, h + 1))
+    def _path(self, trend: np.ndarray, phi: float) -> np.ndarray:
+        return trend / self.trend_steps * sum(phi ** k for k in range(1, self.h + 1))
 
-    def fit(self, train, h, features):
-        super().fit(train, h, features)
-        t = train.dropna(subset=["d12"])
-        err = {phi: np.abs(self._path(t["d12"].to_numpy(), h, phi) - t["target"].to_numpy()).mean() for phi in PHIS}
-        self.phi = min(err, key=err.get) if len(t) else 1.0
+    def fit(self, train, h, features, trend_steps=12):
+        super().fit(train, h, features, trend_steps)
+        t = train.dropna(subset=["trend"])
+        if t.empty:  # no trend observed yet: nothing to damp
+            self.phi = 1.0
+            return self
+        err = {phi: np.abs(self._path(t["trend"].to_numpy(), phi) - t["target"].to_numpy()).mean() for phi in PHIS}
+        self.phi = min(err, key=err.get)
         return self
 
     def predict(self, rows):
-        return self._path(rows["d12"].fillna(0).to_numpy(), self.h, self.phi)
+        return self._path(rows["trend"].fillna(0).to_numpy(), self.phi)
 
 
 class PooledMean(Model):
     name, complexity = "pooled_mean", 2
 
-    def fit(self, train, h, features):
-        super().fit(train, h, features)
-        recent = train[train["month"] > train["month"].max() - 12]
+    def fit(self, train, h, features, trend_steps=12):
+        super().fit(train, h, features, trend_steps)
+        recent = train[train["period"] > train["period"].max() - trend_steps]
         self.mean = float(recent["target"].mean()) if len(recent) else 0.0
         return self
 
@@ -86,14 +88,14 @@ class PooledMean(Model):
         return np.full(len(rows), self.mean)
 
 
-def _month_folds(months: pd.Series, n: int = 4, h: int = 1):
-    """Time-ordered inner folds over anchor months, with an h-month gap so labels do not overlap the fold."""
-    u = np.sort(months.unique())
+def _period_folds(periods: pd.Series, n: int = 4, h: int = 1):
+    """Time-ordered inner folds over anchor periods, with an h-period gap so labels do not overlap the fold."""
+    u = np.array(sorted(periods.unique()))
     cuts = np.linspace(len(u) * 0.5, len(u), n + 1).astype(int)[:-1]
     for c in cuts:
         if c - h <= 0 or c >= len(u):
             continue
-        yield months.isin(u[:c - h]).to_numpy(), months.isin(u[c:c + 6]).to_numpy()
+        yield periods.isin(u[:c - h]).to_numpy(), periods.isin(u[c:c + 6]).to_numpy()
 
 
 class RidgeModel(Model):
@@ -104,11 +106,11 @@ class RidgeModel(Model):
         return make_pipeline(SimpleImputer(strategy="median", add_indicator=True, keep_empty_features=True),
                              StandardScaler(), Ridge(alpha=alpha))
 
-    def fit(self, train, h, features):
-        super().fit(train, h, features)
+    def fit(self, train, h, features, trend_steps=12):
+        super().fit(train, h, features, trend_steps)
         X, y = train[features], train["target"].to_numpy()
         scores = {a: [] for a in ALPHAS}
-        for tr, va in _month_folds(train["month"], h=h):
+        for tr, va in _period_folds(train["period"], h=h):
             if tr.sum() < 20 or va.sum() == 0:
                 continue
             for a in ALPHAS:
@@ -125,8 +127,8 @@ class RidgeModel(Model):
 class LightGBMModel(Model):
     name, complexity, uses_features = "lightgbm", 4, True
 
-    def fit(self, train, h, features):
-        super().fit(train, h, features)
+    def fit(self, train, h, features, trend_steps=12):
+        super().fit(train, h, features, trend_steps)
         self.m = lgb.LGBMRegressor(**LGB_PARAMS).fit(train[features], train["target"])
         return self
 

@@ -5,14 +5,16 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from forecasting import evaluation as E, run
+from forecasting import run
+from forecasting.targets import all_specs, skill_demand
 
-LATEST = Path(run.__file__).parent / "output" / "latest_forecast.csv"
+SPEC = skill_demand.SPEC
+OUTPUT = Path(run.__file__).parent / "output"
 
 
 def _sel(holdout_n=10, insufficient=False):
     rows = []
-    for h in E.HORIZONS:
+    for h in SPEC.horizons:
         for c in ("naive", "ridge"):
             rows.append({"h": h, "candidate": c, "chosen": c == "ridge", "selection_mae_pp": 0.5,
                          "holdout_mae_pp": 0.4, "holdout_mase_vs_naive": 0.8 if c == "ridge" else 1.0,
@@ -31,16 +33,16 @@ def out(tmp_path, monkeypatch):
 
 
 def _issue(out, run_id, model):
-    rows = pd.DataFrame([{"run_id": run_id, "h": h, "model": model} for h in E.HORIZONS])
+    rows = pd.DataFrame([{"run_id": run_id, "h": h, "model": model} for h in SPEC.horizons])
     rows.to_csv(out / "forecast_log.csv", mode="a", header=not (out / "forecast_log.csv").exists(), index=False)
     return rows
 
 
 def test_rejected_run_keeps_the_last_accepted_model(out):
     _issue(out, "good", "ridge")
-    run.promote("good", "t1", _sel(), FRESH, None, "v1")
+    run.promote(SPEC, out, "good", "t1", _sel(), FRESH, "v1")
     _issue(out, "bad", "ridge")
-    reg = run.promote("bad", "t2", _sel(holdout_n=2), STALE, None, "v2")
+    reg = run.promote(SPEC, out, "bad", "t2", _sel(holdout_n=2), STALE, "v2")
     assert all(e["run_id"] == "good" for e in reg["promoted"].values())
     assert [a["accepted"] for a in reg["attempts"]] == [True] * 3 + [False] * 3
     assert "target source is stale" in reg["attempts"][-1]["rejected_because"]
@@ -48,21 +50,30 @@ def test_rejected_run_keeps_the_last_accepted_model(out):
 
 
 def test_insufficient_history_blocks_promotion():
-    assert "insufficient history for selection" in run.acceptance(_sel(insufficient=True), FRESH, 1)
+    assert "insufficient history for selection" in run.acceptance(SPEC, _sel(insufficient=True), FRESH, 1)
 
 
 def test_status_labels_follow_the_holdout_comparison():
     assert run.status_for(pd.Series({"candidate": "naive", "holdout_mase_vs_naive": 1.0})) == "baseline"
     assert run.status_for(pd.Series({"candidate": "ridge", "holdout_mase_vs_naive": 0.9})) == "validated"
     assert run.status_for(pd.Series({"candidate": "ridge", "holdout_mase_vs_naive": 1.1})) == "not_demonstrably_better"
+    # a near-tie is not evidence: "validated" needs a margin over naive
+    assert run.status_for(pd.Series({"candidate": "ridge", "holdout_mase_vs_naive": 0.9997})) == "not_demonstrably_better"
 
 
-@pytest.mark.skipif(not LATEST.exists(), reason="no forecast run yet")
-def test_published_forecast_is_timestamped_versioned_and_bounded():
-    f = pd.read_csv(LATEST)
+@pytest.mark.parametrize("tid", list(all_specs()))
+def test_published_forecast_is_timestamped_versioned_and_bounded(tid):
+    latest = OUTPUT / tid / "latest_forecast.csv"
+    if not latest.exists():
+        pytest.skip("no forecast run yet")
+    f = pd.read_csv(latest)
     assert f["run_id"].notna().all() and f["made_at"].notna().all() and f["data_as_of"].notna().all()
     assert ((f["low_pct"] <= f["forecast_pct"]) & (f["forecast_pct"] <= f["high_pct"])).all()
     assert f[["low_pct", "high_pct"]].stack().between(0, 100).all()
-    assert set(f["h"]) == set(E.HORIZONS)
-    reg = json.loads((LATEST.parent / "model_registry.json").read_text())
+    assert (f["target"] == tid).all()
+    reg = json.loads((OUTPUT / tid / "model_registry.json").read_text())
     assert all(e["model_version"] for e in reg["promoted"].values())
+    assert {int(h) for h in reg["promoted"]} == set(f["h"])  # only promoted horizons are served
+    spec = all_specs()[tid]
+    if spec.history_warning:
+        assert f["warnings"].str.contains("short history").all()

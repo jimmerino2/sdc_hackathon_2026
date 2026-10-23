@@ -3,11 +3,21 @@ import dataclasses
 
 import pytest
 
-from forecasting import contracts as C, features as F, registry as R
+from forecasting import contracts as C, registry as R
+from forecasting.targets import all_specs
 
 
-def test_skill_demand_model_passes_its_own_contract():
-    C.check_sources("ai_mention_share", "indeed_ai_tracker", set(F.GROUP_SOURCE.values()))
+def test_every_implemented_target_passes_its_own_contract():
+    for tid, spec in all_specs().items():
+        C.check_sources(tid, C.TARGETS[tid].label_source, set(spec.group_source.values()))
+        assert C.TARGETS[tid].status == "implemented" and C.TARGETS[tid].horizons == spec.horizons
+
+
+def test_adoption_models_use_no_cross_domain_source():
+    specs = all_specs()
+    assert set(specs["worker_genai_use_rate"].group_source.values()) == {"rps_genai"}  # no BTOS, no exposure
+    assert set(specs["btos_ai_use_rate"].group_source.values()) == {"census_btos"}
+    assert "census_btos" not in set(specs["ai_mention_share"].group_source.values())
 
 
 def test_btos_is_not_a_skill_demand_feature():
@@ -43,12 +53,13 @@ def test_invalid_substitutions_are_refused(label, target):
 
 
 def test_every_feature_group_names_a_registered_source():
-    for g in F.FEATURE_GROUPS:
-        assert F.GROUP_SOURCE[g] in R.SOURCES
-    assert set(F.ALL_FEATURES) == {f for cols in F.FEATURE_GROUPS.values() for f in cols}
+    for spec in all_specs().values():
+        assert set(spec.feature_groups) == set(spec.group_source)
+        assert all(src in R.SOURCES for src in spec.group_source.values())
 
 
 def test_stale_source_is_not_reported_fresh(ai_v):
     import pandas as pd
-    h = R.health("indeed_ai_tracker", ai_v, pd.Timestamp("2026-01-01", tz="UTC"))
+    h = R.vintage_health("indeed_ai_tracker", ai_v, pd.Timestamp("2026-01-01", tz="UTC"))
     assert h["status"] == "stale"
+    assert R.health("census_btos", None, None, pd.Timestamp("2026-01-01", tz="UTC"))["status"] == "no_data"

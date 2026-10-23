@@ -1,0 +1,85 @@
+{
+  "target": "btos_ai_use_rate",
+  "promoted": {
+    "6": {
+      "run_id": "20261023T180244Z-bd0071",
+      "made_at": "2026-10-23T18:02:44Z",
+      "h": 6,
+      "model": "naive",
+      "model_version": "bd00711d7e44",
+      "status": "baseline",
+      "selection_mae_pp": 1.1084848484848484,
+      "holdout_mae_pp": 2.337345679012346,
+      "holdout_mase_vs_naive": 1.0,
+      "accepted": true,
+      "rejected_because": []
+    },
+    "13": {
+      "run_id": "20261023T180244Z-bd0071",
+      "made_at": "2026-10-23T18:02:44Z",
+      "h": 13,
+      "model": "ridge",
+      "model_version": "bd00711d7e44",
+      "status": "validated",
+      "selection_mae_pp": 1.4683405556682103,
+      "holdout_mae_pp": 3.7620546422130743,
+      "holdout_mase_vs_naive": 0.894423471462594,
+      "accepted": true,
+      "rejected_because": []
+    }
+  },
+  "attempts": [
+    {
+      "run_id": "20261023T175853Z-12d42a",
+      "made_at": "2026-10-23T17:58:53Z",
+      "h": 6,
+      "model": "naive",
+      "model_version": "12d42acd9bcc",
+      "status": "baseline",
+      "selection_mae_pp": 1.1084848484848484,
+      "holdout_mae_pp": 2.337345679012346,
+      "holdout_mase_vs_naive": 1.0,
+      "accepted": true,
+      "rejected_because": []
+    },
+    {
+      "run_id": "20261023T175853Z-12d42a",
+      "made_at": "2026-10-23T17:58:53Z",
+      "h": 13,
+      "model": "ridge",
+      "model_version": "12d42acd9bcc",
+      "status": "validated",
+      "selection_mae_pp": 1.4683405556682103,
+      "holdout_mae_pp": 3.7620546422130743,
+      "holdout_mase_vs_naive": 0.894423471462594,
+      "accepted": true,
+      "rejected_because": []
+    },
+    {
+      "run_id": "20261023T180244Z-bd0071",
+      "made_at": "2026-10-23T18:02:44Z",
+      "h": 6,
+      "model": "naive",
+      "model_version": "bd00711d7e44",
+      "status": "baseline",
+      "selection_mae_pp": 1.1084848484848484,
+      "holdout_mae_pp": 2.337345679012346,
+      "holdout_mase_vs_naive": 1.0,
+      "accepted": true,
+      "rejected_because": []
+    },
+    {
+      "run_id": "20261023T180244Z-bd0071",
+      "made_at": "2026-10-23T18:02:44Z",
+      "h": 13,
+      "model": "ridge",
+      "model_version": "bd00711d7e44",
+      "status": "validated",
+      "selection_mae_pp": 1.4683405556682103,
+      "holdout_mae_pp": 3.7620546422130743,
+      "holdout_mase_vs_naive": 0.894423471462594,
+      "accepted": true,
+      "rejected_because": []
+    }
+  ]
+}

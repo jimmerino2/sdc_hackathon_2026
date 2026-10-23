@@ -5,8 +5,8 @@ The four quantities are related but different, and must never stand in for each 
   business_adoption    share of firms using AI (BTOS)
   occupation_adoption  share of workers in an occupation using AI (RPS); task exposure is NOT adoption
   skill_demand         share of job postings asking for a skill; NOT adoption, NOT employment
-Only skill_demand has a working model on this branch; the others are declared so their rules are enforced
-from the start, and their status says so.
+skill_demand, business_adoption and occupation_adoption have working models (forecasting/targets/); ai_capability
+is declared so its rules are enforced from the start, and its status says so.
 """
 from __future__ import annotations
 
@@ -23,23 +23,24 @@ class Target:
     unit: str
     grain: str
     label_source: str
-    horizons_months: tuple[int, ...]
+    horizons: tuple[int, ...]
+    horizon_unit: str
     status: str  # implemented | planned
 
 
 TARGETS: dict[str, Target] = {t.id: t for t in [
     Target("ai_mention_share", "skill_demand",
            "monthly mean of the daily share of new Indeed postings whose description mentions AI terms",
-           "percent of postings", "country x month", "indeed_ai_tracker", (1, 3, 6), "implemented"),
+           "percent of postings", "country x month", "indeed_ai_tracker", (1, 3, 6), "month", "implemented"),
     Target("btos_ai_use_rate", "business_adoption",
            "share of US businesses that used AI in the last two weeks, within one question wording",
-           "percent of firms", "US sector x fortnight", "census_btos", (3, 6), "planned"),
+           "percent of firms", "US sector x wording x fortnight", "census_btos", (6, 13), "fortnight", "implemented"),
     Target("worker_genai_use_rate", "occupation_adoption",
            "share of employed US adults in a SOC major group using generative AI for their job",
-           "percent of workers", "SOC major group x quarter", "rps_genai", (3, 6), "planned"),
+           "percent of workers", "SOC major group x quarter", "rps_genai", (1, 2), "quarter", "implemented"),
     Target("frontier_capability_index", "ai_capability",
            "benchmark-based capability measure of the best available model (definition pending)",
-           "benchmark score", "month", "", (6, 12), "planned"),
+           "benchmark score", "month", "", (6, 12), "month", "planned"),
 ]}
 
 # Substitutions the spec forbids, as (source, domain) -> reason. Checked on top of the registry, so a later

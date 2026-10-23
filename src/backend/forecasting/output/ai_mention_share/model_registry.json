@@ -1,0 +1,163 @@
+{
+  "target": "ai_mention_share",
+  "promoted": {
+    "1": {
+      "run_id": "20261023T180055Z-bd0071",
+      "made_at": "2026-10-23T18:00:55Z",
+      "h": 1,
+      "model": "drift",
+      "model_version": "bd00711d7e44",
+      "status": "validated",
+      "selection_mae_pp": 0.3670600555627154,
+      "holdout_mae_pp": 0.3888248962192503,
+      "holdout_mase_vs_naive": 0.8029880000559522,
+      "accepted": true,
+      "rejected_because": []
+    },
+    "3": {
+      "run_id": "20261023T180055Z-bd0071",
+      "made_at": "2026-10-23T18:00:55Z",
+      "h": 3,
+      "model": "pooled_mean",
+      "model_version": "bd00711d7e44",
+      "status": "validated",
+      "selection_mae_pp": 0.4113139943373301,
+      "holdout_mae_pp": 0.7094351831794574,
+      "holdout_mase_vs_naive": 0.6601235164205017,
+      "accepted": true,
+      "rejected_because": []
+    },
+    "6": {
+      "run_id": "20261023T180055Z-bd0071",
+      "made_at": "2026-10-23T18:00:55Z",
+      "h": 6,
+      "model": "naive",
+      "model_version": "bd00711d7e44",
+      "status": "baseline",
+      "selection_mae_pp": 0.5234071088435374,
+      "holdout_mae_pp": 2.0448101851851854,
+      "holdout_mase_vs_naive": 1.0,
+      "accepted": true,
+      "rejected_because": []
+    }
+  },
+  "attempts": [
+    {
+      "run_id": "20261023T173012Z-c8a73a",
+      "made_at": "2026-10-23T17:30:12Z",
+      "h": 1,
+      "model": "drift",
+      "model_version": "c8a73a40bae5",
+      "status": "validated",
+      "selection_mae_pp": 0.3670600555627154,
+      "holdout_mae_pp": 0.3888248962192503,
+      "holdout_mase_vs_naive": 0.8029880000559522,
+      "accepted": true,
+      "rejected_because": []
+    },
+    {
+      "run_id": "20261023T173012Z-c8a73a",
+      "made_at": "2026-10-23T17:30:12Z",
+      "h": 3,
+      "model": "pooled_mean",
+      "model_version": "c8a73a40bae5",
+      "status": "validated",
+      "selection_mae_pp": 0.4113139943373301,
+      "holdout_mae_pp": 0.7094351831794574,
+      "holdout_mase_vs_naive": 0.6601235164205017,
+      "accepted": true,
+      "rejected_because": []
+    },
+    {
+      "run_id": "20261023T173012Z-c8a73a",
+      "made_at": "2026-10-23T17:30:12Z",
+      "h": 6,
+      "model": "naive",
+      "model_version": "c8a73a40bae5",
+      "status": "baseline",
+      "selection_mae_pp": 0.5234071088435374,
+      "holdout_mae_pp": 2.0448101851851854,
+      "holdout_mase_vs_naive": 1.0,
+      "accepted": true,
+      "rejected_because": []
+    },
+    {
+      "run_id": "20261023T175323Z-630bff",
+      "made_at": "2026-10-23T17:53:23Z",
+      "h": 1,
+      "model": "drift",
+      "model_version": "630bff39f88f",
+      "status": "validated",
+      "selection_mae_pp": 0.3670600555627154,
+      "holdout_mae_pp": 0.3888248962192503,
+      "holdout_mase_vs_naive": 0.8029880000559522,
+      "accepted": true,
+      "rejected_because": []
+    },
+    {
+      "run_id": "20261023T175323Z-630bff",
+      "made_at": "2026-10-23T17:53:23Z",
+      "h": 3,
+      "model": "pooled_mean",
+      "model_version": "630bff39f88f",
+      "status": "validated",
+      "selection_mae_pp": 0.4113139943373301,
+      "holdout_mae_pp": 0.7094351831794574,
+      "holdout_mase_vs_naive": 0.6601235164205017,
+      "accepted": true,
+      "rejected_because": []
+    },
+    {
+      "run_id": "20261023T175323Z-630bff",
+      "made_at": "2026-10-23T17:53:23Z",
+      "h": 6,
+      "model": "naive",
+      "model_version": "630bff39f88f",
+      "status": "baseline",
+      "selection_mae_pp": 0.5234071088435374,
+      "holdout_mae_pp": 2.0448101851851854,
+      "holdout_mase_vs_naive": 1.0,
+      "accepted": true,
+      "rejected_because": []
+    },
+    {
+      "run_id": "20261023T180055Z-bd0071",
+      "made_at": "2026-10-23T18:00:55Z",
+      "h": 1,
+      "model": "drift",
+      "model_version": "bd00711d7e44",
+      "status": "validated",
+      "selection_mae_pp": 0.3670600555627154,
+      "holdout_mae_pp": 0.3888248962192503,
+      "holdout_mase_vs_naive": 0.8029880000559522,
+      "accepted": true,
+      "rejected_because": []
+    },
+    {
+      "run_id": "20261023T180055Z-bd0071",
+      "made_at": "2026-10-23T18:00:55Z",
+      "h": 3,
+      "model": "pooled_mean",
+      "model_version": "bd00711d7e44",
+      "status": "validated",
+      "selection_mae_pp": 0.4113139943373301,
+      "holdout_mae_pp": 0.7094351831794574,
+      "holdout_mase_vs_naive": 0.6601235164205017,
+      "accepted": true,
+      "rejected_because": []
+    },
+    {
+      "run_id": "20261023T180055Z-bd0071",
+      "made_at": "2026-10-23T18:00:55Z",
+      "h": 6,
+      "model": "naive",
+      "model_version": "bd00711d7e44",
+      "status": "baseline",
+      "selection_mae_pp": 0.5234071088435374,
+      "holdout_mae_pp": 2.0448101851851854,
+      "holdout_mase_vs_naive": 1.0,
+      "accepted": true,
+      "rejected_because": []
+    }
+  ]
+}
