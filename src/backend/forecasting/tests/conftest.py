@@ -2,9 +2,14 @@
 
 Run from src/backend:  python -m pytest forecasting/tests
 """
+import sys
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # src/backend, so tests also run from the repo root
 
 GEOS = ["AA", "BB", "CC"]
 
