@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import FlowShell from '../components/FlowShell.vue';
 import Bubble from '../components/Bubble.vue';
 import Icon from '../components/Icon.vue';
+import PollenGame from '../components/PollenGame.vue';
 import { checkResumeFile, extractResume, ResumeUploadError } from '../api/resume';
 import { skillLabel } from '../data/skills';
 import { useFlow } from '../state';
@@ -64,6 +65,7 @@ function onDrop(e: DragEvent) {
 
 function skip() {
   attempt++;
+  reading.value = false;
   state.value.resume = null;
   router.push(go('skills'));
 }
@@ -71,6 +73,7 @@ function skip() {
 
 <template>
   <FlowShell :progress="3" next="skills" back="mind" :next-disabled="!state.resume || reading">
+     <PollenGame v-if="reading" :avoid="['.skip']" :bottom-reserve="90" />
     <h1>Got a resume? Let Jobee read it.</h1>
     <Bubble class="b" :size="60" mood="serious" gear="suit">Upload your resume, or even a list of class projects. I’ll pull out the skills.</Bubble>
     <button
