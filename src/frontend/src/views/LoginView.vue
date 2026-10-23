@@ -18,6 +18,13 @@ const error = ref<string | null>(null);
 const emailOk = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim()));
 const codeOk = computed(() => /^\d{6,8}$/.test(code.value.trim()));
 
+/** Jobee follows along: perks up when the input looks right, thinks while waiting, startles on an error. */
+const mood = computed(() => {
+  if (error.value) return 'surprised';
+  if (busy.value) return 'thinking';
+  return (step.value === 'email' ? emailOk.value : codeOk.value) ? 'happy' : 'wave';
+});
+
 async function run(task: () => Promise<void>) {
   error.value = null;
   busy.value = true;
@@ -60,7 +67,7 @@ function changeEmail() {
     <header><Logo /></header>
     <main>
       <h1>Welcome back</h1>
-      <Bubble class="b" :size="60" mood="wave">
+      <Bubble class="b" :size="60" :mood="mood">
         {{ step === 'email' ? 'Enter the email you saved your roadmap with and I’ll send you a code.' : 'Check your inbox! I just sent you a code.' }}
       </Bubble>
 
@@ -72,7 +79,7 @@ function changeEmail() {
 
       <form v-else class="card block" @submit.prevent="verify">
         <label for="code">Enter the code we sent to <strong>{{ sentTo }}</strong></label>
-        <input id="code" v-model="code" class="field code" type="text" inputmode="numeric" maxlength="8" placeholder="123456" autocomplete="one-time-code" autofocus />
+        <input id="code" v-model="code" class="field code" type="text" inputmode="numeric" maxlength="8" placeholder="12345678" autocomplete="one-time-code" autofocus />
         <button class="btn btn-primary" type="submit" :disabled="!codeOk || busy">{{ busy ? 'Checking…' : 'Log in' }}</button>
         <div class="links">
           <button type="button" :disabled="busy" @click="sendCode">Resend code</button>

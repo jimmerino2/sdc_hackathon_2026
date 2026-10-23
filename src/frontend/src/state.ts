@@ -4,7 +4,7 @@ import { DEFAULT_SKILLS, LEVEL_SCORES, levelFromScore, mergeSkills, SKILL_CHECK_
 import type { SkillScore } from './api/resume';
 import { fetchRecommendations, JobsError, type Recommendations } from './api/jobs';
 import { ensureRoadmap, getRoadmap, RoadmapError, type Roadmap } from './api/roadmap';
-import { clearOnboarded, markLoggedIn, markOnboarded, readProfileId, saveProfileId, stageForWho, type Profile } from './api/profile';
+import { clearOnboarded, clearSession, markLoggedIn, markOnboarded, readProfileId, saveProfileId, stageForWho, type Profile } from './api/profile';
 import { bee, BEES, type BeeName } from './bee';
 
 interface FlowState {
@@ -79,6 +79,12 @@ export function signIn(profile: Profile) {
   markLoggedIn();
 }
 
+/** Log out: forget the profile in this browser and reset the in-memory flow. */
+export function signOut() {
+  clearSession();
+  resetPersona('a');
+}
+
 /** Fetch the matched roles for the saved profile into state.jobs. Never throws. */
 export async function loadJobs(s: FlowState) {
   if (!s.profileId) {
@@ -124,10 +130,14 @@ export async function loadRoadmap(s: FlowState) {
   }
 }
 
+const WHO_PERSONAS: readonly PersonaKey[] = ['a', 'b', 'c'];
+
 export function useFlow() {
-  const key = computed<PersonaKey>(() => 'a'); // one persona's copy for now; the address no longer carries it
+  // All answers live in one store, so changing the career stage never resets what the learner already picked.
+  const state = computed(() => store.a);
+  // Presentation only: the career stage picked on "Who are you" (0/1/2) chooses persona a/b/c copy.
+  const key = computed<PersonaKey>(() => WHO_PERSONAS[state.value.who] ?? 'a');
   const persona = computed(() => personas[key.value]);
-  const state = computed(() => store[key.value]);
   const scenario = computed(() => scenarios.find((s) => s.key === state.value.scenario)!);
   const roles = computed<Role[]>(() => persona.value.roles[state.value.scenario]);
   const chosenRole = computed<Role>(() => {
