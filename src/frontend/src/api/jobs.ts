@@ -85,6 +85,22 @@ export async function fetchRecommendations(profileId: string): Promise<Recommend
   throw new JobsError('Jobee couldn’t match roles just now. Try again in a moment.');
 }
 
+/** Why a role fits one of the learner's interests, through one SDG they share. */
+export interface InterestReason {
+  sdg: number;
+  interest_id: number;
+  interest: string;
+  /** One short sentence, written by the LLM the first time and then kept. */
+  reason: string;
+}
+
+/** The interest reasons for one role. Slow the first time (the LLM writes them), instant after. */
+export async function fetchInterestReasons(profileId: string, onetCode: string): Promise<InterestReason[]> {
+  const res = await fetch(`${API_URL}/jobs/reasons?profile_id=${encodeURIComponent(profileId)}&onet_code=${encodeURIComponent(onetCode)}`);
+  if (!res.ok) throw new JobsError(`Reasons request failed (${res.status})`);
+  return res.json();
+}
+
 /** The roles last suggested to this profile, as they were then (nothing is recomputed). Null if none were saved. */
 export async function fetchSuggested(profileId: string): Promise<Recommendations | null> {
   let res: Response;

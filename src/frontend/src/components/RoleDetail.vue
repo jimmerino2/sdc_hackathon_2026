@@ -8,7 +8,8 @@ import { skillLabel } from '../data/skills';
 import { useFlow } from '../state';
 import { personaCopy } from '../data/personaCopy';
 import { backendScenario, fetchJobForecasts, type JobForecast } from '../api/forecast';
-import type { JobMatch } from '../api/jobs';
+import { fetchInterestReasons, type InterestReason, type JobMatch } from '../api/jobs';
+import { readProfileId } from '../api/profile';
 
 /** A role's AI outlook (the three-futures chart) and skill gap. Shared by the onboarding forecast page and the role page. */
 const props = defineProps<{
@@ -24,6 +25,29 @@ const base = import.meta.env.BASE_URL;
 const fromInterests = computed(() => props.job?.sdg_reasons?.filter((r) => r.interests.length) ?? []);
 const fromJob = computed(() => props.job?.sdg_reasons?.filter((r) => !r.interests.length) ?? []);
 const active = computed(() => state.value.scenario);
+
+/** The LLM's sentence for each interest card, by "sdg:interest". Only fetched on the role page, not in onboarding. */
+const reasons = ref<Record<string, string>>({});
+const reasonsStatus = ref<'idle' | 'loading' | 'done'>('idle');
+async function loadReasons() {
+  const id = state.value.profileId ?? readProfileId();
+  if (props.compact || !id || !fromInterests.value.length || reasonsStatus.value !== 'idle') return;
+  reasonsStatus.value = 'loading';
+  try {
+    const list: InterestReason[] = await fetchInterestReasons(id, props.onetCode);
+    reasons.value = Object.fromEntries(list.map((r) => [`${r.sdg}:${r.interest}`, r.reason]));
+  } catch {
+    // Not fatal: the cards still show which interests point at each goal.
+  }
+  reasonsStatus.value = 'done';
+}
+// The job can arrive after mounting (the saved suggestions load on a refresh).
+watch(fromInterests, loadReasons, { immediate: true });
+watch(() => props.onetCode, () => {
+  reasons.value = {};
+  reasonsStatus.value = 'idle';
+  loadReasons();
+});
 
 const forecasts = ref<JobForecast[]>([]);
 const status = ref<'loading' | 'ready' | 'error'>('loading');
@@ -151,10 +175,14 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
         <div v-if="fromInterests.length" class="sdg-group">
           <h2 class="sdg-title">Your interests</h2>
           <ul class="sdg-list">
-            <li v-for="r in fromInterests" :key="r.sdg" class="sdg-card">
+            <li v-for="r in fromInterests" :key="r.sdg" class="sdg-card" :class="{ why: !compact }">
               <img class="sdg-tile" :src="`${base}sdg/goal-${String(r.sdg).padStart(2, '0')}.jpg`" :alt="`UN Sustainable Development Goal ${r.sdg}: ${r.name}`" width="132" height="132" loading="lazy" />
               <div class="sdg-from">
-                <span v-for="i in r.interests" :key="i" class="chip chip-have"><Icon name="check" :size="13" :stroke="3" /> <span>{{ i }}</span></span>
+                <template v-for="i in r.interests" :key="i">
+                  <span class="chip chip-have"><Icon name="check" :size="13" :stroke="3" /> <span>{{ i }}</span></span>
+                  <p v-if="reasons[`${r.sdg}:${i}`]" class="sdg-why">{{ reasons[`${r.sdg}:${i}`] }}</p>
+                  <span v-else-if="reasonsStatus === 'loading'" class="skel sdg-why-skel" aria-hidden="true" />
+                </template>
               </div>
             </li>
           </ul>
@@ -238,6 +266,10 @@ h1 { font-size: 30px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .sdg-from { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .sdg-from .chip { max-width: 100%; white-space: normal; text-align: left; line-height: 1.25; border-radius: 14px; }
 .sdg-from .chip svg { flex: none; }
+.sdg-card.why { width: 230px; }
+.sdg-card.why .sdg-tile { width: 148px; }
+.sdg-why { font-size: 13px; font-weight: 600; line-height: 1.4; color: var(--muted); margin: 0 0 6px 4px; }
+.sdg-why-skel { display: block; width: 100%; height: 36px; border-radius: 10px; margin-bottom: 6px; }
 .sdg-credit { margin-top: 14px; font-size: 11px; font-weight: 600; color: var(--muted); }
 .gap-row { grid-column: 1 / -1; margin-top: 12px; }
 .gap-row .b { margin-bottom: 18px; }

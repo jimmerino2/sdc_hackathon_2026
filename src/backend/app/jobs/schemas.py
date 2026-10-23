@@ -48,6 +48,15 @@ class SdgReason(BaseModel):
     interests: list[str] = Field(description="The learner's interests that point at this goal, strongest first; empty if none do")
 
 
+class InterestReason(BaseModel):
+    """Why a role fits one of the learner's interests, through one SDG they share. Written by the LLM once, then kept."""
+
+    sdg: int = Field(ge=1, le=17, description="The goal the interest and the role share")
+    interest_id: int
+    interest: str = Field(description="The interest's name, e.g. 'Sports & Fitness'")
+    reason: str = Field(description="One short sentence linking the interest, the goal and the role's work")
+
+
 class MatchParts(BaseModel):
     """The parts of the match that don't depend on the AI scenario, each 0-1 (the score is 10% education, 25% interests, 35% skills, 35% outlook)."""
 

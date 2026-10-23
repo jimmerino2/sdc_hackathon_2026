@@ -77,6 +77,10 @@ const by = computed(() => {
         @click="emit('select', j.onet_code)"
       >
         <span v-if="picking" class="radio" aria-hidden="true"><Icon v-if="selected === j.onet_code" name="check" :size="14" :stroke="3.2" /></span>
+        <span class="score" :class="{ best: idx === 0 }" :style="{ '--p': matchPercent(j, scenarioName) }">
+          <b>{{ matchPercent(j, scenarioName) }}<small>%</small></b>
+          <span>match</span>
+        </span>
         <span class="body">
           <span class="title-row">
             <h3>{{ j.title }}</h3>
@@ -86,7 +90,7 @@ const by = computed(() => {
               {{ roadmapStatus(roadmaps[j.onet_code]).label }}
             </span>
           </span>
-          <span class="sub">{{ matchPercent(j, scenarioName) }}% match · {{ j.skills_owned }} of {{ j.skills_total }} key skills</span>
+          <span class="sub">{{ j.skills_owned }} of {{ j.skills_total }} key skills</span>
           <span v-if="picking && selected === j.onet_code" class="more">
             <span class="blurb">{{ j.description }}</span>
             <span class="chips">
@@ -116,6 +120,18 @@ const by = computed(() => {
 
 .list { display: flex; flex-direction: column; gap: 12px; }
 .role { align-items: flex-start; padding: 16px 18px; }
+/* Match ring: the filled arc is the match %. */
+.score {
+  flex: none; width: 58px; height: 58px; border-radius: 50%; display: grid; place-content: center; text-align: center;
+  background: radial-gradient(closest-side, #fff 76%, transparent 78%), conic-gradient(var(--orange) calc(var(--p) * 1%), var(--line) 0);
+}
+.score.best { background: radial-gradient(closest-side, var(--yellow) 76%, transparent 78%), conic-gradient(var(--ink) calc(var(--p) * 1%), var(--line) 0); }
+.score b { font-size: 18px; font-weight: 900; line-height: 1; color: var(--ink); }
+.score b small { font-size: 11px; font-weight: 900; }
+.score span { font-size: 9px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: 1px; }
+.score.best span { color: var(--ink); }
+.role:not(.selected) { align-items: center; }
+.role:not(.selected) .trend, .role:not(.selected) .go, .role:not(.selected) .radio { margin-top: 0; }
 .radio { width: 24px; height: 24px; margin-top: 1px; border-radius: 50%; border: 2px solid var(--line-strong); display: grid; place-items: center; flex: none; background: #fff; }
 .selected .radio { background: var(--ink); border-color: var(--ink); color: var(--yellow); }
 .body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; text-align: left; }

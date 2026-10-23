@@ -16,12 +16,17 @@ def chat(prompt: str) -> str:
     return res.choices[0].message.content
 
 
-def complete(prompt: str, *, system: str | None = None, model: str | None = None, max_tokens: int = 1000) -> str:
-    """One chat call with an optional system message and model override; temperature 0, 60 s timeout."""
+def complete(prompt: str, *, system: str | None = None, model: str | None = None, max_tokens: int = 1000, thinking: bool = True) -> str:
+    """One chat call with an optional system message and model override; temperature 0, 60 s timeout.
+
+    thinking=False turns the model's hidden reasoning off (Grafilab's chat-template switch), for short answers
+    that should come back in a few seconds.
+    """
     settings = get_settings()
     client = OpenAI(base_url="https://llm.grafilab.ai/v1", api_key=settings.openrouter_api_key, timeout=60)
     messages = ([{"role": "system", "content": system}] if system else []) + [{"role": "user", "content": prompt}]
     res = client.chat.completions.create(
-        model=model or settings.openrouter_model, messages=messages, max_tokens=max_tokens, temperature=0
+        model=model or settings.openrouter_model, messages=messages, max_tokens=max_tokens, temperature=0,
+        extra_body=None if thinking else {"chat_template_kwargs": {"enable_thinking": False}},
     )
     return res.choices[0].message.content or ""

@@ -6,8 +6,8 @@ from supabase import Client
 
 from app.deps import get_supabase_admin
 from app.interests import service as interests_service
-from app.jobs import service
-from app.jobs.schemas import RecommendRequest, RecommendResponse
+from app.jobs import reasons, service
+from app.jobs.schemas import InterestReason, RecommendRequest, RecommendResponse
 from app.profile import service as profiles
 from app.resume.vocab import TOP_N
 
@@ -46,6 +46,19 @@ def recommend(
     except profiles.ProfileError as e:
         print(f"Suggestions not saved: {e.message}")
     return result
+
+
+@router.get("/reasons", response_model=list[InterestReason])
+def interest_reasons(
+    profile_id: UUID = Query(description="The profile_id returned from POST /profile"),
+    onet_code: str = Query(description="The role, e.g. 15-2051.00"),
+    db: Client = Depends(get_supabase_admin),
+):
+    """Why the role fits each of the learner's interests: one short sentence per SDG the role and an interest share. Written by the LLM the first time, then kept (role_interest_reasons), so call it only when the role's details are opened. Empty if no interest points at the role's goals; a sentence the LLM failed to write is left out. 404 if there is no such profile or role."""
+    try:
+        return reasons.interest_reasons(db, profile_id, onet_code)
+    except reasons.ReasonError as e:
+        raise HTTPException(e.status_code, e.message)
 
 
 @router.get("/suggested", response_model=RecommendResponse)

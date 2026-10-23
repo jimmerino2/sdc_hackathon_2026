@@ -3,8 +3,6 @@ import { computed } from 'vue';
 import Icon from './Icon.vue';
 import PositionChart from './PositionChart.vue';
 import RoleList from './RoleList.vue';
-import SdgFocus from './SdgFocus.vue';
-import type { SdgFocus as SdgFocusItem } from '../api/interests';
 import { scenarios } from '../data/flows';
 import { backendScenario } from '../api/forecast';
 import type { ContextRole, JobMatch } from '../api/jobs';
@@ -24,8 +22,6 @@ const props = defineProps<{
   pick?: boolean;
   /** The profile's roadmaps by role. When given, each card shows its role's roadmap status. */
   roadmaps?: Record<string, RoadmapSummary>;
-  /** The SDGs the learner's interests point at; shown above the roles when there are any. */
-  sdgFocus?: SdgFocusItem[];
   /** Always the list: no Cards / Chart toggle. */
   cardsOnly?: boolean;
 }>();
@@ -52,7 +48,6 @@ const heading = computed(() => {
 
 <template>
   <div>
-    <SdgFocus :focus="sdgFocus ?? []" />
     <div class="bar">
       <div v-if="view === 'chart'" class="tabs">
         <button v-for="s in scenarios" :key="s.key" :class="{ on: state.scenario === s.key }" @click="state.scenario = s.key">
