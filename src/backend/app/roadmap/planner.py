@@ -79,12 +79,25 @@ def sanitize(raw: dict, valid_ids: set[str]) -> Plan:
     return plan
 
 
+def _thinking_options(mode: str, base_url: str) -> dict | None:
+    """Extra request body that sets how much the model thinks before answering (ROADMAP_REASONING).
+
+    Thinking is the slow part: with it on, a roadmap took about 73 s, most of it hidden reasoning; with it off
+    about 10 s. OpenRouter takes a `reasoning` object; other OpenAI-compatible gateways (Grafilab) take the
+    chat-template switch, which only has an on/off form, so "low" there keeps the model's default.
+    """
+    if "openrouter.ai" in base_url:
+        reasoning = {"off": {"enabled": False}, "low": {"effort": "low"}}.get(mode)
+        return {"reasoning": reasoning} if reasoning else None
+    if mode == "off":
+        return {"chat_template_kwargs": {"enable_thinking": False}}
+    return None
+
+
 def _complete(messages: list[dict]) -> str:
     settings = get_settings()
     client = OpenAI(base_url=settings.openrouter_base_url, api_key=settings.openrouter_api_key)
-    # OpenRouter-specific parameter; other gateways may not accept it
-    reasoning = {"off": {"enabled": False}, "low": {"effort": "low"}}.get(settings.roadmap_reasoning)
-    extra = {"reasoning": reasoning} if reasoning and "openrouter.ai" in settings.openrouter_base_url else None
+    extra = _thinking_options(settings.roadmap_reasoning, settings.openrouter_base_url)
     res = client.chat.completions.create(
         model=settings.openrouter_model, messages=messages, max_tokens=MAX_OUTPUT_TOKENS, extra_body=extra
     )

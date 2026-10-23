@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import SideNav from '../components/SideNav.vue';
 import Bubble from '../components/Bubble.vue';
 import Icon from '../components/Icon.vue';
 import RoleDetail from '../components/RoleDetail.vue';
@@ -65,7 +64,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <SideNav active="roles">
+  <div class="tab">
     <div class="page">
       <RouterLink :to="go('suggested')" class="back">← All roles</RouterLink>
 
@@ -103,7 +102,7 @@ onMounted(async () => {
         <RoleDetail :onet-code="code" :job="job" />
       </template>
     </div>
-  </SideNav>
+  </div>
 </template>
 
 <style scoped>

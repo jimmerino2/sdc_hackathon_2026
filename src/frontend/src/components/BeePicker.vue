@@ -4,7 +4,7 @@ import Icon from './Icon.vue';
 import { bee, BEES, beeInfo, type BeeName } from '../bee';
 
 /** The four companion bees as a grid of cards. Shared by onboarding and the profile; the caller decides what a pick does. */
-defineProps<{ columns?: number }>();
+defineProps<{ columns?: number; /** Names only, no taglines (onboarding). */ plain?: boolean }>();
 const emit = defineEmits<{ pick: [bee: BeeName] }>();
 </script>
 
@@ -13,8 +13,10 @@ const emit = defineEmits<{ pick: [bee: BeeName] }>();
     <button v-for="b in BEES" :key="b" type="button" class="option bee" :class="{ selected: bee === b }" :aria-pressed="bee === b" @click="emit('pick', b)">
       <Mascot :size="84" :bee="b" :mood="bee === b ? 'happy' : 'idle'" :look="false" class="m" />
       <h3>{{ b }}</h3>
-      <p>{{ beeInfo[b].tagline }}</p>
-      <small>{{ beeInfo[b].vibe }}</small>
+      <template v-if="!plain">
+        <p>{{ beeInfo[b].tagline }}</p>
+        <small>{{ beeInfo[b].vibe }}</small>
+      </template>
       <span v-if="bee === b" class="tick"><Icon name="check" :size="14" :stroke="3" /></span>
     </button>
   </div>

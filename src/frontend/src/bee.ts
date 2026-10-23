@@ -3,6 +3,9 @@ import { ref, watch } from 'vue';
 export const BEES = ['Libbee', 'Tobee', 'Barnabee', 'Phoebee'] as const;
 export type BeeName = (typeof BEES)[number];
 
+/** The brand mascot on the landing page and logo. It never follows the learner's pick. */
+export const BRAND_BEE: BeeName = 'Libbee';
+
 const KEY = 'jobee_bee';
 const saved = typeof localStorage !== 'undefined' ? localStorage.getItem(KEY) : null;
 

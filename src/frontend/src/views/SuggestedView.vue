@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import SideNav from '../components/SideNav.vue';
 import Bubble from '../components/Bubble.vue';
 import Icon from '../components/Icon.vue';
 import RoleBrowser from '../components/RoleBrowser.vue';
@@ -77,7 +76,7 @@ onMounted(load);
 </script>
 
 <template>
-  <SideNav active="roles">
+  <div class="tab">
     <div class="page">
       <div class="head">
         <div>
@@ -94,7 +93,10 @@ onMounted(load);
       </div>
       <p v-else-if="regenError" class="error" role="alert">{{ regenError }}</p>
 
-      <div v-if="status === 'loading'" class="state"><Bubble :size="64">Loading the roles Jobee suggested for you…</Bubble></div>
+      <div v-if="status === 'loading'" class="skel-wrap" aria-busy="true" aria-label="Loading your roles">
+        <span class="skel tab-skel" />
+        <div class="skel-cards"><span v-for="n in 4" :key="n" class="skel card card-skel" /></div>
+      </div>
 
       <div v-else-if="status === 'error'" class="state">
         <Bubble :size="64">{{ error }}</Bubble>
@@ -121,7 +123,7 @@ onMounted(load);
         @select="openRole"
       />
     </div>
-  </SideNav>
+  </div>
 </template>
 
 <style scoped>
@@ -134,7 +136,11 @@ onMounted(load);
 @keyframes spin { to { transform: rotate(360deg); } }
 .banner { margin-bottom: 18px; }
 .error { margin-bottom: 18px; padding: 12px 16px; border-radius: 14px; background: #fdecea; color: #b3261e; font-weight: 800; font-size: 14px; line-height: 1.4; }
+.note { margin-top: 12px; font-size: 12px; font-weight: 600; color: var(--muted); line-height: 1.5; }
 .dim { opacity: .55; pointer-events: none; transition: opacity .2s; }
 .state { max-width: 560px; margin: 40px 0; display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
 .state .btn { display: inline-flex; align-items: center; gap: 8px; }
+.tab-skel { display: block; height: 44px; margin-bottom: 16px; }
+.skel-cards { display: flex; flex-direction: column; gap: 12px; }
+.card-skel { height: 76px; border-radius: 16px; }
 </style>

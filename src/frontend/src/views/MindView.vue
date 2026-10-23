@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import FlowShell from '../components/FlowShell.vue';
-import Bubble from '../components/Bubble.vue';
 import Icon from '../components/Icon.vue';
 import { mindOptions } from '../data/flows';
 import { useFlow } from '../state';
+import { personaCopy } from '../data/personaCopy';
 
-const { persona, state } = useFlow();
+const { state, key } = useFlow();
 function toggle(i: number) {
   const idx = state.value.mind.indexOf(i);
   if (idx >= 0) state.value.mind.splice(idx, 1);
@@ -14,24 +14,30 @@ function toggle(i: number) {
 </script>
 
 <template>
-  <FlowShell :progress="2" next="resume" back="who" :next-disabled="!state.mind.length">
-    <h1>What’s been on your mind lately?</h1>
-    <Bubble class="b" mood="thinking" thought>{{ persona.mindBubble }}</Bubble>
-    <div class="grid">
-      <button v-for="(o, i) in mindOptions" :key="o.title" class="option" :class="{ selected: state.mind.includes(i) }" @click="toggle(i)">
-        <span class="ic"><Icon :name="o.icon" :size="22" /></span>
-        <span><h3>{{ o.title }}</h3><p>{{ o.sub }}</p></span>
-        <span v-if="state.mind.includes(i)" class="tick"><Icon name="check" :size="14" :stroke="3" /></span>
+  <FlowShell :progress="2" next="outcome" back="who" mood="thinking" :next-disabled="!state.mind.length">
+    <template #bubble>{{ personaCopy[key].mind }}</template>
+    <p id="mind-hint" class="hint">Pick any that fit</p>
+    <div class="grid" role="group" aria-describedby="mind-hint">
+      <button
+        v-for="(o, i) in mindOptions"
+        :key="o.title"
+        type="button"
+        class="option"
+        :class="{ selected: state.mind.includes(i) }"
+        :aria-pressed="state.mind.includes(i)"
+        @click="toggle(i)"
+      >
+        <h3>{{ o.title }}</h3>
+        <span v-if="state.mind.includes(i)" class="tick" aria-hidden="true"><Icon name="check" :size="14" :stroke="3" /></span>
       </button>
     </div>
-    <p class="hint">Pick as many as you like.</p>
   </FlowShell>
 </template>
 
 <style scoped>
-h1 { font-size: 30px; font-weight: 900; margin-bottom: 24px; }
-.b { margin-bottom: 24px; }
+.hint { font-size: 13px; font-weight: 800; color: var(--muted); margin-bottom: 12px; }
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.hint { margin-top: 24px; font-size: 12px; font-weight: 700; color: var(--muted); }
-@media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+.option { min-height: 76px; }
+.option h3 { font-size: 16px; }
+@media (max-width: 560px) { .grid { grid-template-columns: 1fr; } .option { min-height: 60px; } }
 </style>
