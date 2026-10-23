@@ -3,7 +3,14 @@ import { computed, nextTick, onMounted, ref } from 'vue';
 import '../learn.css';
 import Icon from './Icon.vue';
 import Logo from './Logo.vue';
-import { go, type Step } from '../router';
+import { go, router, type Step } from '../router';
+import { signOut } from '../state';
+
+function logout() {
+  signOut();
+  sessionStorage.removeItem(KEY);
+  router.push(go('landing'));
+}
 
 const props = defineProps<{ active: 'learn' | 'roles' | 'profile' }>();
 const items: { id: 'learn' | 'roles' | 'profile'; label: string; icon: string; to: Step }[] = [
@@ -33,6 +40,9 @@ onMounted(async () => {
             <Icon :name="i.icon" :size="22" /><span>{{ i.label }}</span>
           </RouterLink>
         </div>
+        <button type="button" class="jb-nav__item jb-nav__logout" @click="logout">
+          <Icon name="logout" :size="22" /><span>Log out</span>
+        </button>
       </nav>
     </aside>
     <div class="content"><slot /></div>
@@ -44,10 +54,14 @@ onMounted(async () => {
 aside { width: 240px; flex: none; border-right: 2px solid var(--line); padding: 20px 16px; position: sticky; top: 0; height: 100vh; }
 .content { flex: 1; min-width: 0; padding: 32px 40px 80px; }
 .jb-nav__item { text-decoration: none; }
+aside { display: flex; }
+.jb-nav { display: flex; flex-direction: column; flex: 1; }
+.jb-nav__logout { margin-top: auto; width: 100%; }
 @media (max-width: 860px) {
+  .jb-nav__logout { margin-top: 0; margin-left: auto; width: auto; }
   .layout { flex-direction: column; }
   aside { width: 100%; height: auto; position: static; border-right: 0; border-bottom: 2px solid var(--line); overflow-x: auto; }
-  .jb-nav { display: flex; align-items: center; gap: 12px; }
+  .jb-nav { flex-direction: row; align-items: center; gap: 12px; }
   .jb-nav__logo { padding: 0; }
   .content { padding: 24px 16px 80px; }
 }

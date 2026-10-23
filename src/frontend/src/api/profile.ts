@@ -144,6 +144,13 @@ export function clearOnboarded() {
   document.cookie = `${ONBOARDED_COOKIE}=; Max-Age=0; Path=/; SameSite=Lax`;
 }
 
+/** Forget this browser's account: the profile id, the logged-in flag and the onboarded flag. */
+export function clearSession() {
+  for (const name of [PROFILE_COOKIE, LOGGED_IN_COOKIE, ONBOARDED_COOKIE]) {
+    document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`;
+  }
+}
+
 export function isOnboarded(): boolean {
   return document.cookie.split('; ').some((c) => c === `${ONBOARDED_COOKIE}=1`);
 }

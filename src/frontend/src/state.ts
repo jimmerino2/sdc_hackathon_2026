@@ -4,7 +4,7 @@ import { DEFAULT_SKILLS, LEVEL_SCORES, levelFromScore, mergeSkills, SKILL_CHECK_
 import type { SkillScore } from './api/resume';
 import { fetchRecommendations, JobsError, type Recommendations } from './api/jobs';
 import { ensureRoadmap, getRoadmap, RoadmapError, type Roadmap } from './api/roadmap';
-import { clearOnboarded, markLoggedIn, markOnboarded, readProfileId, saveProfileId, stageForWho, type Profile } from './api/profile';
+import { clearOnboarded, clearSession, markLoggedIn, markOnboarded, readProfileId, saveProfileId, stageForWho, type Profile } from './api/profile';
 import { bee, BEES, type BeeName } from './bee';
 
 interface FlowState {
@@ -77,6 +77,12 @@ export function signIn(profile: Profile) {
   if ((BEES as readonly string[]).includes(profile.bee ?? '')) bee.value = profile.bee as BeeName; // their bee, not this browser's
   saveProfileId(profile.profile_id);
   markLoggedIn();
+}
+
+/** Log out: forget the profile in this browser and reset the in-memory flow. */
+export function signOut() {
+  clearSession();
+  resetPersona('a');
 }
 
 /** Fetch the matched roles for the saved profile into state.jobs. Never throws. */
