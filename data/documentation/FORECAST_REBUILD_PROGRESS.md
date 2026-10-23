@@ -47,3 +47,21 @@ Update this file after every step so a cut-off session can resume.
   First vertical slice complete. NEXT (not started): port Adzuna collector so snapshots accumulate; better h=6
   candidate (local linear trend); business adoption (BTOS by wording) and occupation adoption (RPS) models;
   serve latest_forecast.csv through /forecast. Do not merge to main until the merge gate in FORECAST_REBUILD.md §11.
+
+## Phase 2 (started 2026-10-24): adoption targets
+
+User: Adzuna stays on the free tier -> context only, never a model input. Next: business adoption (BTOS) and
+occupation adoption (RPS), on a generic engine shared with skill demand.
+
+| # | Step | Status |
+|---|------|--------|
+| 10 | Generic engine: TargetSpec, per-target output dirs (`output/<target>/`) | todo |
+| 11 | BTOS ingestion with publication dates, wording segments, SE, `.` vs `S` codes (`forecasting/btos.py`) | todo |
+| 12 | RPS ingestion with fetch-time snapshots, optional FRED_API_KEY vintages (`forecasting/rps.py`) | todo |
+| 13 | Business- and occupation-adoption targets, run, tests | todo |
+| 14 | Docs update (FORECAST_REBUILD.md, STRUCTURE.md) | todo |
+
+Facts: BTOS Q7/Q24 old wording 202319-202520 (54 fortnights), not asked 202521-202523 ("."), new wording
+202524-202621 (24 fortnights; 10.0% -> 17.3% jump). Dates sheet has Publication Date per smpdt (also future
+schedule rows: drop those after today). RPS: 9 quarters 2024Q3-2026Q3 per SOC group; no FRED key, so no
+historical vintages (FRED csv ignores vintage_date).
