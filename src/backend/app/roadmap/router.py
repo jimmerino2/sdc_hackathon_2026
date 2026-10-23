@@ -44,10 +44,12 @@ def get_roadmap(
 
 @router.post("", response_model=Roadmap, status_code=201)
 def create_roadmap(body: RoadmapCreate, db: Client = Depends(get_supabase_admin)):
-    """Build and store a role's roadmap for a profile with the AI model (AI_MODEL_MODE).
+    """Build and store a role's roadmap for a profile.
 
-    Takes the role's skills with importance above 2, has the model keep the worthwhile ones, group them
-    into sections and units, and set prerequisites. Needs SUPABASE_SERVICE_KEY. Returns 404 if the profile
+    If any profile already has a roadmap for the role, its plan (skills, sections, units, prerequisites) is copied
+    and the new roadmap starts with nothing completed; this is instant. Otherwise (or with replace=true) the AI
+    model (AI_MODEL_MODE) takes the role's skills with importance above 2, keeps the worthwhile ones, groups them
+    into sections and units, and sets prerequisites; that takes about 10 seconds. Needs SUPABASE_SERVICE_KEY. Returns 404 if the profile
     does not exist, and 409 if it already has a roadmap for the role unless replace=true.
     """
     return service.create_roadmap(db, str(body.profile_id), body.onet_code, body.replace)
