@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import FlowShell from '../components/FlowShell.vue';
 import Icon from '../components/Icon.vue';
+import PollenGame from '../components/PollenGame.vue';
 import { checkResumeFile, extractResume, ResumeUploadError } from '../api/resume';
 import { skillLabel } from '../data/skills';
 import { useFlow } from '../state';
@@ -66,6 +67,7 @@ function onDrop(e: DragEvent) {
 
 function skip() {
   attempt++;
+  reading.value = false;
   state.value.resume = null;
   router.push(go('skills'));
 }
@@ -78,6 +80,7 @@ function skip() {
       <template v-else-if="state.resume">Nice! Here’s what I found.</template>
       <template v-else>{{ personaCopy[key].resume }}</template>
     </template>
+    <PollenGame v-if="reading" :avoid="['.skip']" :bottom-reserve="90" />
     <button
       type="button"
       class="drop"
