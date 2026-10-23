@@ -12,11 +12,11 @@ Update this file after every step so a cut-off session can resume.
 |---|------|--------|
 | 1 | Audit repo and old branch, reuse/discard assessment (`FORECAST_REBUILD.md`) | done (assessment written in step 9) |
 | 2 | Point-in-time vintage store from Indeed git history (`forecasting/vintages.py`) | done |
-| 3 | Source registry + data contracts for the three domains (`forecasting/registry.py`, `contracts.py`) | todo |
-| 4 | Skill-demand features with as-of cutoffs (`forecasting/features.py`) | todo |
-| 5 | Chronological splits, rolling-origin CV, locked holdout (`forecasting/evaluation.py`) | todo |
-| 6 | Baselines + ridge + LightGBM challenger, selection, conformal ranges (`forecasting/models.py`) | todo |
-| 7 | Source ablations, timestamped forecast, model registry with promotion rule (`forecasting/run.py`) | todo |
+| 3 | Source registry + data contracts for the three domains (`forecasting/registry.py`, `contracts.py`) | done |
+| 4 | Skill-demand features with as-of cutoffs (`forecasting/features.py`) | done |
+| 5 | Chronological splits, rolling-origin CV, locked holdout (`forecasting/evaluation.py`) | done |
+| 6 | Baselines + ridge + LightGBM challenger, selection, conformal ranges (`forecasting/models.py`) | done |
+| 7 | Source ablations, timestamped forecast, model registry with promotion rule (`forecasting/run.py`) | done |
 | 8 | Tests: leakage, splits, contracts, BTOS guard, promotion (`forecasting/tests/`) | todo |
 | 9 | Docs: `FORECAST_REBUILD.md`, `STRUCTURE.md`, `SOURCES.md`, READMEs | todo |
 
@@ -36,3 +36,8 @@ Update this file after every step so a cut-off session can resume.
   (partial clones; rebuild with `python -m forecasting.vintages` from `src/backend`). Findings: schemas changed 4x
   (day-first dates in early files; % change instead of index before mid-2021); AI-share revisions mean 0.39 pp,
   max 1.58 pp; publication lag 1 month (max 2).
+- 2026-10-24: registry.py, contracts.py, features.py, models.py, evaluation.py, run.py written; first full run
+  `python -m forecasting.run --skip-ingest` (~2 min) -> output/runs/<run_id>/, model_registry.json,
+  latest_forecast.csv. 65 origins (27 real, 38 reconstructed), holdout from 2025-02 (18 origins).
+  Holdout MASE vs naive: h1 drift 0.80, h3 pooled_mean 0.66, h6 naive chosen (selection) but drift better on holdout.
+  NEXT: tests (step 8), then docs (step 9).

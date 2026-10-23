@@ -203,12 +203,15 @@ def load(name: str) -> pd.DataFrame:
     return df
 
 
-def as_of(vintages: pd.DataFrame, when: pd.Timestamp) -> pd.DataFrame:
-    """Per geo, the rows of the latest vintage published at or before `when`. Empty if none was."""
+def as_of(vintages: pd.DataFrame, when: pd.Timestamp, per_geo: bool = False) -> pd.DataFrame:
+    """Rows of the latest vintage published at or before `when` (empty if none was).
+
+    per_geo=False: one vintage for all geos (the AI tracker is one file; a country it drops is gone, not stale).
+    per_geo=True: the latest vintage of each geo (the postings tracker has one file per country)."""
     v = vintages[vintages["available_at"] <= when]
     if v.empty:
         return v
-    latest = v.groupby("geo")["available_at"].transform("max")
+    latest = v.groupby("geo")["available_at"].transform("max") if per_geo else v["available_at"].max()
     return v[v["available_at"] == latest]
 
 
