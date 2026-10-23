@@ -11,7 +11,7 @@ Update this file after every step so a cut-off session can resume.
 | # | Step | Status |
 |---|------|--------|
 | 1 | Audit repo and old branch, reuse/discard assessment (`FORECAST_REBUILD.md`) | done (assessment written in step 9) |
-| 2 | Point-in-time vintage store from Indeed git history (`forecasting/vintages.py`) | todo |
+| 2 | Point-in-time vintage store from Indeed git history (`forecasting/vintages.py`) | done |
 | 3 | Source registry + data contracts for the three domains (`forecasting/registry.py`, `contracts.py`) | todo |
 | 4 | Skill-demand features with as-of cutoffs (`forecasting/features.py`) | todo |
 | 5 | Chronological splits, rolling-origin CV, locked holdout (`forecasting/evaluation.py`) | todo |
@@ -31,3 +31,8 @@ Update this file after every step so a cut-off session can resume.
 ## Log
 
 - 2026-10-24: audit done; progress file created.
+- 2026-10-24: vintages.py builds `data/processed/forecasting/{ai_share,postings}_vintages.csv` (35 AI vintages
+  2024-04..2026-10, 76 postings vintages 2021-02..2026-10). Raw clones: `data/raw/vintages/{ait_full,jpt_full}`
+  (partial clones; rebuild with `python -m forecasting.vintages` from `src/backend`). Findings: schemas changed 4x
+  (day-first dates in early files; % change instead of index before mid-2021); AI-share revisions mean 0.39 pp,
+  max 1.58 pp; publication lag 1 month (max 2).
