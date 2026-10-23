@@ -23,7 +23,11 @@ The data behind our model, which forecasts job demand 12 months ahead and how AI
 | `ai_exposure.csv`      | How much AI is already used for each job             |
 | `my_vacancies.csv`     | Malaysia online job vacancies (display only)         |
 | `onet_to_my_group.csv` | Maps the 46 jobs to Malaysian occupation groups      |
+| `forecasting/ai_share_vintages.csv` | Every published vintage of Indeed's AI share, by country and month |
+| `forecasting/postings_vintages.csv` | Monthly vintages of Indeed's postings index, by country and month |
 
 ## Refreshing
 
 Tables are rebuilt with `python pipeline/refresh.py`. The scripts live in `pipeline/` at the repo root; how to run them, and which inputs you must download by hand, is in `pipeline/README.md`.
+
+The `forecasting/` vintage tables belong to the rebuilt forecast and are rebuilt with `python -m forecasting.vintages` from `src/backend` (see `src/backend/forecasting/README.md` and `documentation/FORECAST_REBUILD.md`).

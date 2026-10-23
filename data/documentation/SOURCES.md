@@ -23,6 +23,7 @@ Four external datasets, one per question the app has to answer, plus one Malaysi
 - **As of:** 2026-10-09
 - **Files used:** `<country>/job_postings_by_sector_<country>.csv`, `<country>/aggregate_job_postings_<country>.csv`
 - **Why this one:** real, free, dated and refreshed weekly, which meets the brief's "updatable, dated source".
+- **Vintages (forecast rebuild):** `<country>/aggregate_job_postings_<country>.csv` is read at the last commit of each month from Feb 2021. Before mid-2021 the files held % change since 1 Feb 2020, not an index. See `FORECAST_REBUILD.md`.
 
 ## 2. Indeed AI Tracker
 
@@ -35,6 +36,8 @@ Four external datasets, one per question the app has to answer, plus one Malaysi
 - **As of:** 2026-09-30
 - **Files used:** `AI_posting.csv`
 - **Why this one:** a dated, regularly updated measure of AI adoption in the labour market. This is the brief's "AI-trend signal layer".
+- **Vintages (forecast rebuild):** the repo's git history is used as a record of what was published when: each commit to `AI_posting.csv` (and its earlier names) is one vintage. There are 35 vintages from 29 Apr 2024. History is revised between vintages (mean 0.39 pp), so backtests must not read today's file. It measures **mentions in ads** (skill demand), not AI adoption. See `FORECAST_REBUILD.md`.
+- **Also in the repo, not used yet:** `GenAI_posting.csv` (share mentioning GenAI terms, 12 vintages).
 
 ## 3. Anthropic Economic Index
 

@@ -177,6 +177,59 @@ Join: `onet_to_my_group.my_occupation_group` = `my_vacancies.group` where `group
 
 ---
 
+## 9. `forecasting/ai_share_vintages.csv` and `forecasting/postings_vintages.csv`
+
+The point-in-time store for the rebuilt forecast (`FORECAST_REBUILD.md`). There is one row per **published vintage × country × month**, so a backtest can see exactly what was public at any date. Both files are built by `src/backend/forecasting/vintages.py` from the git history of the two Indeed repos.
+
+- `ai_share_vintages.csv`: every AI Tracker vintage, 35 vintages (29 Apr 2024 to 8 Oct 2026), 24,273 rows.
+- `postings_vintages.csv`: per country, the last vintage of each calendar month, 76 commits (24 Feb 2021 to 20 Oct 2026), 23,660 rows.
+
+| Column           | Source                              | Type      | Derived from                                                                                                       |
+| ---------------- | ----------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------ |
+| `source_id`      | Ours                                | text      | `indeed_ai_tracker` or `indeed_postings` (keys of `forecasting/registry.py`)                                       |
+| `vintage_id`     | Indeed AI Tracker / Indeed Postings | text      | Commit SHA (12 characters) that published the file                                                                 |
+| `blob_sha`       | Indeed AI Tracker / Indeed Postings | text      | Git blob SHA of the file. Identical content republished later is kept once, under its first commit                 |
+| `available_at`   | Indeed AI Tracker / Indeed Postings | timestamp | Commit time in UTC: when the vintage became public. A forecast at time T may only use vintages with `available_at` ≤ T |
+| `source_file`    | Indeed AI Tracker / Indeed Postings | text      | Path in the repo (the file was renamed several times)                                                              |
+| `schema_version` | Ours                                | text      | The file's column names joined by a pipe character. A change marks a possible measurement break                    |
+| `geo`            | Indeed AI Tracker / Indeed Postings | text      | Country code (`jobcountry`). The AI Tracker's country set changes between vintages                                 |
+| `month`          | Ours                                | `YYYY-MM` | Daily dates grouped into months. Early files are day-first (`29/3/24`); the parser picks the format under which dates run day by day |
+| `value`          | Indeed AI Tracker / Indeed Postings | number    | Monthly mean of the daily value. AI: % of postings mentioning AI. Postings: index, 1 Feb 2020 = 100 (before mid-2021 Indeed published % change since 1 Feb 2020, converted as 100 + change) |
+| `numerator`      | Indeed AI Tracker                   | number    | Monthly sum of `AI_count`. Only in the Jul–Aug 2024 vintages; blank (never 0) otherwise                            |
+| `denominator`    | Indeed AI Tracker                   | number    | Monthly sum of `total` postings, same vintages                                                                     |
+| `n_days`         | Ours                                | int       | Days with data in the month                                                                                        |
+| `is_partial`     | Ours                                | bool      | `True` if `n_days` is below the days in the month. Partial months are never used as features or outcomes          |
+
+Caveats:
+
+- **Revisions are large.** The same AI-share country-month differs by 0.39 pp on average (1.58 pp at most) between the first and latest vintage.
+- **No vintage before 29 Apr 2024.** Earlier backtest origins are reconstructed (see `FORECAST_REBUILD.md` §4).
+
+### Forecast outputs (`src/backend/forecasting/output/`)
+
+| File                            | One row per                                          | What it is                                                                                     |
+| ------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `runs/<run_id>/backtest.csv.gz` | origin × horizon × candidate × feature set × country | Every out-of-sample prediction with `actual`, `error` (pp), `role` (`selection` / `holdout` / `purged`) and `vintage_kind` |
+| `runs/<run_id>/evaluation.json` | run                                                  | Split, selection table, holdout scores, interval coverage, ablations, source contributions and health |
+| `runs/<run_id>/forecast.csv`    | country × horizon                                    | That run's forecast                                                                            |
+| `forecast_log.csv`              | country × horizon × run                              | Every forecast ever issued (append only)                                                       |
+| `latest_forecast.csv`           | country × horizon                                    | The forecast of the promoted run per horizon: what the app should show                         |
+| `model_registry.json`           | horizon                                              | The promoted model per horizon, and every attempt with its acceptance verdict                  |
+
+Forecast columns:
+
+- `run_id`, `made_at`: the run and when it ran (UTC).
+- `geo`, `h`, `target_month`.
+- `last_observed_month`, `last_observed_pct`.
+- `model`: the chosen candidate.
+- `forecast_pct`, `low_pct`, `high_pct`: the forecast and its 10–90% empirical range.
+- `status`: `validated`, `baseline` or `not_demonstrably_better`.
+- `holdout_mae_pp`, `naive_holdout_mae_pp`.
+- `ai_vintage`, `data_as_of`: the vintage used and when it was published.
+- `warnings`.
+
+---
+
 ## Supporting files
 
 | File                     | Source                          | What it is                                                                                                                                |

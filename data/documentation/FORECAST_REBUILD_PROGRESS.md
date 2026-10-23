@@ -18,7 +18,7 @@ Update this file after every step so a cut-off session can resume.
 | 6 | Baselines + ridge + LightGBM challenger, selection, conformal ranges (`forecasting/models.py`) | done |
 | 7 | Source ablations, timestamped forecast, model registry with promotion rule (`forecasting/run.py`) | done |
 | 8 | Tests: leakage, splits, contracts, BTOS guard, promotion (`forecasting/tests/`) | done (38 tests) |
-| 9 | Docs: `FORECAST_REBUILD.md`, `STRUCTURE.md`, `SOURCES.md`, READMEs | todo |
+| 9 | Docs: `FORECAST_REBUILD.md`, `STRUCTURE.md`, `SOURCES.md`, READMEs | done |
 
 ## Decisions so far
 
@@ -42,3 +42,8 @@ Update this file after every step so a cut-off session can resume.
   Holdout MASE vs naive: h1 drift 0.80, h3 pooled_mean 0.66, h6 naive chosen (selection) but drift better on holdout.
   NEXT: tests (step 8), then docs (step 9).
 - 2026-10-24: tests written, 38 pass (`python -m pytest forecasting/tests` from src/backend). NEXT: docs (step 9).
+- 2026-10-24: docs done: FORECAST_REBUILD.md (audit, reuse/discard, design, results, model card, ops),
+  STRUCTURE.md §9, SOURCES.md vintage notes, data/README.md, src/backend/forecasting/README.md.
+  First vertical slice complete. NEXT (not started): port Adzuna collector so snapshots accumulate; better h=6
+  candidate (local linear trend); business adoption (BTOS by wording) and occupation adoption (RPS) models;
+  serve latest_forecast.csv through /forecast. Do not merge to main until the merge gate in FORECAST_REBUILD.md §11.
