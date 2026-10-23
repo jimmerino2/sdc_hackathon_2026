@@ -17,7 +17,7 @@ Update this file after every step so a cut-off session can resume.
 | 5 | Chronological splits, rolling-origin CV, locked holdout (`forecasting/evaluation.py`) | done |
 | 6 | Baselines + ridge + LightGBM challenger, selection, conformal ranges (`forecasting/models.py`) | done |
 | 7 | Source ablations, timestamped forecast, model registry with promotion rule (`forecasting/run.py`) | done |
-| 8 | Tests: leakage, splits, contracts, BTOS guard, promotion (`forecasting/tests/`) | todo |
+| 8 | Tests: leakage, splits, contracts, BTOS guard, promotion (`forecasting/tests/`) | done (38 tests) |
 | 9 | Docs: `FORECAST_REBUILD.md`, `STRUCTURE.md`, `SOURCES.md`, READMEs | todo |
 
 ## Decisions so far
@@ -41,3 +41,4 @@ Update this file after every step so a cut-off session can resume.
   latest_forecast.csv. 65 origins (27 real, 38 reconstructed), holdout from 2025-02 (18 origins).
   Holdout MASE vs naive: h1 drift 0.80, h3 pooled_mean 0.66, h6 naive chosen (selection) but drift better on holdout.
   NEXT: tests (step 8), then docs (step 9).
+- 2026-10-24: tests written, 38 pass (`python -m pytest forecasting/tests` from src/backend). NEXT: docs (step 9).
