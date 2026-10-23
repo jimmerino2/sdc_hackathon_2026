@@ -1,0 +1,244 @@
+:root {
+  /* Required palette */
+  --c-primary: #ffc107;
+  --c-secondary: #ff9800;
+  --c-dark: #1e1e1e;
+  --c-cream: #fffdf5;
+  --c-white: #ffffff;
+
+  /* Derived tones */
+  --c-ink: #2b2219;
+  --c-ink-soft: #6b5d4c;
+  --c-cream-deep: #f6f0dc;
+  --c-cream-line: #e9dfc2;
+  --c-panel: #262626;
+  --c-panel-2: #2f2f2f;
+  --c-panel-line: #3a3a3a;
+  --c-panel-text: #ece6d8;
+  --c-panel-muted: #9b9488;
+  --c-success: #4caf50;
+  --c-success-soft: #e3f4e1;
+  --c-danger: #e5534b;
+  --c-danger-soft: #fbe5e3;
+  --c-locked: #b8ad98;
+  --c-copper: #d9783b;
+
+  --font-display: 'Pixelify Sans', 'Nunito', system-ui, sans-serif;
+  --font-body: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --radius-l: 16px;
+  --shadow-pop: 0 3px 0 rgba(43, 34, 25, 0.25);
+  --shadow-float: 0 10px 30px rgba(20, 14, 6, 0.25);
+  --topbar-h: 60px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--c-cream);
+  color: var(--c-ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  min-height: 100%;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0 0 0.4em;
+  letter-spacing: 0.01em;
+}
+
+p {
+  margin: 0 0 0.9em;
+}
+
+code,
+pre,
+kbd {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+}
+
+:not(pre) > code {
+  background: var(--c-cream-deep);
+  border: 1px solid var(--c-cream-line);
+  padding: 0.05em 0.35em;
+  border-radius: 4px;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 0.05em 0.4em;
+  border-radius: 4px;
+  border: 1px solid currentColor;
+  border-bottom-width: 3px;
+  text-align: center;
+  font-size: 0.8em;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--c-secondary);
+  outline-offset: 2px;
+}
+
+/* Buttons: chunky, game-like */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45em;
+  padding: 0.6em 1.15em;
+  border: 2px solid var(--c-ink);
+  border-radius: var(--radius-m);
+  background: var(--c-white);
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 3px 0 var(--c-ink);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 0 var(--c-ink);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--c-ink);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--c-primary);
+}
+
+.btn-secondary {
+  background: var(--c-secondary);
+}
+
+.btn-ghost {
+  background: transparent;
+  box-shadow: none;
+  border-color: transparent;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  box-shadow: none;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.btn-dark {
+  background: var(--c-panel-2);
+  color: var(--c-panel-text);
+  border-color: #111;
+  box-shadow: 0 3px 0 #111;
+}
+
+.btn-dark:hover:not(:disabled) {
+  box-shadow: 0 4px 0 #111;
+}
+
+.btn-sm {
+  padding: 0.35em 0.75em;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 0 var(--c-ink);
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.15em 0.55em;
+  border-radius: 999px;
+  background: var(--c-cream-deep);
+  color: var(--c-ink-soft);
+}
+
+.status-code {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  padding: 0.1em 0.5em;
+  border-radius: 4px;
+}
+
+.status-2xx {
+  background: rgba(76, 175, 80, 0.2);
+  color: #7fd483;
+}
+
+.status-4xx {
+  background: rgba(255, 152, 0, 0.2);
+  color: var(--c-secondary);
+}
+
+.status-5xx,
+.status-err {
+  background: rgba(229, 83, 75, 0.2);
+  color: #ff8a83;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Dark scrollbars inside developer panels */
+.dev-scroll {
+  scrollbar-color: #4a4a4a transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

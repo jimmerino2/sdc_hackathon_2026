@@ -28,3 +28,8 @@ graphify-out/manifest.json
 *.key
 secrets/
 *.local
+
+# game-frontend / frontier
+node_modules/
+src/game-frontend/dist/
+src/backend/.frontier/
