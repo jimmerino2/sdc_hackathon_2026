@@ -2,7 +2,8 @@
 import { computed } from 'vue';
 import SkillNode from './SkillNode.vue';
 import { useFit } from '../../composables/useFit';
-import { CENTER_X, layoutPath, STAGE_W, trailPath, type ResolvedSkill, type ResolvedUnit } from '../../learn/skillState';
+import { groupStyle } from '../../data/skillGroups';
+import { layoutGraph, type ResolvedSkill, type ResolvedUnit } from '../../learn/skillState';
 
 const props = defineProps<{
   units: ResolvedUnit[];
@@ -11,27 +12,30 @@ const props = defineProps<{
   startId?: string | null;
   busyId?: string | null;
   label: (s: ResolvedSkill) => string;
+  /** The skill's category: it picks the column, the shade and the icon. */
   kind: (s: ResolvedSkill) => string;
 }>();
 defineEmits<{ select: [skill: ResolvedSkill] }>();
 
-const layout = computed(() => layoutPath(props.units));
-const { el, scale } = useFit(STAGE_W);
+const layout = computed(() => layoutGraph(props.units, props.kind));
+const { el, scale } = useFit(() => layout.value.width);
 </script>
 
 <template>
   <div ref="el" class="jb jb-path" :style="{ height: layout.height * scale + 'px' }">
-    <div class="jb-path__stage" :style="{ width: STAGE_W + 'px', height: layout.height + 'px', transform: `scale(${scale})` }">
-      <svg class="jb-path__svg" :width="STAGE_W" :height="layout.height" :viewBox="`0 0 ${STAGE_W} ${layout.height}`" aria-hidden="true">
-        <path class="jb-path__line" :d="trailPath(layout.pts)" />
+    <div class="jb-path__stage" :style="{ width: layout.width + 'px', height: layout.height + 'px', transform: `scale(${scale})` }">
+      <svg class="jb-path__svg" :width="layout.width" :height="layout.height" :viewBox="`0 0 ${layout.width} ${layout.height}`" aria-hidden="true">
+        <path v-for="(e, i) in layout.edges" :key="i" class="jb-path__line" :class="{ 'jb-path__line--done': e.done }" :d="e.d" />
       </svg>
-      <template v-for="(it, i) in layout.items" :key="it.type === 'node' ? it.skill.id : `unit-${i}`">
-        <div v-if="it.type === 'unit'" class="jb-unit" :style="{ top: it.y + 'px', left: CENTER_X - 100 + 'px' }"><span>{{ it.label }}</span></div>
+      <template v-for="(it, i) in layout.items" :key="it.type === 'node' ? it.skill.id : `${it.type}-${i}`">
+        <div v-if="it.type === 'unit'" class="jb-unit" :style="{ top: it.y + 'px', left: layout.width / 2 - 100 + 'px' }"><span>{{ it.label }}</span></div>
         <SkillNode
           v-else
-          :style="{ left: it.x + 'px', top: it.y + 'px', '--i': it.k }"
+          :style="{ left: it.x + 'px', top: it.y + 'px', width: it.w + 'px', '--i': it.k }"
           :name="label(it.skill)"
-          :kind="kind(it.skill)"
+          stack
+          :icon="groupStyle(kind(it.skill)).icon"
+          :shade="groupStyle(kind(it.skill)).shade"
           :resources="it.skill.node.sources.length || (it.skill.node.source ? 1 : 0)"
           :state="it.skill.state"
           :selected="selectedId === it.skill.id"

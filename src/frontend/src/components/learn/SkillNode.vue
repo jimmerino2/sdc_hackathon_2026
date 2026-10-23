@@ -4,7 +4,7 @@ import Icon from '../Icon.vue';
 import { useFlash } from '../../composables/useFlash';
 import type { SkillState } from '../../learn/skillState';
 
-const props = defineProps<{ name: string; kind?: string; resources?: number; state: SkillState; selected?: boolean; tag?: string | null; busy?: boolean }>();
+const props = defineProps<{ name: string; kind?: string; resources?: number; state: SkillState; selected?: boolean; tag?: string | null; busy?: boolean; /** Orb above its label, for the graph layout. */ stack?: boolean; /** The skill group's icon and yellow shade (0 lightest): they mark the orb. */ icon?: string; shade?: number }>();
 const emit = defineEmits<{ select: [] }>();
 
 const { on: shaking, trigger: shake } = useFlash(480);
@@ -28,14 +28,14 @@ function click() {
 </script>
 
 <template>
-  <div class="jb jb-node" :data-state="state" :data-selected="selected ? 'true' : 'false'" :data-shaking="shaking ? 'true' : 'false'">
+  <div class="jb jb-node" :data-layout="stack ? 'stack' : undefined" :data-grouped="shade !== undefined ? 'true' : undefined" :style="shade !== undefined ? { '--gs': shade } : undefined" :data-state="state" :data-selected="selected ? 'true' : 'false'" :data-shaking="shaking ? 'true' : 'false'">
     <span v-if="tag" class="jb-node__tag">{{ tag }}</span>
     <div class="jb-node__discwrap">
       <button type="button" class="jb-node__disc" :aria-label="`${name}, ${status[state]}`" :aria-pressed="!!selected" :aria-busy="busy || undefined" @click="click">
         <Icon v-if="state === 'done'" class="jb-draw" name="check" :size="30" :stroke="3" />
-        <Icon v-else-if="state === 'locked'" name="lock" :size="28" />
-        <Icon v-else name="star" :size="30" />
+        <Icon v-else :name="icon ?? (state === 'locked' ? 'lock' : 'star')" :size="state === 'locked' ? 26 : 30" />
       </button>
+      <span v-if="state === 'locked' && icon" class="jb-node__lock" aria-hidden="true"><Icon name="lock" :size="13" :stroke="2.8" /></span>
       <span v-if="burstKey > 0" :key="burstKey" class="jb-burst" aria-hidden="true"><i v-for="(p, i) in particles" :key="i" :style="p" /></span>
     </div>
     <div class="jb-node__label">

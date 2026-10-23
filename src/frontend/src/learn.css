@@ -106,6 +106,13 @@
 .jb-unit { position: absolute; z-index: 2; width: 200px; text-align: center; animation: jb-rise var(--dur-slow) var(--ease-out) both; }
 .jb-unit span { display: inline-block; padding: 4px 14px; border-radius: var(--radius-pill); background: var(--bg); color: var(--text-muted); font-size: 11px; line-height: 16px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
 .jb-path .jb-node { z-index: 1; }
+.jb-path__line--done { stroke: var(--honey); }
+/* graph layout: the orb sits above its label, in a column per category */
+.jb-node[data-layout="stack"] { flex-direction: column; gap: 8px; text-align: center; }
+/* the label hides the line that runs behind it, so a line never strikes through a name */
+.jb-node[data-layout="stack"] .jb-node__label { align-items: center; max-width: 100%; padding: 2px 4px; border-radius: 8px; background: var(--bg); }
+.jb-node[data-layout="stack"] .jb-node__tag { left: 50%; margin-left: -28px; }
+.jb-node[data-layout="stack"]:hover .jb-node__label { transform: translateY(2px); }
 
 /* ---------- section banner ---------- */
 .jb-section { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: 20px var(--space-5) 22px; border-radius: var(--radius-lg); background: var(--honey); color: var(--on-honey); box-shadow: 0 6px 0 var(--honey-deep); animation: jb-rise var(--dur-slow) var(--ease-out) both; }
@@ -208,3 +215,13 @@
   .jb *, .jb *::before, .jb *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .jb-draw path { stroke-dashoffset: 0; }
 }
+
+/* A skill group sets how deep the yellow is on its orb (--gs, 0 lightest) and carries its icon; done and locked keep their own colours. */
+.jb-node[data-grouped] { --g: hsl(44 100% calc(76% - var(--gs) * 6.5%)); --g-deep: hsl(40 92% calc(60% - var(--gs) * 6.5%)); }
+.jb-node[data-grouped][data-state="ready"] .jb-node__disc { background: var(--g); box-shadow: 0 6px 0 var(--g-deep); }
+.jb-node[data-grouped][data-state="ready"] .jb-node__disc:hover { box-shadow: 0 9px 0 var(--g-deep); }
+.jb-node[data-grouped][data-state="ready"] .jb-node__disc:active { box-shadow: 0 1px 0 var(--g-deep); }
+.jb-node[data-grouped][data-state="ready"] .jb-node__disc::after,
+.jb-node[data-grouped][data-state="ready"] .jb-node__disc::before { border-color: var(--g); }
+.jb-node[data-grouped][data-state="done"] .jb-node__disc { color: var(--g); }
+.jb-node__lock { position: absolute; right: -4px; bottom: -2px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--locked-edge); color: var(--surface-raised); box-shadow: 0 0 0 3px var(--bg); pointer-events: none; }
