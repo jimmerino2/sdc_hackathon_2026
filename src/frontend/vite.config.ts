@@ -9,11 +9,13 @@ export default defineConfig({
     port: Number(process.env.PORT ?? 5173),
     host: '0.0.0.0',
     allowedHosts: true,
+    // Dev only: the browser calls /api on this same origin and Vite forwards it to the backend,
+    // so the Replit preview link works without CORS or exposing port 8000.
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8000',
+        target: process.env.API_PROXY_TARGET ?? 'http://127.0.0.1:8000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        rewrite: (p) => p.replace(/^\/api/, ''),
       },
       '/docs': 'http://127.0.0.1:8000',
       '/openapi.json': 'http://127.0.0.1:8000',

@@ -2,23 +2,25 @@
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import FlowShell from '../components/FlowShell.vue';
-import Bubble from '../components/Bubble.vue';
 import Icon from '../components/Icon.vue';
 import { checkResumeFile, extractResume, ResumeUploadError } from '../api/resume';
 import { skillLabel } from '../data/skills';
 import { useFlow } from '../state';
+import { personaCopy } from '../data/personaCopy';
 import { go } from '../router';
 
 const SHOWN_SKILLS = 8;
 
 const router = useRouter();
-const { state } = useFlow();
+const { state, key } = useFlow();
 const input = ref<HTMLInputElement>();
 const reading = ref(false);
 const dragging = ref(false);
 const error = ref<string | null>(null);
 let attempt = 0; // a newer upload wins over one still in flight
 
+/** Jobee reads along while the resume is processed, cheers when it's done, and is startled by an error. */
+const mood = computed(() => (reading.value ? 'busy' : error.value ? 'surprised' : state.value.resume ? 'happy' : 'wave'));
 const shown = computed(() => state.value.resume?.skills.slice(0, SHOWN_SKILLS) ?? []);
 const more = computed(() => Math.max((state.value.resume?.skills.length ?? 0) - SHOWN_SKILLS, 0));
 
@@ -70,71 +72,74 @@ function skip() {
 </script>
 
 <template>
-  <FlowShell :progress="3" next="skills" back="mind" :next-disabled="!state.resume || reading">
-    <h1>Got a resume? Let Jobee read it.</h1>
-    <Bubble class="b" :size="60" mood="serious" gear="suit">Upload your resume, or even a list of class projects. I’ll pull out the skills.</Bubble>
+  <FlowShell :progress="3" next="skills" back="outcome" :mood="mood" :gear="reading ? 'none' : 'glasses'" :next-disabled="!state.resume || reading">
+    <template #bubble>
+      <template v-if="reading">Give me a sec, I’m reading it…</template>
+      <template v-else-if="state.resume">Nice! Here’s what I found.</template>
+      <template v-else>{{ personaCopy[key].resume }}</template>
+    </template>
     <button
       type="button"
       class="drop"
       :class="{ dragging, busy: reading }"
       :disabled="reading"
+      :aria-busy="reading"
       @click="input?.click()"
       @dragover.prevent="dragging = true"
       @dragleave="dragging = false"
       @drop.prevent="onDrop"
     >
-      <span class="up"><Icon :name="reading ? 'sparkles' : 'upload'" :size="22" /></span>
+      <span class="up" aria-hidden="true"><Icon name="upload" :size="22" :stroke="2.6" /></span>
       <template v-if="reading">
-        <strong>Jobee is reading your resume…</strong>
-        <small>This takes a few seconds</small>
+        <strong>Reading your resume…</strong>
       </template>
       <template v-else>
-        <strong>{{ state.resume ? 'Drop a different PDF' : 'Drop your resume or LinkedIn PDF' }}</strong>
-        <small>PDF · up to 10 MB · stays private</small>
+        <strong>{{ state.resume ? 'Upload a different PDF' : personaCopy[key].resumeDrop }}</strong>
+        <small>PDF, up to 10 MB</small>
       </template>
     </button>
-    <input ref="input" type="file" accept="application/pdf,.pdf" hidden @change="upload(($event.target as HTMLInputElement).files?.[0])" />
+    <input ref="input" type="file" accept="application/pdf,.pdf" hidden aria-label="Resume PDF" @change="upload(($event.target as HTMLInputElement).files?.[0])" />
     <p v-if="error" class="error" role="alert">{{ error }}</p>
 
     <template v-if="state.resume && !reading">
       <div class="file card">
-        <span class="fic"><Icon name="file" :size="20" /></span>
         <span class="meta">
           <strong>{{ state.resume.filename }}</strong>
-          <small>{{ kb(state.resume.size) }} · {{ state.resume.pages }} {{ state.resume.pages === 1 ? 'page' : 'pages' }} · read just now</small>
+          <small>{{ kb(state.resume.size) }} · {{ state.resume.pages }} {{ state.resume.pages === 1 ? 'page' : 'pages' }}</small>
         </span>
         <span class="chip chip-have"><Icon name="check" :size="14" :stroke="3" /> Read</span>
       </div>
-      <h3>Jobee found these skills</h3>
+      <h2>Skills found</h2>
       <div v-if="shown.length" class="chips">
-        <span v-for="s in shown" :key="s.name" class="chip chip-have"><Icon name="check" :size="14" :stroke="3" /> {{ skillLabel(s.name) }}</span>
+        <span v-for="s in shown" :key="s.name" class="chip chip-have">{{ skillLabel(s.name) }}</span>
         <span v-if="more" class="chip chip-neutral">+ {{ more }} more</span>
       </div>
-      <p v-else class="none">I couldn’t spot specific skills in this one. That’s okay, the skill check is next.</p>
+      <p v-else class="none">No specific skills spotted. The skill check is next.</p>
     </template>
 
-    <button type="button" class="skip" @click="skip">No resume? Skip</button>
+    <template #skip>
+      <button type="button" class="skip" @click="skip">No resume? Skip</button>
+    </template>
   </FlowShell>
 </template>
 
 <style scoped>
-h1 { font-size: 30px; font-weight: 900; margin-bottom: 24px; }
-.b { margin-bottom: 24px; }
-.drop { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 36px 16px; border: 3px dashed var(--yellow); border-radius: 20px; }
-.drop:hover, .drop.dragging { background: rgba(255, 193, 7, .08); }
+.drop {
+  width: 100%; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 32px 16px;
+  border: 3px dashed var(--yellow); border-radius: 20px; background: #fff; transition: background .15s, border-color .15s;
+}
+.drop:hover, .drop.dragging { background: var(--cream); border-color: var(--orange); }
 .drop.busy { cursor: progress; }
 .drop.busy .up { animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 50% { transform: scale(1.12); } }
 .up { width: 46px; height: 46px; border-radius: 50%; background: var(--yellow); box-shadow: 0 3px 0 var(--orange); display: grid; place-items: center; margin-bottom: 6px; }
-.drop strong { font-weight: 800; font-size: 16px; } small { font-size: 12px; color: var(--muted); font-weight: 600; }
+.drop strong { font-weight: 800; font-size: 16px; } small { font-size: 13px; color: var(--muted); font-weight: 700; }
 .error { margin-top: 14px; padding: 12px 16px; border-radius: 14px; background: #fdecea; color: #b3261e; font-weight: 800; font-size: 14px; line-height: 1.4; }
-.file { margin-top: 18px; display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 16px; }
-.fic { width: 40px; height: 40px; border-radius: 10px; background: var(--cream); display: grid; place-items: center; }
+.file { margin-top: 16px; display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 16px; }
 .meta { display: flex; flex-direction: column; flex: 1; gap: 2px; min-width: 0; } .meta strong { font-weight: 800; font-size: 14px; overflow-wrap: anywhere; }
-h3 { margin: 22px 0 12px; font-weight: 900; font-size: 15px; }
+h2 { margin: 20px 0 10px; font-weight: 900; font-size: 15px; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.chip { font-size: 12px; padding: 6px 12px 6px 10px; }
+.chip { font-size: 13px; padding: 6px 12px; }
 .none { color: var(--muted); font-weight: 700; font-size: 14px; }
-.skip { display: block; margin: 24px auto 0; font-size: 12px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.skip:hover { color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .drop.busy .up { animation: none; } }
 </style>

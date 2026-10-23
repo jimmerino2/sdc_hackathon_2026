@@ -11,6 +11,7 @@ const moods: { id: Mood; label: string; note: string }[] = [
   { id: 'sleepy', label: 'Sleepy', note: 'Eyes closed, floating zzz' },
   { id: 'surprised', label: 'Surprised', note: 'Startled hop with wide eyes' },
   { id: 'celebrate', label: 'Celebrate', note: 'Jumps with confetti on milestones' },
+  { id: 'busy', label: 'Busy', note: 'Reads a document while your resume is processed' },
 ];
 const q = new URLSearchParams(location.search).get('bee');
 if (q && (BEES as readonly string[]).includes(q)) bee.value = q as typeof bee.value;
@@ -22,7 +23,7 @@ function pick(m: Mood) { current.value = m; replay.value++; }
 <template>
   <main class="pg">
     <h1>Meet Jobee</h1>
-    <p class="sub">Seven moods, four bees, all drawn in code.</p>
+    <p class="sub">Eight moods, four bees, all drawn in code.</p>
     <div class="bees"><button v-for="b in BEES" :key="b" class="pillbtn" :class="{ on: bee === b }" @click="bee = b">{{ b }}</button></div>
     <div class="stage"><Mascot :key="replay" :size="220" :mood="current" /></div>
     <div class="grid">

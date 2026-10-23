@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import '../learn.css';
 import Icon from './Icon.vue';
 import Logo from './Logo.vue';
@@ -12,17 +13,21 @@ function logout() {
   router.push(go('landing'));
 }
 
-const props = defineProps<{ active: 'learn' | 'roles' | 'profile' }>();
+/** The app layout after onboarding. It stays mounted while the learner switches tabs; only the content slot changes. */
+const route = useRoute();
+const tabFor: Record<string, 'learn' | 'roles' | 'profile'> = { pathway: 'learn', suggested: 'roles', role: 'roles', profile: 'profile' };
+const active = computed(() => tabFor[route.name as string]);
 const items: { id: 'learn' | 'roles' | 'profile'; label: string; icon: string; to: Step }[] = [
   { id: 'learn', label: 'Learn', icon: 'route', to: 'pathway' },
   { id: 'roles', label: 'Roles', icon: 'tup', to: 'suggested' },
   { id: 'profile', label: 'Profile', icon: 'user', to: 'profile' },
 ];
 /** Position of the active item; the highlight pill springs to it. */
-const idx = computed(() => Math.max(0, items.findIndex((i) => i.id === props.active)));
-// Each page mounts its own nav, so start the pill where the last page left it and let it spring across.
+const idx = computed(() => Math.max(0, items.findIndex((i) => i.id === active.value)));
 const KEY = 'jobee_nav_idx';
 const shown = ref(Number(sessionStorage.getItem(KEY) ?? idx.value));
+// The layout stays mounted across tabs, so the pill springs whenever the active tab changes.
+watch(idx, (i) => { shown.value = i; sessionStorage.setItem(KEY, String(i)); });
 onMounted(async () => {
   await nextTick();
   requestAnimationFrame(() => { shown.value = idx.value; sessionStorage.setItem(KEY, String(idx.value)); });

@@ -29,6 +29,7 @@ const CHIPS = 3; // skills shown per side on a card
 const { state, scenario } = useFlow();
 const sIcon = { accelerates: 'tup', steady: 'arrow', slows: 'tdown' } as const;
 const trendIcon = { growing: 'tup', stable: 'arrow', shrinking: 'tdown' } as const;
+const trendClass = { growing: 'trend-up', stable: 'trend-flat', shrinking: 'trend-down' } as const;
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function outlook(job: JobMatch) {
@@ -83,16 +84,15 @@ const heading = computed(() => {
     <div v-else class="cards">
       <button v-for="j in jobs" :key="j.onet_code" class="rc" :class="{ on: selected === j.onet_code }" @click="emit('select', j.onet_code)">
         <div class="top">
-          <span class="ic"><Icon :name="j.icon" :size="22" /></span>
           <span class="match"><b>{{ j.match_percent }}%</b> match</span>
+          <em v-if="j.rank === 1" class="pill pill-dark">Best match</em>
         </div>
-        <em v-if="j.rank === 1" class="pill pill-dark best">Best match</em>
         <h2>{{ j.title }}</h2>
         <span v-if="roadmaps" class="rm" :class="roadmapStatus(roadmaps[j.onet_code]).key">
           <Icon v-if="roadmapStatus(roadmaps[j.onet_code]).key === 'completed'" name="check" :size="14" :stroke="3" />
           {{ roadmapStatus(roadmaps[j.onet_code]).label }}
         </span>
-        <div class="big" :class="outlook(j)?.trend">
+        <div class="big" :class="trendClass[outlook(j)?.trend ?? 'stable']">
           <Icon :name="trendIcon[outlook(j)?.trend ?? 'stable']" :size="26" :stroke="2.6" />
           <b>{{ changeText(j) }}</b><span>{{ byText(j) }}</span>
         </div>
@@ -119,28 +119,29 @@ const heading = computed(() => {
 .chart-title { font-size: 17px; font-weight: 900; margin-bottom: 10px; }
 .foot { margin-top: 12px; font-size: 12px; font-weight: 600; color: var(--muted); line-height: 1.5; }
 .tabs button { display: flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 14px; border: 2px solid var(--line-strong); background: #fff; box-shadow: 0 4px 0 rgba(30,30,30,.1); font-weight: 900; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
+.tabs button { transition: transform .08s, box-shadow .08s; }
+.tabs button:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(30,30,30,.1); translate: none; scale: 1; }
+.tabs button.on:active { box-shadow: 0 1px 0 var(--orange); }
 .tabs button.on { background: var(--yellow); border-color: var(--yellow); box-shadow: 0 4px 0 var(--orange); }
 h1 { font-size: 30px; font-weight: 900; margin-bottom: 22px; }
 .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
 .rc { text-align: left; background: #fff; border: 2px solid var(--line-strong); border-radius: 22px; padding: 22px; box-shadow: 0 5px 0 var(--line); display: flex; flex-direction: column; gap: 10px; transition: transform .12s; }
 .rc:hover { transform: translateY(-2px); }
+.rc:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--line); translate: none; scale: 1; }
+.rc.on:active { box-shadow: 0 2px 0 var(--orange); }
 .rc.on { border: 3px solid var(--yellow); box-shadow: 0 5px 0 var(--orange); }
-.top { display: flex; justify-content: space-between; align-items: center; }
-.ic { width: 42px; height: 42px; border-radius: 12px; background: var(--cream); display: grid; place-items: center; }
-.on .ic { background: var(--yellow); }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 h2 { font-size: 21px; font-weight: 800; margin-top: 6px; }
 .big { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 8px; } .big b { font-size: 44px; font-weight: 900; line-height: 1; } .big span { font-size: 13px; color: var(--muted); font-weight: 700; }
 .small { font-size: 12px; font-weight: 700; color: var(--muted); }
 .match { display: inline-flex; align-items: baseline; gap: 4px; background: var(--cream); border-radius: 12px; padding: 6px 12px; font-weight: 800; font-size: 12px; color: var(--muted); }
 .match b { font-size: 18px; font-weight: 900; color: var(--ink); }
 .on .match { background: var(--yellow); color: var(--ink); }
-.best { align-self: flex-start; }
 .rm { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 800; border: 2px solid var(--line-strong); color: var(--muted); background: #fff; }
 .rm.ready { background: var(--cream); border-color: var(--yellow); color: var(--ink); }
 .rm.started { background: var(--yellow); border-color: var(--yellow); color: var(--ink); }
 .rm.completed { background: var(--ink); border-color: var(--ink); color: var(--yellow); }
-.big svg { color: var(--orange); align-self: center; flex: none; }
-.big.shrinking b, .big.shrinking svg { color: var(--muted); }
+.big svg { align-self: center; flex: none; }
 .note { margin-top: 22px; font-size: 12px; font-weight: 600; color: var(--muted); line-height: 1.5; max-width: 760px; }
 .blurb { font-size: 13px; color: var(--muted); font-weight: 600; line-height: 1.4; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }

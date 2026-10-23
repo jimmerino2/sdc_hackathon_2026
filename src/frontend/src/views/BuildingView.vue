@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Icon from '../components/Icon.vue';
-import Mascot from '../components/Mascot.vue';
+import PollenField from '../components/PollenField.vue';
 import { isOnboarded } from '../api/profile';
 import { loadRoadmap, useFlow } from '../state';
 import { go } from '../router';
@@ -40,51 +40,37 @@ function start() {
 
 onMounted(start);
 onBeforeUnmount(() => clearInterval(timer));
+
+const pct = computed(() => Math.round(Math.min(100, 12 + (stage.value * 88) / items.value.length)));
+const status = computed(() => (failed.value ? state.value.roadmap.error : items.value[Math.min(stage.value, items.value.length - 1)]));
 </script>
 
 <template>
   <div class="page">
-    <div class="halo"><Mascot :size="100" class="m" mood="thinking" /></div>
-    <h1>Building your roadmap…</h1>
-    <p class="sub">Jobee is planning your path to {{ roleTitle }}. This can take up to half a minute.</p>
-    <div class="progress"><i :style="{ width: Math.min(100, 12 + (stage * 88) / items.length) + '%' }" /></div>
-    <ul class="card">
-      <li v-for="(t, i) in items" :key="t" :class="{ done: i < stage, now: i === stage, wait: i > stage, bad: failed && i === stage }">
-        <span class="dot"><Icon v-if="i <= stage" :name="i < stage ? 'check' : failed ? 'x' : 'sparkles'" :size="13" :stroke="3" /></span>
-        {{ t }}
-      </li>
-    </ul>
-    <div v-if="failed" class="fail" role="alert">
-      <p>{{ state.roadmap.error }}</p>
-      <button type="button" class="btn btn-secondary" @click="start"><Icon name="refresh" :size="18" /> Try again</button>
-      <RouterLink :to="go(isOnboarded() ? 'suggested' : 'signal')" class="back">Back</RouterLink>
-    </div>
-    <div v-else class="know">
-      <small>Did you know?</small>
-      <p>Your roadmap starts with the skills everything else builds on, so each step unlocks the next.</p>
+    <div class="stack">
+      <PollenField />
+      <div class="progress" :class="{ bad: failed }" role="progressbar" aria-label="Building your roadmap" aria-valuemin="0" aria-valuemax="100" :aria-valuenow="pct"><i :style="{ width: pct + '%' }" /></div>
+      <p class="status" :class="{ bad: failed }" :role="failed ? 'alert' : 'status'" aria-live="polite">
+        <Transition name="swap" mode="out-in"><span :key="status ?? ''">{{ status }}</span></Transition>
+      </p>
+      <button v-if="failed" type="button" class="btn btn-secondary" @click="start"><Icon name="refresh" :size="18" /> Try again</button>
+      <RouterLink v-if="failed" :to="go(isOnboarded() ? 'suggested' : 'signal')" class="back">Back</RouterLink>
     </div>
   </div>
 </template>
 
 <style scoped>
-.page { min-height: 100vh; max-width: 400px; margin: 0 auto; padding: 60px 20px; display: flex; flex-direction: column; align-items: center; }
-.halo { width: 150px; height: 150px; border-radius: 50%; background: var(--cream); display: grid; place-items: center; margin-bottom: 28px; animation: float 2.4s ease-in-out infinite; }
-@keyframes float { 50% { transform: translateY(-8px); } }
-h1 { font-size: 30px; font-weight: 900; margin-bottom: 8px; } .sub { color: var(--muted); font-weight: 600; font-size: 14px; margin-bottom: 24px; }
-.progress { width: 100%; height: 12px; margin-bottom: 20px; }
-ul { list-style: none; width: 100%; padding: 12px 20px; display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px; }
-li { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 14px; }
-.dot { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; flex: none; border: 2px solid var(--line-strong); }
-.done .dot { background: var(--ink); color: var(--yellow); border-color: var(--ink); }
-.now .dot { background: var(--yellow); border-color: var(--yellow); color: var(--ink); }
-.wait { color: var(--muted); }
-.know { width: 100%; background: var(--cream); border-radius: 16px; padding: 14px 18px; }
-.know small { font-size: 10px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--orange); }
-.know p { font-weight: 800; font-size: 14px; line-height: 1.4; margin-top: 4px; }
-.bad .dot { background: #fdecea; border-color: #b3261e; color: #b3261e; }
-.fail { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 14px; }
-.fail p { width: 100%; padding: 12px 16px; border-radius: 14px; background: #fdecea; color: #b3261e; font-weight: 800; font-size: 14px; line-height: 1.4; }
-.fail .btn { display: inline-flex; align-items: center; gap: 8px; }
+.page { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 20px; }
+.stack { width: 100%; max-width: 440px; display: flex; flex-direction: column; align-items: center; }
+.stack :deep(.fpv) { margin-bottom: 28px; }
+.progress { width: 100%; height: 14px; margin-bottom: 18px; }
+.progress.bad > i { background: #e8b4ae; }
+.status { min-height: 2.8em; text-align: center; font-weight: 800; font-size: 17px; line-height: 1.4; color: var(--ink); }
+.status.bad { color: #b3261e; margin-bottom: 16px; }
+.btn { gap: 8px; }
+.swap-enter-active, .swap-leave-active { transition: opacity .2s ease, transform .2s ease; }
+.swap-enter-from { opacity: 0; transform: translateY(6px); }
+.swap-leave-to { opacity: 0; transform: translateY(-6px); }
 .back { font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .back:hover { color: var(--ink); }
 </style>

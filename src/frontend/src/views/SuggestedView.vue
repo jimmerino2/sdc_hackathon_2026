@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import SideNav from '../components/SideNav.vue';
 import Bubble from '../components/Bubble.vue';
 import Icon from '../components/Icon.vue';
 import RoleBrowser from '../components/RoleBrowser.vue';
@@ -77,7 +76,7 @@ onMounted(load);
 </script>
 
 <template>
-  <SideNav active="roles">
+  <div class="tab">
     <div class="page">
       <div class="head">
         <div>
@@ -94,7 +93,11 @@ onMounted(load);
       </div>
       <p v-else-if="regenError" class="error" role="alert">{{ regenError }}</p>
 
-      <div v-if="status === 'loading'" class="state"><Bubble :size="64">Loading the roles Jobee suggested for you…</Bubble></div>
+      <div v-if="status === 'loading'" class="skel-wrap" aria-busy="true" aria-label="Loading your roles">
+        <div class="skel-bar"><span v-for="n in 3" :key="n" class="skel tab-skel" /></div>
+        <span class="skel line title-skel" />
+        <div class="skel-cards"><span v-for="n in 3" :key="n" class="skel card card-skel" /></div>
+      </div>
 
       <div v-else-if="status === 'error'" class="state">
         <Bubble :size="64">{{ error }}</Bubble>
@@ -121,7 +124,7 @@ onMounted(load);
         @select="openRole"
       />
     </div>
-  </SideNav>
+  </div>
 </template>
 
 <style scoped>
@@ -137,4 +140,10 @@ onMounted(load);
 .dim { opacity: .55; pointer-events: none; transition: opacity .2s; }
 .state { max-width: 560px; margin: 40px 0; display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
 .state .btn { display: inline-flex; align-items: center; gap: 8px; }
+.skel-bar { display: flex; gap: 10px; margin-bottom: 26px; }
+.tab-skel { width: 150px; height: 46px; }
+.title-skel { width: 55%; height: 30px; margin-bottom: 26px; }
+.skel-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.card-skel { height: 380px; border-radius: 22px; }
+@media (max-width: 960px) { .skel-cards { grid-template-columns: 1fr; } .card-skel { height: 200px; } .tab-skel { width: 30%; } }
 </style>

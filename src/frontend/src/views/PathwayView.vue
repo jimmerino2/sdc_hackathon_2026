@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import '../learn.css';
 import { computed, nextTick, onMounted, ref } from 'vue';
-import SideNav from '../components/SideNav.vue';
 import Bubble from '../components/Bubble.vue';
 import Icon from '../components/Icon.vue';
 import SkillChips from '../components/learn/SkillChips.vue';
@@ -122,7 +121,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <SideNav active="learn">
+  <div class="tab">
     <div v-if="!roadmap" class="learn__state">
       <Bubble :size="64">{{ state.roadmap.status === 'error' ? state.roadmap.error : 'Loading your roadmap…' }}</Bubble>
       <RouterLink v-if="state.roadmap.status === 'error'" :to="go('suggested')" class="btn btn-secondary">Back to my roles</RouterLink>
@@ -163,5 +162,5 @@ onMounted(() => {
         <BeeGuide :message="message" :mood="mood" />
       </aside>
     </div>
-  </SideNav>
+  </div>
 </template>

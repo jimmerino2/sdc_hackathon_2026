@@ -116,7 +116,7 @@ const labels = computed(() => {
     <text class="ql risk" :x="L + 10" :y="T + 18">At risk</text>
     <text class="ql transform" :x="W - R - 10" :y="T + 18" text-anchor="end">Transform with AI</text>
     <text class="ql niche" :x="L + 10" :y="H - B - 10">Stable niche</text>
-    <text class="ql proof" :x="W - R - 10" :y="H - B - 10" text-anchor="end">Future-proof</text>
+    <text class="ql proof" :x="W - R - 10" :y="H - B - 10" text-anchor="end">Growing, less exposed</text>
 
     <!-- Axes -->
     <line class="mid" :x1="sx(0)" :x2="sx(0)" :y1="T" :y2="H - B" />

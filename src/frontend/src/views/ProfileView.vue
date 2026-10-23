@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import SideNav from '../components/SideNav.vue';
 import Bubble from '../components/Bubble.vue';
 import BeePicker from '../components/BeePicker.vue';
 import Icon from '../components/Icon.vue';
@@ -118,7 +117,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <SideNav active="profile">
+  <div class="tab">
     <div class="page">
       <p class="eyebrow">Profile</p>
 
@@ -152,7 +151,7 @@ onMounted(() => {
       <section class="card block">
         <h2>Your roadmaps</h2>
         <p v-if="roadmapsError" class="hint">Couldn’t load your roadmaps right now.</p>
-        <p v-else-if="roadmaps === null" class="hint">Loading…</p>
+        <div v-else-if="roadmaps === null" class="skels" aria-hidden="true"><span class="skel" style="height: 92px" /><span class="skel" style="height: 92px" /></div>
         <template v-else-if="roadmaps.length">
           <div v-for="(group, i) in [active, finished]" :key="i">
             <h3 v-if="group.length" class="sub">{{ i === 0 ? 'Active' : 'Completed' }}</h3>
@@ -184,7 +183,7 @@ onMounted(() => {
           <span v-if="learned?.length" class="pill pill-dark">{{ learned.length }} skills</span>
         </div>
         <p v-if="learnedError" class="hint">Couldn’t load your skills right now.</p>
-        <p v-else-if="learned === null" class="hint">Loading…</p>
+        <div v-else-if="learned === null" class="skels" aria-hidden="true"><span class="skel line" style="width: 30%" /><span class="skel chips-skel" /></div>
         <template v-else-if="learned.length">
           <div v-for="[group, skills] in learnedGroups" :key="group" class="grp">
             <h3 class="sub">{{ group }}</h3>
@@ -196,7 +195,7 @@ onMounted(() => {
         <Bubble v-else :size="52">Nothing yet. Finish a skill on your roadmap and it’ll show up here.</Bubble>
       </section>
     </div>
-  </SideNav>
+  </div>
 </template>
 
 <style scoped>
@@ -235,4 +234,6 @@ h2 { font-weight: 900; font-size: 18px; margin-bottom: 12px; }
 .grp .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip { font-size: 12px; padding: 6px 11px 6px 9px; }
 @media (max-width: 600px) { .rm { grid-template-columns: 1fr; } .go { grid-column: 1; grid-row: auto; } }
+.skels { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+.chips-skel { height: 34px; width: 80%; border-radius: 999px; }
 </style>
