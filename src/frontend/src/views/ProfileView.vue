@@ -4,7 +4,9 @@ import { useRouter } from 'vue-router';
 import Bubble from '../components/Bubble.vue';
 import BeePicker from '../components/BeePicker.vue';
 import Icon from '../components/Icon.vue';
+import InterestPicker from '../components/InterestPicker.vue';
 import { bee, type BeeName } from '../bee';
+import { fetchInterests, MAX_INTERESTS, type Interest } from '../api/interests';
 import { getProfile, readProfileId, setBee, stageForWho, updateProfile } from '../api/profile';
 import { fetchLearnedSkills, fetchRoadmapSummaries, type LearnedSkill, type RoadmapSummary } from '../api/roadmap';
 import { whoOptions } from '../data/flows';
@@ -76,6 +78,38 @@ async function pickStage(next: number) {
   }
 }
 
+// ---- interests
+const interestOptions = ref<Interest[] | null>(null);
+const interestsLoadError = ref(false);
+const editingInterests = ref(false);
+const interestDraft = ref<number[]>([]);
+const savingInterests = ref(false);
+const interestsError = ref('');
+
+const pickedInterests = computed(() => (interestOptions.value ?? []).filter((i) => state.value.interests.includes(i.id)));
+
+function startInterestEdit() {
+  interestDraft.value = state.value.interests.slice(0, MAX_INTERESTS);
+  interestsError.value = '';
+  editingInterests.value = true;
+}
+
+async function saveInterests() {
+  const id = profileId();
+  if (!id || !interestDraft.value.length || savingInterests.value) return;
+  savingInterests.value = true;
+  interestsError.value = '';
+  try {
+    const saved = await updateProfile(id, { interests: interestDraft.value });
+    state.value.interests = saved.interests;
+    editingInterests.value = false;
+  } catch {
+    interestsError.value = 'Couldn’t save your interests. Try again.';
+  } finally {
+    savingInterests.value = false;
+  }
+}
+
 // ---- bee
 const beeError = ref('');
 const beeSaved = ref(false);
@@ -126,6 +160,7 @@ function openRole(r: RoadmapSummary) {
 }
 
 onMounted(() => {
+  fetchInterests().then((i) => (interestOptions.value = i)).catch(() => (interestsLoadError.value = true));
   const id = profileId();
   if (!id) {
     roadmapsError.value = true;
@@ -136,6 +171,7 @@ onMounted(() => {
     name.value = p.name;
     state.value.name = p.name;
     state.value.who = Math.max(stageForWho.indexOf(p.stage), 0);
+    state.value.interests = p.interests ?? [];
   }).catch(() => {});
   fetchRoadmapSummaries(id).then((r) => (roadmaps.value = r)).catch(() => (roadmapsError.value = true));
   fetchLearnedSkills(id).then((l) => (learned.value = l)).catch(() => (learnedError.value = true));
@@ -186,6 +222,29 @@ onMounted(() => {
           </button>
         </div>
         <p v-if="stageError" class="error" role="alert">{{ stageError }}</p>
+      </section>
+
+      <!-- Interests -->
+      <section class="card block">
+        <div class="head">
+          <h2>Your interests</h2>
+          <button v-if="!editingInterests && interestOptions" type="button" class="link" @click="startInterestEdit"><Icon name="pencil" :size="16" /> Edit</button>
+        </div>
+        <p class="hint">They steer your matches towards the goals you care about. New matches use them the next time you regenerate your roles.</p>
+        <p v-if="interestsLoadError" class="hint">Couldn’t load the interests right now.</p>
+        <div v-else-if="interestOptions === null" class="skels" aria-hidden="true"><span class="skel chips-skel" /></div>
+        <form v-else-if="editingInterests" @submit.prevent="saveInterests">
+          <InterestPicker v-model="interestDraft" :interests="interestOptions" hint-id="profile-interests-hint" />
+          <div class="actions">
+            <button class="btn btn-primary" type="submit" :disabled="!interestDraft.length || savingInterests">{{ savingInterests ? 'Saving…' : 'Save' }}</button>
+            <button class="btn btn-secondary" type="button" :disabled="savingInterests" @click="editingInterests = false">Cancel</button>
+          </div>
+        </form>
+        <div v-else-if="pickedInterests.length" class="chips">
+          <span v-for="i in pickedInterests" :key="i.id" class="chip chip-have"><Icon :name="i.icon" :size="14" /> {{ i.interest }}</span>
+        </div>
+        <p v-else class="hint">None picked yet.</p>
+        <p v-if="interestsError" class="error" role="alert">{{ interestsError }}</p>
       </section>
 
       <!-- Bee -->
@@ -291,7 +350,8 @@ h2 { font-weight: 900; font-size: 18px; margin-bottom: 12px; }
 .go { grid-column: 2; grid-row: 1 / span 2; display: inline-flex; align-items: center; gap: 8px; }
 .empty { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
 
-.grp .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.actions { display: flex; gap: 10px; margin-top: 14px; }
 .chip { font-size: 12px; padding: 6px 11px 6px 9px; }
 @media (max-width: 600px) { .rm { grid-template-columns: 1fr; } .go { grid-column: 1; grid-row: auto; } }
 .skels { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }

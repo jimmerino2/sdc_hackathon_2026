@@ -13,12 +13,16 @@ outlook    the forecast's posting change for the chosen AI scenario as a multipl
            dropping, kept between 0.7x and 1.3x), stretched to 0-1.
 
 With no interests picked, that part is left out and the others are scaled up to fill the 100%.
+
+The shown match is score ** CURVE: it lifts every score (0.4 -> 0.53, 0.66 -> 0.75) without changing the order, and
+0 and 1 stay put.
 """
 from app.interests.schemas import Interest
 
 W_EDUCATION, W_INTERESTS, W_SKILLS, W_OUTLOOK = 0.10, 0.25, 0.35, 0.35
 STAGE_LEVEL = {"under": 1.0, "fresh": 1.5, "working": 2.5}
 MULT_MIN, MULT_MAX = 0.7, 1.3  # the outlook multiplier is kept in this range
+CURVE = 0.7  # below 1 lifts the match; lower lifts it more
 
 
 def proficiency(score: float) -> float:
@@ -67,8 +71,8 @@ def outlook_score(change_pct: float) -> float:
 
 
 def combine(education_: float, skills: float, outlook: float, interests: float | None) -> float:
-    """The weighted score, 0-1. Without interests (None) the other parts share the whole 100%."""
+    """The weighted score, curved up, 0-1. Without interests (None) the other parts share the whole 100%."""
     parts = [(W_EDUCATION, education_), (W_SKILLS, skills), (W_OUTLOOK, outlook)]
     if interests is not None:
         parts.append((W_INTERESTS, interests))
-    return sum(w * v for w, v in parts) / sum(w for w, _ in parts)
+    return (sum(w * v for w, v in parts) / sum(w for w, _ in parts)) ** CURVE

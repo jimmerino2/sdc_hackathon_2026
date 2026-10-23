@@ -33,6 +33,9 @@ export interface SdgReason {
   interests: string[];
 }
 
+/** How many interests a learner can pick. The backend rejects more. */
+export const MAX_INTERESTS = 3;
+
 /** A failed request, with a message that can be shown to the user as is. */
 export class InterestsError extends Error {}
 

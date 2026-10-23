@@ -19,7 +19,7 @@ score = 0.10 × education + 0.25 × interests + 0.35 × skills + 0.35 × outlook
 | Interests | 25% | How well the learner's interests point at the SDGs the role serves |
 | Education | 10% | The learner's career stage |
 
-The displayed "% match" is the score × 100. The code is in `src/backend/app/jobs/scoring.py`, and `recommend()` in `src/backend/app/jobs/service.py` applies it to every tech role.
+The weights add up to 1.05, so the sum is divided by 1.05 to keep it between 0 and 1. The displayed "% match" is then score<sup>0.7</sup> × 100. The curve lifts every match (0.40 shows as 53%, 0.66 as 75%) without changing the order between roles. The code is in `src/backend/app/jobs/scoring.py`, and `recommend()` in `src/backend/app/jobs/service.py` applies it to every tech role.
 
 ### How are skills scored?
 
@@ -69,7 +69,7 @@ It is the same for every role in the learner's job group, and only tech roles ar
 
 ### Where can I change the weights and values?
 
-In `src/backend/app/jobs/scoring.py`: the four weights (`W_EDUCATION`, `W_INTERESTS`, `W_SKILLS`, `W_OUTLOOK`), `STAGE_LEVEL` for education, and the multiplier limits `MULT_MIN` and `MULT_MAX`. The proficiency steps are in `proficiency()` there, and the skill check's own values are `LEVEL_SCORES` in `src/frontend/src/data/skills.ts`.
+In `src/backend/app/jobs/scoring.py`: the four weights (`W_EDUCATION`, `W_INTERESTS`, `W_SKILLS`, `W_OUTLOOK`), `STAGE_LEVEL` for education, the multiplier limits `MULT_MIN` and `MULT_MAX`, and `CURVE` (lower lifts every match more; 1 turns the curve off). The proficiency steps are in `proficiency()` there, and the skill check's own values are `LEVEL_SCORES` in `src/frontend/src/data/skills.ts`.
 
 ### Can I see how a score was made up?
 
@@ -91,10 +91,10 @@ A test profile (not a real user): Python (Good), SQL (Strong), JavaScript (Basic
 
 | Role | Skills | Interests | Education | Outlook (AI accelerates) | Match |
 | ---- | ------ | --------- | --------- | ------------------------ | ----- |
-| Software Developers | 0.27 | 1.00 | 1.0 | 0.70 | 66% |
-| Computer Systems Analysts | 0.17 | 0.82 | 1.0 | 0.47 | 50% |
+| Software Developers | 0.27 | 1.00 | 1.0 | 0.70 | 74% |
+| Computer Systems Analysts | 0.17 | 0.82 | 1.0 | 0.47 | 62% |
 
-For Software Developers: 0.10 × 1.0 + 0.25 × 1.00 + 0.35 × 0.27 + 0.35 × 0.70 ≈ 0.66.
+For Software Developers: (0.10 × 1.0 + 0.25 × 1.00 + 0.35 × 0.27 + 0.35 × 0.70) ÷ 1.05 ≈ 0.657, and 0.657<sup>0.7</sup> ≈ 0.74.
 
 ## Interests and SDGs
 

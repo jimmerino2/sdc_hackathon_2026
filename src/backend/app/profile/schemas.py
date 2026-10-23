@@ -24,7 +24,7 @@ class ProfileIn(BaseModel):
     stage: Literal["under", "fresh", "working"] = Field(
         description="under = undergraduate, fresh = fresh graduate, working = working (beginner)"
     )
-    interests: list[int] = Field(default_factory=list, description="Ids of the interests they picked (GET /interests); they steer the job matches towards the SDGs those interests serve")
+    interests: list[int] = Field(default_factory=list, description="Ids of the interests they picked (GET /interests), at most 3; they steer the job matches towards the SDGs those interests serve")
     skills: list[SkillScore] = Field(description="O*NET skill names, each with how strong it is (0-1)")
     experience: list[ExperienceEntry] = Field(description="Work / project experience")
 
@@ -36,7 +36,7 @@ class ProfileUpdate(BaseModel):
     stage: Literal["under", "fresh", "working"] | None = Field(
         None, description="under = undergraduate, fresh = fresh graduate, working = working (beginner)"
     )
-    interests: list[int] | None = Field(None, description="Ids of the interests they picked (GET /interests); replaces the current picks")
+    interests: list[int] | None = Field(None, description="Ids of the interests they picked (GET /interests), at most 3; replaces the current picks")
     skills: list[SkillScore] | None = Field(None, description="O*NET skill names, each with how strong it is (0-1)")
     experience: list[ExperienceEntry] | None = Field(None, description="Work / project experience")
 

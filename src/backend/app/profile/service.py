@@ -31,9 +31,14 @@ def _out(db: Client, row: dict) -> ProfileOut:
     return ProfileOut(**row, interests=_interest_ids(db, row["profile_id"]))
 
 
+MAX_INTERESTS = 3
+
+
 def _set_interests(db: Client, profile_id: str, ids: list[int]) -> None:
-    """Make these the profile's interests: the old picks go, the new ones are saved."""
+    """Make these the profile's interests: the old picks go, the new ones are saved. At most MAX_INTERESTS."""
     ids = sorted(set(ids))
+    if len(ids) > MAX_INTERESTS:
+        raise ProfileError(422, f"Pick at most {MAX_INTERESTS} interests.")
     try:
         db.table("profile_interests").delete().eq("profile_id", profile_id).execute()
         if ids:
