@@ -1,13 +1,16 @@
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
-/** Scale (<= 1) that makes a stage of fixed `width` fit the element bound to `el`. */
-export function useFit(width: number) {
+/** Scale (<= 1) that makes a stage of `width` (fixed, or read each time) fit the element bound to `el`. */
+export function useFit(width: number | (() => number)) {
   const el = ref<HTMLElement | null>(null);
-  const scale = ref(1);
+  const box = ref(0);
+  const scale = computed(() => {
+    const w = typeof width === 'function' ? width() : width;
+    return box.value > 0 && w > 0 ? Math.min(1, box.value / w) : 1;
+  });
   let ro: ResizeObserver | undefined;
   function measure() {
-    const w = el.value?.clientWidth ?? 0;
-    scale.value = w > 0 ? Math.min(1, w / width) : 1;
+    box.value = el.value?.clientWidth ?? 0;
   }
   onMounted(() => {
     measure();
