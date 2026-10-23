@@ -94,9 +94,8 @@ onMounted(load);
       <p v-else-if="regenError" class="error" role="alert">{{ regenError }}</p>
 
       <div v-if="status === 'loading'" class="skel-wrap" aria-busy="true" aria-label="Loading your roles">
-        <div class="skel-bar"><span v-for="n in 3" :key="n" class="skel tab-skel" /></div>
-        <span class="skel line title-skel" />
-        <div class="skel-cards"><span v-for="n in 3" :key="n" class="skel card card-skel" /></div>
+        <span class="skel tab-skel" />
+        <div class="skel-cards"><span v-for="n in 4" :key="n" class="skel card card-skel" /></div>
       </div>
 
       <div v-else-if="status === 'error'" class="state">
@@ -137,13 +136,11 @@ onMounted(load);
 @keyframes spin { to { transform: rotate(360deg); } }
 .banner { margin-bottom: 18px; }
 .error { margin-bottom: 18px; padding: 12px 16px; border-radius: 14px; background: #fdecea; color: #b3261e; font-weight: 800; font-size: 14px; line-height: 1.4; }
+.note { margin-top: 12px; font-size: 12px; font-weight: 600; color: var(--muted); line-height: 1.5; }
 .dim { opacity: .55; pointer-events: none; transition: opacity .2s; }
 .state { max-width: 560px; margin: 40px 0; display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
 .state .btn { display: inline-flex; align-items: center; gap: 8px; }
-.skel-bar { display: flex; gap: 10px; margin-bottom: 26px; }
-.tab-skel { width: 150px; height: 46px; }
-.title-skel { width: 55%; height: 30px; margin-bottom: 26px; }
-.skel-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-.card-skel { height: 380px; border-radius: 22px; }
-@media (max-width: 960px) { .skel-cards { grid-template-columns: 1fr; } .card-skel { height: 200px; } .tab-skel { width: 30%; } }
+.tab-skel { display: block; height: 44px; margin-bottom: 16px; }
+.skel-cards { display: flex; flex-direction: column; gap: 12px; }
+.card-skel { height: 76px; border-radius: 16px; }
 </style>
