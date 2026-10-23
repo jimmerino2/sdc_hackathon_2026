@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from supabase import Client
 
 from app.deps import get_supabase_admin
+from app.interests import service as interests_service
 from app.jobs import service
 from app.jobs.schemas import RecommendRequest, RecommendResponse
 from app.profile import service as profiles
@@ -17,13 +18,12 @@ router = APIRouter(prefix="/jobs", tags=["jobs"])
 def recommend(
     profile_id: UUID = Query(description="The profile_id returned from POST /profile"),
     source: Literal["auto", "openjev", "llm", "openai", "grafilab"] = Query(
-        "auto",
-        description="auto = OpenJev, falling back to the gateway LLM (Grafilab) if OPENJEV_URL is unset or OpenJev fails; openjev or llm = only that one, no fallback ('openai' and 'grafilab' mean the gateway LLM)",
+        "auto", description="Ignored: roles are scored by formula now, with no model involved. Kept so older callers still work."
     ),
     horizon: Literal[3, 6, 9, 12] = Query(12, description="Months ahead for the posting change"),
     db: Client = Depends(get_supabase_admin),
 ):
-    """The tech roles that fit the profile best (up to 10; 8 tech roles are matched for now), each with an icon, a match %, a short reason, skills overlap and the forecast under each AI scenario.
+    """The tech roles that fit the profile best (up to 10; 8 tech roles are matched for now), each with an icon, a match % (by formula from the learner's skills, interests, career stage and the role's outlook), skills overlap, the SDGs it serves and the forecast and match under each AI scenario.
 
     No login needed: the skills are read from the profile (POST /profile). 404 if there is no such profile; 409 if it has no skills.
     """
@@ -35,11 +35,12 @@ def recommend(
     if not skills:
         raise HTTPException(409, "That profile has no skills yet. Add some with PATCH /profile/{profile_id}.")
     req = RecommendRequest(top_skills=skills[:TOP_N], skills=skills)
-    engine = "llm" if source in ("openai", "grafilab") else source
-    try:
-        result = service.recommend(req, str(profile_id), engine, horizon)
-    except service.RecommendError as e:
-        raise HTTPException(502, str(e))
+    try:  # interests only steer the ranking, so failing to read them must not stop the matching
+        picked = interests_service.by_ids(db, profile.interests)
+    except interests_service.InterestError as e:
+        print(f"Interests not used: {e}")
+        picked = []
+    result = service.recommend(req, str(profile_id), profile.stage, horizon, picked)
     try:  # keep it so GET /jobs/suggested can show it again; failing to save must not lose the result
         profiles.save_suggestions(db, profile_id, result.model_dump(mode="json"))
     except profiles.ProfileError as e:

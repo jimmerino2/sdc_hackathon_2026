@@ -14,7 +14,7 @@ export const DEFAULT_SKILLS = [
 export const SKILL_CHECK_SIZE = 8;
 
 /** Skill check level (New, Basic, Good, Strong) -> the 0-1 score stored on the profile. New means "don't have it". */
-export const LEVEL_SCORES = [0, 0.4, 0.7, 1] as const;
+export const LEVEL_SCORES = [0, 0.33, 0.67, 1] as const;
 
 /** Starting level for a skill the resume showed, from how strongly it showed it. */
 export function levelFromScore(score: number): number {

@@ -3,6 +3,8 @@ import { computed } from 'vue';
 import Icon from './Icon.vue';
 import PositionChart from './PositionChart.vue';
 import RoleList from './RoleList.vue';
+import SdgFocus from './SdgFocus.vue';
+import type { SdgFocus as SdgFocusItem } from '../api/interests';
 import { scenarios } from '../data/flows';
 import { backendScenario } from '../api/forecast';
 import type { ContextRole, JobMatch } from '../api/jobs';
@@ -22,10 +24,15 @@ const props = defineProps<{
   pick?: boolean;
   /** The profile's roadmaps by role. When given, each card shows its role's roadmap status. */
   roadmaps?: Record<string, RoadmapSummary>;
+  /** The SDGs the learner's interests point at; shown above the roles when there are any. */
+  sdgFocus?: SdgFocusItem[];
+  /** Always the list: no Cards / Chart toggle. */
+  cardsOnly?: boolean;
 }>();
 const emit = defineEmits<{ select: [code: string] }>();
 
 const { state, scenario } = useFlow();
+const view = computed(() => (props.cardsOnly ? 'cards' : state.value.rolesView));
 const sIcon = { accelerates: 'tup', steady: 'arrow', slows: 'tdown' } as const;
 
 function outlook(job: JobMatch) {
@@ -45,18 +52,19 @@ const heading = computed(() => {
 
 <template>
   <div>
+    <SdgFocus :focus="sdgFocus ?? []" />
     <div class="bar">
-      <div v-if="state.rolesView === 'chart'" class="tabs">
+      <div v-if="view === 'chart'" class="tabs">
         <button v-for="s in scenarios" :key="s.key" :class="{ on: state.scenario === s.key }" @click="state.scenario = s.key">
           <Icon :name="sIcon[s.key]" :size="18" /> {{ s.label }}
         </button>
       </div>
-      <div class="view" role="group" aria-label="Layout">
+      <div v-if="!cardsOnly" class="view" role="group" aria-label="Layout">
         <button :class="{ on: state.rolesView === 'cards' }" :aria-pressed="state.rolesView === 'cards'" @click="state.rolesView = 'cards'">Cards</button>
-        <button :class="{ on: state.rolesView === 'chart' }" :aria-pressed="state.rolesView === 'chart'" @click="state.rolesView = 'chart'">Chart</button>
+        <button :class="{ on: view === 'chart' }" :aria-pressed="view === 'chart'" @click="state.rolesView = 'chart'">Chart</button>
       </div>
     </div>
-    <template v-if="state.rolesView === 'chart'">
+    <template v-if="view === 'chart'">
       <h1>{{ heading }}</h1>
       <div class="card chart-card">
         <h2 class="chart-title">Demand vs AI automation exposure</h2>
@@ -71,7 +79,7 @@ const heading = computed(() => {
     <div v-else class="list-wrap" :class="{ center: pick }">
       <RoleList :jobs="jobs" :selected="pick ? selected : undefined" :roadmaps="roadmaps" @select="emit('select', $event)" />
     </div>
-    <p v-if="note && state.rolesView === 'chart'" class="note">{{ note }}</p>
+    <p v-if="note && view === 'chart'" class="note">{{ note }}</p>
   </div>
 </template>
 

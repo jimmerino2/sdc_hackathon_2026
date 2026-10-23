@@ -40,13 +40,6 @@ export const whoOptions = [
   { title: 'I already work in tech', sub: 'Engineer, analyst, IT pro', icon: 'briefcase' },
 ] as const;
 
-export const mindOptions = [
-  { title: 'Will AI take my future job?', sub: 'The headlines are loud', icon: 'cpu' },
-  { title: 'I don’t know what to learn', sub: 'Too many paths, no map', icon: 'search' },
-  { title: 'Is my degree still worth it?', sub: 'Feeling behind already', icon: 'grad' },
-  { title: 'I want a role that lasts', sub: 'Something future-proof', icon: 'shield' },
-] as const;
-
 export const levels = ['New', 'Basic', 'Good', 'Strong'] as const;
 
 export const scenarios: {

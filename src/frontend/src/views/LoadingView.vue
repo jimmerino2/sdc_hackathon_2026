@@ -2,7 +2,6 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import PollenField from '../components/PollenField.vue';
-import { mindOptions } from '../data/flows';
 import { bee } from '../bee';
 import { setBee, createProfile, ProfileNotFound, readProfileId, saveProfileId, stageForWho, updateProfile } from '../api/profile';
 import { loadJobs, useFlow } from '../state';
@@ -26,7 +25,7 @@ async function saveProfile() {
   const body = {
     name: s.name.trim() || 'Jobee learner',
     stage: stageForWho[s.who]!,
-    concerns: s.mind.map((i) => mindOptions[i]!.title).join('; '),
+    interests: s.interests,
     skills: profileSkills.value,
     experience: [],
   };

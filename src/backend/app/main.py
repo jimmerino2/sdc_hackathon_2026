@@ -5,6 +5,7 @@ from fastapi.responses import RedirectResponse
 from app.auth.router import router as auth_router
 from app.config import get_settings
 from app.forecast.router import router as forecast_router
+from app.interests.router import router as interests_router
 from app.jobs.router import router as jobs_router
 from app.llm.router import router as llm_router
 from app.profile.router import router as profile_router
@@ -33,6 +34,7 @@ def create_app() -> FastAPI:
 
     app.include_router(auth_router)
     app.include_router(forecast_router)
+    app.include_router(interests_router)
     app.include_router(jobs_router)
     app.include_router(llm_router)
     app.include_router(profile_router)

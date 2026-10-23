@@ -6,8 +6,8 @@ import type { PersonaKey } from './flows';
  * Prompts are short questions for Jobee's speech bubble.
  */
 export interface PersonaCopy {
-  /** Mind screen: what AI change is on your mind. */
-  mind: string;
+  /** Interests screen: what the learner is into, outside of work. */
+  interests: string;
   /** Resume screen. */
   resume: string;
   /** Resume drop-zone label when nothing is uploaded yet. */
@@ -31,7 +31,7 @@ export interface PersonaCopy {
 
 export const personaCopy: Record<PersonaKey, PersonaCopy> = {
   a: {
-    mind: 'What’s on your mind about AI and your future job?',
+    interests: 'What are you into outside of class?',
     resume: 'Can you share your resume or project list?',
     resumeDrop: 'Upload resume, CV or project list (PDF)',
     skills: 'How confident are you in these skills?',
@@ -47,7 +47,7 @@ export const personaCopy: Record<PersonaKey, PersonaCopy> = {
     },
   },
   b: {
-    mind: 'What’s on your mind as you job hunt?',
+    interests: 'What do you love doing outside of job hunting?',
     resume: 'Can you share your resume?',
     resumeDrop: 'Upload resume or LinkedIn PDF',
     skills: 'How strong are these skills for your first role?',
@@ -63,7 +63,7 @@ export const personaCopy: Record<PersonaKey, PersonaCopy> = {
     },
   },
   c: {
-    mind: 'What’s on your mind as AI agents change your work?',
+    interests: 'What are you into outside of work?',
     resume: 'Can you share your resume or LinkedIn profile?',
     resumeDrop: 'Upload resume or LinkedIn PDF',
     skills: 'How strong are these skills in your work today?',

@@ -5,16 +5,17 @@ from pathlib import Path
 
 import pandas as pd
 
-from app.config import get_settings
 from app.forecast import service as forecast
-from app.jobs import fit
-from app.jobs.schemas import ContextRole, Engine, JobMatch, RecommendRequest, RecommendResponse, ScenarioOutlook
+from app.interests.schemas import Interest
+from app.interests.sdg import SDG_NAMES
+from app.interests.service import sdg_focus as focus_of
+from app.jobs import scoring
+from app.jobs.schemas import ContextRole, Engine, JobMatch, MatchParts, RecommendRequest, RecommendResponse, ScenarioOutlook, SdgReason
 from app.supabase import get_client
 
 DATA_DIR = Path(__file__).resolve().parents[4] / "data" / "processed"
 TOP_JOBS = 10
 DEFAULT_ICON = "briefcase"
-SHORTLIST = 20  # roles the engine scores: the best on skill overlap out of all of them
 KEY_TOOLS = 6  # a role's key skills: this many tools ...
 KEY_ABILITIES = 4  # ... plus this many abilities (O*NET skill_type "skill", e.g. Programming, Critical Thinking)
 # Only tech roles are matched for now.
@@ -54,12 +55,10 @@ IMPLIES = {
 }
 HORIZON = 12
 SCENARIOS = [("Rapid AI", "AI accelerates"), ("Baseline", "AI holds steady"), ("Slow", "AI slows down")]
-NOTE = ("Match is how well your skills fit the role today. Posting change is the sector trend carried over to the role "
-        "(US data stands in for Malaysia) and is indicative, not a precise prediction.")
-
-
-class RecommendError(Exception):
-    """The fit step failed; carries a message to show the caller."""
+HEADLINE = "Rapid AI"  # the scenario behind JobMatch.match_percent and the order of the roles
+NOTE = ("Match combines your skills (35%), the role's outlook under the chosen AI future (35%), your interests (25%) and your "
+        "career stage (10%). Posting change is the sector trend carried over to the role (US data stands in for Malaysia) "
+        "and is indicative, not a precise prediction.")
 
 
 @lru_cache
@@ -86,15 +85,18 @@ def _roles() -> list[dict]:
     return out
 
 
-def _expand(have: set[str]) -> set[str]:
-    """The candidate's skills (lower case) plus every close equivalent they imply."""
-    out = set(have)
+def _expand(scores: dict[str, float]) -> dict[str, float]:
+    """The learner's proficiency per skill (lower case) plus every close equivalent they imply, at the best proficiency among them."""
+    out = dict(scores)
     for family in FAMILIES:
-        if any(n.lower() in have for n in family):
-            out |= {n.lower() for n in family}
+        best = max((out.get(n.lower(), 0.0) for n in family), default=0.0)
+        if best:
+            for n in family:
+                out[n.lower()] = max(out.get(n.lower(), 0.0), best)
     for name, implied in IMPLIES.items():
-        if name.lower() in have:
-            out |= {n.lower() for n in implied}
+        have = scores.get(name.lower(), 0.0)
+        for n in implied:
+            out[n.lower()] = max(out.get(n.lower(), 0.0), have)
     return out
 
 
@@ -131,10 +133,35 @@ def _role_icons() -> dict[str, str]:
     return _icons
 
 
-def _overlap(role: dict, have: set[str]) -> float:
-    """Share of the role's key-skill importance the candidate already covers, 0-1."""
-    total = sum(role["weights"].values())
-    return sum(w for n, w in role["weights"].items() if n.lower() in have) / total
+_sdgs: dict[str, list[dict]] = {}
+
+
+def _role_sdgs() -> dict[str, list[dict]]:
+    """Each role's SDGs from onet_roles.sdg (migration 0014), biggest first, with the goal's name. Cached once read;
+    empty (so roles are matched on skills alone and show no SDG reasons) until the column exists."""
+    if not _sdgs:
+        try:
+            for r in get_client().table("onet_roles").select("onet_code, sdg").execute().data:
+                goals = sorted(r.get("sdg") or [], key=lambda g: -g["value"])
+                if goals:
+                    _sdgs[r["onet_code"]] = [{"sdg": g["sdg"], "name": SDG_NAMES[g["sdg"]], "value": g["value"]} for g in goals]
+        except Exception as e:
+            print(f"Role SDGs unavailable ({type(e).__name__}); matching on skills only")
+    return _sdgs
+
+
+def _sdg_reasons(role: dict, interests: list[Interest]) -> list[SdgReason]:
+    """The SDGs the role serves, each with the learner's interests that point at the same goal (strongest first).
+
+    Built from the data, so it only ever names interests the learner picked and goals the role has. A goal no
+    interest points at comes from the role itself, which the page shows by the role's title.
+    """
+    out = []
+    for g in role.get("sdg", []):
+        weight = lambda i: next((w.value for w in i.sdg if w.sdg == g["sdg"]), 0.0)  # noqa: E731
+        mine = sorted((i for i in interests if weight(i) > 0), key=lambda i: -weight(i))
+        out.append(SdgReason(sdg=g["sdg"], name=g["name"], value=g["value"], interests=[i.interest for i in mine]))
+    return out
 
 
 def _description(role: dict, owned: list[str], missing: list[str]) -> str:
@@ -177,50 +204,48 @@ def _all_titles() -> list[dict]:
     return pd.read_csv(DATA_DIR / "onet_roles.csv")[["onet_code", "title"]].to_dict("records")
 
 
-def recommend(req: RecommendRequest, profile_id: str, source: str = "auto", horizon: int = HORIZON) -> RecommendResponse:
-    """Pick the TOP_JOBS roles that fit the candidate best and attach each one's skills overlap and forecast."""
-    settings = get_settings()
-    skills = {s.name.lower(): s for s in [*req.skills, *req.top_skills]}
-    ranked = sorted(skills.values(), key=lambda s: -s.score)
-    top = [s.model_dump() for s in req.top_skills]
-    profile = fit.profile_text(top, [s.model_dump() for s in ranked])
-    have = _expand(set(skills))
-
-    roles = [_with_key_skills(r, have) for r in _roles()]
-    shortlist = sorted(roles, key=lambda r: -_overlap(r, have))[:SHORTLIST]
+def recommend(req: RecommendRequest, profile_id: str, stage: str = "under", horizon: int = HORIZON, interests: list[Interest] | None = None) -> RecommendResponse:
+    """Score every tech role for the candidate by formula (see scoring.py) and return the best TOP_JOBS, each with its
+    skills overlap, SDG links and the forecast and match under each AI scenario."""
+    picked = interests or []
     start = time.perf_counter()
-    engine, model, scores = None, None, None
-    if source in ("auto", "openjev") and settings.openjev_url:
-        try:
-            scores, engine, model = fit.openjev_fit(profile, shortlist), "openjev", "openjev"
-        except Exception as e:  # server down, bad token, timeout, unexpected reply
-            if source == "openjev":
-                raise RecommendError(f"OpenJev failed: {type(e).__name__}.") from e
-            print(f"OpenJev failed ({type(e).__name__}: {e}); falling back to the LLM")
-    elif source == "openjev":
-        raise RecommendError("OPENJEV_URL is not set, so OpenJev can't be used.")
-    if scores is None:
-        try:
-            scores, engine, model = fit.llm_fit(profile, shortlist), "llm", settings.resume_model or settings.openrouter_model
-        except ValueError as e:
-            raise RecommendError("The model's answer could not be read as JSON. Try again.") from e
-        except Exception as e:
-            raise RecommendError(f"The job matching step failed: {type(e).__name__}.") from e
-    seconds = round(time.perf_counter() - start, 2)
+    graded: dict[str, float] = {}
+    for s in [*req.skills, *req.top_skills]:
+        graded[s.name.lower()] = max(graded.get(s.name.lower(), 0.0), scoring.proficiency(s.score))
+    proficiency = _expand(graded)
+    have = {n for n, v in proficiency.items() if v > 0}
+    focus = focus_of(picked)
+    edu = scoring.education(stage)
 
-    best = sorted(zip(shortlist, scores), key=lambda rs: (-rs[1], -_overlap(rs[0], have)))[:TOP_JOBS]
+    sdgs = _role_sdgs()
+    roles = [{**_with_key_skills(r, have), "sdg": sdgs.get(r["onet_code"], [])} for r in _roles()]
+    raw = {r["onet_code"]: scoring.interest_raw(picked, r["sdg"]) for r in roles}
+    top_raw = max(raw.values(), default=0.0)
+    scored = []
+    for role in roles:
+        skills = scoring.skills_fit(role["weights"], proficiency)
+        interest = (raw[role["onet_code"]] / top_raw if top_raw else 0.0) if picked else None
+        outlook, exposure = _outlook(role["onet_code"], horizon)
+        outlook = [o.model_copy(update={"match_percent": round(100 * scoring.combine(edu, skills, scoring.outlook_score(o.change_pct), interest))}) for o in outlook]
+        headline = next((o.match_percent for o in outlook if o.scenario == HEADLINE), None)
+        if headline is None:  # no forecast for this role: a flat outlook (1x)
+            headline = round(100 * scoring.combine(edu, skills, scoring.outlook_score(0), interest))
+        scored.append((headline, skills, interest, role, outlook, exposure))
+
+    scored.sort(key=lambda t: (-t[0], -t[1]))
     icons = _role_icons()
     jobs = []
-    for rank, (role, score) in enumerate(best, start=1):
+    for rank, (headline, skills, interest, role, outlook, exposure) in enumerate(scored[:TOP_JOBS], start=1):
         owned = [n for n in role["key_skills"] if n.lower() in have]
         missing = [n for n in role["key_skills"] if n.lower() not in have]
-        outlook, exposure = _outlook(role["onet_code"], horizon)
         jobs.append(JobMatch(
-            rank=rank, onet_code=role["onet_code"], title=role["title"], icon=icons.get(role["onet_code"], DEFAULT_ICON), match_percent=round(score * 100),
+            rank=rank, onet_code=role["onet_code"], title=role["title"], icon=icons.get(role["onet_code"], DEFAULT_ICON), match_percent=headline,
+            match_parts=MatchParts(education=round(edu, 4), interests=None if interest is None else round(interest, 4), skills=round(skills, 4)),
             skills_owned=len(owned), skills_total=len(role["key_skills"]), skills_you_have=owned,
             skills_to_learn=missing, description=_description(role, owned, missing),
-            outlook=outlook, **exposure,
+            outlook=outlook, sdg_reasons=_sdg_reasons(role, picked), **exposure,
         ))
-    return RecommendResponse(profile_id=profile_id, jobs=jobs, context=_context(horizon), horizon_months=horizon, note=NOTE,
+    seconds = round(time.perf_counter() - start, 2)
+    return RecommendResponse(profile_id=profile_id, jobs=jobs, context=_context(horizon), horizon_months=horizon, sdg_focus=focus, note=NOTE,
                              generated_at=datetime.now(timezone.utc).isoformat(),
-                             engine=Engine(source=engine, model=model, jobs_considered=len(shortlist), seconds=seconds))
+                             engine=Engine(source="formula", model="arithmetic", jobs_considered=len(roles), seconds=seconds))

@@ -56,6 +56,7 @@ onMounted(() => {
     <template v-else>
       <RoleBrowser
         pick
+        cards-only
         :jobs="jobs"
         :context="state.jobs.data?.context ?? []"
         :note="state.jobs.data?.note"

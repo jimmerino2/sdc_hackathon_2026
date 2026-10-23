@@ -17,20 +17,57 @@ class ProfileError(Exception):
         self.message = message
 
 
+def _interest_ids(db: Client, profile_id: str) -> list[int]:
+    """The ids of the interests this profile picked, in id order."""
+    try:
+        rows = db.table("profile_interests").select("interest_id").eq("profile_id", profile_id).order("interest_id").execute().data
+    except Exception as e:
+        raise ProfileError(502, f"The profile's interests could not be read: {getattr(e, 'message', type(e).__name__)}") from e
+    return [r["interest_id"] for r in rows]
+
+
+def _out(db: Client, row: dict) -> ProfileOut:
+    """A profile row from the database, with its interests added."""
+    return ProfileOut(**row, interests=_interest_ids(db, row["profile_id"]))
+
+
+def _set_interests(db: Client, profile_id: str, ids: list[int]) -> None:
+    """Make these the profile's interests: the old picks go, the new ones are saved."""
+    ids = sorted(set(ids))
+    try:
+        db.table("profile_interests").delete().eq("profile_id", profile_id).execute()
+        if ids:
+            db.table("profile_interests").insert([{"profile_id": profile_id, "interest_id": i} for i in ids]).execute()
+    except Exception as e:
+        if getattr(e, "code", None) == "23503":
+            raise ProfileError(422, "One of those interests does not exist.") from e
+        raise ProfileError(502, f"The interests could not be saved: {getattr(e, 'message', type(e).__name__)}") from e
+
+
 def create_profile(db: Client, profile: ProfileIn) -> ProfileOut:
     """Insert a new profile; the database generates its id."""
     try:
-        data = db.table("profiles").insert(profile.model_dump(mode="json")).execute().data
+        data = db.table("profiles").insert(profile.model_dump(mode="json", exclude={"interests"})).execute().data
     except Exception as e:
         if getattr(e, "code", None) == "23505":
             raise ProfileError(409, "A profile with this email already exists.") from e
         raise ProfileError(502, f"The profile could not be saved: {getattr(e, 'message', type(e).__name__)}") from e
-    return ProfileOut(**data[0])
+    if profile.interests:
+        try:
+            _set_interests(db, data[0]["profile_id"], profile.interests)
+        except ProfileError:
+            db.table("profiles").delete().eq("profile_id", data[0]["profile_id"]).execute()  # no half-saved profile
+            raise
+    return _out(db, data[0])
 
 
 def update_profile(db: Client, profile_id: UUID, changes: ProfileUpdate) -> ProfileOut:
     """Change only the fields that were sent."""
     fields = changes.model_dump(mode="json", exclude_unset=True)
+    interests = fields.pop("interests", None)
+    if interests is not None:
+        get_profile(db, profile_id)  # 404 before anything is changed
+        _set_interests(db, str(profile_id), interests)
     if not fields:
         return get_profile(db, profile_id)
     try:
@@ -39,7 +76,7 @@ def update_profile(db: Client, profile_id: UUID, changes: ProfileUpdate) -> Prof
         raise ProfileError(502, f"The profile could not be saved: {getattr(e, 'message', type(e).__name__)}") from e
     if not data:
         raise ProfileError(404, "No such profile.")
-    return ProfileOut(**data[0])
+    return _out(db, data[0])
 
 
 def set_bee(db: Client, profile_id: UUID, bee: str) -> ProfileOut:
@@ -50,7 +87,7 @@ def set_bee(db: Client, profile_id: UUID, bee: str) -> ProfileOut:
         raise ProfileError(502, f"The profile could not be saved: {getattr(e, 'message', type(e).__name__)}") from e
     if not data:
         raise ProfileError(404, "No such profile.")
-    return ProfileOut(**data[0])
+    return _out(db, data[0])
 
 
 def _profile_by_email(db: Client, email: str) -> ProfileOut | None:
@@ -59,7 +96,7 @@ def _profile_by_email(db: Client, email: str) -> ProfileOut | None:
         data = db.table("profiles").select("*").in_("email", list({email, email.lower()})).limit(1).execute().data
     except Exception as e:
         raise ProfileError(502, f"The profile could not be read: {getattr(e, 'message', type(e).__name__)}") from e
-    return ProfileOut(**data[0]) if data else None
+    return _out(db, data[0]) if data else None
 
 
 def send_login_code(db: Client, email: str) -> None:
@@ -158,7 +195,7 @@ def confirm_code(db: Client, profile_id: UUID, email: str, token: str) -> Profil
         if getattr(e, "code", None) == "23505":
             raise ProfileError(409, "A profile with this email already exists.") from e
         raise ProfileError(502, f"The profile could not be saved: {getattr(e, 'message', type(e).__name__)}") from e
-    return ProfileOut(**data[0])
+    return _out(db, data[0])
 
 
 def get_profile(db: Client, profile_id: UUID) -> ProfileOut:
@@ -168,4 +205,4 @@ def get_profile(db: Client, profile_id: UUID) -> ProfileOut:
         raise ProfileError(502, f"The profile could not be read: {getattr(e, 'message', type(e).__name__)}") from e
     if not data:
         raise ProfileError(404, "No such profile.")
-    return ProfileOut(**data[0])
+    return _out(db, data[0])

@@ -19,6 +19,10 @@ const props = defineProps<{
 }>();
 
 const { state, key } = useFlow();
+const base = import.meta.env.BASE_URL;
+/** The role's SDGs that one of the learner's interests points at, and the ones that come from the role itself. */
+const fromInterests = computed(() => props.job?.sdg_reasons?.filter((r) => r.interests.length) ?? []);
+const fromJob = computed(() => props.job?.sdg_reasons?.filter((r) => !r.interests.length) ?? []);
 const active = computed(() => state.value.scenario);
 
 const forecasts = ref<JobForecast[]>([]);
@@ -142,6 +146,33 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
         <p v-if="!compact" class="hint">Tap a future to see how {{ title }} fares in it.</p>
       </section>
 
+      <section v-if="job?.sdg_reasons?.length" class="sdg-row">
+        <p class="eyebrow">Why it was suggested</p>
+        <div v-if="fromInterests.length" class="sdg-group">
+          <h2 class="sdg-title">Your interests</h2>
+          <ul class="sdg-list">
+            <li v-for="r in fromInterests" :key="r.sdg" class="sdg-card">
+              <img class="sdg-tile" :src="`${base}sdg/goal-${String(r.sdg).padStart(2, '0')}.jpg`" :alt="`UN Sustainable Development Goal ${r.sdg}: ${r.name}`" width="132" height="132" loading="lazy" />
+              <div class="sdg-from">
+                <span v-for="i in r.interests" :key="i" class="chip chip-have"><Icon name="check" :size="13" :stroke="3" /> <span>{{ i }}</span></span>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div v-if="fromJob.length" class="sdg-group">
+          <h2 class="sdg-title">Job features</h2>
+          <ul class="sdg-list">
+            <li v-for="r in fromJob" :key="r.sdg" class="sdg-card">
+              <img class="sdg-tile" :src="`${base}sdg/goal-${String(r.sdg).padStart(2, '0')}.jpg`" :alt="`UN Sustainable Development Goal ${r.sdg}: ${r.name}`" width="132" height="132" loading="lazy" />
+              <div class="sdg-from">
+                <span class="chip chip-gap"><Icon name="briefcase" :size="13" /> <span>{{ job.title }}</span></span>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <p class="sdg-credit">SDG icons: United Nations. The UN has not approved this app.</p>
+      </section>
+
       <section v-if="!compact" class="gap-row">
         <p class="eyebrow">Your skill gap</p>
         <h1 v-if="!compact">Here’s how close you are to {{ title }}</h1>
@@ -197,6 +228,17 @@ h1 { font-size: 30px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .sc .tick { align-self: center; }
 .sc p { font-size: 13px; line-height: 1.35; }
 .hint { font-size: 12px; font-weight: 700; color: var(--muted); }
+.sdg-row { grid-column: 1 / -1; margin-top: 12px; }
+.sdg-group { margin-top: 6px; }
+.sdg-group + .sdg-group { margin-top: 26px; }
+.sdg-title { font-size: 20px; font-weight: 900; margin: 4px 0 14px; line-height: 1.2; }
+.sdg-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 18px; }
+.sdg-card { width: 148px; display: flex; flex-direction: column; gap: 10px; }
+.sdg-tile { display: block; width: 100%; height: auto; border-radius: 12px; box-shadow: 0 4px 0 rgba(30, 30, 30, .12); }
+.sdg-from { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.sdg-from .chip { max-width: 100%; white-space: normal; text-align: left; line-height: 1.25; border-radius: 14px; }
+.sdg-from .chip svg { flex: none; }
+.sdg-credit { margin-top: 14px; font-size: 11px; font-weight: 600; color: var(--muted); }
 .gap-row { grid-column: 1 / -1; margin-top: 12px; }
 .gap-row .b { margin-bottom: 18px; }
 .gap-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }

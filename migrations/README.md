@@ -17,6 +17,8 @@ How the reference data gets into Supabase. Column meanings are in `data/document
 | `0010_roadmap_created_at.sql` | Adds `roadmap.created_at`, so a profile's most recent roadmap can be found without naming the role |
 | `0011_profiles_suggested_roles.sql` | Adds `profiles.suggested_roles` (jsonb) and `suggested_at`: the roles last suggested to the learner, saved so they can be shown again without recomputing |
 | `0012_onet_role_skills_group.sql` | Adds `onet_role_skills.skill_group`: all 260 skills in 27 areas (e.g. HTML, CSS and JavaScript are "Web Development"), used to label roadmap nodes and group the learned skills on the profile |
+| `0013_interests.sql` | Adds `interests` (15 seeded interests, each with up to 3 UN SDGs as jsonb `{sdg, value}` whose values add up to 1; public read) and `profile_interests` (links profiles to interests, service role only). Drops `profiles.concerns` |
+| `0014_onet_roles_sdg.sql` | Adds `onet_roles.sdg` (jsonb `{sdg, value}`, up to 3 goals per role, values adding up to 1) and fills it for all 46 roles. Used to match roles to a learner's interests and to explain why a role was suggested |
 | `0009_profiles_bee.sql` | Adds `profiles.bee`, the learner's companion (Libbee by default; Phoebee, Tobee or Barnabee), checked against that list |
 | `../pipeline/load_supabase.py` | Loads `data/processed/*.csv` into those tables |
 

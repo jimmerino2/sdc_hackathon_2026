@@ -4,7 +4,8 @@ import { useRoute, useRouter } from 'vue-router';
 import Bubble from '../components/Bubble.vue';
 import Icon from '../components/Icon.vue';
 import RoleDetail from '../components/RoleDetail.vue';
-import { fetchSuggested } from '../api/jobs';
+import { fetchSuggested, matchPercent } from '../api/jobs';
+import { backendScenario } from '../api/forecast';
 import { readProfileId } from '../api/profile';
 import { listRoadmaps, type RoadmapSummary } from '../api/roadmap';
 import { roadmapStatus } from '../data/roadmapStatus';
@@ -80,7 +81,7 @@ onMounted(async () => {
             <div class="txt">
               <h1>{{ job?.title ?? 'Role details' }}</h1>
               <div class="meta">
-                <span v-if="job" class="match"><b>{{ job.match_percent }}%</b> match</span>
+                <span v-if="job" class="match"><b>{{ matchPercent(job, backendScenario[state.scenario]) }}%</b> match</span>
                 <span v-if="!checkFailed && !checking" class="rm" :class="status.key">
                   <Icon v-if="status.key === 'completed'" name="check" :size="14" :stroke="3" /> {{ status.label }}
                 </span>

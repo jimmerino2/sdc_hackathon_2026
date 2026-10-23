@@ -5,8 +5,9 @@ import Bubble from '../components/Bubble.vue';
 import BeePicker from '../components/BeePicker.vue';
 import Icon from '../components/Icon.vue';
 import { bee, type BeeName } from '../bee';
-import { getProfile, readProfileId, setBee, updateProfile } from '../api/profile';
+import { getProfile, readProfileId, setBee, stageForWho, updateProfile } from '../api/profile';
 import { fetchLearnedSkills, fetchRoadmapSummaries, type LearnedSkill, type RoadmapSummary } from '../api/roadmap';
+import { whoOptions } from '../data/flows';
 import { roadmapStatus } from '../data/roadmapStatus';
 import { skillLabel } from '../data/skills';
 import { openRoadmap, useFlow } from '../state';
@@ -48,6 +49,30 @@ async function saveName() {
     nameError.value = 'Couldn’t save your name. Try again.';
   } finally {
     savingName.value = false;
+  }
+}
+
+// ---- education level (the career stage picked in onboarding)
+const stageError = ref('');
+const stageSaved = ref(false);
+let stageTimer: number | undefined;
+
+/** Switch right away, then save it; put the old level back if saving fails. */
+async function pickStage(next: number) {
+  const id = profileId();
+  const previous = state.value.who;
+  if (next === previous || !id) return;
+  state.value.who = next;
+  stageError.value = '';
+  stageSaved.value = false;
+  try {
+    await updateProfile(id, { stage: stageForWho[next]! });
+    stageSaved.value = true;
+    window.clearTimeout(stageTimer);
+    stageTimer = window.setTimeout(() => (stageSaved.value = false), 2500);
+  } catch {
+    state.value.who = previous;
+    stageError.value = 'Couldn’t save your education level. Try again.';
   }
 }
 
@@ -110,6 +135,7 @@ onMounted(() => {
   getProfile(id).then((p) => {
     name.value = p.name;
     state.value.name = p.name;
+    state.value.who = Math.max(stageForWho.indexOf(p.stage), 0);
   }).catch(() => {});
   fetchRoadmapSummaries(id).then((r) => (roadmaps.value = r)).catch(() => (roadmapsError.value = true));
   fetchLearnedSkills(id).then((l) => (learned.value = l)).catch(() => (learnedError.value = true));
@@ -134,6 +160,32 @@ onMounted(() => {
           <button type="button" class="link" @click="startEdit"><Icon name="pencil" :size="16" /> Edit</button>
         </div>
         <p v-if="nameError" class="error" role="alert">{{ nameError }}</p>
+      </section>
+
+      <!-- Education level -->
+      <section class="card block">
+        <div class="head">
+          <h2>Your education level</h2>
+          <span v-if="stageSaved" class="saved"><Icon name="check" :size="14" :stroke="3" /> Saved</span>
+        </div>
+        <p class="hint">It counts towards how well each role matches you. New matches use it the next time you regenerate your roles.</p>
+        <div class="stages" role="radiogroup" aria-label="Education level">
+          <button
+            v-for="(o, i) in whoOptions"
+            :key="o.title"
+            type="button"
+            role="radio"
+            class="option stage"
+            :class="{ selected: state.who === i }"
+            :aria-checked="state.who === i"
+            @click="pickStage(i)"
+          >
+            <span class="stage-ic" aria-hidden="true"><Icon :name="o.icon" :size="20" /></span>
+            <span class="stage-txt"><h3>{{ o.title }}</h3><span>{{ o.sub }}</span></span>
+            <span v-if="state.who === i" class="tick" aria-hidden="true"><Icon name="check" :size="14" :stroke="3" /></span>
+          </button>
+        </div>
+        <p v-if="stageError" class="error" role="alert">{{ stageError }}</p>
       </section>
 
       <!-- Bee -->
@@ -215,6 +267,14 @@ h2 { font-weight: 900; font-size: 18px; margin-bottom: 12px; }
 .edit { display: flex; gap: 10px; flex-wrap: wrap; }
 .field { flex: 1; min-width: 200px; padding: 12px 16px; border: 2px solid var(--line-strong); border-radius: 14px; background: #fff; font: 800 16px 'Nunito', sans-serif; color: var(--ink); outline: none; }
 .field:focus { border-color: var(--orange); }
+
+.stages { display: flex; flex-direction: column; gap: 10px; }
+.stage { align-items: center; gap: 14px; padding: 14px 16px; text-align: left; }
+.stage-ic { flex: none; width: 40px; height: 40px; border-radius: 12px; background: var(--cream); display: grid; place-items: center; }
+.selected .stage-ic { background: var(--yellow); }
+.stage-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stage-txt h3 { font-size: 16px; }
+.stage-txt span { font-size: 12px; font-weight: 600; color: var(--muted); }
 
 .sub { font-size: 11px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 14px 0 8px; }
 .rm { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px 16px; padding: 14px 0; border-top: 2px solid var(--line); }

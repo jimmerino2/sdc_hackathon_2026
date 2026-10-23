@@ -117,6 +117,7 @@ onMounted(load);
         :jobs="suggested.jobs"
         :context="suggested.context"
         :note="suggested.note"
+        :sdg-focus="suggested.sdg_focus"
         :roadmaps="roadmaps"
         :selected="state.chosenRoleId"
         chart-hint="Tap one to open it."

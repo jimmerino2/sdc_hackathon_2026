@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { ContextRole, JobMatch, ScenarioOutlook } from '../api/jobs';
+import { matchPercent } from '../api/jobs';
 
 const props = defineProps<{
   jobs: JobMatch[];
@@ -45,7 +46,7 @@ function toPoint(role: JobMatch | ContextRole, match: number | null): Point | nu
   return { code: role.onet_code, title: role.title, x: o.change_pct, y, r: match == null ? 6 : 7 + (match / 100) * 9, match, o };
 }
 
-const mine = computed(() => props.jobs.map((j) => toPoint(j, j.match_percent)).filter((p): p is Point => !!p));
+const mine = computed(() => props.jobs.map((j) => toPoint(j, matchPercent(j, props.scenario))).filter((p): p is Point => !!p));
 const others = computed(() => props.context.map((c) => toPoint(c, null)).filter((p): p is Point => !!p));
 const chosen = computed(() => mine.value.find((p) => p.code === props.selected) ?? null);
 

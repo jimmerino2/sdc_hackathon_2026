@@ -8,7 +8,7 @@ const { key } = useFlow();
 </script>
 
 <template>
-  <FlowShell :progress="2.5" next="resume" back="mind" mood="celebrate">
+  <FlowShell :progress="2.5" next="resume" back="interests" mood="celebrate">
     <template #bubble>{{ personaCopy[key].outcome.say }}</template>
     <ol class="path">
       <li v-for="(g, i) in personaCopy[key].outcome.goals" :key="g" class="stop" :style="{ '--d': i * 0.18 + 's' }">

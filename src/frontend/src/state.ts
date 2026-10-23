@@ -10,7 +10,8 @@ import { bee, BEES, type BeeName } from './bee';
 interface FlowState {
   name: string;
   who: number;
-  mind: number[];
+  /** Ids of the interests picked (GET /interests). */
+  interests: number[];
   /** Skill check answers: O*NET skill name -> level index (see LEVEL_SCORES). */
   levels: Record<string, number>;
   scenario: ScenarioKey;
@@ -40,7 +41,7 @@ function init(k: PersonaKey): FlowState {
   return {
     name: '',
     who: p.whoIndex,
-    mind: [],
+    interests: [],
     levels: {},
     scenario: 'accelerates',
     rolesView: 'cards',
@@ -73,6 +74,7 @@ export function signIn(profile: Profile) {
   s.name = profile.name;
   s.email = profile.email ?? null;
   s.savedSkills = profile.skills;
+  s.interests = profile.interests ?? [];
   s.who = Math.max(stageForWho.indexOf(profile.stage), 0);
   if ((BEES as readonly string[]).includes(profile.bee ?? '')) bee.value = profile.bee as BeeName; // their bee, not this browser's
   saveProfileId(profile.profile_id);

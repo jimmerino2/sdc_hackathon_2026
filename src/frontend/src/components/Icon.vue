@@ -6,7 +6,7 @@ import {
   Play, RefreshCw, Megaphone, Users, Boxes, ClipboardList, ChartPie, Calculator, ShieldCheck, Landmark, Monitor,
   Headset, Palette, Sigma, Brain, ChartBar, Zap, Leaf, Factory, Microscope, HandHeart, Scale, Baby, School, PenTool,
   Languages, Activity, Stethoscope, Pill, ClipboardPlus, HeartHandshake, ShieldAlert, ChefHat, ShoppingBag, Receipt,
-  Banknote, Headphones, Keyboard, Plug, Sun, Wrench, Wind, Truck, Package, Pencil, LogOut, Trash2,
+  Banknote, Headphones, Keyboard, Plug, Sun, Wrench, Wind, Truck, Package, Pencil, LogOut, Trash2, Sprout, Dumbbell, Music, PawPrint, Gamepad2, Shirt, Hammer, HeartPulse, Mountain, Coins,
 } from 'lucide-vue-next';
 
 const map = {
@@ -23,6 +23,9 @@ const map = {
   'heart-handshake': HeartHandshake, 'shield-alert': ShieldAlert, 'chef-hat': ChefHat, 'shopping-bag': ShoppingBag,
   receipt: Receipt, banknote: Banknote, headphones: Headphones, keyboard: Keyboard, plug: Plug, sun: Sun,
   wrench: Wrench, wind: Wind, truck: Truck, package: Package, pencil: Pencil, logout: LogOut, trash: Trash2,
+  // Interest icons (interests.icon, migration 0013)
+  sprout: Sprout, dumbbell: Dumbbell, music: Music, 'paw-print': PawPrint, 'gamepad-2': Gamepad2, 'graduation-cap': GraduationCap,
+  shirt: Shirt, hammer: Hammer, 'heart-pulse': HeartPulse, mountain: Mountain, coins: Coins,
 } as const;
 
 const props = withDefaults(defineProps<{ name: string; size?: number; stroke?: number }>(), { size: 20, stroke: 2.2 });

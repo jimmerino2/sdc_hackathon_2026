@@ -8,7 +8,7 @@ const { state } = useFlow();
 </script>
 
 <template>
-  <FlowShell :progress="1" next="mind" back="name" gear="magnifier">
+  <FlowShell :progress="1" next="interests" back="name" gear="magnifier">
     <template #bubble>Where are you in your tech journey?</template>
     <div class="list" role="radiogroup" aria-label="Where you are right now">
       <button

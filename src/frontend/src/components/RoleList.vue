@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import Icon from './Icon.vue';
 import { backendScenario } from '../api/forecast';
-import type { JobMatch } from '../api/jobs';
+import { matchPercent, type JobMatch } from '../api/jobs';
 import type { RoadmapSummary } from '../api/roadmap';
 import { scenarios } from '../data/flows';
 import { roadmapStatus } from '../data/roadmapStatus';
@@ -22,6 +22,9 @@ const emit = defineEmits<{ select: [code: string] }>();
 const CHIPS = 3; // skills shown per side in the open row
 
 const { state } = useFlow();
+const scenarioName = computed(() => backendScenario[state.value.scenario]);
+/** The roles, best match first under the chosen AI future, so the order and the Best match tag follow the tab. */
+const ordered = computed(() => [...props.jobs].sort((a, b) => matchPercent(b, scenarioName.value) - matchPercent(a, scenarioName.value) || a.rank - b.rank));
 /** Rows pick a role when a selection is tracked; otherwise they act as links. */
 const picking = computed(() => props.selected !== undefined);
 
@@ -64,7 +67,7 @@ const by = computed(() => {
 
     <div class="list" :role="picking ? 'radiogroup' : undefined" aria-label="Roles that fit you">
       <button
-        v-for="j in jobs"
+        v-for="(j, idx) in ordered"
         :key="j.onet_code"
         type="button"
         :role="picking ? 'radio' : undefined"
@@ -77,13 +80,13 @@ const by = computed(() => {
         <span class="body">
           <span class="title-row">
             <h3>{{ j.title }}</h3>
-            <em v-if="j.rank === 1" class="pill pill-dark">Best match</em>
+            <em v-if="idx === 0" class="pill pill-dark">Best match</em>
             <span v-if="roadmaps" class="rm" :class="roadmapStatus(roadmaps[j.onet_code]).key">
               <Icon v-if="roadmapStatus(roadmaps[j.onet_code]).key === 'completed'" name="check" :size="12" :stroke="3" />
               {{ roadmapStatus(roadmaps[j.onet_code]).label }}
             </span>
           </span>
-          <span class="sub">{{ j.match_percent }}% match · {{ j.skills_owned }} of {{ j.skills_total }} key skills</span>
+          <span class="sub">{{ matchPercent(j, scenarioName) }}% match · {{ j.skills_owned }} of {{ j.skills_total }} key skills</span>
           <span v-if="picking && selected === j.onet_code" class="more">
             <span class="blurb">{{ j.description }}</span>
             <span class="chips">

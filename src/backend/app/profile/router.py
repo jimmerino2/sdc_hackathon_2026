@@ -13,7 +13,7 @@ router = APIRouter(prefix="/profile", tags=["profile"])
 
 @router.post("", response_model=ProfileOut, status_code=201)
 def create_profile(body: ProfileIn, db: Client = Depends(get_supabase_admin)):
-    """Create a profile. No login needed. name, stage, concerns, skills and experience are required; email is optional. The profile_id is generated and returned. A second POST with the same email is rejected with 409."""
+    """Create a profile. No login needed. name, stage, skills and experience are required; interests (ids from GET /interests) are optional; email is optional. The profile_id is generated and returned. A second POST with the same email is rejected with 409."""
     try:
         return service.create_profile(db, body)
     except service.ProfileError as e:

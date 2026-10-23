@@ -18,7 +18,8 @@ export interface ProfileIn {
   email?: string | null;
   name: string;
   stage: Stage;
-  concerns: string;
+  /** Ids of the interests they picked (GET /interests). */
+  interests: number[];
   skills: SkillScore[];
   experience: ExperienceEntry[];
 }

@@ -1,4 +1,5 @@
 import { API_URL } from './config';
+import type { SdgFocus, SdgReason } from './interests';
 
 export interface ScenarioOutlook {
   scenario: 'Rapid AI' | 'Baseline' | 'Slow';
@@ -8,6 +9,8 @@ export interface ScenarioOutlook {
   range_high_pct: number;
   trend: 'growing' | 'stable' | 'shrinking';
   forecast_for: string;
+  /** The role's overall match under this scenario. Missing on sets saved before scenario scores existed. */
+  match_percent?: number | null;
 }
 
 /** How much AI already touches a job (Anthropic Economic Index); null when unknown. */
@@ -23,18 +26,35 @@ export interface ContextRole extends AiExposure {
   outlook: ScenarioOutlook[];
 }
 
+/** The match parts that don't depend on the AI scenario, each 0-1. */
+export interface MatchParts {
+  education: number;
+  /** Null if the learner picked no interests. */
+  interests: number | null;
+  skills: number;
+}
+
+/** A role's match under one AI future (backend scenario name), falling back to its headline match on older saved sets. */
+export function matchPercent(job: JobMatch, scenario: ScenarioOutlook['scenario']): number {
+  return job.outlook.find((o) => o.scenario === scenario)?.match_percent ?? job.match_percent;
+}
+
 export interface JobMatch extends AiExposure {
   rank: number;
   onet_code: string;
   title: string;
   icon: string;
+  /** The overall match under the AI-accelerates scenario; use matchPercent() for the chosen one. */
   match_percent: number;
+  match_parts?: MatchParts | null;
   skills_owned: number;
   skills_total: number;
   skills_you_have: string[];
   skills_to_learn: string[];
   description: string;
   outlook: ScenarioOutlook[];
+  /** For each SDG the role serves, why it fits the learner's interests. Missing on sets saved before this existed. */
+  sdg_reasons?: SdgReason[];
 }
 
 export interface Recommendations {
@@ -42,6 +62,8 @@ export interface Recommendations {
   jobs: JobMatch[];
   context: ContextRole[];
   horizon_months: number;
+  /** The SDGs the learner's interests point at, biggest first. Empty or missing if they picked no interests. */
+  sdg_focus?: SdgFocus[];
   note: string;
   /** When the roles were worked out (ISO 8601). Missing on sets saved before this was recorded. */
   generated_at?: string | null;
