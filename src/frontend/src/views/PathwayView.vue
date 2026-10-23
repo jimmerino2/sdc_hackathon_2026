@@ -10,11 +10,12 @@ import NextUpCard, { type NextUpSkill } from '../components/learn/NextUpCard.vue
 import ProgressCard from '../components/learn/ProgressCard.vue';
 import SignalCard from '../components/learn/SignalCard.vue';
 import BeeGuide from '../components/learn/BeeGuide.vue';
-import { completeNode, RoadmapError, type RoadmapNode, type RoadmapSource } from '../api/roadmap';
+import { completeNode, deleteRoadmap, fetchRoadmapSummaries, RoadmapError, type RoadmapNode, type RoadmapSource, type RoadmapSummary } from '../api/roadmap';
+import { readProfileId } from '../api/profile';
 import { skillLabel } from '../data/skills';
 import { allNodes, completeLocally, learningLinks, progress, resolveNodes, resolveUnits, sectionCleared, type ResolvedSkill } from '../learn/skillState';
 import { prefersReducedMotion } from '../composables/useCountUp';
-import { loadRoadmap, useFlow } from '../state';
+import { loadRoadmap, openRoadmap, useFlow } from '../state';
 import { go } from '../router';
 
 const { state, scenario, profileSkills } = useFlow();
@@ -114,15 +115,106 @@ async function markDone() {
   }
 }
 
-onMounted(() => {
+/* ---------- the profile's roadmaps: switch between them, or delete the one on screen ---------- */
+const summaries = ref<RoadmapSummary[]>([]);
+const activeCode = computed(() => roadmap.value?.onet_code ?? state.value.chosenRoleId);
+/** Every roadmap is gone, so there is nothing to show until the learner builds another. */
+const empty = ref(false);
+const confirming = ref(false);
+const deleting = ref(false);
+const deleteError = ref<string | null>(null);
+const profileId = () => state.value.profileId ?? readProfileId();
+
+async function refreshSummaries() {
+  const id = profileId();
+  if (!id) return;
+  try {
+    summaries.value = await fetchRoadmapSummaries(id);
+  } catch {
+    // The switcher just stays as it was; the roadmap itself is unaffected.
+  }
+}
+
+/** Show another of the profile's roadmaps. */
+async function switchTo(code: string, force = false) {
+  if (!force && (code === activeCode.value || state.value.roadmap.status === 'loading')) return;
+  selectedId.value = null;
+  cleared.value = false;
+  error.value = null;
+  confirming.value = false;
+  deleteError.value = null;
+  openRoadmap(state.value, code);
+  await loadRoadmap(state.value);
+}
+
+async function removeRoadmap() {
+  const id = profileId();
+  const code = roadmap.value?.onet_code;
+  if (!id || !code || deleting.value) return;
+  deleting.value = true;
+  deleteError.value = null;
+  try {
+    await deleteRoadmap(id, code);
+    confirming.value = false;
+    await refreshSummaries();
+    const next = summaries.value[0];
+    if (next) await switchTo(next.onet_code, true);
+    else {
+      state.value.chosenRoleId = null;
+      state.value.roadmap = { status: 'idle', data: null, error: null };
+      empty.value = true;
+    }
+  } catch (e) {
+    deleteError.value = e instanceof RoadmapError ? e.message : 'Jobee couldn’t delete that roadmap. Try again in a moment.';
+  } finally {
+    deleting.value = false;
+  }
+}
+
+onMounted(async () => {
   // Landing here directly (e.g. after a refresh): fetch the roadmap if a role is known.
-  if (state.value.roadmap.status === 'idle') loadRoadmap(state.value);
+  const loading = state.value.roadmap.status === 'idle' ? loadRoadmap(state.value) : Promise.resolve();
+  await Promise.all([loading, refreshSummaries()]);
 });
 </script>
 
 <template>
   <div class="tab">
-    <div v-if="!roadmap" class="learn__state">
+    <div v-if="summaries.length" class="jb rmbar">
+      <div class="rmbar__tabs" role="tablist" aria-label="Your roadmaps">
+        <button
+          v-for="r in summaries"
+          :key="r.onet_code"
+          type="button"
+          role="tab"
+          class="rmbar__tab"
+          :class="{ on: r.onet_code === activeCode }"
+          :aria-selected="r.onet_code === activeCode"
+          @click="switchTo(r.onet_code)"
+        >
+          <span class="rmbar__name">{{ r.title }}</span>
+          <span class="rmbar__n">{{ r.onet_code === activeCode && roadmap ? counts.done : r.completed }}/{{ r.onet_code === activeCode && roadmap ? counts.total : r.total }}</span>
+        </button>
+      </div>
+      <button v-if="roadmap" type="button" class="rmbar__del" :disabled="deleting" @click="confirming = !confirming">
+        <Icon name="trash" :size="16" /> Delete
+      </button>
+    </div>
+    <div v-if="confirming && roadmap" class="jb rmconfirm" role="alertdialog" aria-label="Delete this roadmap">
+      <p>Delete the <b>{{ roadmap.title }}</b> roadmap? Your progress on it is lost. You can build it again from Roles.</p>
+      <div class="rmconfirm__act">
+        <button type="button" class="jb-btn jb-btn--ink" :disabled="deleting" @click="confirming = false">Keep it</button>
+        <button type="button" class="rmconfirm__go" :disabled="deleting" @click="removeRoadmap">{{ deleting ? 'Deleting…' : 'Delete roadmap' }}</button>
+      </div>
+      <p v-if="deleteError" class="rmconfirm__err" role="alert">{{ deleteError }}</p>
+    </div>
+
+    <div v-if="empty && !roadmap" class="learn__state">
+      <Bubble :size="64">No roadmaps left. Pick a role and I’ll build you a new one.</Bubble>
+      <RouterLink :to="go('suggested')" class="btn btn-primary">Go to my roles</RouterLink>
+    </div>
+
+    <div v-else-if="!roadmap" class="learn__state">
       <Bubble :size="64">{{ state.roadmap.status === 'error' ? state.roadmap.error : 'Loading your roadmap…' }}</Bubble>
       <RouterLink v-if="state.roadmap.status === 'error'" :to="go('suggested')" class="btn btn-secondary">Back to my roles</RouterLink>
     </div>

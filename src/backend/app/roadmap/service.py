@@ -304,3 +304,11 @@ def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool) -
         mine(db.table("roadmap").delete()).execute()
         raise HTTPException(status_code=502, detail=f"could not store roadmap: {e}")
     return get_roadmap(db, profile_id, onet_code)
+
+
+def delete_roadmap(db: Client, profile_id: str, onet_code: str) -> None:
+    """Remove this profile's roadmap for a role, with its nodes and progress (they go with it: on delete cascade)."""
+    query = lambda q: q.eq("profile_id", profile_id).eq("onet_code", onet_code)  # noqa: E731
+    if not query(db.table("roadmap").select("roadmap_id")).limit(1).execute().data:
+        raise HTTPException(status_code=404, detail=f"no roadmap for {onet_code!r} on this profile")
+    query(db.table("roadmap").delete()).execute()

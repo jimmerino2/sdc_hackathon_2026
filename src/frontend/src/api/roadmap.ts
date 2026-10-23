@@ -83,6 +83,12 @@ export async function completeNode(profileId: string, roadmapDetailId: string): 
   return res.json();
 }
 
+/** Delete the profile's roadmap for a role, with its progress. Already gone counts as deleted. */
+export async function deleteRoadmap(profileId: string, onetCode: string): Promise<void> {
+  const res = await call(`?profile_id=${encodeURIComponent(profileId)}&onet_code=${encodeURIComponent(onetCode)}`, { method: 'DELETE' });
+  if (!res.ok && res.status !== 404) throw new RoadmapError('Jobee couldn’t delete that roadmap. Try again in a moment.');
+}
+
 /** One of a profile's roadmaps in brief: which role, how far along. */
 export interface RoadmapSummary {
   onet_code: string;

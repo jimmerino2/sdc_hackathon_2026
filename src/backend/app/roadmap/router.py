@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 from supabase import Client
 
 from app.deps import get_supabase_admin
@@ -69,3 +69,17 @@ def complete_node(
     a locked node is refused with 409. 404 if the node is not on this profile's roadmap. Needs SUPABASE_SERVICE_KEY.
     """
     return service.complete_node(db, str(profile_id), str(roadmap_detail_id))
+
+
+@router.delete("", status_code=204)
+def delete_roadmap(
+    profile_id: UUID = Query(description="The profile the roadmap belongs to"),
+    onet_code: str = Query(description="O*NET code of the role whose roadmap to delete, e.g. 15-2051.00"),
+    db: Client = Depends(get_supabase_admin),
+):
+    """Delete the profile's roadmap for a role, including its nodes and any progress on them. 404 if it has none.
+
+    Other roadmaps on the profile are untouched; the role can be built again afterwards with POST /roadmap.
+    """
+    service.delete_roadmap(db, str(profile_id), onet_code)
+    return Response(status_code=204)
