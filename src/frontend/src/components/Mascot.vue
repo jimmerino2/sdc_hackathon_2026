@@ -227,10 +227,11 @@ const confetti = [
 .b-tobee .stripes rect { fill: var(--ink); opacity: .92; }
 .b-tobee .body { inset: 0 -.025em 0 -.025em; }
 .b-tobee .ant { height: .18em; }
-.b-barnabee .stripes rect, .b-phoebee .stripes rect { fill: #2a2118; opacity: .9; }
+.b-barnabee .stripes rect { fill: #2a2118; opacity: .9; }
+.b-phoebee .stripes rect { fill: var(--orange); opacity: .95; }
 .b-barnabee .body { border-radius: .38em .38em .36em .06em; inset: .05em -.07em 0 -.07em; }
-.b-phoebee { transform: scale(.84); transform-origin: 50% 100%; }
-.b-phoebee .body { border-radius: .36em; }
+.b-phoebee .body { border-radius: .36em .36em .34em .06em; inset: .03em .05em 0 .05em; }
+.b-phoebee .ant { height: .15em; }
 .lanyard { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; z-index: 1; }
 
 /* tired manager face */
