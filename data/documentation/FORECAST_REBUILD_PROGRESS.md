@@ -76,3 +76,19 @@ historical vintages (FRED csv ignores vintage_date).
   Adzuna not used; data/README.md; forecasting/README.md. Fixed SOC "00" -> 0 in latest_forecast. 50 tests pass.
   NEXT (not started): AI capability target (benchmark source, e.g. Epoch AI / METR); local-linear-trend candidate
   for long horizons; serve latest_forecast.csv via /forecast + UI; merge gate (fresh-clone test + second run).
+
+## Phase 3 (started 2026-10-24): AI capability target
+
+Source: Epoch AI benchmark_data.zip (CC-BY): epoch_capabilities_index/eci_scores.csv (270 models, ECI + CI +
+release date) and metr_time_horizons_external.csv (105 rows, METR version column). ECI is refitted jointly, so
+past scores change: point-in-time comes from Wayback Machine captures of https://epoch.ai/data/benchmark_data.zip
+(32 captures 2025-03..2026-10; CDX: web.archive.org/cdx/search/cdx?url=epoch.ai/data/benchmark_data.zip).
+METR's own repo (METR/eval-analysis-public) only has raw runs + 24 commits: not used.
+
+| # | Step | Status |
+|---|------|--------|
+| 15 | `forecasting/capability.py`: monthly Wayback vintages + current download, extract ECI and METR per vintage | todo |
+| 16 | Engine: per-target value transform (logit / identity / log2), metric names without `_pp` | todo |
+| 17 | Local-linear-trend (Kalman) candidate; regime probabilities + Brier score vs climatology | todo |
+| 18 | targets/capability_eci.py (+ METR horizon if vintages allow), run, tests | todo |
+| 19 | Docs | todo |
