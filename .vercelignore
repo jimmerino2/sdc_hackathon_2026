@@ -1,0 +1,13 @@
+# Backend-only deploy: keep uploads small (data/raw alone is ~560 MB and is not read by the API)
+data/raw
+.venv
+venv
+**/.venv
+**/node_modules
+src/frontend
+submission
+graphify-out
+.git
+.agents
+.env
+src/backend/.env

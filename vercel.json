@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }],
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 300,
+      "includeFiles": "{src/backend/**,data/processed/**,data/occupational_forecasting/**}",
+      "excludeFiles": "{src/backend/.venv/**,src/backend/.env,src/backend/**/tests/**,**/__pycache__/**}"
+    }
+  }
+}
