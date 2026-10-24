@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { BacktestPoint, HistoryPoint, SkillRow } from '../../api/occupational';
-import { addMonths, linear, month, monthsBetween, pct, ticks } from '../../occupational/format';
+import { addMonths, linear, methodName, month, monthsBetween, pct, ticks } from '../../occupational/format';
+import ChartHover, { type HoverPoint } from '../ChartHover.vue';
 
 const props = defineProps<{
   history: HistoryPoint[];
@@ -46,10 +47,37 @@ const xTicks = computed(() => {
   for (let yr = y0 + (first.value.endsWith('-01') ? 0 : 1); yr <= y1; yr += step) years.push(`${yr}-01`);
   return years;
 });
+/** One hover stop per month: the observed share and ads, earlier test forecasts for it, and new forecasts. */
+const hover = computed<HoverPoint[]>(() => {
+  const out: HoverPoint[] = [];
+  for (const p of hist.value) {
+    const tests = past.value.filter((b) => b.target_month === p.month);
+    out.push({
+      x: x(p.month), title: `${month(p.month)} (3 months to)`,
+      rows: [
+        ...(p.share_3m != null ? [{ label: 'Share of ads', value: pct(p.share_3m), color: 'var(--ink)' }] : []),
+        { label: 'Ads that month', value: `${p.n_ads_skill} of ${p.n_ads} name it`, muted: true },
+        ...tests.map((b) => ({ label: `Forecast made ${month(b.origin_month)}${b.method === 'persistence' ? ' (no change)' : ''}`, value: pct(b.forecast), color: b.method === 'persistence' ? '#9e9a92' : 'var(--orange)' })),
+      ],
+      dots: [...(p.share_3m != null ? [{ y: y(p.share_3m) }] : []), ...tests.map((b) => ({ y: y(b.forecast), color: 'var(--orange)' }))],
+    });
+  }
+  for (const r of fc.value) {
+    out.push({
+      x: x(r.target_month), title: `${month(r.target_month)} · ${r.h}-month forecast`,
+      rows: [{ label: 'Forecast', value: pct(r.forecast), color: 'var(--orange)' },
+        { label: 'Likely range (80%)', value: `${pct(r.low)}–${pct(r.high)}` },
+        { label: 'Method', value: methodName(r.model), muted: true }],
+      dots: [{ y: y(r.forecast), color: r.h === props.h ? 'var(--ink)' : 'var(--orange)' }],
+    });
+  }
+  return out;
+});
 const nowX = computed(() => (lastObs.value ? x(addMonths(lastObs.value.month, 0)) : null));
 </script>
 
 <template>
+  <ChartHover :w="W" :h="H" :top="T" :bottom="H - B" :points="hover">
   <svg :viewBox="`0 0 ${W} ${H}`" role="img" :aria-label="label">
     <g class="grid">
       <g v-for="t in yTicks" :key="t">
@@ -89,6 +117,7 @@ const nowX = computed(() => (lastObs.value ? x(addMonths(lastObs.value.month, 0)
       </g>
     </g>
   </svg>
+  </ChartHover>
 </template>
 
 <style scoped>

@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import Bubble from '../components/Bubble.vue';
+import ChartHover, { type HoverPoint } from '../components/ChartHover.vue';
 import Icon from '../components/Icon.vue';
+import InfoDialog from '../components/InfoDialog.vue';
 import ShareChart from '../components/occ/ShareChart.vue';
 import {
   fetchAdoption, fetchEmerging, fetchOccEvaluation, fetchOccMeta, fetchSignals, fetchSkill, fetchSkills,
@@ -152,6 +154,11 @@ function sparkPath(vals: number[], w: number, hgt: number) {
   return vals.map((v, i) => `${i ? 'L' : 'M'}${((i / Math.max(1, vals.length - 1)) * w).toFixed(1)},${(hgt - (v / max) * hgt).toFixed(1)}`).join(' ');
 }
 const signalMax = computed(() => Math.max(0.01, ...signal.value.map((s) => s.share_3m ?? 0)));
+const signalHover = computed<HoverPoint[]>(() => signal.value.map((s, i) => ({
+  x: (i / Math.max(1, signal.value.length - 1)) * 600, title: month(s.month),
+  rows: [{ label: 'Ads expecting AI tool use', value: pct(s.share_3m), color: 'var(--orange)' }],
+  dots: [{ y: 110 - ((s.share_3m ?? 0) / signalMax.value) * 110, color: 'var(--orange)' }],
+})));
 
 // ---- method ----
 const evaluation = ref<OccEvaluation | null>(null);
@@ -224,7 +231,8 @@ onMounted(() => {
 
 const evidenceLabel = (e: string) => ({ high: 'Strong evidence', medium: 'Some evidence', low: 'Thin evidence' }[e] ?? e);
 const confLabel = (c: string) => ({ high: 'High', medium: 'Medium', low: 'Low' }[c] ?? c);
-const dirIcon = (d: string) => (d === 'rising' ? 'tup' : d === 'falling' ? 'tdown' : 'arrow');
+const dirIcon = (d: string) => (d === 'rising' ? 'tup' : d === 'falling' ? 'tdown' : 'tflat');
+const dirClass = (d: string) => (d === 'rising' ? 'trend-up' : d === 'falling' ? 'trend-down' : 'trend-flat');
 const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
 </script>
 
@@ -267,7 +275,11 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
           <label><span>Forecast horizon</span>
             <select v-model.number="h"><option v-for="x in meta.horizons" :key="x" :value="x">{{ x }} months</option></select>
           </label>
-          <label><span>Latest observation</span>
+          <label><span>Latest observation
+            <InfoDialog title="Latest observation, or a past test">
+              <p>Leave this on <b>latest</b> to see today’s forecasts.</p>
+              <p>Pick an earlier month to rewind: the page then shows the forecast the model would have made with only the data available then, next to what actually happened. It’s a way to check how trustworthy the forecasts are.</p>
+            </InfoDialog></span>
             <select v-model="origin">
               <option value="">{{ month(meta.last_complete_month) }} (latest)</option>
               <option v-for="o in [...meta.asof_origins].reverse()" :key="o" :value="o">{{ month(o) }} (test: forecast vs actual)</option>
@@ -289,21 +301,32 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
             <div class="card pad summary">
               <div>
                 <p class="kicker">{{ countryName(country) }} · {{ occName }}</p>
-                <p class="big">{{ cell?.ads_last_12m.toLocaleString('en') }} <span>eligible job ads in the 12 months to {{ month(meta.last_complete_month) }}</span></p>
-                <p class="muted small">Share = ads naming the skill ÷ eligible ads classified into this occupation and country (HN “Who is hiring?” posts; duplicates and posts without a description removed).</p>
+                <p class="big">{{ cell?.ads_last_12m.toLocaleString('en') }} <span>job ads in the 12 months to {{ month(meta.last_complete_month) }}</span>
+                  <InfoDialog title="Where these numbers come from">
+                    <p>Every number on this page is a <b>share of job ads</b>: ads that name the skill ÷ all eligible ads for this occupation and country.</p>
+                    <p>The ads are Hacker News “Who is hiring?” posts, with duplicates and posts without a description removed. That’s mostly tech companies and US startups: a real, dated record, but not the whole labour market.</p>
+                    <p class="muted">Shares are measured over rolling 3-month windows so a single quiet month doesn’t swing them.</p>
+                  </InfoDialog>
+                </p>
                 <p v-if="(cell?.ads_last_12m ?? 0) < 100" class="warn small"><Icon name="shield-alert" :size="14" /> Few ads here, so shares move a lot from month to month. Treat forecasts as rough.</p>
               </div>
               <div class="verdict-box">
-                <p class="kicker">How the {{ h }}-month forecast tested</p>
+                <p class="kicker">How the {{ h }}-month forecast tested
+                  <InfoDialog :title="`How the ${h}-month forecast tested`">
+                    <p>Before showing a forecast, each method forecast past months it hadn’t seen. Its average miss is compared with simply assuming <b>“no change”</b> from the last 3 months.</p>
+                    <p v-if="cellServed && cellNaive">For {{ occName }} in {{ countryName(country) }} ({{ cellServed.n }} past forecasts): {{ methodName(cellServed.method) }} was off by <b>{{ cellServed.mae_pp.toFixed(2) }} pp</b> on average; “no change” by <b>{{ cellNaive.mae_pp.toFixed(2) }} pp</b>.</p>
+                    <p v-if="headline">Across all countries and occupations: {{ methodName(headline.served) }} was off by {{ headline.test_mae_pp?.toFixed(2) }} pp vs {{ headline.persistence_test_mae_pp?.toFixed(2) }} pp for “no change”. The 80% likely ranges held {{ pct(headline.coverage_80, 0) }} of actual values.</p>
+                    <p class="muted">pp = percentage points: a share going from 10% to 12% is +2 pp.</p>
+                  </InfoDialog>
+                </p>
                 <template v-if="cellServed && cellNaive">
-                  <p class="small">Here ({{ cellServed.n }} past forecasts): {{ methodName(cellServed.method) }} was off by <b>{{ cellServed.mae_pp.toFixed(2) }} pp</b> on average; “no change” by <b>{{ cellNaive.mae_pp.toFixed(2) }} pp</b>.</p>
                   <span class="verdict" :class="cellServed.mae_pp < cellNaive.mae_pp ? 'yes' : cellServed.method === 'persistence' ? 'same' : 'no'">
                     <Icon :name="cellServed.mae_pp < cellNaive.mae_pp ? 'check' : 'x'" :size="14" />
                     {{ cellServed.method === 'persistence' ? 'Shown forecast is “no change”' : cellServed.mae_pp < cellNaive.mae_pp ? 'Beats “no change” here' : 'Does not beat “no change” here' }}
                   </span>
+                  <p class="small muted">Typical miss <b class="ink">{{ cellServed.mae_pp.toFixed(2) }} pp</b> vs {{ cellNaive.mae_pp.toFixed(2) }} pp for “no change”, over {{ cellServed.n }} tests.</p>
                 </template>
-                <p v-else class="small warn">Too few ads in this country and occupation for tested forecasts (each test needs ≥ {{ meta.rules.min_target_ads }} ads in the target months). Forecasts below use the method chosen across all series.</p>
-                <p v-if="headline" class="muted small">All series: {{ methodName(headline.served) }}, {{ headline.test_mae_pp?.toFixed(2) }} pp vs {{ headline.persistence_test_mae_pp?.toFixed(2) }} pp for “no change”; 80% ranges held {{ pct(headline.coverage_80, 0) }} of actual values.</p>
+                <p v-else class="small warn">Too few ads here to test forecasts (each test needs ≥ {{ meta.rules.min_target_ads }} ads). Forecasts below use the method chosen across all series.</p>
               </div>
             </div>
 
@@ -328,18 +351,24 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
             <template v-else>
               <div class="two">
                 <div class="card pad">
-                  <h2><Icon name="tup" :size="18" /> Growing</h2>
-                  <p class="muted small">Last 6 months vs the 12 before; listed only when the rise is clear of noise (80% band above zero).</p>
+                  <h2><Icon name="tup" :size="18" class="trend-up" /> Growing
+                    <InfoDialog title="Growing and declining skills">
+                      <p>Compares each skill’s share in the <b>last 6 months</b> with the <b>12 months before</b>.</p>
+                      <p>A skill is listed only when the change is clear of random noise: the 80% uncertainty band is entirely above zero (growing) or below zero (declining). Small skills that jumped from 1 ad to 3 won’t show up here.</p>
+                      <p class="muted">Click a skill to see its history and forecast below.</p>
+                    </InfoDialog>
+                  </h2>
+                  <p class="muted small">Clear rises, last 6 months vs the 12 before.</p>
                   <ul class="movers">
-                    <li v-for="r in rising" :key="r.skill_id"><button type="button" @click="selected = r.skill_id">{{ r.skill_name }}</button><b>{{ pp(r.change_pp_recent_vs_base) }}</b></li>
+                    <li v-for="r in rising" :key="r.skill_id" :class="{ on: r.skill_id === selected }"><button type="button" @click="selected = r.skill_id">{{ r.skill_name }}</button><b class="trend-up">{{ pp(r.change_pp_recent_vs_base) }}</b></li>
                     <li v-if="!rising.length" class="muted small">No skill rose clearly beyond noise.</li>
                   </ul>
                 </div>
                 <div class="card pad">
-                  <h2><Icon name="tdown" :size="18" /> Declining</h2>
-                  <p class="muted small">Same test, falling (80% band below zero).</p>
+                  <h2><Icon name="tdown" :size="18" class="trend-down" /> Declining</h2>
+                  <p class="muted small">Clear falls, same comparison.</p>
                   <ul class="movers">
-                    <li v-for="r in falling" :key="r.skill_id"><button type="button" @click="selected = r.skill_id">{{ r.skill_name }}</button><b>{{ pp(r.change_pp_recent_vs_base) }}</b></li>
+                    <li v-for="r in falling" :key="r.skill_id" :class="{ on: r.skill_id === selected }"><button type="button" @click="selected = r.skill_id">{{ r.skill_name }}</button><b class="trend-down">{{ pp(r.change_pp_recent_vs_base) }}</b></li>
                     <li v-if="!falling.length" class="muted small">No skill fell clearly beyond noise.</li>
                   </ul>
                 </div>
@@ -363,9 +392,19 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
                             :from="from" :h="h" :label="`${selRow.skill_name}: share of ${occName} ads in ${countryName(country)}, history and forecast`" />
                 <div v-else class="skel chart-skel" />
                 <p class="key"><span class="k-line" /> share of ads, 3-month window <span class="k-dot" /> forecast <span class="k-bar" /> likely range (80%)
-                  <span class="k-ring" /> earlier test forecasts at {{ h }} months <span class="k-vol" /> ads per month</p>
+                  <span class="k-ring" /> earlier test forecasts at {{ h }} months <span class="k-vol" /> ads per month
+                  <span class="hint">Hover the chart for values</span></p>
                 <p v-if="!selRow.backtested" class="warn small"><Icon name="shield-alert" :size="14" /> Found by the emerging-skill detector using today’s data, so it was not part of the backtest; its forecast uses the method chosen for all skills.</p>
-                <p class="small muted">Method: {{ methodName(selRow.model) }}. {{ STATUS_TEXT[selRow.model_status] }}. {{ evidenceLabel(selRow.evidence) }} ({{ selRow.ads_12m }} ads in 12 months).</p>
+                <p class="small muted method-line">
+                  <span class="tag" :class="selRow.evidence === 'high' ? 'ok' : selRow.evidence === 'low' ? 'new' : ''">{{ evidenceLabel(selRow.evidence) }}</span>
+                  Forecast by {{ methodName(selRow.model) }}
+                  <InfoDialog title="How this skill’s forecast is made">
+                    <p><b>Method:</b> {{ methodName(selRow.model) }}.</p>
+                    <p><b>Test result:</b> {{ STATUS_TEXT[selRow.model_status] }}.</p>
+                    <p><b>Evidence:</b> {{ evidenceLabel(selRow.evidence) }}, based on {{ selRow.ads_12m }} ads in the last 12 months. More ads means a steadier share.</p>
+                    <p class="muted">Orange rings on the chart are forecasts the model made in the past for those months, so you can see how close it got.</p>
+                  </InfoDialog>
+                </p>
                 <div v-if="detail" class="detail-grid">
                   <div>
                     <h3>Recent ads naming it</h3>
@@ -375,8 +414,12 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
                     </ul>
                   </div>
                   <div>
-                    <h3>Adzuna live-ad snapshot</h3>
-                    <p class="muted small">Different population (job boards) and only a ~500-character snippet per ad, so shares run lower. Shown as a cross-check, never mixed into the series above.</p>
+                    <h3>Adzuna live-ad snapshot
+                      <InfoDialog title="Adzuna live-ad snapshot">
+                        <p>A cross-check from a different source: current ads on job boards via Adzuna.</p>
+                        <p class="muted">It’s a different population and only a ~500-character snippet of each ad is available, so its shares run lower. It is never mixed into the series above.</p>
+                      </InfoDialog>
+                    </h3>
                     <ul class="ex">
                       <li v-for="a in detail.adzuna" :key="a.retrieved_at">{{ month(a.retrieved_at) }} ({{ a.retrieved_at }}): {{ pct(a.share) }} of {{ a.n_ads }} ads</li>
                       <li v-if="!detail.adzuna.length" class="muted small">No snapshot names it for this country and occupation.</li>
@@ -390,14 +433,27 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
               <!-- all skills -->
               <div class="card pad">
                 <div class="tbl-head">
-                  <h2>All tracked skills</h2>
+                  <h2>All tracked skills
+                    <InfoDialog title="Reading the skills table">
+                      <ul>
+                        <li><b>12-month share</b>: share of ads naming the skill over the last year. <b>Ads</b> is how many.</li>
+                        <li><b>Last 3 months</b>: the most recent share.</li>
+                        <li><b>Forecast</b>: the expected share for the 3 months ending {{ month(latestRows[0]?.target_month) }}, with an 80% <b>likely range</b>.</li>
+                        <li><b>Direction</b>: rising or falling when the forecast differs from the last 3 months by at least {{ meta?.rules.direction_label_pp ?? 1 }} pp, otherwise flat.</li>
+                        <li><b>Evidence</b>: how many ads the numbers rest on (high, medium, low).</li>
+                        <li><b>Not in O*NET tech</b>: not among O*NET’s listed technology skills (tools and software), which can hint at a newer skill.</li>
+                      </ul>
+                      <p class="muted">Click any row to open that skill above.</p>
+                    </InfoDialog>
+                  </h2>
                   <div class="tbl-filters">
                     <input v-model="search" type="search" placeholder="Find a skill" aria-label="Find a skill">
                     <select v-model="category" aria-label="Category"><option value="">All categories</option><option v-for="c in categories" :key="c" :value="c">{{ c }}</option></select>
                     <select v-model.number="minAds" aria-label="Minimum ads"><option :value="1">≥ 1 ad</option><option :value="5">≥ 5 ads</option><option :value="20">≥ 20 ads</option></select>
                   </div>
                 </div>
-                <div class="scroll">
+                <p class="small muted">{{ shownRows.length }} skills · click a row to open it above</p>
+                <div class="scroll tall">
                   <table class="tbl click">
                     <thead><tr><th>Skill</th><th>12-month share</th><th>Ads</th><th>Last 3 months</th><th>Forecast, {{ h }} mo</th><th>Likely range</th><th>Direction</th><th>Evidence</th></tr></thead>
                     <tbody>
@@ -406,15 +462,12 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
                         <td>{{ r.skill_name }} <span v-if="r.skill_status !== 'known'" class="tag">{{ TAXONOMY_TEXT[r.skill_status] ?? r.skill_status }}</span><span v-if="!r.in_onet" class="tag new" title="Not among O*NET 31.0 technology skills (tools and software). Professional skills are rated separately in O*NET and are not checked here.">not in O*NET tech</span></td>
                         <td>{{ pct(r.share_12m) }}</td><td>{{ r.count_12m }}</td><td>{{ pct(r.last_share_3m) }}</td>
                         <td><b>{{ pct(r.forecast) }}</b></td><td>{{ pct(r.low) }}–{{ pct(r.high) }}</td>
-                        <td><Icon :name="dirIcon(r.direction)" :size="14" /> {{ r.direction }}</td><td>{{ r.evidence }}</td>
+                        <td :class="dirClass(r.direction)"><Icon :name="dirIcon(r.direction)" :size="14" /> {{ r.direction }}</td>
+                        <td :class="'c-' + r.evidence">{{ r.evidence }}</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
-                <p class="muted small">
-                  Forecasts are for the 3 months ending {{ month(latestRows[0]?.target_month) }}.
-                  Direction compares the forecast with the last 3 months’ share: rising or falling when it differs by at least {{ meta?.rules.direction_label_pp ?? 1 }} pp, otherwise flat (about stable).
-                </p>
               </div>
             </template>
           </template>
@@ -425,9 +478,19 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
           <div v-if="!emerging" class="skel card mid-skel" />
           <template v-else>
             <div class="card pad">
-              <h2>Which skills are gaining ground for {{ occName }} in {{ countryName(country) }}?</h2>
-              <p class="small">Ranked by the <b>least</b> the share has plausibly grown (the 90% lower bound of last 6 months vs the 12 before), so a term going from 1 ad to 3 cannot top the list on percentage growth.
-                New terms come from the ad text itself, not only from the vocabulary: a term is <b>newly detected</b> only with ≥ {{ (emerging.registry.thresholds.strong as any).recent_ads }} recent ads from ≥ {{ (emerging.registry.thresholds.strong as any).employers }} employers and a first appearance in the last {{ emerging.registry.thresholds.new_months }} months; weaker or older evidence stays <b>under review</b>.</p>
+              <h2>Which skills are gaining ground for {{ occName }} in {{ countryName(country) }}?
+                <InfoDialog title="How emerging skills are ranked">
+                  <p>Skills are ranked by the <b>least</b> their share has plausibly grown: the 90% lower bound of the last 6 months vs the 12 before. That way a term going from 1 ad to 3 can’t top the list on percentage growth alone.</p>
+                  <p>New terms are picked up from the ad text itself, not only from a fixed vocabulary.</p>
+                  <ul>
+                    <li><b>Newly detected</b>: ≥ {{ (emerging.registry.thresholds.strong as any).recent_ads }} recent ads from ≥ {{ (emerging.registry.thresholds.strong as any).employers }} different employers, first seen in the last {{ emerging.registry.thresholds.new_months }} months.</li>
+                    <li><b>Under review</b>: weaker or older evidence.</li>
+                    <li><b>Growth, at least</b>: the lower bound above, in percentage points.</li>
+                  </ul>
+                  <p class="muted">Click a row to see example ads and spellings.</p>
+                </InfoDialog>
+              </h2>
+              <p class="small muted">Ranked by how much each skill has <b>at least</b> grown, so small noisy jumps don’t win. Click a row for example ads.</p>
               <div class="chips">
                 <button v-for="f in ([['growing', 'Clearly growing'], ['not_onet', 'Not in O*NET for this occupation'], ['discovered', 'Found in ad text'], ['all', 'All']] as const)" :key="f[0]"
                         type="button" :class="{ on: emFilter === f[0] }" @click="emFilter = f[0]">{{ f[1] }}</button>
@@ -458,8 +521,14 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
             </div>
 
             <div v-if="emerging.backcheck" class="card pad">
-              <h2>Would the detector have found recent skills in time?</h2>
-              <p class="small">Test: {{ emerging.backcheck.skills.length }} recent skills were removed from the vocabulary and the detector was replayed every quarter from {{ month(emerging.backcheck.as_of_months[0]) }}, each time using only ads available then. Reference point: {{ emerging.backcheck.reference }}.</p>
+              <h2>Would the detector have found recent skills in time?
+                <InfoDialog title="Detector back-check">
+                  <p>{{ emerging.backcheck.skills.length }} recent skills were removed from the vocabulary, and the detector was replayed every quarter from {{ month(emerging.backcheck.as_of_months[0]) }}, each time using only the ads available then.</p>
+                  <p>“Flagged first” means it spotted the skill before the skill was plainly in demand.</p>
+                  <p class="muted">Reference point: {{ emerging.backcheck.reference }}. Misses are mostly lower-case phrases (“vector databases”, “prompt engineering”): the detector reads capitalised or tech-shaped terms only.</p>
+                </InfoDialog>
+              </h2>
+              <p class="small muted">Replaying the detector on past data, with known recent skills hidden from it.</p>
               <div class="scroll">
                 <table class="tbl">
                   <thead><tr><th>Withheld skill</th><th>First flagged</th><th>First “newly detected”</th><th>Plainly in demand (≥ 2%)</th><th>Lead</th></tr></thead>
@@ -473,7 +542,6 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
                   </tbody>
                 </table>
               </div>
-              <p class="muted small">Misses are mostly lower-case phrases (“vector databases”, “prompt engineering”): the detector reads capitalised or tech-shaped terms only.</p>
             </div>
           </template>
         </section>
@@ -487,22 +555,29 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
           </div>
           <template v-else>
             <div class="card pad">
-              <h2>Is the job-ad forecast missing an emerging skill?</h2>
-              <p class="small">Big rises in hiring demand can start with little warning in a skill’s own job-ad history. This view puts evidence from outside that history next to the forecast:
-                <b>package adoption</b> (PyPI and npm downloads relative to a skill-neutral basket of packages) and <b>related-skill demand</b> (job-ad share of skills in the same technology family, across every IT cell).
-                Downloads include automated installs: they show ecosystem adoption, <b>not hiring</b>.</p>
+              <h2>Is the job-ad forecast missing an emerging skill?
+                <InfoDialog title="What emerging signals are" wide>
+                  <p>Big rises in hiring demand can start with little warning in a skill’s own job-ad history. This view puts two kinds of outside evidence next to the forecast:</p>
+                  <ul>
+                    <li><b>Package adoption</b>: PyPI and npm downloads, relative to a skill-neutral basket of packages so ecosystem-wide growth doesn’t count. Downloads include automated installs: they show ecosystem adoption, <b>not hiring</b>.</li>
+                    <li><b>Related-skill demand</b>: job-ad share of skills in the same technology family, across every IT occupation and country.</li>
+                  </ul>
+                  <h3>Signal-adjusted forecast: {{ signals.adjusted_forecast.validated ? 'validated' : 'not shown' }}</h3>
+                  <p v-if="signals.adjusted_forecast.validated">Passed its backtest; shown next to the job-ad forecast.</p>
+                  <p v-else>A model adding this evidence to the job-ad forecast did not beat the job-ad forecast on held-back months
+                    (test error {{ signals.test_summary.hybrid?.mae_pp.toFixed(2) }} pp vs {{ signals.test_summary.baseline?.mae_pp.toFixed(2) }} pp, {{ signals.test_summary.baseline?.n.toLocaleString('en') }} forecasts), so no adjusted number is shown.</p>
+                  <h3>Rise alerts: {{ signals.radar.validated ? 'validated' : 'not shown' }}</h3>
+                  <p v-if="signals.radar.validated">Probability of a rise of ≥ {{ signals.radar.rise_pp }} pp in {{ signals.horizon }} months, tested on held-back months.</p>
+                  <p v-else>On held-back months, alerts using this evidence caught {{ signals.radar_test.hybrid.true_alerts }} of {{ signals.radar_test.hybrid.positives }} real rises of ≥ {{ signals.radar.rise_pp }} pp with {{ signals.radar_test.hybrid.alerts - signals.radar_test.hybrid.true_alerts }} false alarms;
+                    job-ad history alone caught {{ signals.radar_test.own.true_alerts }} with {{ signals.radar_test.own.alerts - signals.radar_test.own.true_alerts }} false alarms. Not reliably better, so no alert or probability is shown.</p>
+                  <h3>How strong is the link?</h3>
+                  <p class="muted">Historically (pooled across countries and occupations, {{ signals.relationship.period }}), 6-month package adoption growth correlated {{ relCorr('adoption_g6')?.toFixed(2) ?? '–' }} with the next {{ signals.horizon }} months’ change in a skill’s job-ad share, and related-skill demand {{ relCorr('related_g6')?.toFixed(2) ?? '–' }}: a weak link, too weak to move a forecast.</p>
+                </InfoDialog>
+              </h2>
+              <p class="small muted">Outside evidence (package downloads, demand for related skills) shown next to the job-ad forecast. It is context, not a forecast. Click a row for a what-if scenario.</p>
               <div class="verdicts">
-                <p class="small"><span class="tag" :class="signals.adjusted_forecast.validated ? 'ok' : 'new'">{{ signals.adjusted_forecast.validated ? 'validated' : 'not shown' }}</span>
-                  <b>Signal-adjusted forecast.</b>
-                  <template v-if="signals.adjusted_forecast.validated"> Passed its backtest; shown next to the job-ad forecast.</template>
-                  <template v-else> A model adding this evidence to the job-ad forecast did not beat the job-ad forecast on held-back months
-                    (test error {{ signals.test_summary.hybrid?.mae_pp.toFixed(2) }} pp vs {{ signals.test_summary.baseline?.mae_pp.toFixed(2) }} pp, {{ signals.test_summary.baseline?.n.toLocaleString('en') }} forecasts), so no adjusted number is shown.</template></p>
-                <p class="small"><span class="tag" :class="signals.radar.validated ? 'ok' : 'new'">{{ signals.radar.validated ? 'validated' : 'not shown' }}</span>
-                  <b>Rise alerts.</b>
-                  <template v-if="signals.radar.validated"> Probability of a rise of ≥ {{ signals.radar.rise_pp }} pp in {{ signals.horizon }} months, tested on held-back months.</template>
-                  <template v-else> On held-back months, alerts using this evidence caught {{ signals.radar_test.hybrid.true_alerts }} of {{ signals.radar_test.hybrid.positives }} real rises of ≥ {{ signals.radar.rise_pp }} pp with {{ signals.radar_test.hybrid.alerts - signals.radar_test.hybrid.true_alerts }} false alarms;
-                    job-ad history alone caught {{ signals.radar_test.own.true_alerts }} with {{ signals.radar_test.own.alerts - signals.radar_test.own.true_alerts }} false alarms. Not reliably better, so no alert or probability is shown.</template></p>
-                <p class="small muted">Historically (pooled across countries and occupations, {{ signals.relationship.period }}), 6-month package adoption growth correlated {{ relCorr('adoption_g6')?.toFixed(2) ?? '–' }} with the next {{ signals.horizon }} months’ change in a skill’s job-ad share, and related-skill demand {{ relCorr('related_g6')?.toFixed(2) ?? '–' }}: a weak link, too weak to move a forecast.</p>
+                <span class="tag" :class="signals.adjusted_forecast.validated ? 'ok' : 'new'">Signal-adjusted forecast: {{ signals.adjusted_forecast.validated ? 'validated' : 'didn’t beat job-ads alone, not shown' }}</span>
+                <span class="tag" :class="signals.radar.validated ? 'ok' : 'new'">Rise alerts: {{ signals.radar.validated ? 'validated' : 'not reliable, not shown' }}</span>
               </div>
               <div class="chips">
                 <button v-for="f in ([['accelerating', 'Rising evidence'], ['adoption', 'With package data'], ['all', 'All']] as const)" :key="f[0]"
@@ -570,7 +645,13 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
           <template v-else>
             <div class="card pad">
               <p class="kicker">A · Worker AI usage <span class="tag ok">measured</span></p>
-              <h2>How many {{ occName }}s say they use AI tools at work?</h2>
+              <h2>How many {{ occName }}s say they use AI tools at work?
+                <InfoDialog title="About the worker AI usage survey">
+                  <p>From the Stack Overflow Developer Survey: employed respondents whose main role is {{ usage[0]?.devtypes ?? 'this occupation' }}.</p>
+                  <p>Respondents choose to take part, so this is not a sample of all workers. The thin dark line on each bar is the 95% range from sample size.</p>
+                  <p class="muted">2025 split “Yes” into daily / weekly / monthly use; all count as using. {{ adoption.not_found.worker_usage_forecast }}</p>
+                </InfoDialog>
+              </h2>
               <label class="inline">Respondents in
                 <select v-model="adCountry">
                   <option v-for="c in usageCountries" :key="c" :value="c">{{ c === 'ALL' ? 'all countries (survey population)' : countryName(c) }}</option>
@@ -590,9 +671,8 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
                 </div>
               </div>
               <p v-else class="muted">This occupation is not a category in the survey for this selection.</p>
-              <p class="small muted">Stack Overflow Developer Survey, employed respondents whose main role is {{ usage[0]?.devtypes ?? '—' }}. Self-selected respondents, not a sample of all workers. Bars show the 95% range from sample size.</p>
+              <p class="small muted">Stack Overflow Developer Survey · self-selected respondents.</p>
               <p v-if="usage[0]?.comparability_note" class="warn small"><Icon name="shield-alert" :size="14" /> {{ usage[0].comparability_note }}</p>
-              <p class="small muted">2025 split “Yes” into daily / weekly / monthly use; all count as using. {{ adoption.not_found.worker_usage_forecast }}</p>
               <details v-if="rps.length" class="notes">
                 <summary>Context: all computer and mathematical workers, US (RPS)</summary>
                 <p class="small">{{ rps[0].population }}; {{ rps[0].occupation_scope }}.</p>
@@ -602,15 +682,20 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
 
             <div class="card pad">
               <p class="kicker">B · Employer deployment in this occupation’s work</p>
-              <h2>Not measured directly</h2>
-              <p class="small">{{ adoption.not_found.employer_deployment_by_occupation }}</p>
+              <h2>Not measured directly
+                <InfoDialog title="Why employer deployment isn’t measured">
+                  <p>{{ adoption.not_found.employer_deployment_by_occupation }}</p>
+                  <p class="muted">The chart below is a proxy: {{ adoption.employer_signal[0]?.definition }}</p>
+                </InfoDialog>
+              </h2>
               <h3>Proxy <span class="tag new">proxy, not a deployment rate</span>: ads expecting the hire to use AI tools · {{ countryName(country) }}</h3>
-              <svg v-if="signal.length > 2" viewBox="0 0 600 120" preserveAspectRatio="none" class="spark" role="img" aria-label="Share of ads expecting AI tool use over time">
-                <path :d="sparkPath(signal.map((s) => s.share_3m ?? 0), 600, 110)" />
-              </svg>
+              <ChartHover v-if="signal.length > 2" :w="600" :h="120" :points="signalHover" :bottom="110">
+                <svg viewBox="0 0 600 120" preserveAspectRatio="none" class="spark" role="img" aria-label="Share of ads expecting AI tool use over time">
+                  <path :d="sparkPath(signal.map((s) => s.share_3m ?? 0), 600, 110)" />
+                </svg>
+              </ChartHover>
               <p v-if="signal.length" class="small">{{ month(signal[0].month) }}: {{ pct(signal[0].share_3m) }} → {{ month(signal.at(-1)!.month) }}: <b>{{ pct(signal.at(-1)!.share_3m) }}</b> of ads (3-month window; peak {{ pct(signalMax) }}).</p>
               <p v-else class="muted small">Not enough ads in this country and occupation.</p>
-              <p class="muted small">{{ adoption.employer_signal[0]?.definition }}</p>
             </div>
 
             <div class="card pad">
@@ -756,6 +841,9 @@ select, input[type='search'] { font: inherit; font-size: 13.5px; font-weight: 70
 .tbl-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; }
 .tbl-filters { display: flex; gap: 8px; flex-wrap: wrap; }
 .scroll { overflow-x: auto; }
+.scroll.tall { max-height: 520px; overflow-y: auto; border: 1px solid var(--line); border-radius: 12px; margin-top: 8px; }
+.scroll.tall .tbl { margin-top: 0; }
+.scroll.tall thead th { position: sticky; top: 0; background: #faf9f6; z-index: 1; }
 .tbl { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
 .tbl th, .tbl td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 .tbl th:first-child, .tbl td:first-child { text-align: left; white-space: normal; }
@@ -764,12 +852,22 @@ select, input[type='search'] { font: inherit; font-size: 13.5px; font-weight: 70
 .tbl tr.shown td { font-weight: 800; }
 .tbl tr.more td { background: #faf9f6; white-space: normal; text-align: left; }
 .c-high { color: #1e5e30; font-weight: 800; } .c-medium { color: var(--amber-ink); font-weight: 800; } .c-low { color: var(--muted); }
-.verdicts { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
-.verdicts .tag { margin: 0 6px 0 0; }
+.verdicts { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
+.verdicts .tag { margin: 0; font-size: 11px; padding: 3px 10px; }
+h3 { display: flex; align-items: center; gap: 6px; }
+.kicker { display: flex; align-items: center; gap: 6px; }
+.big { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.big :deep(.info), .kicker :deep(.info) { align-self: center; }
+.ink { color: var(--ink); }
+.hint { margin-left: auto; font-style: italic; font-weight: 600; }
+.method-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.method-line .tag { margin-left: 0; }
+.movers li.on button { color: var(--amber-ink); text-decoration: underline; }
+.filters label > span { display: flex; align-items: center; gap: 6px; }
 .sig-detail { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; padding: 6px 0; }
 .sig-detail h3 { font-size: 13px; margin: 0 0 4px; }
 .scenario input { width: 100%; }
-.bar-row { display: grid; grid-template-columns: 150px 1fr 52px; gap: 8px; align-items: center; font-size: 12px; }
+.scenario .bar-row { display: grid; grid-template-columns: 150px 1fr 52px; gap: 8px; align-items: center; font-size: 12px; }
 .bar-row i { display: block; height: 10px; border-radius: 3px; background: var(--line-strong); }
 .bar-row i.fc { background: var(--yellow); }
 .bar-row i.sc { background: repeating-linear-gradient(45deg, var(--amber-ink) 0 4px, transparent 4px 7px); border: 1px solid var(--amber-ink); }
@@ -781,6 +879,7 @@ select, input[type='search'] { font: inherit; font-size: 13.5px; font-weight: 70
 .ex a { color: var(--ink); font-weight: 700; }
 .bars { display: flex; flex-direction: column; gap: 8px; margin: 8px 0; }
 .bar-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) 90px 90px; gap: 10px; align-items: center; font-size: 13px; font-weight: 800; }
+.scenario .bar-row { grid-template-columns: 150px 1fr 52px; font-size: 12px; font-weight: 700; }
 .bar-track { position: relative; height: 16px; background: #f0efec; border-radius: 6px; }
 .bar-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--yellow); border-radius: 6px; }
 .ci { position: absolute; top: 6px; height: 4px; background: var(--ink); opacity: .55; border-radius: 2px; }
@@ -852,5 +951,7 @@ code { font-size: 12px; background: #f6f4ef; padding: 1px 5px; border-radius: 6p
   .kv { grid-template-columns: minmax(0, 1fr); }
   .bar-row { grid-template-columns: 40px minmax(0, 1fr) 70px; }
   .bar-row .small { display: none; }
+  .scenario .bar-row { grid-template-columns: 110px minmax(0, 1fr) 52px; }
+  .hint { display: none; }
 }
 </style>

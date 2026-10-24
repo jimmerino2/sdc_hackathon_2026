@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import ChartHover, { type HoverPoint } from './ChartHover.vue';
 import Icon from './Icon.vue';
 import { fetchRegime, type RegimeExplained } from '../api/outlook';
 
@@ -65,6 +66,18 @@ const plot = computed(() => {
   for (let t = Math.ceil(lo); t <= Math.floor(hi); t++) ticks.push({ x: sx(t), label: String(t) });
   return { sx, bars, ticks, BASE, H: BASE + 36, x0: sx(d.same_band[0]), x1: sx(d.same_band[1]) };
 });
+const BAND_TEXT: Record<Band, string> = { slower: 'Slower', same: 'About the same', faster: 'Faster' };
+const hover = computed<HoverPoint[]>(() => {
+  const p = plot.value, d = r.value;
+  if (!p || !d) return [];
+  const total = p.bars.reduce((s, b) => s + b.c, 0) || 1;
+  return p.bars.map((b) => ({
+    x: b.x + b.w / 2, title: `${d1(b.lo)} to ${d1(b.hi)} doublings a year`,
+    rows: [{ label: 'Simulated futures', value: `${b.c.toLocaleString('en')} (${pct(b.c / total)})`, color: COLORS[b.band] },
+      { label: 'Counted as', value: BAND_TEXT[b.band], muted: true }],
+    dots: [{ y: p.BASE - b.h, color: COLORS[b.band] }],
+  }));
+});
 const comps = computed(() => Object.entries(r.value?.components ?? {}));
 </script>
 
@@ -122,7 +135,8 @@ const comps = computed(() => Object.entries(r.value?.components ?? {}));
             <h3>Where the simulated futures land</h3>
             <p>Each bar counts futures by their pace over the next {{ months(r.h) }}. 8 in 10 fall between
               {{ d1(r.future_pace_range[0]) }} and {{ d1(r.future_pace_range[1]) }} doublings a year; the median is {{ d1(r.future_pace_median) }}.</p>
-            <svg v-if="plot" :viewBox="`0 0 ${W} ${plot.H}`" class="strip" role="img"
+            <ChartHover v-if="plot" :w="W" :h="plot.H" :top="TOP - 18" :bottom="plot.BASE" :points="hover">
+            <svg :viewBox="`0 0 ${W} ${plot.H}`" class="strip" role="img"
                  :aria-label="`Simulated paces: ${pct(r.p_simulated.faster)} faster, ${pct(r.p_simulated.same)} about the same, ${pct(r.p_simulated.slower)} slower`">
               <rect :x="plot.x0" :y="TOP - 18" :width="plot.x1 - plot.x0" :height="plot.BASE - TOP + 18" :fill="COLORS.same" fill-opacity=".12" />
               <text :x="(plot.x0 + plot.x1) / 2" :y="TOP - 6" text-anchor="middle" class="zone">about the same</text>
@@ -139,6 +153,7 @@ const comps = computed(() => Object.entries(r.value?.components ?? {}));
               </g>
               <text :x="W / 2" :y="plot.H - 3" text-anchor="middle" class="tick">pace over the next {{ months(r.h) }}, doublings a year</text>
             </svg>
+            </ChartHover>
             <p class="key">
               <span><i class="ln pace-k" /> past 12 months’ pace</span>
               <span><i class="dot" :style="{ background: COLORS.faster }" /> faster</span>
@@ -206,7 +221,8 @@ p + p { margin-top: 6px; }
 .tbl th, .tbl td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--line); }
 .tbl th:first-child, .tbl td:first-child { text-align: left; }
 .tbl th { font-size: 11px; color: var(--muted); font-weight: 800; }
-.strip { width: 100%; height: auto; margin-top: 8px; }
+.strip { width: 100%; height: auto; }
+.steps :deep(.ch) { margin-top: 8px; }
 .zone { font-size: 11px; font-weight: 800; fill: var(--muted); }
 .tick { font-size: 11px; fill: var(--muted); }
 .axis { stroke: var(--line-strong); stroke-width: 1; }
