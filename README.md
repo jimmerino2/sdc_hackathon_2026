@@ -23,7 +23,7 @@
 | Live Demo         | https://jobee-sdchack.replit.app/                             |
 | RunPod            | Serverless endpoint hosting OpenJev (resume skill extraction) |
 | Slide Deck        | https://canva.link/9ogvetmkxddtzag                            |
-| Demo Video        | https://youtu.be/Hny9_auRplk                                  |
+| Demo Video        | https://youtu.be/xLT6an0eAq4                                  |
 
 ---
 
