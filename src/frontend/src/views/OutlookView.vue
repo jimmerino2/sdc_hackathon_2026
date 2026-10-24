@@ -429,7 +429,7 @@ h2 { font-size: 19px; line-height: 1.25; }
 .now-val { font-size: 26px; font-weight: 900; }
 .now-lbl { font-size: 12px; font-weight: 700; color: var(--muted); }
 .rows { list-style: none; display: flex; flex-direction: column; gap: 14px; padding: 0; margin: 0; }
-.row { border-top: 2px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.rows .row { border-top: 2px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 6px; }
 .row-head { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; font-weight: 800; }
 .muted { color: var(--muted); font-weight: 700; }
 .val { font-size: 16px; font-weight: 900; white-space: nowrap; }

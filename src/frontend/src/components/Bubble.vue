@@ -4,7 +4,7 @@ withDefaults(defineProps<{ size?: number; mood?: Mood; gear?: Gear; wings?: bool
 </script>
 
 <template>
-  <div class="row">
+  <div class="bubble-row">
     <Mascot :size="size" :mood="mood" :gear="gear" :wings="wings" />
     <span v-if="thought" class="dots"><i /><i /></span>
     <p class="bubble" :class="{ cloud: thought }"><slot /></p>
@@ -12,7 +12,7 @@ withDefaults(defineProps<{ size?: number; mood?: Mood; gear?: Gear; wings?: bool
 </template>
 
 <style scoped>
-.row { display: flex; align-items: center; gap: 12px; }
+.bubble-row { display: flex; align-items: center; gap: 12px; }
 .bubble {
   background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 12px 16px;
   font-weight: 800; font-size: 15px; line-height: 1.35; max-width: 390px;
