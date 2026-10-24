@@ -42,7 +42,7 @@ export function useScenarioProbabilities() {
   return {
     metrics: SCENARIO_METRICS,
     metricTarget: computed({
-      get: () => state.value.scenarioMetric,
+      get: () => metric.value.target,
       set: (target: string) => { state.value.scenarioMetric = target; },
     }),
     pct,

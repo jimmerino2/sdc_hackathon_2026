@@ -72,13 +72,20 @@ const heading = computed(() => {
     </div>
     <template v-if="view === 'chart'">
       <h1>{{ heading }}</h1>
-      <p class="chart-source">
-        Chances of each future, from
-        <select v-model="metricTarget" aria-label="Metric the chances are based on">
-          <option v-for="m in metrics" :key="m.target" :value="m.target">{{ m.label }}</option>
-        </select>
-        forecasts, nearest-term.
-      </p>
+      <div class="metric-wrap">
+        <span class="seg-label">Chances from</span>
+        <div class="metric-seg" role="radiogroup" aria-label="Metric the chances are based on">
+          <button
+            v-for="m in metrics"
+            :key="m.target"
+            type="button"
+            role="radio"
+            :aria-checked="metricTarget === m.target"
+            :class="{ on: metricTarget === m.target }"
+            @click="metricTarget = m.target"
+          >{{ m.label }}</button>
+        </div>
+      </div>
       <div class="card chart-card">
         <h2 class="chart-title">Demand vs AI automation exposure</h2>
         <PositionChart :jobs="jobs" :context="context" :scenario="backendScenario[state.scenario]" :selected="selected" @select="emit('select', $event)" />
@@ -91,13 +98,20 @@ const heading = computed(() => {
     </template>
     <div v-else class="list-wrap" :class="{ center: pick }">
       <h1 v-if="!cardsOnly">{{ heading }}</h1>
-      <p class="chart-source">
-        Chances of each future, from
-        <select v-model="metricTarget" aria-label="Metric the chances are based on">
-          <option v-for="m in metrics" :key="m.target" :value="m.target">{{ m.label }}</option>
-        </select>
-        forecasts, nearest-term.
-      </p>
+      <div class="metric-wrap">
+        <span class="seg-label">Chances from</span>
+        <div class="metric-seg" role="radiogroup" aria-label="Metric the chances are based on">
+          <button
+            v-for="m in metrics"
+            :key="m.target"
+            type="button"
+            role="radio"
+            :aria-checked="metricTarget === m.target"
+            :class="{ on: metricTarget === m.target }"
+            @click="metricTarget = m.target"
+          >{{ m.label }}</button>
+        </div>
+      </div>
       <RoleList :jobs="jobs" :selected="pick ? selected : undefined" :roadmaps="roadmaps" @select="emit('select', $event)" />
     </div>
     <p v-if="note && view === 'chart'" class="note">{{ note }}</p>
@@ -120,8 +134,16 @@ const heading = computed(() => {
 .tabs button.on { background: var(--rc); border-color: var(--rc); color: #fff; box-shadow: 0 4px 0 var(--rc); }
 .tab-pct { font-weight: 900; opacity: .85; }
 h1 { font-size: 30px; font-weight: 900; margin-bottom: 10px; }
-.chart-source { margin: 0 0 16px; font-size: 12px; font-weight: 600; color: var(--muted); }
-.chart-source select { font: inherit; font-weight: 800; color: var(--ink); background: none; border: none; border-bottom: 2px solid var(--line-strong); padding: 0 2px 1px; cursor: pointer; }
+.metric-wrap { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.seg-label { font-size: 13px; font-weight: 900; color: var(--muted); white-space: nowrap; }
+.metric-seg { display: inline-flex; padding: 4px; border-radius: 14px; background: var(--line); }
+.metric-seg button { padding: 8px 16px; border-radius: 10px; font-weight: 900; font-size: 12px; color: var(--muted); text-align: center; white-space: nowrap; transition: background .15s, color .15s; }
+.metric-seg button:hover { color: var(--ink); }
+.metric-seg button.on { background: #fff; color: var(--ink); box-shadow: 0 2px 0 rgba(30, 30, 30, .1); }
+@media (max-width: 480px) {
+  .metric-wrap { flex-wrap: wrap; }
+  .metric-seg button { padding: 7px 10px; font-size: 11px; }
+}
 .note { margin-top: 22px; font-size: 12px; font-weight: 600; color: var(--muted); line-height: 1.5; max-width: 760px; }
 .list-wrap { max-width: 760px; }
 .list-wrap.center { margin: 0 auto; }
