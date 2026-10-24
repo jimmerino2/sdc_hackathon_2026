@@ -1,0 +1,14 @@
+{
+  "version": "2026-10-24.1",
+  "note": "Hand-written. Case-sensitive regexes matched on an ad's location text (HN: the post's first line). An ad can match several countries. 'REMOTE' with no country is left unspecified and excluded from country-level series.",
+  "countries": {
+    "US": {"name": "United States", "patterns": ["\\bUSA?\\b", "U\\.S\\.", "United States", "\\bNYC\\b", "New York", "San Francisco", "\\bSF\\b", "Bay Area", "Silicon Valley", "Seattle", "Austin", "Boston", "Chicago", "Los Angeles", "\\bLA\\b", "Denver", "Boulder", "Atlanta", "Miami", "Portland, OR", "San Diego", "Washington,? DC", "D\\.C\\.", "Palo Alto", "Mountain View", "Menlo Park", "Sunnyvale", "San Jose", "Oakland", "Berkeley", "Philadelphia", "Pittsburgh", "Salt Lake", "Phoenix", "Dallas", "Houston", "Minneapolis", "Detroit", "Raleigh", "Durham", "Nashville", "Baltimore", "Cambridge, MA", "Brooklyn", "Manhattan", "Santa Monica", "Redwood City", "San Mateo", "Santa Clara", "Irvine", "Ann Arbor", "Madison, WI", "Columbus", "Cincinnati", "St\\.? Louis", "Kansas City", "Charlotte", "Orlando", "Tampa", "Honolulu", "Anchorage", "Hoboken", ", (AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)\\b"]},
+    "GB": {"name": "United Kingdom", "patterns": ["London", "\\bUK\\b", "U\\.K\\.", "United Kingdom", "England", "Scotland", "Manchester", "Edinburgh", "Cambridge, UK", "Cambridge, England", "Bristol", "Oxford, UK", "Glasgow", "Leeds", "Belfast", "Birmingham, UK", "Brighton"]},
+    "CA": {"name": "Canada", "patterns": ["Canada", "Toronto", "Vancouver", "Montreal", "Montréal", "Ottawa", "Waterloo", "Calgary", "Edmonton", "Ontario", "Quebec", "Québec", "British Columbia", "Halifax", "Victoria, BC", ", (ON|BC|QC|AB)\\b"]},
+    "DE": {"name": "Germany", "patterns": ["Germany", "Deutschland", "Berlin", "Munich", "München", "Hamburg", "Frankfurt", "Cologne", "Köln", "Stuttgart", "Düsseldorf", "Leipzig"]},
+    "NL": {"name": "Netherlands", "patterns": ["Netherlands", "Amsterdam", "Rotterdam", "Utrecht", "The Hague", "Eindhoven"]},
+    "FR": {"name": "France", "patterns": ["France", "Paris", "Lyon", "Toulouse", "Bordeaux"]},
+    "AU": {"name": "Australia", "patterns": ["Australia", "Sydney", "Melbourne", "Brisbane", "Adelaide", "Canberra"]},
+    "IN": {"name": "India", "patterns": ["India", "Bangalore", "Bengaluru", "Mumbai", "Hyderabad", "Pune", "Chennai", "New Delhi", "Gurgaon", "Gurugram", "Noida"]}
+  }
+}

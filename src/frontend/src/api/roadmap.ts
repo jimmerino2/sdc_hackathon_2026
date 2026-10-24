@@ -28,6 +28,54 @@ export interface RoadmapNode {
   previous_nodes_required: boolean;
 }
 
+/** One weighted line of a Bonus Quest's rubric. */
+export interface RubricCriterion {
+  key: string;
+  criterion: string;
+  /** What earns a high score. */
+  description: string;
+  /** Share of the total score; a challenge's weights add up to 100. */
+  weight: number;
+}
+
+/** How a submitted repo did on one rubric criterion. */
+export interface CriterionResult {
+  key: string;
+  /** 0-100. */
+  score: number;
+  why: string;
+  improve: string;
+}
+
+/** A Bonus Quest: an optional project built from the skills of a couple of sections (tech roles only). */
+export interface RoadmapChallenge {
+  challenge_id: string;
+  sections: number[];
+  /** Shown after this section. */
+  after_section: number;
+  title: string;
+  /** The brief; may hold "- " feature lines. */
+  description: string;
+  sdg: number;
+  sdg_name: string;
+  /** The learner's interests it is themed on. */
+  interests: string[];
+  /** Skills by area, as O*NET names (pass them through skillLabel). */
+  tech_stack: { area: string; skills: string[] }[];
+  rubric: RubricCriterion[];
+  /** True until every skill in its sections is done. */
+  locked: boolean;
+  status: 'open' | 'judging' | 'judged';
+  repo_url: string | null;
+  result: CriterionResult[] | null;
+  /** Weighted total of the latest judgement, 0-100. */
+  score: number | null;
+  summary: string | null;
+  files_read: string[];
+  attempts: number;
+  judged_at: string | null;
+}
+
 export interface Roadmap {
   profile_id: string;
   onet_code: string;
@@ -37,6 +85,8 @@ export interface Roadmap {
   status: 'locked' | 'available' | 'in_progress' | 'completed' | null;
   current: { section: number; unit: number } | null;
   sections: { section: number; units: { unit: number; nodes: RoadmapNode[] }[] }[];
+  /** Bonus Quests; empty (or missing, on an older backend) for non-tech roles. */
+  challenges?: RoadmapChallenge[];
 }
 
 /** A failed roadmap request, with a message that can be shown to the user as is. */
@@ -81,6 +131,19 @@ export async function completeNode(profileId: string, roadmapDetailId: string): 
   const res = await call(`/complete/${encodeURIComponent(roadmapDetailId)}?profile_id=${encodeURIComponent(profileId)}`, { method: 'POST' });
   if (!res.ok) throw new RoadmapError('Couldn’t save that. Try again.');
   return res.json();
+}
+
+/** Have a public GitHub repo judged against a Bonus Quest; takes up to a minute. Returns the challenge with its score. */
+export async function submitChallenge(profileId: string, challengeId: string, repoUrl: string): Promise<RoadmapChallenge> {
+  const res = await call(`/challenge/${encodeURIComponent(challengeId)}/submit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ profile_id: profileId, repo_url: repoUrl }),
+  });
+  if (res.ok) return res.json();
+  // The backend's messages for a bad link, a locked or busy challenge, or GitHub limits are written for the learner.
+  const detail = await res.json().then((b) => (typeof b?.detail === 'string' ? b.detail : null)).catch(() => null);
+  throw new RoadmapError(res.status < 500 || res.status === 503 ? detail ?? 'That didn’t work. Check the link and try again.' : 'Jobee couldn’t judge that just now. Try again in a moment.');
 }
 
 /** Delete the profile's roadmap for a role, with its progress. Already gone counts as deleted. */

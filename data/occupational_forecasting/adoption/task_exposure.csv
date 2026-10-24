@@ -1,0 +1,4 @@
+occupation,onet_code,onet_title,usage_percentile,automation_share_of_usage,as_of,measure_type,definition,source
+software_engineer,15-1252.00,Software Developers,0.941,0.738,2026-06-26,exposure_index,Percentile rank among all occupations of the share of Claude work conversations about this occupation's tasks (Anthropic Economic Index). Not the share of workers using AI.,anthropic_economic_index
+data_scientist,15-2051.00,Data Scientists,0.94,0.703,2026-06-26,exposure_index,Percentile rank among all occupations of the share of Claude work conversations about this occupation's tasks (Anthropic Economic Index). Not the share of workers using AI.,anthropic_economic_index
+data_analyst,15-2051.01,Business Intelligence Analysts,0.969,0.865,2026-06-26,exposure_index,Percentile rank among all occupations of the share of Claude work conversations about this occupation's tasks (Anthropic Economic Index). Not the share of workers using AI.,anthropic_economic_index

@@ -1,0 +1,142 @@
+{
+  "version": "2026-10-24.1",
+  "note": "Hand-written. Title patterns are case-insensitive regexes matched on job-ad titles (HN: the post's first line, plus singular titles in the body). Adding an occupation = adding an entry here and rerunning the pipeline.",
+  "sectors": [
+    {
+      "id": "software_technology",
+      "name": "Software & technology",
+      "occupations": [
+        {
+          "id": "software_engineer",
+          "name": "Software Engineer",
+          "onet_codes": [
+            "15-1252.00"
+          ],
+          "onet_note": "O*NET 15-1252.00 Software Developers",
+          "title_patterns": [
+            "software (engineer|developer|development engineer)s?",
+            "(back[- ]?end|front[- ]?end|full[- ]?stack|fullstack|web|mobile|ios|android|platform|product|application|infrastructure|embedded|systems|game|frontend|backend) (software )?(engineer|developer)s?",
+            "\\bswe\\b",
+            "\\bsde\\b",
+            "(rails|django|ruby|python|java|golang|go|rust|scala|elixir|node(\\.js)?|react|typescript|javascript|c\\+\\+|\\.net|php|kotlin|swift) (engineer|developer)s?"
+          ],
+          "adzuna_search": "software engineer",
+          "so_devtypes": {
+            "2023": [
+              "Developer, full-stack",
+              "Developer, back-end",
+              "Developer, front-end",
+              "Developer, mobile",
+              "Developer, desktop or enterprise applications"
+            ],
+            "2024": [
+              "Developer, full-stack",
+              "Developer, back-end",
+              "Developer, front-end",
+              "Developer, mobile",
+              "Developer, desktop or enterprise applications"
+            ],
+            "2025": [
+              "Developer, full-stack",
+              "Developer, back-end",
+              "Developer, front-end",
+              "Developer, mobile",
+              "Developer, desktop or enterprise applications"
+            ]
+          },
+          "title_patterns_header_only": [
+            "full[- ]?stack",
+            "front[- ]?end",
+            "back[- ]?end",
+            "(senior|sr\\.?|junior|jr\\.?|lead|staff|principal) (software |web |app )?(developer|engineer)s?",
+            "(software|web|app|mobile|ios|android) devs?",
+            "(rails|django|ruby|python|java|golang|rust|scala|elixir|node(js)?|react|typescript|javascript|php|kotlin|swift) devs?"
+          ]
+        },
+        {
+          "id": "ml_engineer",
+          "name": "AI / Machine Learning Engineer",
+          "onet_codes": [
+            "15-1221.00"
+          ],
+          "onet_note": "No dedicated O*NET code. O*NET lists 'Machine Learning Engineer' and 'AI Engineer' as titles of 15-1221.00 Computer and Information Research Scientists",
+          "title_patterns": [
+            "(machine learning|\\bml\\b|\\bai\\b|deep learning|mlops|ml ops|ml platform|ml infrastructure|applied ml|applied ai|llm|genai|generative ai|nlp|computer vision) (software )?(engineer|developer)s?",
+            "\\bmle\\b",
+            "ai/ml (engineer|developer)s?",
+            "ml/ai (engineer|developer)s?"
+          ],
+          "adzuna_search": "machine learning engineer",
+          "so_devtypes": {
+            "2024": [
+              "Developer, AI"
+            ],
+            "2025": [
+              "AI/ML engineer"
+            ]
+          },
+          "so_note": "2023 had no separate AI/ML category (it was merged with data scientists). 2024 'Developer, AI' and 2025 'AI/ML engineer' are different labels, so years are not strictly comparable"
+        },
+        {
+          "id": "data_scientist",
+          "name": "Data Scientist",
+          "onet_codes": [
+            "15-2051.00"
+          ],
+          "onet_note": "O*NET 15-2051.00 Data Scientists",
+          "title_patterns": [
+            "data scientist",
+            "(senior|staff|lead|principal|junior|product|research) data scientists?",
+            "data science (engineer|lead|manager)s?"
+          ],
+          "title_patterns_header_only": [
+            "data scientists"
+          ],
+          "adzuna_search": "data scientist",
+          "so_devtypes": {
+            "2023": [
+              "Data scientist or machine learning specialist"
+            ],
+            "2024": [
+              "Data scientist or machine learning specialist"
+            ],
+            "2025": [
+              "Data scientist"
+            ]
+          },
+          "so_note": "2023-2024 category was 'Data scientist or machine learning specialist'; 2025 split ML engineers out, so 2025 is not strictly comparable"
+        },
+        {
+          "id": "data_analyst",
+          "name": "Data Analyst",
+          "onet_codes": [
+            "15-2051.01",
+            "15-2041.00"
+          ],
+          "onet_note": "No dedicated O*NET code. Mapped to 15-2051.01 Business Intelligence Analysts (primary) and 15-2041.00 Statisticians, which list 'Data Analyst' as a title",
+          "title_patterns": [
+            "data analyst",
+            "(business intelligence|\\bbi\\b|product|analytics|marketing|reporting|business|financial data) analyst",
+            "(bi|business intelligence|analytics|tableau|power bi) developer"
+          ],
+          "title_patterns_header_only": [
+            "data analysts",
+            "analytics engineers?"
+          ],
+          "adzuna_search": "data analyst",
+          "so_devtypes": {
+            "2023": [
+              "Data or business analyst"
+            ],
+            "2024": [
+              "Data or business analyst"
+            ],
+            "2025": [
+              "Data or business analyst"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

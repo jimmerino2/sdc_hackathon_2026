@@ -20,6 +20,7 @@ How the reference data gets into Supabase. Column meanings are in `data/document
 | `0013_interests.sql` | Adds `interests` (15 seeded interests, each with up to 3 UN SDGs as jsonb `{sdg, value}` whose values add up to 1; public read) and `profile_interests` (links profiles to interests, service role only). Drops `profiles.concerns` |
 | `0014_onet_roles_sdg.sql` | Adds `onet_roles.sdg` (jsonb `{sdg, value}`, up to 3 goals per role, values adding up to 1) and fills it for all 46 roles. Used to match roles to a learner's interests and to explain why a role was suggested |
 | `0015_role_interest_reasons.sql` | Adds `role_interest_reasons`: one LLM-written sentence per role, SDG and interest explaining why the role fits that interest, written the first time a role's details are opened (`GET /jobs/reasons`) and reused after. Service role only |
+| `0016_roadmap_challenge.sql` | Adds `roadmap_challenge`: the Bonus Quests of a tech-role roadmap, one per two sections (an odd last section joins the final one). Each has an LLM-written title, brief, SDG, tech stack and weighted rubric, plus the latest GitHub repo submitted and its per-criterion score, reasoning and tips. Service role only |
 | `0009_profiles_bee.sql` | Adds `profiles.bee`, the learner's companion (Libbee by default; Phoebee, Tobee or Barnabee), checked against that list |
 | `../pipeline/load_supabase.py` | Loads `data/processed/*.csv` into those tables |
 

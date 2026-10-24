@@ -28,4 +28,11 @@ graphify-out/manifest.json
 *.key
 secrets/
 *.local
-data/occupational_forecasting/
+
+# occupational forecasting: raw downloads and ad text (large, regenerable)
+data/occupational_forecasting/raw/
+data/occupational_forecasting/normalized/ads_text.csv.gz
+data/occupational_forecasting/normalized/known_skill_cache.*
+data/occupational_forecasting/runs/
+data/occupational_forecasting/latest/backtest.csv.gz
+data/occupational_forecasting/.latest.tmp/

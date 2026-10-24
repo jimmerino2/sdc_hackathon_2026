@@ -23,6 +23,7 @@ Four external datasets, one per question the app has to answer, plus one Malaysi
 - **As of:** 2026-10-09
 - **Files used:** `<country>/job_postings_by_sector_<country>.csv`, `<country>/aggregate_job_postings_<country>.csv`
 - **Why this one:** real, free, dated and refreshed weekly, which meets the brief's "updatable, dated source".
+- **Vintages (forecast rebuild):** `<country>/aggregate_job_postings_<country>.csv` is read at the last commit of each month from Feb 2021. Before mid-2021 the files held % change since 1 Feb 2020, not an index. See `FORECAST_REBUILD.md`.
 
 ## 2. Indeed AI Tracker
 
@@ -35,6 +36,8 @@ Four external datasets, one per question the app has to answer, plus one Malaysi
 - **As of:** 2026-09-30
 - **Files used:** `AI_posting.csv`
 - **Why this one:** a dated, regularly updated measure of AI adoption in the labour market. This is the brief's "AI-trend signal layer".
+- **Vintages (forecast rebuild):** the repo's git history is used as a record of what was published when: each commit to `AI_posting.csv` (and its earlier names) is one vintage. There are 35 vintages from 29 Apr 2024. History is revised between vintages (mean 0.39 pp), so backtests must not read today's file. It measures **mentions in ads** (skill demand), not AI adoption. See `FORECAST_REBUILD.md`.
+- **Also in the repo, not used yet:** `GenAI_posting.csv` (share mentioning GenAI terms, 12 vintages).
 
 ## 3. Anthropic Economic Index
 
@@ -79,6 +82,71 @@ Four external datasets, one per question the app has to answer, plus one Malaysi
 - **File used:** the release's "Data" workbook, saved as `data/raw/dosm_jmi/jmi_q2_2026.xlsx` (download id 20742; `build_jmi.py` fetches it if missing)
 - **Why this one:** the only official source of Malaysian demand found. Counts are not comparable across time (coverage jumps in 2021-Q3 and 2025-Q3) and there are only 9 occupation groups, so we show it as context and never train on it.
 - **Limits:** DOSM states it does not represent all vacancies in Malaysia.
+
+## 6. Census Business Trends and Outlook Survey (BTOS) — forecast rebuild only
+
+- **URL:** https://www.census.gov/hfp/btos/data_downloads
+- **Publisher:** U.S. Census Bureau
+- **License:** public domain (U.S. government work)
+- **What it contains:** fortnightly survey of US businesses. Two AI questions are used:
+  - Q7: used AI in the last two weeks;
+  - Q24: expects to within six months.
+
+  Both come with standard errors, nationally and for 19 NAICS sectors.
+- **Coverage:** two question wordings, which must not be joined:
+  - old: Sep 2023 – Oct 2025 (54 fortnights);
+  - new: Nov 2025 onwards (24 fortnights so far).
+
+  Three fortnights in between were not asked. The level jumps from 10.0% to 17.3% at the change.
+- **Update frequency:** fortnightly, with a published schedule
+- **As of:** fortnight 202621 (reference period ending 4 Oct 2026), published 22 Oct 2026
+- **Files used:** `Sector.xlsx`, `National.xlsx`, `AI Core Questions.xlsx`
+- **Used for:** the **business-adoption** target only (`btos_ai_use_rate`, see `FORECAST_REBUILD.md` §8a). It measures firms, so the forecast contracts refuse it as an occupation-adoption label and as a skill-demand input.
+
+## 7. Real-Time Population Survey: Generative AI adoption (via FRED) — forecast rebuild only
+
+- **URL:** https://sites.google.com/view/covid-rps/data (series `RPSGENAIUSAGESHAREOCC1`–`22` and `RPSGENAIUSAGESHAREWORK` on FRED)
+- **Publisher:** Bick, Blandin & Deming; distributed by the Federal Reserve Bank of St. Louis (FRED)
+- **What it contains:** quarterly % of employed US adults (18–64) who use generative AI for their job, for 22 SOC major groups and all workers.
+- **Coverage:** 2024-Q3 – 2026-Q3 (9 quarters)
+- **Update frequency:** quarterly
+- **As of:** 2026-Q3, on FRED by 22 Oct 2026
+- **Used for:** the **occupation-adoption** target only (`worker_genai_use_rate`, see `FORECAST_REBUILD.md` §8b). It is the only direct, worker-level evidence on occupational AI use.
+- **Point in time:** ALFRED vintages via `FRED_API_KEY` (in `src/backend/.env`). FRED first published the series on 18 Jun 2026 and revised it on 16 Oct 2026. Earlier backtest origins are reconstructed.
+
+## 8. Epoch AI benchmark data (METR time horizons, Epoch Capabilities Index) — forecast rebuild only
+
+- **URL:** https://epoch.ai/benchmarks (download `https://epoch.ai/data/benchmark_data.zip`)
+- **Publisher:** Epoch AI. The time horizons are measured by METR (https://metr.org).
+- **License:** CC-BY-4.0 (cite "Epoch AI, 'Capabilities & benchmarking'")
+- **What it contains:** benchmark results for AI models. Two parts are used:
+  - `metr_time_horizons_external.csv`: the length of tasks (in human minutes) a model completes with 50% reliability, with CIs, release dates and METR suite version;
+  - `epoch_capabilities_index/eci_scores.csv`: a composite index fitted over about 60 benchmarks.
+- **Coverage:**
+  - METR: about 50 models, released 2019–2026;
+  - ECI: about 270 models.
+- **Vintages:** 17 Wayback Machine captures from Mar 2025, one per month. METR appears from Jun 2025, ECI only from Sep 2026.
+- **As of:** 23 Oct 2026 (Last-Modified)
+- **Used for:** the **AI-capability** target (`frontier_time_horizon`, see `FORECAST_REBUILD.md` §8c), METR only.
+- **Not used:** ECI is refitted with every update and has too few vintages to backtest without retrospective normalisation. It is stored for later.
+
+## Not used in models
+
+- **Adzuna job-ads API:** the account is on the free tier (25 calls a day), so stored snapshots will never reach a history long enough to train or backtest on. It is context only (decision of 24 Oct 2026). The occupational forecasting page shows its dated snapshots as a cross-check, never as model input.
+
+## Occupational forecasting (separate domain)
+
+These feed only `src/backend/occupational/` and are stored in `data/occupational_forecasting/` (see its README):
+
+- **Hacker News "Ask HN: Who is hiring?"** (https://hn.algolia.com/api)
+  - **What:** one thread a month, one post per hiring company, full ad text.
+  - **Coverage:** Jan 2014 to now. Tech companies, mostly US startups.
+  - **Used for:** skill-demand series per country × occupation, and emerging-skill discovery.
+- **Stack Overflow Developer Survey microdata 2023–2025** (https://survey.stackoverflow.co, ODbL)
+  - **What:** share of employed respondents, per developer type and country, who use AI tools in their work.
+  - **Caveat:** respondents are self-selected.
+- **O\*NET 31.0 software skills** (CC BY 4.0)
+  - **Used for:** checking whether a skill is in O\*NET's technology list.
 
 ---
 

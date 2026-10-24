@@ -1,3 +1,11 @@
-<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="180" height="180" rx="36" fill="#FF3C00"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -20 120 120">
+<!-- Libbee, idle: same proportions as components/Mascot.vue (body = 100 units, antennae above it) -->
+<defs><clipPath id="b"><path d="M34 0H66A34 34 0 0 1 100 34V66A34 34 0 0 1 66 100H6A6 6 0 0 1 0 94V34A34 34 0 0 1 34 0Z"/></clipPath></defs>
+<g stroke="#1e1e1e" stroke-width="3.4" stroke-linecap="round"><path d="M34.5 4L29.6 -11.2"/><path d="M65.5 4L70.4 -11.2"/></g>
+<circle cx="29" cy="-13.5" r="4.2" fill="#1e1e1e"/><circle cx="71" cy="-13.5" r="4.2" fill="#1e1e1e"/>
+<path d="M34 0H66A34 34 0 0 1 100 34V66A34 34 0 0 1 66 100H6A6 6 0 0 1 0 94V34A34 34 0 0 1 34 0Z" fill="#ffc107"/>
+<g clip-path="url(#b)" fill="#ff9800" opacity=".4"><rect y="64" width="100" height="7"/><rect y="80" width="100" height="7"/></g>
+<ellipse cx="22" cy="58" rx="5" ry="3" fill="#ff9800" opacity=".45"/><ellipse cx="78" cy="58" rx="5" ry="3" fill="#ff9800" opacity=".45"/>
+<ellipse cx="34.5" cy="43.5" rx="6.5" ry="7.5" fill="#1e1e1e"/><ellipse cx="65.5" cy="43.5" rx="6.5" ry="7.5" fill="#1e1e1e"/>
+<path d="M45 60Q50 65.5 55 60" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round"/>
 </svg>

@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from fastapi import HTTPException
 from supabase import Client
 
+from app.challenge import service as challenges
 from app.profile import service as profiles
 from app.roadmap import planner
 from app.roadmap.planner import Plan, PlanNode
@@ -151,7 +152,7 @@ def get_roadmap(db: Client, profile_id: str, onet_code: str | None = None) -> Ro
         )
         for sec, units in sorted(grouped.items())
     ]
-    return Roadmap(
+    out = Roadmap(
         profile_id=profile_id,
         onet_code=onet_code,
         title=roadmap["onet_roles"]["title"],
@@ -161,6 +162,8 @@ def get_roadmap(db: Client, profile_id: str, onet_code: str | None = None) -> Ro
         current=CurrentStep(section=roadmap["section"], unit=roadmap["unit"]),
         sections=sections,
     )
+    out.challenges = challenges.for_roadmap(db, out)
+    return out
 
 
 def complete_node(db: Client, profile_id: str, roadmap_detail_id: str) -> Roadmap:
@@ -265,7 +268,8 @@ def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool) -
 
     The plan (sections, units, prerequisites) is copied from the newest roadmap anyone has for the role, since it
     doesn't depend on the learner; if there is none, or replace is set, the model plans it. Either way the new
-    roadmap starts with nothing completed.
+    roadmap starts with nothing completed. A tech role's roadmap then gets its Bonus Quests, written for this learner
+    (they depend on their interests, so they are never copied).
     """
     try:
         profiles.get_profile(db, profile_id)
@@ -303,7 +307,10 @@ def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool) -
     except Exception as e:
         mine(db.table("roadmap").delete()).execute()
         raise HTTPException(status_code=502, detail=f"could not store roadmap: {e}")
-    return get_roadmap(db, profile_id, onet_code)
+    built = get_roadmap(db, profile_id, onet_code)
+    challenges.generate_for_roadmap(db, profile_id, built)
+    built.challenges = challenges.for_roadmap(db, built)
+    return built
 
 
 def delete_roadmap(db: Client, profile_id: str, onet_code: str) -> None:
