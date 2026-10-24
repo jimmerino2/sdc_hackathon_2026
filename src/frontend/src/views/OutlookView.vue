@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import Bubble from '../components/Bubble.vue';
 import Icon from '../components/Icon.vue';
-import { fetchOutlook, fetchTargets, type OutlookRow, type OutlookStatus, type TargetSummary } from '../api/outlook';
+import {
+  fetchAccuracy, fetchOutlook, fetchTargets, type MethodScore, type OutlookRow, type TargetSummary, type UnitAccuracy,
+} from '../api/outlook';
 import { COUNTRIES, OCCUPATIONS, SECTORS } from '../data/outlookNames';
 
 /** One card per forecast target. They measure different things and are never combined. */
@@ -23,6 +25,7 @@ const cards: Card[] = [
   {
     target: 'frontier_time_horizon', eyebrow: 'AI capability', title: 'How long a task can the best AI finish?',
     blurb: 'Length of software tasks (in a skilled person’s working time) the best measured model completes half the time. Source: METR, via Epoch AI.',
+    names: { 'v1.0': 'the best measured models (METR suite v1.0)', 'v1.1': 'the best measured models (METR suite v1.1)' },
     defaultUnit: 'v1.1', minutes: true,
   },
   {
@@ -69,10 +72,13 @@ function units(c: Card): string[] {
 function unitName(c: Card, u: string): string {
   return c.names?.[c.key ? c.key(u) : u] ?? u;
 }
-function selected(c: Card): OutlookRow[] {
+function selectedUnit(c: Card): string | undefined {
   const all = rows.value[c.target] ?? [];
-  const u = all.some((r) => r.unit === picked[c.target]) ? picked[c.target] : all[0]?.unit;
-  return all.filter((r) => r.unit === u).sort((a, b) => a.h - b.h);
+  return all.some((r) => r.unit === picked[c.target]) ? picked[c.target] : all[0]?.unit;
+}
+function selected(c: Card): OutlookRow[] {
+  const u = selectedUnit(c);
+  return (rows.value[c.target] ?? []).filter((r) => r.unit === u).sort((a, b) => a.h - b.h);
 }
 
 function fmt(c: Card, v: number | null): string {
@@ -96,30 +102,60 @@ function period(p: string): string {
   return q ? `Q${q[2]} ${q[1]}` : p;
 }
 
-/** Plain-language result of the out-of-sample test. "No change" winning is a normal outcome, not an error. */
-const STATUS: Record<OutlookStatus, { label: string; tone: 'good' | 'neutral'; icon: string; hint: string }> = {
-  validated: {
-    label: 'Beat “no change” in testing', tone: 'good', icon: 'check',
-    hint: 'On recent months it hadn’t seen, this method was clearly more accurate than assuming nothing changes.',
-  },
-  baseline: {
-    label: 'No method beat “no change”', tone: 'neutral', icon: 'scale',
-    hint: 'On recent months, assuming nothing changes was as accurate as any method we tried, so that is what’s shown.',
-  },
-  not_demonstrably_better: {
-    label: 'About as accurate as “no change”', tone: 'neutral', icon: 'scale',
-    hint: 'This method did about as well as assuming nothing changes on recent months, not clearly better.',
-  },
-  baseline_retained: {
-    label: 'No method reliably beat “no change”', tone: 'neutral', icon: 'scale',
-    hint: 'The best method from earlier tests didn’t beat “no change” on recent months, so “no change” is shown instead.',
-  },
+/** Plain names for the forecasting methods. */
+const METHODS: Record<string, string> = {
+  naive: '“No change”',
+  drift: 'Continue last year’s trend',
+  damped_drift: 'Trend, slowing down',
+  pooled_mean: 'Average recent change across series',
+  local_trend: 'Local trend model',
+  ridge: 'Ridge regression',
+  lightgbm: 'LightGBM',
 };
+const methodName = (m: string) => METHODS[m] ?? m;
+
+/** Test results per card and selected unit, fetched when the selection changes. */
+const accuracy = reactive<Record<string, UnitAccuracy[] | 'error'>>({});
+const accKey = (c: Card, u: string) => `${c.target}::${u}`;
+async function loadAccuracy(c: Card, u: string) {
+  const k = accKey(c, u);
+  if (accuracy[k]) return;
+  try {
+    accuracy[k] = await fetchAccuracy(c.target, u);
+  } catch {
+    accuracy[k] = 'error';
+  }
+}
+watch([rows, () => ({ ...picked })], () => {
+  for (const c of shown.value) {
+    const u = selectedUnit(c);
+    if (u) loadAccuracy(c, u);
+  }
+}, { deep: true });
+function acc(c: Card, r: OutlookRow): UnitAccuracy | 'error' | undefined {
+  const a = accuracy[accKey(c, r.unit)];
+  return a === 'error' ? a : a?.find((x) => x.h === r.h);
+}
+/** An average error: pp for shares; for time horizons a typical "off by a factor of" (errors are in doublings). */
+function err(c: Card, v: number | null | undefined): string {
+  if (v == null) return '–';
+  return c.minutes ? `×${(2 ** v).toFixed(2)}` : `${v.toFixed(2)} pp`;
+}
+/** Error relative to "no change": -23% means 23% smaller. */
+function vsNaive(m: MethodScore, a: UnitAccuracy): string {
+  const n = a.methods.find((x) => x.method === 'naive')?.mae;
+  if (!n || m.method === 'naive') return '—';
+  const d = Math.round((m.mae / n - 1) * 100);
+  return `${d > 0 ? '+' : ''}${d}%`;
+}
+const pooled = (a: UnitAccuracy, m: string) => a.all_units.find((x) => x.method === m)?.mae;
+const best = (a: UnitAccuracy) => a.methods[0];
 
 /** The pipeline's technical warnings, said plainly. Unknown ones are shown as they are. */
 function friendly(w: string): string | null {
   if (w.startsWith('point forecast outside')) return null; // already said on the row itself
-  if (w.startsWith('chosen model')) return STATUS.baseline_retained.hint;
+  if (w.startsWith('chosen model'))
+    return 'Across all series, the method picked in earlier tests didn’t beat “no change” on recent months, so “no change” is shown.';
   if (w.startsWith('point-in-time basis: reconstructed') || w.startsWith('point-in-time basis: mixed'))
     return 'Part of the test history was rebuilt from later data, so the test scores are approximate.';
   if (w.startsWith('point-in-time basis: current_only'))
@@ -166,7 +202,7 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
       <p class="eyebrow">AI outlook</p>
       <h1>Where AI and jobs look to be heading</h1>
       <Bubble :size="56" class="intro">
-        These are trend outlooks from public data, not promises. Each one says how it did when we tested it on months it hadn’t seen, so you know how much weight to give it.
+        These are trend outlooks from public data, not promises. Under each forecast you can see how every method did on past months it hadn’t seen, for the exact country, sector or group you pick.
       </Bubble>
 
       <div v-if="status === 'loading'" class="grid" aria-busy="true" aria-label="Loading the outlook">
@@ -213,9 +249,55 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
                 <p v-if="r.low != null && r.high != null && (r.forecast < r.low || r.forecast > r.high)" class="skew">
                   Forecasts like this have always come in too {{ r.forecast < r.low ? 'low' : 'high' }}, so the range is the better guide here.
                 </p>
-                <span class="chip" :class="STATUS[r.status].tone" :title="STATUS[r.status].hint">
-                  <Icon :name="STATUS[r.status].icon" :size="14" /> {{ STATUS[r.status].label }}
-                </span>
+                <div v-for="a in [acc(c, r)]" :key="'a'" class="test">
+                  <p v-if="a === 'error'" class="test-line">Test results couldn’t be loaded.</p>
+                  <p v-else-if="!a" class="test-line muted">Loading test results…</p>
+                  <template v-else>
+                    <p class="test-line">
+                      <b>Tested on {{ a.n_test_points }} past forecast{{ a.n_test_points === 1 ? '' : 's' }}</b> for {{ unitName(c, r.unit) }}.
+                      <template v-if="a.served_model !== 'naive'">
+                        The method shown ({{ methodName(a.served_model) }}) was off by <b>{{ err(c, a.served_mae) }}</b> on average;
+                        “no change” was off by <b>{{ err(c, a.naive_mae) }}</b>.
+                      </template>
+                      <template v-else>
+                        The forecast shown is “no change”, off by <b>{{ err(c, a.naive_mae) }}</b> on average.
+                        <template v-if="best(a).method !== 'naive'">The most accurate method here was {{ methodName(best(a).method) }} ({{ err(c, best(a).mae) }}).</template>
+                      </template>
+                    </p>
+                    <span v-if="a.beats_naive !== null" class="verdict" :class="a.beats_naive ? 'yes' : 'no'">
+                      <Icon :name="a.beats_naive ? 'check' : 'x'" :size="14" />
+                      {{ a.beats_naive ? 'Beats “no change” here' : 'Does not beat “no change” here' }}
+                    </span>
+                    <span v-else class="verdict same"><Icon name="scale" :size="14" /> Shown forecast is “no change”</span>
+                    <p v-if="a.n_test_points < 5" class="few">
+                      Only {{ a.n_test_points }} test points here, so this comparison can easily be luck.
+                    </p>
+                    <details class="methods">
+                      <summary>All methods tested for {{ unitName(c, r.unit) }}</summary>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th scope="col">Method</th><th scope="col">Avg error here</th><th scope="col">vs “no change”</th>
+                            <th v-if="c.pickerLabel" scope="col">All series</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="m in a.methods" :key="m.method" :class="{ shown: m.method === a.served_model, base: m.method === 'naive' }">
+                            <td>{{ methodName(m.method) }}<span v-if="m.method === a.served_model" class="tag">shown</span></td>
+                            <td>{{ err(c, m.mae) }}</td>
+                            <td>{{ vsNaive(m, a) }}</td>
+                            <td v-if="c.pickerLabel">{{ err(c, pooled(a, m.method)) }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <p class="table-note">
+                        Average error on months the methods hadn’t seen{{ c.minutes ? ' (×1.30 = typically 30% too high or too low)' : ', in percentage points' }}.
+                        A negative “vs no change” means more accurate than “no change”.
+                        <template v-if="c.pickerLabel">“All series” pools every {{ c.pickerLabel.toLowerCase() }}; that pooled score is what picked the method shown.</template>
+                      </p>
+                    </details>
+                  </template>
+                </div>
 
                 <div v-if="r.p_acceleration != null" class="regime">
                   <p class="regime-q">Will progress speed up {{ horizon(r) }}?</p>
@@ -272,9 +354,23 @@ h2 { font-size: 19px; line-height: 1.25; }
 .tick { position: absolute; top: 1px; width: 2px; height: 16px; margin-left: -1px; background: var(--muted); }
 .range { font-size: 12px; font-weight: 700; color: var(--muted); }
 .skew { font-size: 12px; font-weight: 700; color: var(--amber-ink); line-height: 1.4; }
-.chip { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; }
-.chip.good { background: #e7f4ea; color: #1e5e30; }
-.chip.neutral { background: #f0efec; color: var(--ink); }
+.test { display: flex; flex-direction: column; gap: 6px; }
+.test-line { font-size: 12.5px; line-height: 1.5; color: var(--ink); }
+.verdict { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; }
+.verdict.yes { background: #e7f4ea; color: #1e5e30; }
+.verdict.no { background: #fdecea; color: #a12a22; }
+.verdict.same { background: #f0efec; color: var(--ink); }
+.few { font-size: 12px; font-weight: 700; color: var(--amber-ink); }
+.methods { font-size: 12px; }
+.methods summary { cursor: pointer; font-weight: 800; color: var(--ink); }
+.methods table { width: 100%; border-collapse: collapse; margin-top: 8px; font-variant-numeric: tabular-nums; }
+.methods th, .methods td { text-align: right; padding: 5px 6px; border-bottom: 1px solid var(--line); }
+.methods th:first-child, .methods td:first-child { text-align: left; }
+.methods th { font-weight: 800; color: var(--muted); font-size: 11px; }
+.methods tr.shown td { font-weight: 800; }
+.methods tr.base td { background: #faf9f6; }
+.tag { margin-left: 6px; padding: 1px 6px; border-radius: 999px; background: var(--cream); color: var(--amber-ink); font-size: 10px; font-weight: 800; }
+.table-note { margin-top: 6px; color: var(--muted); line-height: 1.45; }
 .regime { margin-top: 4px; display: flex; flex-direction: column; gap: 6px; }
 .regime-q { font-size: 13px; font-weight: 800; }
 .stack { display: flex; gap: 2px; height: 12px; }

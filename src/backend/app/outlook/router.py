@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
 
 from app.outlook import service
-from app.outlook.schemas import OutlookRow, TargetSummary
+from app.outlook.schemas import OutlookRow, TargetSummary, UnitAccuracy
 
 router = APIRouter(prefix="/outlook", tags=["outlook"])
 
@@ -32,3 +32,12 @@ def get_evaluation(target: str):
     """The newest run's evaluation: split, selection table, holdout scores, coverage, ablations, regimes."""
     _check(target)
     return service.evaluation(target)
+
+
+# Example: http://127.0.0.1:8000/outlook/btos_ai_use_rate/accuracy?unit=62|new
+@router.get("/{target}/accuracy", response_model=list[UnitAccuracy])
+def get_accuracy(target: str, unit: str = Query(..., description="e.g. US, 62|new, 15, v1.1")):
+    """For one unit: how every method did on the held-back test data, per published horizon, and whether the
+    published forecast beat 'no change' there."""
+    _check(target)
+    return service.accuracy(target, unit)

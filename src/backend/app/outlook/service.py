@@ -69,3 +69,37 @@ def rows(target: str, unit: str | None = None, h: int | None = None) -> list[dic
         r["warnings"] = [w.strip() for w in (r.get("warnings") or "").split(WARNING_SEP) if w.strip()]
         out.append(r)
     return out
+
+
+def _backtest(target: str, run_id: str) -> pd.DataFrame:
+    """Held-back (holdout) predictions of one run, with an outcome: the test the published forecast passed or failed."""
+    b = _csv(OUTPUT_DIR / target / "runs" / run_id / "backtest.csv.gz")
+    return b[(b["feature_set"] == "all") & (b["role"] == "holdout") & b["actual"].notna()]
+
+
+def accuracy(target: str, unit: str) -> list[dict]:
+    """Per promoted horizon: every method's average error on the held-back test data for this one unit, next to the
+    same methods pooled over all units. Errors are absolute, in the target's error unit (pp, or doublings)."""
+    spec = all_specs()[target]
+    reg = _json(OUTPUT_DIR / target / "model_registry.json")
+    out = []
+    for h, e in sorted(reg["promoted"].items(), key=lambda kv: int(kv[0])):
+        b = _backtest(target, e["run_id"])
+        b = b[b["h"] == int(h)]
+        mine = b[b["unit"].str.lower() == unit.lower()]
+
+        def score(d: pd.DataFrame) -> list[dict]:
+            g = d.groupby("candidate")["error"]
+            t = pd.DataFrame({"mae": g.apply(lambda x: x.abs().mean()), "bias": g.mean(), "n": g.size()})
+            return [{"method": m, "mae": float(r.mae), "bias": float(r.bias), "n": int(r.n)}
+                    for m, r in t.sort_values("mae").iterrows()]
+
+        rows = score(mine)
+        by = {r["method"]: r for r in rows}
+        served, naive = by.get(e["model"]), by.get("naive")
+        out.append({"h": int(h), "unit": unit, "served_model": e["model"], "chosen_model": e.get("chosen_model"),
+                    "error_unit": spec.error_unit, "n_test_points": served["n"] if served else 0,
+                    "served_mae": served["mae"] if served else None, "naive_mae": naive["mae"] if naive else None,
+                    "beats_naive": (served["mae"] < naive["mae"]) if served and naive and e["model"] != "naive" else None,
+                    "methods": rows, "all_units": score(b), "run_id": e["run_id"]})
+    return out

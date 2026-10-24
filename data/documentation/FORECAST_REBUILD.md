@@ -361,7 +361,8 @@ python -m pytest forecasting/tests                          # 61 tests, offline,
 - **API** (read-only, added alongside the existing `/forecast`, which is unchanged). New runs show up without a restart. Every row carries `status`, its range and `warnings`:
   - `GET /outlook` lists the targets with promoted horizons, status and source health;
   - `GET /outlook/{target}?unit=&h=` returns the promoted forecasts;
-  - `GET /outlook/{target}/evaluation` returns the newest run's evaluation.
+  - `GET /outlook/{target}/evaluation` returns the newest run's evaluation;
+  - `GET /outlook/{target}/accuracy?unit=` returns, for one unit, every method's average holdout error per published horizon, and whether the published forecast beat "no change" for that unit.
 - **Reproducibility (checked 24 Oct 2026):** on a fresh clone of the branch, with no raw data, the 65 tests pass. `python -m forecasting.run --skip-ingest` reproduces all 69,388 backtest predictions of the main checkout exactly (same code-version hash).
 
 ## 11. Limitations and next steps
@@ -384,7 +385,7 @@ python -m pytest forecasting/tests                          # 61 tests, offline,
    - a unit picker;
    - the latest value;
    - per-horizon forecast markers with their 80% ranges;
-   - a plain-language status chip;
+   - the test results **for the selected unit**: how many held-back forecasts it was tested on, the shown method's average error next to "no change", a beats / does-not-beat verdict, a warning below 5 test points, and an expandable table of every method (this unit and all series pooled). The pooled status chip was removed: the pooled choice can hide a unit where another method, or "no change", did better;
    - an inline note when the point falls outside its range;
    - the warnings (collapsed);
    - the data date.

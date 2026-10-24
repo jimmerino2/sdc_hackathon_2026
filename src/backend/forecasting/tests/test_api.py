@@ -39,3 +39,20 @@ def test_outlook_rows_are_the_promoted_forecast():
 def test_unknown_target_is_404_and_old_forecast_api_still_answers():
     assert client.get("/outlook/no_such_target").status_code == 404
     assert client.get("/forecast/sectors").status_code == 200
+
+
+@pytest.mark.skipif(not service.targets(), reason="no forecast run yet")
+def test_accuracy_is_per_unit_and_includes_no_change():
+    for t in service.targets():
+        unit = client.get(f"/outlook/{t}").json()[0]["unit"]
+        acc = client.get(f"/outlook/{t}/accuracy", params={"unit": unit}).json()
+        assert {a["h"] for a in acc} == {p["h"] for p in service.summary(t)["promoted"]}
+        for a in acc:
+            methods = {m["method"]: m for m in a["methods"]}
+            assert "naive" in methods and a["served_model"] in methods
+            assert a["naive_mae"] == methods["naive"]["mae"] and a["n_test_points"] > 0
+            assert [m["mae"] for m in a["methods"]] == sorted(m["mae"] for m in a["methods"])
+            if a["served_model"] == "naive":
+                assert a["beats_naive"] is None
+            else:
+                assert a["beats_naive"] == (a["served_mae"] < a["naive_mae"])

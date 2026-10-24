@@ -118,3 +118,6 @@ METR's own repo (METR/eval-analysis-public) only has raw runs + 24 commits: not 
 - 2026-10-24: FRED_API_KEY added by user (src/backend/.env, written "FRED_API_KEY = ..."; rps.fred_key() parses it).
   ALFRED: whole series first on FRED 2026-06-18, revised 2026-10-16 -> 2 real origins, earlier reconstructed.
   RPS h1 now baseline_retained (pooled_mean MASE 1.03 vs revised truth). Key verified absent from stored files.
+- 2026-10-24: per-unit test results on the AI outlook page (user asked to see accuracy and beats-no-change per
+  country/sector/group, not one pooled chip): GET /outlook/{target}/accuracy?unit=, OutlookView shows result line,
+  verdict, few-points warning and an all-methods table. Pooled status chip removed. 67 tests pass.

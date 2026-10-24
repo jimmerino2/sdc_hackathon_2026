@@ -65,3 +65,33 @@ async function get<T>(path: string): Promise<T> {
 
 export const fetchTargets = () => get<TargetSummary[]>('/outlook');
 export const fetchOutlook = (target: string) => get<OutlookRow[]>(`/outlook/${encodeURIComponent(target)}`);
+
+/** One method's result on the held-back test data (naive = "no change"). */
+export interface MethodScore {
+  method: string;
+  /** Average absolute error, in error_unit (pp, or doublings for time horizons). */
+  mae: number;
+  /** Average error; negative = forecasts were too low. */
+  bias: number;
+  n: number;
+}
+
+/** How every method did on the held-back test data for one unit at one horizon. */
+export interface UnitAccuracy {
+  h: number;
+  unit: string;
+  served_model: string;
+  chosen_model: string | null;
+  error_unit: string;
+  n_test_points: number;
+  served_mae: number | null;
+  naive_mae: number | null;
+  /** null when the forecast shown is "no change" itself. */
+  beats_naive: boolean | null;
+  methods: MethodScore[];
+  all_units: MethodScore[];
+  run_id: string;
+}
+
+export const fetchAccuracy = (target: string, unit: string) =>
+  get<UnitAccuracy[]>(`/outlook/${encodeURIComponent(target)}/accuracy?unit=${encodeURIComponent(unit)}`);

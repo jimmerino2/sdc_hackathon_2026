@@ -57,3 +57,28 @@ class OutlookRow(BaseModel):
     data_as_of: str
     run_id: str
     made_at: str
+
+
+class MethodScore(BaseModel):
+    method: str = Field(description="naive = no change; drift, damped_drift, pooled_mean, local_trend, ridge, lightgbm")
+    mae: float = Field(description="Average absolute error on the held-back test data, in error_unit")
+    bias: float = Field(description="Average error (forecast minus outcome); negative = forecasts were too low")
+    n: int = Field(description="Number of held-back test forecasts")
+
+
+class UnitAccuracy(BaseModel):
+    """How each method did on the held-back test data for one unit (country, sector or group) at one horizon."""
+
+    h: int
+    unit: str
+    served_model: str = Field(description="Method behind the published forecast")
+    chosen_model: str | None = None
+    error_unit: str
+    n_test_points: int
+    served_mae: float | None
+    naive_mae: float | None
+    beats_naive: bool | None = Field(None, description="Published method more accurate than no change for this unit; "
+                                                       "null when the published method is no change itself")
+    methods: list[MethodScore] = Field(description="Every method, this unit only, most accurate first")
+    all_units: list[MethodScore] = Field(description="Every method, all units pooled (what the model was chosen on)")
+    run_id: str
