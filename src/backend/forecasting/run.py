@@ -62,6 +62,19 @@ VALIDATED_MASE = 0.95  # "validated" needs >= 5% lower holdout error than naive;
                       # evidence. Added after an RPS run labelled a 0.03% gain "validated"; it changes labels, not choices.
 
 
+def decision(sel: pd.DataFrame, h: int) -> tuple[pd.Series, pd.Series, str]:
+    """(chosen row, served row, status) for horizon h. The chosen model is served unless its one holdout score is
+    worse than naive's: then the baseline is retained (spec 16.1). This is a pass/fail gate on the predeclared
+    choice, not a re-selection on the holdout. Added after BTOS h=13 chose local_trend, which then lost to naive
+    by 70% on the new-wording holdout."""
+    rows = sel[sel["h"] == h]
+    c = rows[rows["chosen"]].iloc[0]
+    m = c["holdout_mase_vs_naive"]
+    if c["candidate"] != "naive" and m is not None and not pd.isna(m) and m > 1:
+        return c, rows[rows["candidate"] == "naive"].iloc[0], "baseline_retained"
+    return c, c, status_for(c)
+
+
 def status_for(row: pd.Series) -> str:
     if row["candidate"] == "naive":
         return "baseline"
@@ -97,7 +110,7 @@ def forecast(spec: TargetSpec, snap: F.Snapshot, sel: pd.DataFrame, bt: pd.DataF
     label = contracts.TARGETS[spec.id].label_source
     out = []
     for h in spec.horizons:
-        c = sel[(sel["h"] == h) & sel["chosen"]].iloc[0]
+        chosen, c, status = decision(sel, h)
         m = CANDIDATES[c["candidate"]]().fit(F.labelled(spec, snap, h), h, spec.features, spec.trend_steps,
                                              spec.panel(snap))
         base = rows_now["lvl"].to_numpy() + m.predict(rows_now)
@@ -110,21 +123,29 @@ def forecast(spec: TargetSpec, snap: F.Snapshot, sel: pd.DataFrame, bt: pd.DataF
             warnings.append("insufficient history")
         if snap.kind != "real":
             warnings.append(f"point-in-time basis: {snap.kind}")
+        if status == "baseline_retained":
+            warnings.append(f"chosen model {chosen['candidate']} lost to naive on the holdout; baseline served")
+        outside = ~((lo <= 0) & (0 <= hi)) if np.isfinite([lo, hi]).all() else False
+        if outside:  # every past residual on one side: the model has been systematically biased
+            warnings.append("point forecast outside its own 10-90% range: this model has consistently "
+                            + ("under" if lo > 0 else "over") + "-forecast; read the range, not the point")
         out.append(pd.DataFrame({
             "run_id": run_id, "made_at": made_at, "target": spec.id, "unit_kind": spec.unit_kind,
             "unit": rows_now["unit"], "segment": [spec.segment(u) for u in rows_now["unit"]],
             "last_observed_period": spec.label(snap.last), "last_observed": inv(rows_now["lvl"].to_numpy()),
             "h": h, "period_unit": spec.period_unit, "target_period": spec.label(snap.last + h),
-            "value_unit": spec.value_unit, "model": c["candidate"], "forecast": inv(base),
+            "value_unit": spec.value_unit, "model": c["candidate"], "chosen_model": chosen["candidate"],
+            "forecast": inv(base),
             "low": inv(base + lo), "high": inv(base + hi),
-            "interval": f"10-90% empirical (out-of-sample residuals, {spec.scale.name} scale)", "status": status_for(c),
-            "holdout_mae": c["holdout_mae"], "naive_holdout_mae":
+            "interval": f"10-90% empirical (out-of-sample residuals, {spec.scale.name} scale)", "status": status,
+            "holdout_mae": chosen["holdout_mae"], "naive_holdout_mae":
                 sel[(sel["h"] == h) & (sel["candidate"] == "naive")]["holdout_mae"].iloc[0],
             "vintage": snap.vintage, "data_as_of": snap.origin.isoformat(), "warnings": "; ".join(warnings)}))
         if spec.regimes:
             resid = scored[(scored["candidate"] == c["candidate"]) & (scored["h"] == h)]["resid"].to_numpy()
             lo_b, hi_b = E.regime_bounds(rows_now["trend"].to_numpy(), h, spec.trend_steps)
-            p = E.regime_probs(base - rows_now["lvl"].to_numpy(), resid, lo_b, hi_b) if len(resid) else                 np.full((len(rows_now), 3), np.nan)
+            p = (E.regime_probs(base - rows_now["lvl"].to_numpy(), resid, lo_b, hi_b) if len(resid)
+                 else np.full((len(rows_now), 3), np.nan))
             for i, r in enumerate(E.REGIMES):
                 out[-1][f"p_{r}"] = p[:, i]
             out[-1]["regime_rule"] = (f"rate over next {h} vs trailing rate over {spec.trend_steps} periods; "
@@ -133,15 +154,26 @@ def forecast(spec: TargetSpec, snap: F.Snapshot, sel: pd.DataFrame, bt: pd.DataF
     return pd.concat(out, ignore_index=True)
 
 
+def append_log(path: Path, rows: pd.DataFrame) -> None:
+    """Append-only in content: earlier rows are kept as they are; a new column is added for all rows (blank for
+    older ones). Written to a temporary file first, so a failure cannot truncate the log."""
+    old = pd.read_csv(path, dtype={"unit": str}) if path.exists() else pd.DataFrame()
+    new = pd.concat([old, rows], ignore_index=True)
+    tmp = path.with_suffix(".tmp")
+    new.to_csv(tmp, index=False)
+    tmp.replace(path)
+
+
 def promote(spec: TargetSpec, out: Path, run_id: str, made_at: str, sel: pd.DataFrame, health: dict,
             version: str) -> dict:
     path = out / "model_registry.json"
     reg = json.loads(path.read_text()) if path.exists() else {"target": spec.id, "promoted": {}, "attempts": []}
     for h in spec.horizons:
-        c = sel[(sel["h"] == h) & sel["chosen"]].iloc[0]
+        c, served, status = decision(sel, h)
         fails = acceptance(spec, sel, health, h)
-        entry = {"run_id": run_id, "made_at": made_at, "h": int(h), "model": c["candidate"], "model_version": version,
-                 "status": status_for(c), "selection_mae": c["selection_mae"],
+        entry = {"run_id": run_id, "made_at": made_at, "h": int(h), "model": served["candidate"],
+                 "chosen_model": c["candidate"], "model_version": version,
+                 "status": status, "selection_mae": c["selection_mae"],
                  "holdout_mae": c["holdout_mae"], "holdout_mase_vs_naive": c["holdout_mase_vs_naive"],
                  "accepted": not fails, "rejected_because": fails}
         reg["attempts"].append(entry)
@@ -186,8 +218,7 @@ def run_target(spec: TargetSpec, now: pd.Timestamp | None = None) -> dict:
 
     fc = forecast(spec, snaps[-1], sel, bt, run_id, made_at, health)
     fc.to_csv(run_dir / "forecast.csv", index=False)
-    log = out / "forecast_log.csv"
-    fc.to_csv(log, mode="a", header=not log.exists(), index=False)
+    append_log(out / "forecast_log.csv", fc)
 
     target = contracts.TARGETS[spec.id]
     evaluation = {

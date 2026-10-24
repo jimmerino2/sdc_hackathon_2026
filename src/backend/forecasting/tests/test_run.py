@@ -62,6 +62,15 @@ def test_status_labels_follow_the_holdout_comparison():
     assert run.status_for(pd.Series({"candidate": "ridge", "holdout_mase_vs_naive": 0.9997})) == "not_demonstrably_better"
 
 
+def test_chosen_model_that_loses_to_naive_is_not_served():
+    sel = _sel()
+    sel.loc[sel["candidate"] == "ridge", "holdout_mase_vs_naive"] = 1.7
+    chosen, served, status = run.decision(sel, 1)
+    assert chosen["candidate"] == "ridge" and served["candidate"] == "naive" and status == "baseline_retained"
+    chosen, served, status = run.decision(_sel(), 1)  # beats naive by 20%: served as chosen
+    assert served["candidate"] == "ridge" and status == "validated"
+
+
 @pytest.mark.parametrize("tid", list(all_specs()))
 def test_published_forecast_is_timestamped_versioned_and_bounded(tid):
     latest = OUTPUT / tid / "latest_forecast.csv"
@@ -72,7 +81,9 @@ def test_published_forecast_is_timestamped_versioned_and_bounded(tid):
     assert set(f["unit"]) <= set(log["unit"])  # codes survive the round trip (e.g. SOC "00")
     assert f["run_id"].notna().all() and f["made_at"].notna().all() and f["data_as_of"].notna().all()
     lo, fc, hi = ("low", "forecast", "high") if "forecast" in f else ("low_pct", "forecast_pct", "high_pct")
-    assert ((f[lo] <= f[fc]) & (f[fc] <= f[hi])).all()
+    assert (f[lo] <= f[hi]).all()
+    outside = (f[fc] < f[lo]) | (f[fc] > f[hi])  # allowed only with an explicit warning (one-sided past errors)
+    assert f.loc[outside, "warnings"].str.contains("outside its own 10-90% range").all()
     if all_specs()[tid].value_unit == "percent":
         assert f[[lo, hi]].stack().between(0, 100).all()
     assert (f["target"] == tid).all()
