@@ -134,7 +134,7 @@ def promote(spec: TargetSpec, out: Path, run_id: str, made_at: str, sel: pd.Data
             reg["promoted"][str(h)] = entry
     path.write_text(json.dumps(reg, indent=2, default=lambda v: None if pd.isna(v) else float(v)))
     # latest_forecast.csv: per horizon, rows of the promoted run (looked up in the append-only log)
-    log = pd.read_csv(out / "forecast_log.csv")
+    log = pd.read_csv(out / "forecast_log.csv", dtype={"unit": str})  # SOC "00" must stay "00"
     keep = [log[(log["run_id"] == e["run_id"]) & (log["h"] == int(h))] for h, e in reg["promoted"].items()]
     if keep:
         pd.concat(keep).to_csv(out / "latest_forecast.csv", index=False)

@@ -66,7 +66,9 @@ def test_published_forecast_is_timestamped_versioned_and_bounded(tid):
     latest = OUTPUT / tid / "latest_forecast.csv"
     if not latest.exists():
         pytest.skip("no forecast run yet")
-    f = pd.read_csv(latest)
+    f = pd.read_csv(latest, dtype={"unit": str})
+    log = pd.read_csv(OUTPUT / tid / "forecast_log.csv", dtype={"unit": str})
+    assert set(f["unit"]) <= set(log["unit"])  # codes survive the round trip (e.g. SOC "00")
     assert f["run_id"].notna().all() and f["made_at"].notna().all() and f["data_as_of"].notna().all()
     assert ((f["low_pct"] <= f["forecast_pct"]) & (f["forecast_pct"] <= f["high_pct"])).all()
     assert f[["low_pct", "high_pct"]].stack().between(0, 100).all()
