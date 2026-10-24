@@ -4,7 +4,6 @@ data/raw
 venv
 **/.venv
 **/node_modules
-src/frontend
 submission
 graphify-out
 .git
