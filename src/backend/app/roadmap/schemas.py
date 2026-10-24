@@ -4,6 +4,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from app.challenge.schemas import Challenge
+
 
 class Source(BaseModel):
     """One place to learn a skill (a row of skill_sources)."""
@@ -56,6 +58,9 @@ class Roadmap(BaseModel):
     status: Literal["locked", "available", "in_progress", "completed"] | None = None
     current: CurrentStep | None = Field(None, description="The step the learner is on")
     sections: list[Section]
+    challenges: list[Challenge] = Field(
+        default_factory=list, description="Bonus Quests, one per two sections; tech roles only, empty for the others"
+    )
 
 
 class RoadmapCreate(BaseModel):

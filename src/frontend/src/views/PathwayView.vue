@@ -10,7 +10,8 @@ import NextUpCard, { type NextUpSkill } from '../components/learn/NextUpCard.vue
 import ProgressCard from '../components/learn/ProgressCard.vue';
 import SignalCard from '../components/learn/SignalCard.vue';
 import BeeGuide from '../components/learn/BeeGuide.vue';
-import { completeNode, deleteRoadmap, fetchRoadmapSummaries, RoadmapError, type RoadmapNode, type RoadmapSource, type RoadmapSummary } from '../api/roadmap';
+import ChallengeCard from '../components/learn/ChallengeCard.vue';
+import { completeNode, deleteRoadmap, fetchRoadmapSummaries, RoadmapError, submitChallenge, type RoadmapChallenge, type RoadmapNode, type RoadmapSource, type RoadmapSummary } from '../api/roadmap';
 import { readProfileId } from '../api/profile';
 import { skillLabel } from '../data/skills';
 import { allNodes, completeLocally, learningLinks, progress, resolveNodes, resolveUnits, sectionCleared, type ResolvedSkill } from '../learn/skillState';
@@ -112,6 +113,30 @@ async function markDone() {
     error.value = e instanceof RoadmapError ? e.message : 'Couldn’t save that. Try again.';
   } finally {
     busyId.value = null;
+  }
+}
+
+/* ---------- Bonus quests: optional projects between sections (tech roles only) ---------- */
+const questsAfter = (section: number) => (roadmap.value?.challenges ?? []).filter((c) => c.after_section === section);
+const questBusy = ref<string | null>(null);
+const questErrors = ref<Record<string, string>>({});
+
+/** Have the repo judged, then show the scored challenge in place. */
+async function submitQuest(c: RoadmapChallenge, repoUrl: string) {
+  const id = profileId();
+  if (!id || questBusy.value) return;
+  questBusy.value = c.challenge_id;
+  questErrors.value = { ...questErrors.value, [c.challenge_id]: '' };
+  try {
+    const saved = await submitChallenge(id, c.challenge_id, repoUrl);
+    const current = state.value.roadmap.data;
+    if (current?.challenges) {
+      state.value.roadmap.data = { ...current, challenges: current.challenges.map((x) => (x.challenge_id === saved.challenge_id ? saved : x)) };
+    }
+  } catch (e) {
+    questErrors.value = { ...questErrors.value, [c.challenge_id]: e instanceof RoadmapError ? e.message : 'Jobee couldn’t judge that just now. Try again in a moment.' };
+  } finally {
+    questBusy.value = null;
   }
 }
 
@@ -240,6 +265,14 @@ onMounted(async () => {
               @select="select"
             />
           </div>
+          <ChallengeCard
+            v-for="c in questsAfter(sec.section)"
+            :key="c.challenge_id"
+            :challenge="c"
+            :busy="questBusy === c.challenge_id"
+            :error="questErrors[c.challenge_id] || null"
+            @submit="(url) => submitQuest(c, url)"
+          />
         </template>
 
         <div class="jb-end"><span class="jb-end__disc"><Icon name="trophy" :size="28" /></span>Role-ready!</div>

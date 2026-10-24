@@ -16,7 +16,10 @@ class Settings(BaseSettings):
     openrouter_base_url: str = "https://llm.grafilab.ai/v1"
     # Model reasoning for roadmap generation: "off" ~12s, "low" ~60s with better ordering, "default" ~2min
     roadmap_reasoning: Literal["off", "low", "default"] = "off"
+    # Model reasoning for writing and judging Bonus Quests (same options as roadmap_reasoning)
+    challenge_reasoning: Literal["off", "low", "default"] = "off"
     openrouter_model: str = "qwen/qwen3.7-flash"
+    github_token: str = ""  # optional; reading a submitted repo without it is limited to 60 GitHub API calls an hour
     openjev_url: str = ""
     openjev_token: str = ""
     resume_prefilter: bool = True  # both engines: consider only tools named in the resume (plus the general skills); false = all ~260
