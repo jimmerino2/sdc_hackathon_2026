@@ -58,6 +58,7 @@ def feature_sets(spec: TargetSpec) -> dict[str, list[str]]:
     return sets
 
 
+WARNING_SEP = " | "  # warning texts may contain ";"
 VALIDATED_MASE = 0.95  # "validated" needs >= 5% lower holdout error than naive; a tie on a few noisy origins is not
                       # evidence. Added after an RPS run labelled a 0.03% gain "validated"; it changes labels, not choices.
 
@@ -147,7 +148,7 @@ def forecast(spec: TargetSpec, snap: F.Snapshot, sel: pd.DataFrame, bt: pd.DataF
             "interval": f"10-90% empirical (out-of-sample residuals, {spec.scale.name} scale)", "status": status,
             "holdout_mae": chosen["holdout_mae"], "naive_holdout_mae":
                 sel[(sel["h"] == h) & (sel["candidate"] == "naive")]["holdout_mae"].iloc[0],
-            "vintage": snap.vintage, "data_as_of": snap.origin.isoformat(), "warnings": "; ".join(warnings)}))
+            "vintage": snap.vintage, "data_as_of": snap.origin.isoformat(), "warnings": WARNING_SEP.join(warnings)}))
         if spec.regimes:
             resid = scored[(scored["candidate"] == c["candidate"]) & (scored["h"] == h)]["resid"].to_numpy()
             lo_b, hi_b = E.regime_bounds(rows_now["trend"].to_numpy(), h, spec.trend_steps)
