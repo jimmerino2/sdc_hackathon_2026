@@ -84,7 +84,7 @@ export interface Roadmap {
   roadmap_id: string | null;
   status: 'locked' | 'available' | 'in_progress' | 'completed' | null;
   current: { section: number; unit: number } | null;
-  sections: { section: number; units: { unit: number; nodes: RoadmapNode[] }[] }[];
+  sections: { section: number; /** What this section covers, e.g. "Web Fundamentals"; null on a roadmap built before this was tracked. */ title: string | null; units: { unit: number; nodes: RoadmapNode[] }[] }[];
   /** Bonus Quests; empty (or missing, on an older backend) for non-tech roles. */
   challenges?: RoadmapChallenge[];
 }

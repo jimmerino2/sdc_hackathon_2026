@@ -7,7 +7,7 @@ from supabase import Client
 from app.challenge import service as challenges
 from app.profile import service as profiles
 from app.roadmap import planner
-from app.roadmap.planner import Plan, PlanNode
+from app.roadmap.planner import Plan, PlanNode, PlanSection
 from app.roadmap.schemas import CurrentStep, LearnedSkill, Node, Roadmap, RoadmapSummary, Section, Source, Unit
 
 
@@ -21,7 +21,7 @@ def _role(db: Client, onet_code: str) -> dict:
 # One request: the roadmap row, its role, and every node with the skill it points at (PostgREST embedding).
 # onet_role_skills.source is not read: it needs migration 0002 and learning links now come from skill_sources.
 ROADMAP_SELECT = (
-    "roadmap_id,onet_code,section,unit,status,onet_roles(title,description),"
+    "roadmap_id,onet_code,section,unit,status,section_titles,onet_roles(title,description),"
     "roadmap_detail(roadmap_detail_id,skill_id,section,unit,status,completed_at,previous_nodes,previous_nodes_required,"
     "onet_role_skills(skill_name,skill_type,importance,level))"
 )
@@ -142,9 +142,11 @@ def get_roadmap(db: Client, profile_id: str, onet_code: str | None = None) -> Ro
         )
         grouped.setdefault(d["section"], {}).setdefault(d["unit"], []).append(node)
 
+    titles = roadmap.get("section_titles") or []  # null for a roadmap built before this column existed
     sections = [
         Section(
             section=sec,
+            title=titles[sec - 1] if sec - 1 < len(titles) else None,
             units=[
                 Unit(unit=u, nodes=sorted(nodes, key=lambda n: (depth_of(n.skill_id), -(n.importance or 0))))
                 for u, nodes in sorted(units.items())
@@ -212,29 +214,42 @@ def complete_node(db: Client, profile_id: str, roadmap_detail_id: str) -> Roadma
     return get_roadmap(db, profile_id, node["onet_code"])
 
 
-def plan_from_rows(rows: list[dict]) -> Plan:
-    """Rebuild a plan (sections -> units -> nodes) from stored roadmap_detail rows.
+def plan_from_rows(rows: list[dict], titles: list[str] | None = None) -> Plan:
+    """Rebuild a plan (sections -> units -> nodes) from stored roadmap_detail rows, with the source roadmap's
+    section_titles (positional, section N -> titles[N-1]; missing or short just falls back to "Section N").
 
     Only the structure is read: which skills, where they sit, and their prerequisites. Statuses and
-    completion times of whoever owned those rows are ignored on purpose.
+    completion times of whoever owned those rows are ignored on purpose. A row built before planner.sanitize
+    enforced same-unit-only prerequisites may still carry a cross-unit one (the roadmap can't draw it, so it
+    would just look broken again); drop those here too rather than copy them into a new roadmap.
     """
+    titles = titles or []
+    unit_of = {r["skill_id"]: (r["section"], r["unit"]) for r in rows}
     grouped: dict[int, dict[int, list[PlanNode]]] = {}
     for r in rows:
-        node = PlanNode(r["skill_id"], list(r["previous_nodes"] or []), bool(r["previous_nodes_required"]))
+        prev = [p for p in (r["previous_nodes"] or []) if unit_of.get(p) == (r["section"], r["unit"])]
+        node = PlanNode(r["skill_id"], prev, bool(r["previous_nodes_required"]) or not prev)
         grouped.setdefault(r["section"], {}).setdefault(r["unit"], []).append(node)
-    return [[nodes for _, nodes in sorted(units.items())] for _, units in sorted(grouped.items())]
+    return [
+        PlanSection(
+            title=titles[sec - 1] if sec - 1 < len(titles) else f"Section {sec}",
+            units=[nodes for _, nodes in sorted(units.items())],
+        )
+        for sec, units in sorted(grouped.items())
+    ]
 
 
 def _existing_plan(db: Client, onet_code: str) -> Plan | None:
     """The plan of the newest roadmap anyone has built for this role, or None. A role's plan depends only on the
     role, so it can be copied instead of asking the model again. Any read problem just means no copy."""
     try:
-        newest = db.table("roadmap").select("roadmap_id").eq("onet_code", onet_code).order("created_at", desc=True).limit(1).execute().data
+        newest = (db.table("roadmap").select("roadmap_id,section_titles").eq("onet_code", onet_code)
+                  .order("created_at", desc=True).limit(1).execute().data)
         if not newest:
             return None
         rows = (db.table("roadmap_detail").select("skill_id,section,unit,previous_nodes,previous_nodes_required")
                 .eq("roadmap_id", newest[0]["roadmap_id"]).execute().data)
-        return plan_from_rows(rows) if rows else None
+        return plan_from_rows(rows, newest[0].get("section_titles")) if rows else None
     except Exception as e:
         print(f"could not reuse an existing plan for {onet_code} ({type(e).__name__}); asking the model")
         return None
@@ -245,7 +260,7 @@ def detail_rows(plan: Plan, roadmap_id: str, onet_code: str) -> list[dict]:
     prerequisite are open and everything else starts locked."""
     details = []
     for si, section in enumerate(plan, start=1):
-        for ui, nodes in enumerate(section, start=1):
+        for ui, nodes in enumerate(section.units, start=1):
             for n in nodes:
                 open_now = si == 1 and ui == 1 and not (n.previous_nodes and n.previous_nodes_required)
                 details.append(
@@ -287,7 +302,7 @@ def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool) -
     # A role's plan doesn't depend on the learner, so reuse one that exists unless a rebuild was asked for.
     plan = None if replace else _existing_plan(db, onet_code)
     if plan is None:
-        skills = db.table("onet_role_skills").select("skill_id,skill_name,skill_type,importance,level").eq("onet_code", onet_code).execute().data
+        skills = db.table("onet_role_skills").select("skill_id,skill_name,skill_type,importance,level,forecast_demand").eq("onet_code", onet_code).execute().data
         relevant = planner.candidates(skills)
         if not relevant:
             raise HTTPException(status_code=422, detail=f"no skills above importance {planner.MIN_IMPORTANCE} for {onet_code}")
@@ -296,7 +311,7 @@ def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool) -
     # One roadmap row per role; its section/unit are the current step, starting at the first unit.
     roadmap_id = str(uuid.uuid4())
     roadmap = {"roadmap_id": roadmap_id, "profile_id": profile_id, "onet_code": onet_code, "section": 1, "unit": 1,
-               "status": "available"}
+               "status": "available", "section_titles": [s.title for s in plan]}
     details = detail_rows(plan, roadmap_id, onet_code)
 
     # No transaction support in the client: if a write fails, remove the partial roadmap.

@@ -41,6 +41,7 @@ class Unit(BaseModel):
 
 class Section(BaseModel):
     section: int
+    title: str | None = Field(None, description="What this section covers, e.g. 'Web Fundamentals'; null for a roadmap built before this was tracked")
     units: list[Unit]
 
 

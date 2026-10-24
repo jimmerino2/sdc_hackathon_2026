@@ -9,21 +9,22 @@ from openai import OpenAI
 from app.config import get_settings
 
 MAX_OUTPUT_TOKENS = 12000  # a 50-node plan is ~4k tokens; the rest is headroom for model reasoning
-MIN_IMPORTANCE = 2.0  # candidates must be strictly above this; the model then trims further
+MIN_IMPORTANCE = 2.25  # candidates must be strictly above this; the model then trims further
+MAX_SKILLS = 40  # the previous cap (35) plus 5, so the model has room to also act on forecast_demand
 
-SYSTEM_PROMPT = """You design learning roadmaps. Given a job role and its candidate skills, produce a roadmap a person can follow to prepare for the role.
+SYSTEM_PROMPT = f"""You design learning roadmaps. Given a job role and its candidate skills, produce a roadmap a person can follow to prepare for the role.
 
-Each candidate skill has: id, name, type (skill = general ability, knowledge = subject area, tech = software/tool), importance (1-5, how much the role needs it) and level (0-7, how deep; null for tech).
+Each candidate skill has: id, name, type (skill = general ability, knowledge = subject area, tech = software/tool), importance (1-5, how much O*NET says the role needs it), level (0-7, how deep; null for tech) and forecast_demand (0-1, the share of current US job ads for this role that name the skill, 6 months out; null when it isn't tracked, which is most skills - treat null as no signal either way, not as low demand).
 
 Do this in order:
-1. Re-evaluate which skills to keep. Drop near-duplicates, skills too generic to be worth a dedicated step, and low-value tools. A focused roadmap is better than an exhaustive one (aim for 25-35 skills, never more than 35, fewer if the role has fewer worthwhile ones). Keep high-importance skills.
-2. Group the kept skills into 3 or 4 sections, ordered as stages (e.g. foundations -> core knowledge -> applied skills and tools -> advanced), and each section into units (small themed groups of 3-6 skills). Use level and importance to place basics before advanced material.
-3. For each skill, list previous_nodes: ids of kept skills that should be learned before it. Only list a real dependency, not everything earlier. previous_nodes may only reference skills placed in an earlier unit/section or earlier in the same unit.
+1. Re-evaluate which skills to keep. Drop near-duplicates, skills too generic to be worth a dedicated step, and low-value tools. A focused roadmap is better than an exhaustive one (aim for 25-{MAX_SKILLS} skills, never more than {MAX_SKILLS}, fewer if the role has fewer worthwhile ones). Weigh forecast_demand heavily, not just as a tie-breaker: it is live evidence from current job ads, so a skill with meaningfully positive forecast_demand (say, above 0.05) should almost always be kept and should usually outrank a similar-importance skill with no forecast_demand data, even if that means cutting a slightly-higher-importance skill that forecast_demand doesn't cover. Importance stays the primary signal only when forecast_demand is null (most skills) or negligible.
+2. Group the kept skills into sections by real subject-matter coherence, not a fixed stage template - never sort skills into generic buckets like "foundations" / "core" / "applied" / "advanced" by skill type alone (that produces nonsense, e.g. a general-purpose language stranded alone in an early section while the specific stack the role actually uses sits three sections later). Instead, look at what the skills are actually for and group skills that are learned and used together (e.g. all of a web stack in one section, all of a cloud/deployment toolchain in another), choosing whatever number of sections (3 or more) and whatever order genuinely fits this role and this exact skill set - order sections so that a section's skills don't depend on a later section's, but otherwise structure it freely around the role's real shape, not a template. Give every section a short title (2-5 words) naming what it covers (e.g. "Web Fundamentals", "Cloud & Deployment", "Data Pipelines") - never a generic label like "Foundations" or "Section 1". Split each section into units (small themed groups of 3-6 skills); use level and importance to place basics before advanced material within a section.
+3. For each skill, list previous_nodes: ids of kept skills that should be learned before it. Only list a real dependency, not everything earlier. previous_nodes may ONLY reference another skill placed earlier in the very same unit - never a skill in an earlier unit or section, even when a real dependency exists. The roadmap only draws a dependency line within a unit, so a cross-unit prerequisite would be silently invisible; if a skill genuinely depends on something from an earlier unit or section, either place them in the same unit instead, or drop the link and rely on section/unit order alone.
 4. Set previous_nodes_required to true if the previous nodes must be completed first, false if they are only recommended.
 
 Reply with JSON only, no prose and no code fences, in exactly this shape:
-{"sections":[{"units":[{"nodes":[{"skill_id":"<id>","previous_nodes":["<id>"],"previous_nodes_required":true}]}]}]}
-Use only ids from the candidate list. Each skill may appear at most once. Hard limit: 35 skills in total."""
+{{"sections":[{{"title":"<short section title>","units":[{{"nodes":[{{"skill_id":"<id>","previous_nodes":["<id>"],"previous_nodes_required":true}}]}}]}}]}}
+Use only ids from the candidate list. Each skill may appear at most once. Hard limit: {MAX_SKILLS} skills in total."""
 
 
 @dataclass
@@ -33,8 +34,13 @@ class PlanNode:
     previous_nodes_required: bool = True
 
 
-# plan[section_index][unit_index] -> nodes, in learning order
-Plan = list[list[list[PlanNode]]]
+@dataclass
+class PlanSection:
+    title: str
+    units: list[list[PlanNode]] = field(default_factory=list)  # unit_index -> nodes, in learning order
+
+
+Plan = list[PlanSection]
 
 
 def candidates(skills: list[dict]) -> list[dict]:
@@ -51,10 +57,13 @@ def _extract_json(text: str) -> dict:
 
 
 def sanitize(raw: dict, valid_ids: set[str]) -> Plan:
-    """Keep only what is safe to store: known ids, each once, prerequisites that point strictly backwards.
+    """Keep only what is safe to store: known ids, each once, prerequisites that point strictly backwards
+    within the same unit (the roadmap only ever draws a dependency line within a unit; the model is told
+    this too, but a cross-unit reference is dropped here rather than trusted, same as a bad id).
 
-    Dropping a bad prerequisite is safe (the node just has fewer constraints); a backwards-only rule
-    also guarantees the dependency graph has no cycles. Empty units and sections are removed.
+    Dropping a bad prerequisite is safe (the node just has fewer constraints); a backwards-only,
+    same-unit-only rule also guarantees the dependency graph has no cycles. Empty units and sections
+    are removed.
     """
     seen: set[str] = set()
     plan: Plan = []
@@ -62,18 +71,21 @@ def sanitize(raw: dict, valid_ids: set[str]) -> Plan:
         units: list[list[PlanNode]] = []
         for unit in sec.get("units", []):
             nodes: list[PlanNode] = []
+            unit_seen: set[str] = set()  # ids placed so far in this unit only
             for n in unit.get("nodes", []):
                 sid = n.get("skill_id") if isinstance(n, dict) else None
                 if sid not in valid_ids or sid in seen:
                     continue
                 prev = n.get("previous_nodes") or []
-                prev = list(dict.fromkeys(p for p in prev if p in seen))  # already placed => strictly earlier
+                prev = list(dict.fromkeys(p for p in prev if p in unit_seen))  # same unit, already placed => strictly earlier
                 nodes.append(PlanNode(sid, prev, bool(n.get("previous_nodes_required", True)) or not prev))  # nothing to require
                 seen.add(sid)
+                unit_seen.add(sid)
             if nodes:
                 units.append(nodes)
         if units:
-            plan.append(units)
+            title = sec.get("title")
+            plan.append(PlanSection(title.strip() if isinstance(title, str) and title.strip() else f"Section {len(plan) + 1}", units))
     if not plan:
         raise ValueError("plan has no usable nodes")
     return plan
@@ -114,7 +126,8 @@ def _plan_with_openrouter(role_title: str, role_description: str | None, skills:
     if not get_settings().openrouter_api_key:
         raise HTTPException(status_code=503, detail="OPENROUTER_API_KEY is not set")
     listing = [
-        {"id": s["skill_id"], "name": s["skill_name"], "type": s["skill_type"], "importance": s["importance"], "level": s["level"]}
+        {"id": s["skill_id"], "name": s["skill_name"], "type": s["skill_type"], "importance": s["importance"], "level": s["level"],
+         "forecast_demand": s.get("forecast_demand")}
         for s in skills
     ]
     messages = [

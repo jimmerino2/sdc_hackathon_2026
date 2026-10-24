@@ -45,7 +45,7 @@ const haveMore = computed(() => Math.max(0, haveAll.value.length - MAX_CHIPS));
 const nodes = computed(() => allNodes(roadmap.value));
 const resolved = computed(() => resolveNodes(nodes.value, (n) => skillLabel(n.skill_name)));
 const counts = computed(() => progress(roadmap.value));
-const sections = computed(() => (roadmap.value?.sections ?? []).map((s) => ({ section: s.section, units: resolveUnits(roadmap.value!, s.section, (n) => skillLabel(n.skill_name)), count: s.units.reduce((t, u) => t + u.nodes.length, 0) })));
+const sections = computed(() => (roadmap.value?.sections ?? []).map((s) => ({ section: s.section, title: s.title, units: resolveUnits(roadmap.value!, s.section, (n) => skillLabel(n.skill_name)), count: s.units.reduce((t, u) => t + u.nodes.length, 0) })));
 
 const selectedId = ref<string | null>(null);
 const busyId = ref<string | null>(null);
@@ -275,7 +275,7 @@ onMounted(async () => {
         <template v-for="sec in sections" :key="sec.section">
           <SectionBanner
             :eyebrow="`Section ${sec.section}`"
-            :title="sec.section === 1 ? roadmap.title : `Level up · part ${sec.section}`"
+            :title="sec.title ?? (sec.section === 1 ? roadmap.title : `Level up · part ${sec.section}`)"
             :meta="`${sec.count} skills · ${sec.units.length} ${sec.units.length === 1 ? 'unit' : 'units'}`"
           />
           <div class="learn__path">

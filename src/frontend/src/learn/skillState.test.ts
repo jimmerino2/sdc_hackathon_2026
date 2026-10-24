@@ -12,7 +12,7 @@ function node(id: string, status: RoadmapNode['status'], prev: string[] = [], re
 function roadmap(...units: RoadmapNode[][]): Roadmap {
   return {
     profile_id: 'p', onet_code: '15-1252.00', title: 'Software Developers', description: null, roadmap_id: 'r', status: 'in_progress',
-    current: { section: 1, unit: 1 }, sections: [{ section: 1, units: units.map((nodes, i) => ({ unit: i + 1, nodes })) }],
+    current: { section: 1, unit: 1 }, sections: [{ section: 1, title: null, units: units.map((nodes, i) => ({ unit: i + 1, nodes })) }],
   };
 }
 const stateOf = (r: Roadmap, id: string) => resolveNodes(r.sections.flatMap((s) => s.units.flatMap((u) => u.nodes))).get(`d-${id}`)!;
