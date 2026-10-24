@@ -112,7 +112,7 @@ Four external datasets, one per question the app has to answer, plus one Malaysi
 - **Update frequency:** quarterly
 - **As of:** 2026-Q3, on FRED by 22 Oct 2026
 - **Used for:** the **occupation-adoption** target only (`worker_genai_use_rate`, see `FORECAST_REBUILD.md` §8b). It is the only direct, worker-level evidence on occupational AI use.
-- **Point in time:** past vintages need a free `FRED_API_KEY` (ALFRED). Without one, availability dates are assumed and labelled.
+- **Point in time:** ALFRED vintages via `FRED_API_KEY` (in `src/backend/.env`). FRED first published the series on 18 Jun 2026 and revised it on 16 Oct 2026. Earlier backtest origins are reconstructed.
 
 ## 8. Epoch AI benchmark data (METR time horizons, Epoch Capabilities Index) — forecast rebuild only
 

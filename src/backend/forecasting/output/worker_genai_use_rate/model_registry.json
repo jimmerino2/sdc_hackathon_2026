@@ -2,16 +2,16 @@
   "target": "worker_genai_use_rate",
   "promoted": {
     "1": {
-      "run_id": "20261024T044954Z-67d188",
-      "made_at": "2026-10-24T04:49:54Z",
+      "run_id": "20261024T055908Z-4dcc4c",
+      "made_at": "2026-10-24T05:59:08Z",
       "h": 1,
-      "model": "pooled_mean",
+      "model": "naive",
       "chosen_model": "pooled_mean",
-      "model_version": "67d188c358a2",
-      "status": "not_demonstrably_better",
-      "selection_mae": 6.987117538857303,
-      "holdout_mae": 6.564581334195567,
-      "holdout_mase_vs_naive": 0.9996976388147736,
+      "model_version": "4dcc4c11c5e9",
+      "status": "baseline_retained",
+      "selection_mae": 6.980416246299658,
+      "holdout_mae": 6.709347633688554,
+      "holdout_mase_vs_naive": 1.0248024826202577,
       "accepted": true,
       "rejected_because": []
     }
@@ -214,6 +214,36 @@
       "selection_mae": 7.889531997229574,
       "holdout_mae": 8.673236351599414,
       "holdout_mase_vs_naive": 1.3105652513119628,
+      "accepted": false,
+      "rejected_because": [
+        "insufficient history for selection"
+      ]
+    },
+    {
+      "run_id": "20261024T055908Z-4dcc4c",
+      "made_at": "2026-10-24T05:59:08Z",
+      "h": 1,
+      "model": "naive",
+      "chosen_model": "pooled_mean",
+      "model_version": "4dcc4c11c5e9",
+      "status": "baseline_retained",
+      "selection_mae": 6.980416246299658,
+      "holdout_mae": 6.709347633688554,
+      "holdout_mase_vs_naive": 1.0248024826202577,
+      "accepted": true,
+      "rejected_because": []
+    },
+    {
+      "run_id": "20261024T055908Z-4dcc4c",
+      "made_at": "2026-10-24T05:59:08Z",
+      "h": 2,
+      "model": "naive",
+      "chosen_model": "pooled_mean",
+      "model_version": "4dcc4c11c5e9",
+      "status": "baseline_retained",
+      "selection_mae": 7.883629435671077,
+      "holdout_mae": 9.079089359880937,
+      "holdout_mase_vs_naive": 1.3265388446295865,
       "accepted": false,
       "rejected_because": [
         "insufficient history for selection"

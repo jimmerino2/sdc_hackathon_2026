@@ -55,6 +55,21 @@ COLUMNS = ["series_id", "unit", "unit_name", "quarter", "value_pct", "available_
            "fetched_at", "source_file"]
 
 
+ENV_FILE = ROOT / "src" / "backend" / ".env"
+
+
+def fred_key() -> str | None:
+    """FRED_API_KEY from the environment, else from src/backend/.env (gitignored). Never printed or logged."""
+    if os.environ.get("FRED_API_KEY"):
+        return os.environ["FRED_API_KEY"].strip()
+    if ENV_FILE.exists():
+        for line in ENV_FILE.read_text(encoding="utf-8").splitlines():
+            name, sep, value = line.partition("=")
+            if sep and name.strip().removeprefix("export ").strip() == "FRED_API_KEY":
+                return value.strip().strip('"').strip("'") or None
+    return None
+
+
 def _get(url: str) -> bytes:
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (sdc-hackathon-2026 pipeline)"})
     with urllib.request.urlopen(req, timeout=60) as r:
@@ -67,7 +82,7 @@ def pull() -> None:
     snap = RAW / "snapshots" / stamp
     snap.mkdir(parents=True, exist_ok=True)
     (RAW / "fred").mkdir(parents=True, exist_ok=True)
-    key = os.environ.get("FRED_API_KEY")
+    key = fred_key()
     for sid in SERIES:
         try:
             body = _get(FRED_CSV.format(sid))

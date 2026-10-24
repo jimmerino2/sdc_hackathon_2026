@@ -244,18 +244,21 @@ What it means:
 
 **Availability:**
 
-- There is no FRED key, so FRED's past vintages (ALFRED) can't be read. Values are today's, each assumed available 21 days after its quarter ends; the 2026-Q3 value was already online on 22 Oct.
-- Origins are labelled `current_only` and every forecast says so.
-- Setting a free `FRED_API_KEY` makes `rps.py` read real vintages, with no code change.
+- With `FRED_API_KEY` set (read from `src/backend/.env`), `rps.py` reads every FRED release (ALFRED). FRED first published the whole series on **18 Jun 2026**, then revised it on **16 Oct 2026**. For example, all workers in 2025-Q4 went from 40.73 to 40.65, and 2026-Q1 from 43.41 to 42.84. Q3 2026 appeared on 16 Oct.
+- That gives **2 real origins** (Jun and Oct 2026). Earlier quarters are cut from the first FRED release and labelled `reconstructed`.
+- FRED's date is an upper bound: the authors published earlier on their own site.
+- Without a key, values are today's, each assumed available 21 days after its quarter ends (kind `current_only`).
 
 **Features:** `level`, `own_trend` (d1, d2, d4 quarters) and `all_workers` (mean change over groups).
 
-**Evaluation:** 7 origins (2025-Q1 → 2026-Q3): 3 for selection and 4 holdout.
+**Evaluation:** 7 origins (2025-Q1 → 2026-Q3; 5 reconstructed, 2 real): 3 for selection and 4 holdout. Run `20261024T055908Z-4dcc4c`, with FRED vintages.
 
-| h (quarters) | Chosen | Selection MAE (naive) | Holdout MAE (naive) | Holdout MASE | 80% coverage | Status |
-| --- | --- | --- | --- | --- | --- | --- |
-| 1 | pooled_mean | 6.99 (7.27) | 6.56 (6.57) | 1.00 | 0.71 | not_demonstrably_better (promoted, with warnings) |
-| 2 | pooled_mean | 7.89 (8.51) | 8.67 (6.62) | 1.31 | 0.76 | **not promoted**: insufficient history (2 selection origins) |
+| h (quarters) | Chosen | Selection MAE (naive) | Holdout MAE (naive) | Holdout MASE | Status |
+| --- | --- | --- | --- | --- | --- |
+| 1 | pooled_mean → **naive served** | 6.98 (7.26) | 6.71 (6.55) | 1.03 | baseline_retained |
+| 2 | pooled_mean | 7.88 (8.50) | 9.08 (6.84) | 1.33 | **not promoted**: insufficient history (2 selection origins) |
+
+With today's values and assumed dates, pooled_mean tied naive at h=1 (MASE 1.00). Scored against the revised FRED values it is slightly worse, so the baseline is served. Only one holdout origin is a real vintage.
 
 What it means:
 
@@ -367,7 +370,7 @@ python -m pytest forecasting/tests                          # 61 tests, offline,
 2. **Data:**
    - skill-demand origins before Apr 2024 are reconstructed;
    - BTOS is assumed unrevised;
-   - RPS availability dates are assumed until a FRED key is set;
+   - RPS has FRED vintages only from Jun 2026, so its earlier origins are reconstructed;
    - capability origins are mostly reconstructed or mixed (real METR vintages only from Jun 2025; v1.1 from Mar 2026);
    - in every case the truth is the latest data, which may itself be revised.
 3. **RPS is too short** (9 quarters) for any supported claim. Group-level noise is 6–9 pp.

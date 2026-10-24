@@ -115,3 +115,6 @@ METR's own repo (METR/eval-analysis-public) only has raw runs + 24 commits: not 
   data/outlookNames.ts, router + SideNav item); user will add FRED_API_KEY (then `python -m forecasting.rps`);
   merge check after ~10 Nov 2026 when user asks. Page verified by headless screenshots at 1440 px and 520 px
   (Edge cannot lay out narrower than ~500 px; the 390 px clipping seen was the tool, not the page).
+- 2026-10-24: FRED_API_KEY added by user (src/backend/.env, written "FRED_API_KEY = ..."; rps.fred_key() parses it).
+  ALFRED: whole series first on FRED 2026-06-18, revised 2026-10-16 -> 2 real origins, earlier reconstructed.
+  RPS h1 now baseline_retained (pooled_mean MASE 1.03 vs revised truth). Key verified absent from stored files.

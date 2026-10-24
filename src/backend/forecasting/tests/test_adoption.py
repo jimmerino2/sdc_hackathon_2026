@@ -91,8 +91,24 @@ def test_assumed_rps_availability_is_never_after_the_fetch(tmp_path):
 def test_occupation_origins_are_flagged_and_point_in_time():
     d = OA.load()
     snaps = OA.origins(d)
-    assert all(s.kind in ("current_only", "real") for s in snaps)
+    assert all(s.kind in ("current_only", "real", "reconstructed") for s in snaps)
     for s in snaps:
         assert s.values["period"].max() == s.last
-        assert (d["obs"].loc[d["obs"]["quarter"] <= s.last, "available_at"] <= s.origin).all()
+        if s.kind == "real":  # real origins only see what FRED had published by then
+            assert (d["obs"].loc[d["obs"]["quarter"] <= s.last, "available_at"].min() <= s.origin)
     assert OA.SPEC.history_warning and OA.SPEC.min_selection_origins < 12
+
+
+def test_alfred_origins_use_each_release_and_flag_earlier_ones():
+    def row(q, value, when):
+        return {"unit": "00", "quarter": pd.Period(q, freq="Q"), "value_pct": value,
+                "available_at": pd.Timestamp(when, tz="UTC"), "availability_basis": "alfred"}
+    obs = pd.DataFrame([row("2025Q1", 30.0, "2026-06-18"), row("2025Q2", 31.0, "2026-06-18"),
+                        row("2025Q3", 32.0, "2026-06-18"), row("2025Q3", 32.5, "2026-10-16"),
+                        row("2025Q4", 33.0, "2026-10-16")])  # synthetic: one revision, one new quarter
+    snaps = OA.origins({"obs": obs})
+    kinds = [(str(s.last), s.kind) for s in snaps]
+    assert kinds == [("2025Q1", "reconstructed"), ("2025Q2", "reconstructed"), ("2025Q3", "real"), ("2025Q4", "real")]
+    first_real = snaps[2].values.set_index("period")["value"]
+    assert first_real[pd.Period("2025Q3", freq="Q")] == 32.0  # the later revision (32.5) is not visible yet
+    assert snaps[3].values.set_index("period")["value"][pd.Period("2025Q3", freq="Q")] == 32.5

@@ -237,7 +237,7 @@ Caveats:
 
 ## 11. `forecasting/rps_observations.csv`
 
-Real-Time Population Survey (via FRED): one row per **SOC major group × quarter × vintage**. 207 rows: 23 series × 9 quarters (2024-Q3 to 2026-Q3), one vintage each until ALFRED vintages are read. Built by `src/backend/forecasting/rps.py`.
+Real-Time Population Survey (via FRED): one row per **SOC major group × quarter × vintage**. 258 rows: 23 series × 9 quarters (2024-Q3 to 2026-Q3), from the FRED releases of 18 Jun 2026 and 16 Oct 2026 (ALFRED, with `FRED_API_KEY`). A quarter appears twice when it was revised or first published in October. Built by `src/backend/forecasting/rps.py`.
 
 | Column               | Source | Type      | Derived from                                                                                           |
 | -------------------- | ------ | --------- | ------------------------------------------------------------------------------------------------------ |
