@@ -28,3 +28,4 @@ graphify-out/manifest.json
 *.key
 secrets/
 *.local
+data/occupational_forecasting/
