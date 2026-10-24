@@ -22,6 +22,10 @@ const lines = computed(() => c.value.description.split('\n').map((l) => l.trim()
 const intro = computed(() => lines.value.filter((l) => !l.startsWith('- ')));
 const features = computed(() => lines.value.filter((l) => l.startsWith('- ')).map((l) => l.slice(2)));
 const results = computed(() => new Map((c.value.result ?? []).map((r) => [r.key, r])));
+/** The criterion whose detail is showing; none until the learner picks one. */
+const active = ref<string | null>(null);
+const activeRubric = computed(() => c.value.rubric.find((r) => r.key === active.value) ?? null);
+const activeResult = computed(() => (active.value ? results.value.get(active.value) ?? null : null));
 const score = computed(() => (c.value.score == null ? null : Math.round(c.value.score)));
 const state = computed(() => (c.value.locked ? 'locked' : score.value != null ? 'scored' : 'open'));
 const meta = computed(() => {
@@ -53,49 +57,63 @@ function submit() {
     </button>
 
     <div v-if="open" class="jb-quest__body">
-      <p v-for="(l, i) in intro" :key="i" class="jb-quest__intro">{{ l }}</p>
-      <ul v-if="features.length" class="jb-quest__features">
-        <li v-for="(f, i) in features" :key="i">{{ f }}</li>
-      </ul>
+      <details class="jb-quest__fold" :open="!c.result">
+        <summary>Project brief</summary>
+        <div class="jb-quest__foldbody">
+          <p v-for="(l, i) in intro" :key="i" class="jb-quest__intro">{{ l }}</p>
+          <ul v-if="features.length" class="jb-quest__features">
+            <li v-for="(f, i) in features" :key="i">{{ f }}</li>
+          </ul>
 
-      <div class="jb-quest__sdg">
-        <img :src="`${base}sdg/goal-${String(c.sdg).padStart(2, '0')}.jpg`" :alt="`UN Sustainable Development Goal ${c.sdg}: ${c.sdg_name}`" width="56" height="56" loading="lazy" />
-        <p>
-          <b>Goal {{ c.sdg }}: {{ c.sdg_name }}</b>
-          <span v-if="c.interests.length">Picked for your interest in {{ c.interests.join(' and ') }}.</span>
-        </p>
-      </div>
+          <div class="jb-quest__sdg">
+            <img :src="`${base}sdg/goal-${String(c.sdg).padStart(2, '0')}.jpg`" :alt="`UN Sustainable Development Goal ${c.sdg}: ${c.sdg_name}`" width="56" height="56" loading="lazy" />
+            <p>
+              <b>Goal {{ c.sdg }}: {{ c.sdg_name }}</b>
+              <span v-if="c.interests.length">Picked for your interest in {{ c.interests.join(' and ') }}.</span>
+            </p>
+          </div>
 
-      <h4 class="jb-quest__h">Build it with</h4>
-      <dl class="jb-quest__stack">
-        <div v-for="a in c.tech_stack" :key="a.area">
-          <dt>{{ a.area }}</dt>
-          <dd><span v-for="s in a.skills" :key="s" class="jb-quest__chip">{{ skillLabel(s) }}</span></dd>
+          <h4 class="jb-quest__h">Build it with</h4>
+          <dl class="jb-quest__stack">
+            <div v-for="a in c.tech_stack" :key="a.area">
+              <dt>{{ a.area }}</dt>
+              <dd><span v-for="s in a.skills" :key="s" class="jb-quest__chip">{{ skillLabel(s) }}</span></dd>
+            </div>
+          </dl>
         </div>
-      </dl>
+      </details>
 
       <h4 class="jb-quest__h">{{ c.result ? 'Your scorecard' : 'How it’s scored' }}</h4>
       <div v-if="c.result && score != null" class="jb-quest__total">
         <span class="jb-quest__big">{{ score }}<small>/100</small></span>
         <p>{{ c.summary }}</p>
       </div>
-      <ol class="jb-quest__rubric">
-        <li v-for="r in c.rubric" :key="r.key">
-          <div class="jb-quest__crit">
-            <b>{{ r.criterion }}</b>
-            <span class="jb-quest__w">{{ r.weight }}% of score</span>
-            <span v-if="results.get(r.key)" class="jb-quest__pts">{{ results.get(r.key)!.score }}/100</span>
-          </div>
-          <div v-if="results.get(r.key)" class="jb-bar" role="img" :aria-label="`${results.get(r.key)!.score} out of 100`">
-            <div class="jb-bar__fill" :style="{ width: Math.max(results.get(r.key)!.score, 3) + '%' }" />
-          </div>
-          <p class="jb-quest__desc">{{ r.description }}</p>
-          <template v-if="results.get(r.key)">
-            <p class="jb-quest__why"><b>Why</b>{{ results.get(r.key)!.why }}</p>
-            <p class="jb-quest__fix"><b>To improve</b>{{ results.get(r.key)!.improve }}</p>
-          </template>
-        </li>
-      </ol>
+      <div class="jb-quest__tiles" role="group" aria-label="Scoring criteria">
+        <button
+          v-for="r in c.rubric"
+          :key="r.key"
+          type="button"
+          class="jb-quest__tile"
+          :aria-pressed="active === r.key"
+          @click="active = active === r.key ? null : r.key"
+        >
+          <span class="jb-quest__tname">{{ r.criterion }}</span>
+          <span class="jb-quest__tmeta">
+            <span v-if="results.get(r.key)" class="jb-quest__pts">{{ results.get(r.key)!.score }}</span>
+            <span class="jb-quest__w">{{ r.weight }}%</span>
+          </span>
+          <span v-if="results.get(r.key)" class="jb-bar" role="img" :aria-label="`${results.get(r.key)!.score} out of 100`">
+            <span class="jb-bar__fill" :style="{ width: Math.max(results.get(r.key)!.score, 3) + '%' }" />
+          </span>
+        </button>
+      </div>
+      <div v-if="activeRubric" class="jb-quest__detail">
+        <p class="jb-quest__desc">{{ activeRubric.description }}</p>
+        <template v-if="activeResult">
+          <p class="jb-quest__why"><b>Why</b>{{ activeResult.why }}</p>
+          <p class="jb-quest__fix"><b>To improve</b>{{ activeResult.improve }}</p>
+        </template>
+      </div>
       <details v-if="c.files_read.length" class="jb-quest__files">
         <summary>Judged on {{ c.files_read.length }} files from {{ repoName }}</summary>
         <ul><li v-for="f in c.files_read" :key="f"><code>{{ f }}</code></li></ul>
