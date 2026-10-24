@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -16,8 +17,8 @@ def _sel(holdout_n=10, insufficient=False):
     rows = []
     for h in SPEC.horizons:
         for c in ("naive", "ridge"):
-            rows.append({"h": h, "candidate": c, "chosen": c == "ridge", "selection_mae_pp": 0.5,
-                         "holdout_mae_pp": 0.4, "holdout_mase_vs_naive": 0.8 if c == "ridge" else 1.0,
+            rows.append({"h": h, "candidate": c, "chosen": c == "ridge", "selection_mae": 0.5,
+                         "holdout_mae": 0.4, "holdout_mase_vs_naive": 0.8 if c == "ridge" else 1.0,
                          "holdout_n_origins": holdout_n, "insufficient_history": insufficient})
     return pd.DataFrame(rows)
 
@@ -70,12 +71,17 @@ def test_published_forecast_is_timestamped_versioned_and_bounded(tid):
     log = pd.read_csv(OUTPUT / tid / "forecast_log.csv", dtype={"unit": str})
     assert set(f["unit"]) <= set(log["unit"])  # codes survive the round trip (e.g. SOC "00")
     assert f["run_id"].notna().all() and f["made_at"].notna().all() and f["data_as_of"].notna().all()
-    assert ((f["low_pct"] <= f["forecast_pct"]) & (f["forecast_pct"] <= f["high_pct"])).all()
-    assert f[["low_pct", "high_pct"]].stack().between(0, 100).all()
+    lo, fc, hi = ("low", "forecast", "high") if "forecast" in f else ("low_pct", "forecast_pct", "high_pct")
+    assert ((f[lo] <= f[fc]) & (f[fc] <= f[hi])).all()
+    if all_specs()[tid].value_unit == "percent":
+        assert f[[lo, hi]].stack().between(0, 100).all()
     assert (f["target"] == tid).all()
     reg = json.loads((OUTPUT / tid / "model_registry.json").read_text())
     assert all(e["model_version"] for e in reg["promoted"].values())
     assert {int(h) for h in reg["promoted"]} == set(f["h"])  # only promoted horizons are served
     spec = all_specs()[tid]
     if spec.history_warning:
-        assert f["warnings"].str.contains("short history").all()
+        assert f["warnings"].str.contains(spec.history_warning, regex=False).all()
+    if spec.regimes:
+        p = f[["p_acceleration", "p_stable", "p_slowdown"]]
+        assert np.allclose(p.sum(axis=1), 1) and p.stack().between(0, 1).all()

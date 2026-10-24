@@ -5,8 +5,8 @@ The four quantities are related but different, and must never stand in for each 
   business_adoption    share of firms using AI (BTOS)
   occupation_adoption  share of workers in an occupation using AI (RPS); task exposure is NOT adoption
   skill_demand         share of job postings asking for a skill; NOT adoption, NOT employment
-skill_demand, business_adoption and occupation_adoption have working models (forecasting/targets/); ai_capability
-is declared so its rules are enforced from the start, and its status says so.
+All four domains have a working model (forecasting/targets/). ai_capability is one dimension only: METR time
+horizons (the Epoch Capabilities Index is stored but not modelled until it can be backtested).
 """
 from __future__ import annotations
 
@@ -38,9 +38,9 @@ TARGETS: dict[str, Target] = {t.id: t for t in [
     Target("worker_genai_use_rate", "occupation_adoption",
            "share of employed US adults in a SOC major group using generative AI for their job",
            "percent of workers", "SOC major group x quarter", "rps_genai", (1, 2), "quarter", "implemented"),
-    Target("frontier_capability_index", "ai_capability",
-           "benchmark-based capability measure of the best available model (definition pending)",
-           "benchmark score", "month", "", (6, 12), "month", "planned"),
+    Target("frontier_time_horizon", "ai_capability",
+           "longest METR 50% task time horizon among models released by each month, per METR suite version",
+           "minutes", "METR version x month", "epoch_metr", (3, 6, 12), "month", "implemented"),
 ]}
 
 # Substitutions the spec forbids, as (source, domain) -> reason. Checked on top of the registry, so a later

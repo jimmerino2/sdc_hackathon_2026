@@ -13,7 +13,7 @@ def _bt(scores: dict[str, tuple[float, float]]) -> pd.DataFrame:
         for role, err in (("selection", sel_err), ("holdout", hold_err)):
             for o in range(4):
                 rows.append({"origin": f"{role}{o}", "h": 1, "candidate": c, "feature_set": "all", "role": role,
-                             "actual": 1.0, "error": err, "geo": "AA", "logit_resid": err})
+                             "actual": 1.0, "error": err, "geo": "AA", "resid": err})
     return pd.DataFrame(rows)
 
 
@@ -41,11 +41,11 @@ def test_every_candidate_is_compared_with_naive():
 
 def test_unavailable_evaluation_is_not_zero_error():
     m = E.metrics(pd.DataFrame({"origin": [1], "actual": [np.nan], "error": [np.nan]}))
-    assert m["mae_pp"] is None and m["n"] == 0
+    assert m["mae"] is None and m["n"] == 0
 
 
 def test_coverage_uses_selection_residuals_only():
     bt = _bt(ALL)
-    bt.loc[bt["role"] == "holdout", "logit_resid"] = 100.0  # far outside any selection residual
+    bt.loc[bt["role"] == "holdout", "resid"] = 100.0  # far outside any selection residual
     cov = E.coverage(bt, E.interval_quantiles(bt, ("selection",)))
     assert (cov["holdout_coverage_80"] == 0).all()

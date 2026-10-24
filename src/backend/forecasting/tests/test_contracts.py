@@ -45,7 +45,7 @@ def test_forbidden_rules_survive_a_registry_edit(monkeypatch):
     ("indeed_ai_tracker", "btos_ai_use_rate"),         # AI skill demand is not adoption
     ("indeed_ai_tracker", "worker_genai_use_rate"),
     ("indeed_postings", "ai_mention_share"),           # posting growth is not skill demand / employment
-    ("gdelt_doc", "frontier_capability_index"),        # news volume is not capability
+    ("gdelt_doc", "frontier_time_horizon"),        # news volume is not capability
 ])
 def test_invalid_substitutions_are_refused(label, target):
     with pytest.raises(C.SourceNotAllowed):

@@ -80,22 +80,28 @@ def acceptance(spec: TargetSpec, sel: pd.DataFrame, health: dict, h: int) -> lis
         fails.append("target source is stale")
     if not c["holdout_n_origins"] or c["holdout_n_origins"] < spec.min_holdout:
         fails.append(f"holdout has {c['holdout_n_origins']} origins (< {spec.min_holdout})")
-    if c["selection_mae_pp"] is None or pd.isna(c["selection_mae_pp"]):
+    if c["selection_mae"] is None or pd.isna(c["selection_mae"]):
         fails.append("selection score missing")
     if c["insufficient_history"]:
         fails.append("insufficient history for selection")
     return fails
 
 
-def forecast(spec: TargetSpec, snap: F.Snapshot, sel: pd.DataFrame, qs: pd.DataFrame, run_id: str, made_at: str,
+def forecast(spec: TargetSpec, snap: F.Snapshot, sel: pd.DataFrame, bt: pd.DataFrame, run_id: str, made_at: str,
              health: dict) -> pd.DataFrame:
+    """Forecast from the latest snapshot. Ranges (and regime probabilities) use every out-of-sample residual of
+    the chosen model, selection and holdout: the model is already fixed, so the holdout no longer chooses anything."""
+    qs = E.interval_quantiles(bt, ("selection", "holdout"))
+    scored = bt[(bt["feature_set"] == "all") & bt["role"].isin(["selection", "holdout"])].dropna(subset=["resid"])
     rows_now = F.latest_rows(spec, snap)
     label = contracts.TARGETS[spec.id].label_source
     out = []
     for h in spec.horizons:
         c = sel[(sel["h"] == h) & sel["chosen"]].iloc[0]
-        m = CANDIDATES[c["candidate"]]().fit(F.labelled(spec, snap, h), h, spec.features, spec.trend_steps)
+        m = CANDIDATES[c["candidate"]]().fit(F.labelled(spec, snap, h), h, spec.features, spec.trend_steps,
+                                             spec.panel(snap))
         base = rows_now["lvl"].to_numpy() + m.predict(rows_now)
+        inv = spec.scale.from_model
         lo, hi = qs.loc[(c["candidate"], h)] if (c["candidate"], h) in qs.index else (np.nan, np.nan)
         warnings = [w for w in (spec.history_warning,) if w]
         if health[label]["status"] != "fresh":
@@ -107,14 +113,23 @@ def forecast(spec: TargetSpec, snap: F.Snapshot, sel: pd.DataFrame, qs: pd.DataF
         out.append(pd.DataFrame({
             "run_id": run_id, "made_at": made_at, "target": spec.id, "unit_kind": spec.unit_kind,
             "unit": rows_now["unit"], "segment": [spec.segment(u) for u in rows_now["unit"]],
-            "last_observed_period": spec.label(snap.last), "last_observed_pct": 100 * F.expit(rows_now["lvl"]),
+            "last_observed_period": spec.label(snap.last), "last_observed": inv(rows_now["lvl"].to_numpy()),
             "h": h, "period_unit": spec.period_unit, "target_period": spec.label(snap.last + h),
-            "model": c["candidate"], "forecast_pct": 100 * F.expit(base),
-            "low_pct": 100 * F.expit(base + lo), "high_pct": 100 * F.expit(base + hi),
-            "interval": "10-90% empirical (out-of-sample logit residuals)", "status": status_for(c),
-            "holdout_mae_pp": c["holdout_mae_pp"], "naive_holdout_mae_pp":
-                sel[(sel["h"] == h) & (sel["candidate"] == "naive")]["holdout_mae_pp"].iloc[0],
+            "value_unit": spec.value_unit, "model": c["candidate"], "forecast": inv(base),
+            "low": inv(base + lo), "high": inv(base + hi),
+            "interval": f"10-90% empirical (out-of-sample residuals, {spec.scale.name} scale)", "status": status_for(c),
+            "holdout_mae": c["holdout_mae"], "naive_holdout_mae":
+                sel[(sel["h"] == h) & (sel["candidate"] == "naive")]["holdout_mae"].iloc[0],
             "vintage": snap.vintage, "data_as_of": snap.origin.isoformat(), "warnings": "; ".join(warnings)}))
+        if spec.regimes:
+            resid = scored[(scored["candidate"] == c["candidate"]) & (scored["h"] == h)]["resid"].to_numpy()
+            lo_b, hi_b = E.regime_bounds(rows_now["trend"].to_numpy(), h, spec.trend_steps)
+            p = E.regime_probs(base - rows_now["lvl"].to_numpy(), resid, lo_b, hi_b) if len(resid) else                 np.full((len(rows_now), 3), np.nan)
+            for i, r in enumerate(E.REGIMES):
+                out[-1][f"p_{r}"] = p[:, i]
+            out[-1]["regime_rule"] = (f"rate over next {h} vs trailing rate over {spec.trend_steps} periods; "
+                                      f"tolerance +-{E.REGIME_TOL:.0%} (min {E.REGIME_TOL_FLOOR} per period); "
+                                      f"from {len(resid)} out-of-sample residuals (few: tails are coarse)")
     return pd.concat(out, ignore_index=True)
 
 
@@ -126,8 +141,8 @@ def promote(spec: TargetSpec, out: Path, run_id: str, made_at: str, sel: pd.Data
         c = sel[(sel["h"] == h) & sel["chosen"]].iloc[0]
         fails = acceptance(spec, sel, health, h)
         entry = {"run_id": run_id, "made_at": made_at, "h": int(h), "model": c["candidate"], "model_version": version,
-                 "status": status_for(c), "selection_mae_pp": c["selection_mae_pp"],
-                 "holdout_mae_pp": c["holdout_mae_pp"], "holdout_mase_vs_naive": c["holdout_mase_vs_naive"],
+                 "status": status_for(c), "selection_mae": c["selection_mae"],
+                 "holdout_mae": c["holdout_mae"], "holdout_mase_vs_naive": c["holdout_mase_vs_naive"],
                  "accepted": not fails, "rejected_because": fails}
         reg["attempts"].append(entry)
         if not fails:
@@ -167,10 +182,9 @@ def run_target(spec: TargetSpec, now: pd.Timestamp | None = None) -> dict:
 
     sel = E.select(bt, spec.min_selection_origins)
     cov = E.coverage(bt, E.interval_quantiles(bt, ("selection",)))
-    qs_all = E.interval_quantiles(bt, ("selection", "holdout"))
     abl = E.ablation_table(bt)
 
-    fc = forecast(spec, snaps[-1], sel, qs_all, run_id, made_at, health)
+    fc = forecast(spec, snaps[-1], sel, bt, run_id, made_at, health)
     fc.to_csv(run_dir / "forecast.csv", index=False)
     log = out / "forecast_log.csv"
     fc.to_csv(log, mode="a", header=not log.exists(), index=False)
@@ -194,12 +208,14 @@ def run_target(spec: TargetSpec, now: pd.Timestamp | None = None) -> dict:
         "ablations": abl.replace({np.nan: None}).to_dict("records"),
         "breakdown": E.breakdown(bt, sel),
         "history_warning": spec.history_warning,
+        "value_unit": spec.value_unit, "error_unit": spec.error_unit, "modelling_scale": spec.scale.name,
+        "regime_scores": E.regime_scores(spec, bt, sel) if spec.regimes else None,
         "source_health": health,
     }
     (run_dir / "evaluation.json").write_text(json.dumps(evaluation, indent=2, default=str))
     reg = promote(spec, out, run_id, made_at, sel, health, version)
 
-    show = sel[["h", "candidate", "chosen", "selection_mae_pp", "holdout_mae_pp", "holdout_mase_vs_naive"]]
+    show = sel[["h", "candidate", "chosen", "selection_mae", "holdout_mae", "holdout_mase_vs_naive"]]
     print(show.round(4).to_string(index=False))
     for h, e in reg["promoted"].items():
         print(f"[{spec.id}] h={h}: promoted {e['model']} ({e['status']}) from run {e['run_id']}")

@@ -87,8 +87,15 @@ METR's own repo (METR/eval-analysis-public) only has raw runs + 24 commits: not 
 
 | # | Step | Status |
 |---|------|--------|
-| 15 | `forecasting/capability.py`: monthly Wayback vintages + current download, extract ECI and METR per vintage | todo |
-| 16 | Engine: per-target value transform (logit / identity / log2), metric names without `_pp` | todo |
-| 17 | Local-linear-trend (Kalman) candidate; regime probabilities + Brier score vs climatology | todo |
-| 18 | targets/capability_eci.py (+ METR horizon if vintages allow), run, tests | todo |
+| 15 | `forecasting/capability.py`: monthly Wayback vintages + current download, extract ECI and METR per vintage | done |
+| 16 | Engine: per-target value transform (logit / identity / log2), metric names without `_pp` | done |
+| 17 | Local-linear-trend (Kalman) candidate; regime probabilities + Brier score vs climatology | done |
+| 18 | targets/capability_eci.py (+ METR horizon if vintages allow), run, tests | done |
 | 19 | Docs | todo |
+- 2026-10-24: capability.py (17 monthly Epoch captures via Wayback, gzip-encoded ones decompressed, Last-Modified
+  kept as availability); ECI only in 3 vintages (from 2026-09) -> stored, not modelled. targets/capability_metr.py:
+  frontier METR 50% time horizon per suite version (v1.0 active 2025-06..2026-02, v1.1 from 2026-03), log2 scale,
+  errors in doublings, 3-month measurement-lag cut. Engine: per-target Scale, metrics renamed (no _pp), forecast
+  columns forecast/low/high/value_unit (old logs converted), local_trend (Kalman LLT) candidate for every target,
+  regime probabilities + Brier, holdout_mase_vs_drift. FIRST_RECONSTRUCTED moved 2024-01 -> 2023-01 after first run
+  (too few selection origins) - disclose in docs. 59 tests pass. NEXT: rerun all targets, then step 19 docs.

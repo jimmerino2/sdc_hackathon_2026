@@ -1,0 +1,167 @@
+{
+  "target": "frontier_time_horizon",
+  "promoted": {
+    "3": {
+      "run_id": "20261024T041503Z-48a764",
+      "made_at": "2026-10-24T04:15:03Z",
+      "h": 3,
+      "model": "ridge",
+      "model_version": "48a7640652d8",
+      "status": "validated",
+      "selection_mae": 0.9107870464015767,
+      "holdout_mae": 0.38012405652688136,
+      "holdout_mase_vs_naive": 0.45903632288620483,
+      "accepted": true,
+      "rejected_because": []
+    },
+    "6": {
+      "run_id": "20261024T041503Z-48a764",
+      "made_at": "2026-10-24T04:15:03Z",
+      "h": 6,
+      "model": "ridge",
+      "model_version": "48a7640652d8",
+      "status": "validated",
+      "selection_mae": 1.1121539551345008,
+      "holdout_mae": 0.364442702747153,
+      "holdout_mase_vs_naive": 0.21931299156250003,
+      "accepted": true,
+      "rejected_because": []
+    },
+    "12": {
+      "run_id": "20261024T041503Z-48a764",
+      "made_at": "2026-10-24T04:15:03Z",
+      "h": 12,
+      "model": "ridge",
+      "model_version": "48a7640652d8",
+      "status": "validated",
+      "selection_mae": 1.8041808248399835,
+      "holdout_mae": 1.2529839191092185,
+      "holdout_mase_vs_naive": 0.38263451559846756,
+      "accepted": true,
+      "rejected_because": []
+    }
+  },
+  "attempts": [
+    {
+      "run_id": "20261024T041256Z-4ff3bc",
+      "made_at": "2026-10-24T04:12:56Z",
+      "h": 3,
+      "model": "ridge",
+      "model_version": "4ff3bcb3892d",
+      "status": "validated",
+      "selection_mae": 15.625169293573974,
+      "holdout_mae": 159.31304649332904,
+      "holdout_mase_vs_naive": 0.7805734874787852,
+      "accepted": true,
+      "rejected_because": []
+    },
+    {
+      "run_id": "20261024T041256Z-4ff3bc",
+      "made_at": "2026-10-24T04:12:56Z",
+      "h": 6,
+      "model": "ridge",
+      "model_version": "4ff3bcb3892d",
+      "status": "validated",
+      "selection_mae": 18.468674791857758,
+      "holdout_mae": 108.38817030034443,
+      "holdout_mase_vs_naive": 0.22906433417164979,
+      "accepted": false,
+      "rejected_because": [
+        "insufficient history for selection"
+      ]
+    },
+    {
+      "run_id": "20261024T041256Z-4ff3bc",
+      "made_at": "2026-10-24T04:12:56Z",
+      "h": 12,
+      "model": "local_trend",
+      "model_version": "4ff3bcb3892d",
+      "status": "validated",
+      "selection_mae": 45.00957894269227,
+      "holdout_mae": 300.06559576313924,
+      "holdout_mase_vs_naive": 0.32437857752707283,
+      "accepted": false,
+      "rejected_because": [
+        "insufficient history for selection"
+      ]
+    },
+    {
+      "run_id": "20261024T041401Z-f7df5c",
+      "made_at": "2026-10-24T04:14:01Z",
+      "h": 3,
+      "model": "ridge",
+      "model_version": "f7df5c744c22",
+      "status": "validated",
+      "selection_mae": 0.9107870464015767,
+      "holdout_mae": 0.38012405652688136,
+      "holdout_mase_vs_naive": 0.45903632288620483,
+      "accepted": true,
+      "rejected_because": []
+    },
+    {
+      "run_id": "20261024T041401Z-f7df5c",
+      "made_at": "2026-10-24T04:14:01Z",
+      "h": 6,
+      "model": "ridge",
+      "model_version": "f7df5c744c22",
+      "status": "validated",
+      "selection_mae": 1.1121539551345008,
+      "holdout_mae": 0.364442702747153,
+      "holdout_mase_vs_naive": 0.21931299156250003,
+      "accepted": true,
+      "rejected_because": []
+    },
+    {
+      "run_id": "20261024T041401Z-f7df5c",
+      "made_at": "2026-10-24T04:14:01Z",
+      "h": 12,
+      "model": "ridge",
+      "model_version": "f7df5c744c22",
+      "status": "validated",
+      "selection_mae": 1.8041808248399835,
+      "holdout_mae": 1.2529839191092185,
+      "holdout_mase_vs_naive": 0.38263451559846756,
+      "accepted": true,
+      "rejected_because": []
+    },
+    {
+      "run_id": "20261024T041503Z-48a764",
+      "made_at": "2026-10-24T04:15:03Z",
+      "h": 3,
+      "model": "ridge",
+      "model_version": "48a7640652d8",
+      "status": "validated",
+      "selection_mae": 0.9107870464015767,
+      "holdout_mae": 0.38012405652688136,
+      "holdout_mase_vs_naive": 0.45903632288620483,
+      "accepted": true,
+      "rejected_because": []
+    },
+    {
+      "run_id": "20261024T041503Z-48a764",
+      "made_at": "2026-10-24T04:15:03Z",
+      "h": 6,
+      "model": "ridge",
+      "model_version": "48a7640652d8",
+      "status": "validated",
+      "selection_mae": 1.1121539551345008,
+      "holdout_mae": 0.364442702747153,
+      "holdout_mase_vs_naive": 0.21931299156250003,
+      "accepted": true,
+      "rejected_because": []
+    },
+    {
+      "run_id": "20261024T041503Z-48a764",
+      "made_at": "2026-10-24T04:15:03Z",
+      "h": 12,
+      "model": "ridge",
+      "model_version": "48a7640652d8",
+      "status": "validated",
+      "selection_mae": 1.8041808248399835,
+      "holdout_mae": 1.2529839191092185,
+      "holdout_mase_vs_naive": 0.38263451559846756,
+      "accepted": true,
+      "rejected_because": []
+    }
+  ]
+}
