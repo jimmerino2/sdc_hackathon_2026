@@ -36,3 +36,5 @@ data/occupational_forecasting/normalized/known_skill_cache.*
 data/occupational_forecasting/runs/
 data/occupational_forecasting/latest/backtest.csv.gz
 data/occupational_forecasting/.latest.tmp/
+.vercel
+.env*.local
