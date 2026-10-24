@@ -205,11 +205,15 @@
 
 
 /* ---------- bee guide (speech bubble next to the existing mascot) ---------- */
-.jb-bee { display: flex; align-items: center; gap: 14px; }
+.jb-bee { display: flex; align-items: center; gap: 12px; padding: 2px 0; }
 .jb-bee__btn { flex: none; border: 0; background: none; padding: 0; cursor: pointer; border-radius: var(--radius-md); }
 .jb-bee[data-wiggle="true"] .jb-bee__btn { animation: jb-wiggle .7s var(--ease-out); }
-.jb-bubble { position: relative; background: var(--surface-raised); border: 2px solid var(--line-strong); border-radius: var(--radius-md); padding: 10px 16px; font-size: 14px; line-height: 20px; font-weight: 800; color: var(--text); animation: jb-pop var(--dur-slow) var(--ease-bounce) both; transform-origin: left center; }
-.jb-bubble::before { content: ''; position: absolute; left: -8px; top: 50%; width: 12px; height: 12px; background: var(--surface-raised); border-left: 2px solid var(--line-strong); border-bottom: 2px solid var(--line-strong); transform: translateY(-50%) rotate(45deg); }
+.jb-bee .mascot .jump { animation: none; }
+.jb-bee .mascot .body { animation: none; }
+.jb-bee .mascot .shadow { animation: none; }
+.jb-bee .mascot .conf { display: none; }
+.jb-bubble { position: relative; background: var(--surface-raised); border: 1.5px solid var(--line-strong); border-radius: var(--radius-md); padding: 8px 14px; font-size: 13px; line-height: 18px; font-weight: 700; color: var(--text); animation: jb-pop var(--dur-slow) var(--ease-bounce) both; transform-origin: left center; }
+.jb-bubble::before { content: ''; position: absolute; left: -7px; top: 50%; width: 10px; height: 10px; background: var(--surface-raised); border-left: 1.5px solid var(--line-strong); border-bottom: 1.5px solid var(--line-strong); transform: translateY(-50%) rotate(45deg); }
 
 /* ---------- misc ---------- */
 .jb-btn { text-decoration: none; }

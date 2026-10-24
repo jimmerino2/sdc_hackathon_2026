@@ -8,7 +8,7 @@ const { on: wiggle, trigger } = useFlash(700);
 
 <template>
   <div class="jb jb-bee" :data-wiggle="wiggle ? 'true' : 'false'">
-    <button type="button" class="jb-bee__btn" aria-label="Bee, your guide" @click="trigger"><Mascot :size="72" :mood="mood" /></button>
+    <button type="button" class="jb-bee__btn" aria-label="Bee, your guide" @click="trigger"><Mascot :size="42" :mood="mood" :look="false" /></button>
     <div v-if="message" :key="message" class="jb-bubble" role="status">{{ message }}</div>
   </div>
 </template>

@@ -8,7 +8,6 @@ import SectionBanner from '../components/learn/SectionBanner.vue';
 import SkillPath from '../components/learn/SkillPath.vue';
 import NextUpCard, { type NextUpSkill } from '../components/learn/NextUpCard.vue';
 import ProgressCard from '../components/learn/ProgressCard.vue';
-import SignalCard from '../components/learn/SignalCard.vue';
 import ForecastCard from '../components/learn/ForecastCard.vue';
 import BeeGuide from '../components/learn/BeeGuide.vue';
 import ChallengeCard from '../components/learn/ChallengeCard.vue';
@@ -22,7 +21,7 @@ import type { SkillRow } from '../api/occupational';
 import { loadRoadmap, openRoadmap, useFlow } from '../state';
 import { go } from '../router';
 
-const { state, scenario, profileSkills } = useFlow();
+const { state, profileSkills } = useFlow();
 
 const typeLabel = { tech: 'Tool', skill: 'Ability', knowledge: 'Knowledge' } as const;
 const sourceLabel: Record<RoadmapSource['source_type'] | 'link', string> = {
@@ -315,7 +314,6 @@ onMounted(async () => {
           />
         </div>
         <ProgressCard :done="counts.done" :total="counts.total" :role="roadmap.title" />
-        <SignalCard :title="`Signal: ${scenario.label}`" />
         <BeeGuide :message="message" :mood="mood" />
       </aside>
     </div>
