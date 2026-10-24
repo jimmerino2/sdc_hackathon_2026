@@ -130,6 +130,49 @@ The API docs are at `http://localhost:8000/docs` and the health check at `/healt
 
 The API starts without external credentials. Forecast endpoints use the precomputed outputs in `data/`. Supabase and LLM features need the keys in `.env`.
 
+### Supabase setup
+
+The app uses Supabase for authentication, profiles, role/skill reference data,
+and learning roadmaps. Judges can create a fresh Supabase project and connect
+it to a local checkout as follows:
+
+1. Create a project at [supabase.com](https://supabase.com), then open
+   **Project Settings → API**.
+2. Copy the **Project URL** into `SUPABASE_URL` in
+   [`src/backend/.env`](src/backend/.env). Copy the **Publishable (anon) key**
+   into `SUPABASE_KEY`.
+3. Copy the **service-role key** into `SUPABASE_SERVICE_KEY`. This key bypasses
+   Row Level Security, so keep it in the local `.env` or shell environment and
+   never commit it or expose it to the frontend.
+4. Open the Supabase **SQL Editor**. Run every SQL file in
+   [`migrations/`](migrations) in numeric filename order, starting with
+   [`0001_initial_schema.sql`](migrations/0001_initial_schema.sql). Run both
+   files with the `0010` prefix; their order does not matter. The migrations
+   create the tables, security policies, and app-specific columns, and must be
+   applied before loading data. Do not edit a migration that has already been
+   run.
+5. From the repository root, load the checked-in reference data. With `uv`
+   (recommended):
+
+   ```bash
+   export SUPABASE_SERVICE_KEY="your-service-role-key"
+   uv run python pipeline/load_supabase.py
+   ```
+
+   On Windows PowerShell, use
+   `$env:SUPABASE_SERVICE_KEY = "your-service-role-key"` instead. The loader
+   reads `SUPABASE_URL` from `src/backend/.env` and upserts the CSV data in
+   `data/processed/`. Re-running it is safe.
+
+6. Start the backend and frontend using the local instructions above. Confirm
+   that `http://localhost:8000/health` responds and that the app can load
+   roles. The migration details, table list, loader options, and expected row
+   counts are documented in [`migrations/README.md`](migrations/README.md).
+
+Use the publishable key for normal app reads. Profile, recommendation, roadmap,
+and other write operations require `SUPABASE_SERVICE_KEY`; without it those
+features intentionally return an error rather than writing with the public key.
+
 ## How We Use Replit _(Required)_
 
 - **Designing**: the team did preliminary designs and included animations for the prototypes after developing the core functionality with Claude Code and Antigravity
