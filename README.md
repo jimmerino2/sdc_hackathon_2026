@@ -22,7 +22,7 @@
 | GitHub Repository | https://github.com/jimmerino2/sdc_hackathon_2026              |
 | Live Demo         | https://jobee-sdchack.replit.app/                             |
 | RunPod            | Serverless endpoint hosting OpenJev (resume skill extraction) |
-| Slide Deck        | https://canva.link/bzbux2f8xgpbkka                            |
+| Slide Deck        | https://canva.link/9ogvetmkxddtzag                            |
 | Demo Video        | https://youtu.be/Hny9_auRplk                                  |
 
 ---
