@@ -29,6 +29,7 @@ const router = useRouter();
 const { state } = useFlow();
 const pct = computed(() => ((props.progress ?? 0) / 5) * 100);
 const showProgress = computed(() => props.progress !== undefined && props.progress < 5);
+const showClose = computed(() => showProgress.value);
 /** Where the close button goes: to the learner's pathway once they have an account (a confirmed email), else back to the start. */
 const closeTo = computed<Step>(() => (state.value.email || isLoggedIn() ? 'pathway' : 'landing'));
 
@@ -41,8 +42,8 @@ function onNext() {
 <template>
   <div class="shell" :class="{ wide }">
     <header>
-      <div class="inner top">
-        <RouterLink :to="go(closeTo)" class="x" aria-label="Close"><Icon name="x" :size="22" :stroke="2.6" /></RouterLink>
+      <div v-if="showClose || showProgress" class="inner top">
+        <RouterLink v-if="showClose" :to="go(closeTo)" class="x" aria-label="Close"><Icon name="x" :size="22" :stroke="2.6" /></RouterLink>
         <div v-if="showProgress" class="progress" role="progressbar" aria-label="Progress" aria-valuemin="0" aria-valuemax="5" :aria-valuenow="progress"><i :style="{ width: pct + '%' }" /></div>
       </div>
       <div class="inner say">
