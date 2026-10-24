@@ -177,6 +177,172 @@ Join: `onet_to_my_group.my_occupation_group` = `my_vacancies.group` where `group
 
 ---
 
+## 9. `forecasting/ai_share_vintages.csv` and `forecasting/postings_vintages.csv`
+
+The point-in-time store for the rebuilt forecast (`FORECAST_REBUILD.md`). There is one row per **published vintage × country × month**, so a backtest can see exactly what was public at any date. Both files are built by `src/backend/forecasting/vintages.py` from the git history of the two Indeed repos.
+
+- `ai_share_vintages.csv`: every AI Tracker vintage, 35 vintages (29 Apr 2024 to 8 Oct 2026), 24,273 rows.
+- `postings_vintages.csv`: per country, the last vintage of each calendar month, 76 commits (24 Feb 2021 to 20 Oct 2026), 23,660 rows.
+
+| Column           | Source                              | Type      | Derived from                                                                                                       |
+| ---------------- | ----------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------ |
+| `source_id`      | Ours                                | text      | `indeed_ai_tracker` or `indeed_postings` (keys of `forecasting/registry.py`)                                       |
+| `vintage_id`     | Indeed AI Tracker / Indeed Postings | text      | Commit SHA (12 characters) that published the file                                                                 |
+| `blob_sha`       | Indeed AI Tracker / Indeed Postings | text      | Git blob SHA of the file. Identical content republished later is kept once, under its first commit                 |
+| `available_at`   | Indeed AI Tracker / Indeed Postings | timestamp | Commit time in UTC: when the vintage became public. A forecast at time T may only use vintages with `available_at` ≤ T |
+| `source_file`    | Indeed AI Tracker / Indeed Postings | text      | Path in the repo (the file was renamed several times)                                                              |
+| `schema_version` | Ours                                | text      | The file's column names joined by a pipe character. A change marks a possible measurement break                    |
+| `geo`            | Indeed AI Tracker / Indeed Postings | text      | Country code (`jobcountry`). The AI Tracker's country set changes between vintages                                 |
+| `month`          | Ours                                | `YYYY-MM` | Daily dates grouped into months. Early files are day-first (`29/3/24`); the parser picks the format under which dates run day by day |
+| `value`          | Indeed AI Tracker / Indeed Postings | number    | Monthly mean of the daily value. AI: % of postings mentioning AI. Postings: index, 1 Feb 2020 = 100 (before mid-2021 Indeed published % change since 1 Feb 2020, converted as 100 + change) |
+| `numerator`      | Indeed AI Tracker                   | number    | Monthly sum of `AI_count`. Only in the Jul–Aug 2024 vintages; blank (never 0) otherwise                            |
+| `denominator`    | Indeed AI Tracker                   | number    | Monthly sum of `total` postings, same vintages                                                                     |
+| `n_days`         | Ours                                | int       | Days with data in the month                                                                                        |
+| `is_partial`     | Ours                                | bool      | `True` if `n_days` is below the days in the month. Partial months are never used as features or outcomes          |
+
+Caveats:
+
+- **Revisions are large.** The same AI-share country-month differs by 0.39 pp on average (1.58 pp at most) between the first and latest vintage.
+- **No vintage before 29 Apr 2024.** Earlier backtest origins are reconstructed (see `FORECAST_REBUILD.md` §4).
+
+---
+
+## 10. `forecasting/btos_ai_observations.csv` and `forecasting/btos_calendar.csv`
+
+Census BTOS answers to the two AI questions, one row per **measure × wording × unit × fortnight**: 3,240 rows, of which 2,679 are estimates. Built by `src/backend/forecasting/btos.py` from `Sector.xlsx`, `National.xlsx` (current wording) and `AI Core Questions.xlsx` (old wording). The calendar has one row per fortnight in Census's schedule: 99 rows (202319 to 202713), including scheduled future fortnights and the three that were not asked.
+
+| Column           | Source | Type      | Derived from                                                                                                   |
+| ---------------- | ------ | --------- | -------------------------------------------------------------------------------------------------------------- |
+| `measure`        | Ours   | text      | `current_use` (question 7: used AI in the last two weeks) or `expected_use` (question 24: expects to within six months). Never mixed |
+| `question_id`    | BTOS   | int       | 7 or 24                                                                                                        |
+| `wording`        | Ours   | text      | `old` ("AI in producing goods or services", 202319–202520) or `new` ("SI/AI in any of its business functions", from 202524). A structural break: never joined |
+| `question`       | BTOS   | text      | Full question text as published                                                                                |
+| `unit`           | BTOS   | text      | NAICS sector code (19 sectors; `XX` multi-sector companies left out) or `US` for all businesses               |
+| `smpdt`          | BTOS   | text      | Census sample date: ISO year + fortnight number                                                                |
+| `period`         | Ours   | int       | Position of `smpdt` in the calendar (0 = 202319). Fortnights not asked keep their numbers, so the gap stays a gap |
+| `ref_start`, `ref_end` | BTOS | date   | The two weeks the answer refers to                                                                             |
+| `published_at`   | BTOS   | date      | Census publication date. The forecast treats an estimate as available from the end of that day (+1 day in UTC) |
+| `estimate_pct`   | BTOS   | number    | % of businesses answering Yes. Blank unless `status` is `ok`                                                   |
+| `se_pct`         | BTOS   | number    | Its standard error, in percentage points                                                                       |
+| `status`         | Ours   | text      | `ok`, `suppressed` (Census "S"), `not_asked` (Census ".", e.g. 202521–202523) or `missing`. None of these is ever stored as 0 |
+| `source_file`, `file_sha256` | Ours | text | Workbook read and its SHA-256, so each value can be traced to one download                                   |
+
+Caveats:
+
+- **The break is large:** 10.0% (202520, old wording) → 17.3% (202524, new wording) nationally.
+- **Assumed unrevised:** BTOS estimates are taken as final once published. Each download is also kept under `data/raw/btos/snapshots/<date>/`, so a revision would show up when files are compared.
+- **Sector estimates are noisy:** the mean SE is 1.9 pp under the new wording, against 0.3 pp nationally.
+
+---
+
+## 11. `forecasting/rps_observations.csv`
+
+Real-Time Population Survey (via FRED): one row per **SOC major group × quarter × vintage**. 258 rows: 23 series × 9 quarters (2024-Q3 to 2026-Q3), from the FRED releases of 18 Jun 2026 and 16 Oct 2026 (ALFRED, with `FRED_API_KEY`). A quarter appears twice when it was revised or first published in October. Built by `src/backend/forecasting/rps.py`.
+
+| Column               | Source | Type      | Derived from                                                                                           |
+| -------------------- | ------ | --------- | ------------------------------------------------------------------------------------------------------ |
+| `series_id`          | FRED   | text      | `RPSGENAIUSAGESHAREOCC1`…`OCC22`, `RPSGENAIUSAGESHAREWORK`                                             |
+| `unit`               | Ours   | text      | 2018 SOC major group code (`00` = all workers). The series → code mapping is from the FRED release order, checked on `feat/ai-adoption-mc` |
+| `unit_name`          | Ours   | text      | SOC major group name                                                                                   |
+| `quarter`            | FRED   | `YYYYQn`  | Quarter of the observation (`observation_date` is the quarter's first day)                             |
+| `value_pct`          | FRED   | number    | % of employed adults aged 18–64 in the group who use generative AI for their job                       |
+| `available_at`       | Ours   | timestamp | `alfred`: the vintage's `realtime_start`. `assumed`: quarter end + 21 days, capped at the fetch time    |
+| `availability_basis` | Ours   | text      | `alfred` (real vintage, needs `FRED_API_KEY`) or `assumed`                                              |
+| `fetched_at`         | Ours   | timestamp | When the file was downloaded                                                                           |
+| `source_file`        | Ours   | text      | File read                                                                                              |
+
+Caveats:
+
+- **No respondent counts.** FRED publishes none, so none are stored. The old branch's estimated count (pooled respondents ÷ waves) was dropped.
+- **Noisy group readings:** e.g. Management moves 55.9 → 48.1 → 51.9 → 49.6 → 61.4 over five quarters.
+
+---
+
+## 12. `forecasting/capability_vintages.csv`
+
+Epoch AI capability data as point-in-time vintages: one row per **vintage × measure × METR version × model**. 1,338 rows; 14 vintages with METR time horizons (from Jun 2025) and 3 with ECI (from Sep 2026). Built by `src/backend/forecasting/capability.py` from Wayback Machine captures of `https://epoch.ai/data/benchmark_data.zip` (one per month) and today's file. The raw zips and their `meta.json` are in `data/raw/epoch/snapshots/<capture timestamp>/`.
+
+| Column                | Source   | Type      | Derived from                                                                                                   |
+| --------------------- | -------- | --------- | -------------------------------------------------------------------------------------------------------------- |
+| `vintage_id`          | Ours     | text      | Capture timestamp `YYYYMMDDhhmmss`                                                                             |
+| `available_at`        | Wayback / Epoch | timestamp | Epoch's `Last-Modified` as recorded by the archive, else the capture time. Both are upper bounds on publication |
+| `availability_basis`  | Ours     | text      | `last_modified` or `capture_time`                                                                              |
+| `measure`             | Ours     | text      | `metr_h50_minutes` (METR 50% task time horizon) or `eci` (Epoch Capabilities Index)                            |
+| `metr_version`        | Epoch    | text      | `METR-Horizon-v1.1` or `METR-Horizon-v1.0`. Unlabelled rows are the original suite and are stored as v1.0. Blank for ECI |
+| `model`               | Epoch    | text      | Model version name as published                                                                                |
+| `release_date`        | Epoch    | date      | Model release date                                                                                             |
+| `release_date_source` | Ours     | text      | `file`, or `joined` (filled from a later vintage by model name; the two earliest files have no release dates)  |
+| `value`               | Epoch    | number    | Minutes (METR) or ECI points                                                                                   |
+| `ci_low`, `ci_high`   | Epoch    | number    | Published confidence interval                                                                                  |
+| `source_file`, `zip_sha256` | Ours | text    | File inside the zip, and the zip's hash (first 16 hex characters)                                              |
+
+Caveats:
+
+- **METR v1.1 re-measured older models.** Values moved a lot (e.g. 18.7 → 11.4 minutes), so the two versions are separate series.
+- **METR deleted some legacy v1.0 rows** from Sep 2026.
+- **ECI is refitted with every update.** It is stored for later, not modelled.
+
+---
+
+## 13. `forecasting/metr_success_curves.csv` and `forecasting/metr_success_bins.csv`
+
+Display only, not a model input. Task lengths each AI model completes at success rates other than METR's headline 50%. Built by `src/backend/forecasting/success_curves.py` from METR's raw attempts (`METR/eval-analysis-public`, `reports/time-horizon-1-1/data/raw/runs.jsonl`, suite v1.1). For each model it fits METR's own curve, P(success) = logistic(a + b · log₂ human minutes), with tasks weighted by 1/√attempts. The fit reproduces the official 50% and 80% horizons to within 0.5%; the build refuses to save otherwise.
+
+| Column | Source | Type | Derived from |
+| --- | --- | --- | --- |
+| `model` | METR | text | Model alias in METR's runs, or Epoch's name for official-only rows |
+| `source` | Ours | text | `fitted from METR raw runs`, or `official 50% / 80% only (no public raw runs)` for models METR has not released attempts for |
+| `n_runs` | METR | int | Attempts behind the fit |
+| `intercept`, `slope` | Ours | number | a and b of the fitted curve |
+| `h95` … `h10` | Ours | minutes | Task length completed with 95, 90, 80, 75, 50, 25 and 10% probability |
+| `official_h50`, `official_h80` | Epoch AI | minutes | METR's published 50% and 80% horizons (latest Epoch vintage) |
+| `epoch_model`, `release_date` | Epoch AI | text, date | Matched by the 50% horizon (the two files name models differently) |
+| `longest_task_minutes` | METR | minutes | Longest task in the suite (30 h). Horizons beyond it are extrapolations and are flagged on the page |
+| `metr_commit` | Ours | text | Commit of METR's repo the runs were read from |
+
+`metr_success_bins.csv`: one row per model × task-length group (<1 min … 16 h+), with `attempts` and the weighted `success_rate` observed. These are the dots on the page's curve.
+
+---
+
+## Forecast outputs (`src/backend/forecasting/output/<target>/`)
+
+There is one folder per target: `ai_mention_share`, `btos_ai_use_rate`, `worker_genai_use_rate` and `frontier_time_horizon`.
+
+| File                            | One row per                                       | What it is                                                                                     |
+| ------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `runs/<run_id>/backtest.csv.gz` | origin × horizon × candidate × feature set × unit | Every out-of-sample prediction with `actual`, `error` (pp for shares, doublings for time horizons), `resid` (modelling scale), `role` (`selection` / `holdout` / `purged`), `vintage_kind` and `segment` |
+| `runs/<run_id>/evaluation.json` | run                                               | Split, selection table, holdout scores, interval coverage, ablations, breakdown by role / vintage kind / segment, and source health |
+| `runs/<run_id>/forecast.csv`    | unit × horizon                                    | That run's forecast                                                                            |
+| `forecast_log.csv`              | unit × horizon × run                              | Every forecast ever issued (append only)                                                       |
+| `latest_forecast.csv`           | unit × horizon                                    | The forecast of the promoted run per horizon: what the app should show. A horizon with no promoted model is absent |
+| `model_registry.json`           | horizon                                           | The promoted model per horizon, and every attempt with its acceptance verdict                  |
+
+Forecast columns:
+
+- `run_id`, `made_at`: the run and when it ran (UTC).
+- `target`, `unit_kind`, `unit`, `segment`: e.g. `country` / `US`; `NAICS sector (or US) x wording` / `54|new` / `new wording`; `SOC major group` / `15`.
+- `last_observed_period`, `last_observed`.
+- `h`, `period_unit` (`month` / `fortnight` / `quarter`), `target_period`. BTOS periods are written as `smpdt (ref <end date>)`.
+- `value_unit`: `percent`, or `minutes (50% task time horizon)`.
+- `model`: the model served. `chosen_model` is the one selection chose; they differ only when `status` is `baseline_retained`.
+- `forecast`, `low`, `high`: the forecast and its 10–90% empirical range, in `value_unit`. When every past residual falls on one side, the point can lie outside the range; `warnings` then says so.
+- `status`: `validated` (holdout error at least 5% below naive), `baseline`, `not_demonstrably_better`, or `baseline_retained` (the chosen model lost to naive on the holdout, so naive is served).
+- `holdout_mae`, `naive_holdout_mae`: in pp for shares, in doublings for time horizons.
+- `vintage`, `data_as_of`: the data the forecast was cut from, and when it was available.
+- `warnings`: e.g. short history, stale data, point-in-time basis `current_only` / `mixed`, baseline retained, or a one-sided range.
+- Capability only:
+  - `p_acceleration`, `p_stable`, `p_slowdown`: these sum to 1;
+  - `regime_rule`: the rule, its tolerance, and the number of residuals behind the probabilities.
+
+Older rows were converted to these column names, so the logs keep one schema:
+
+- before the engine refactor: `geo` → `unit`, `ai_vintage` → `vintage`, `*_month` → `*_period`;
+- before value scales: `*_pct` → plain names, `*_mae_pp` → `*_mae`, `value_unit` = `percent`.
+
+Columns added later are blank in older rows.
+
+---
+
 ## Supporting files
 
 | File                     | Source                          | What it is                                                                                                                                |

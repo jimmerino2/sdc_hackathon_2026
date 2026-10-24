@@ -1,0 +1,305 @@
+skill_id,name,as_of,detected,status,term,first_seen,confidence,reason
+svelte,Svelte,2022-03,True,under_review,Svelte,2019-01,low,"13 ads from 10 employers in 4 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.02 pp (90% lower bound); first seen 2019-01, so not new: an established term missing from the vocabulary, proposed for adding"
+nextjs,Next.js,2022-03,True,under_review,Next.js,2017-09,low,"10 ads from 7 employers in 5 of the last 6 months (GB, software_engineer); share up at least 0.03 pp (90% lower bound); first seen 2017-09, so not new: an established term missing from the vocabulary, proposed for adding"
+fastapi,FastAPI,2022-03,False,,,,,
+huggingface,Hugging Face,2022-03,False,,,,,
+llm,LLMs,2022-03,False,,,,,
+generative_ai,Generative AI,2022-03,False,,,,,
+rag,Retrieval-augmented generation,2022-03,False,,,,,
+prompt_engineering,Prompt engineering,2022-03,False,,,,,
+langchain,LangChain,2022-03,False,,,,,
+vector_db,Vector databases,2022-03,False,,,,,
+ai_agents,AI agents,2022-03,False,,,,,
+llm_evals,LLM evaluation,2022-03,False,,,,,
+openai_api,OpenAI API,2022-03,False,,,,,
+anthropic_claude,Claude,2022-03,False,,,,,
+mcp,Model Context Protocol,2022-03,False,,,,,
+ai_assisted_dev,AI-assisted development (AI tool use),2022-03,False,,,,,
+svelte,Svelte,2022-06,False,,,,,
+nextjs,Next.js,2022-06,True,under_review,Next.js,2017-09,low,"5 ads from 3 employers in 3 of the last 6 months (all countries, data_scientist; discovery evidence only); share up at least 0.78 pp (90% lower bound); first seen 2017-09, so not new: an established term missing from the vocabulary, proposed for adding"
+fastapi,FastAPI,2022-06,True,newly_detected,FastAPI,2020-09,medium,"20 ads from 12 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.05 pp (90% lower bound)"
+huggingface,Hugging Face,2022-06,False,,,,,
+llm,LLMs,2022-06,False,,,,,
+generative_ai,Generative AI,2022-06,False,,,,,
+rag,Retrieval-augmented generation,2022-06,False,,,,,
+prompt_engineering,Prompt engineering,2022-06,False,,,,,
+langchain,LangChain,2022-06,False,,,,,
+vector_db,Vector databases,2022-06,False,,,,,
+ai_agents,AI agents,2022-06,False,,,,,
+llm_evals,LLM evaluation,2022-06,False,,,,,
+openai_api,OpenAI API,2022-06,False,,,,,
+anthropic_claude,Claude,2022-06,False,,,,,
+mcp,Model Context Protocol,2022-06,False,,,,,
+ai_assisted_dev,AI-assisted development (AI tool use),2022-06,False,,,,,
+svelte,Svelte,2022-09,False,,,,,
+nextjs,Next.js,2022-09,True,under_review,Next.js,2017-09,high,"82 ads from 58 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.17 pp (90% lower bound); first seen 2017-09, so not new: an established term missing from the vocabulary, proposed for adding"
+fastapi,FastAPI,2022-09,False,,,,,
+huggingface,Hugging Face,2022-09,False,,,,,
+llm,LLMs,2022-09,False,,,,,
+generative_ai,Generative AI,2022-09,False,,,,,
+rag,Retrieval-augmented generation,2022-09,False,,,,,
+prompt_engineering,Prompt engineering,2022-09,False,,,,,
+langchain,LangChain,2022-09,False,,,,,
+vector_db,Vector databases,2022-09,False,,,,,
+ai_agents,AI agents,2022-09,False,,,,,
+llm_evals,LLM evaluation,2022-09,False,,,,,
+openai_api,OpenAI API,2022-09,False,,,,,
+anthropic_claude,Claude,2022-09,False,,,,,
+mcp,Model Context Protocol,2022-09,False,,,,,
+ai_assisted_dev,AI-assisted development (AI tool use),2022-09,False,,,,,
+svelte,Svelte,2022-12,False,,,,,
+nextjs,Next.js,2022-12,True,under_review,Next.js,2017-09,high,"67 ads from 48 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.13 pp (90% lower bound); first seen 2017-09, so not new: an established term missing from the vocabulary, proposed for adding"
+fastapi,FastAPI,2022-12,True,under_review,FastAPI,2020-09,low,"7 ads from 6 employers in 3 of the last 6 months (US, software_engineer); share up at least 0.09 pp (90% lower bound); below the evidence needed to call it a new skill"
+huggingface,Hugging Face,2022-12,False,,,,,
+llm,LLMs,2022-12,False,,,,,
+generative_ai,Generative AI,2022-12,False,,,,,
+rag,Retrieval-augmented generation,2022-12,False,,,,,
+prompt_engineering,Prompt engineering,2022-12,False,,,,,
+langchain,LangChain,2022-12,False,,,,,
+vector_db,Vector databases,2022-12,False,,,,,
+ai_agents,AI agents,2022-12,False,,,,,
+llm_evals,LLM evaluation,2022-12,False,,,,,
+openai_api,OpenAI API,2022-12,False,,,,,
+anthropic_claude,Claude,2022-12,False,,,,,
+mcp,Model Context Protocol,2022-12,False,,,,,
+ai_assisted_dev,AI-assisted development (AI tool use),2022-12,False,,,,,
+svelte,Svelte,2023-03,False,,,,,
+nextjs,Next.js,2023-03,True,under_review,Next.js,2017-09,high,"61 ads from 42 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.29 pp (90% lower bound); first seen 2017-09, so not new: an established term missing from the vocabulary, proposed for adding"
+fastapi,FastAPI,2023-03,True,newly_detected,FastAPI,2020-09,medium,"17 ads from 13 employers in 5 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.15 pp (90% lower bound)"
+huggingface,Hugging Face,2023-03,False,,,,,
+llm,LLMs,2023-03,False,,,,,
+generative_ai,Generative AI,2023-03,False,,,,,
+rag,Retrieval-augmented generation,2023-03,False,,,,,
+prompt_engineering,Prompt engineering,2023-03,False,,,,,
+langchain,LangChain,2023-03,False,,,,,
+vector_db,Vector databases,2023-03,False,,,,,
+ai_agents,AI agents,2023-03,False,,,,,
+llm_evals,LLM evaluation,2023-03,False,,,,,
+openai_api,OpenAI API,2023-03,False,,,,,
+anthropic_claude,Claude,2023-03,False,,,,,
+mcp,Model Context Protocol,2023-03,False,,,,,
+ai_assisted_dev,AI-assisted development (AI tool use),2023-03,False,,,,,
+svelte,Svelte,2023-06,False,,,,,
+nextjs,Next.js,2023-06,False,,,,,
+fastapi,FastAPI,2023-06,True,newly_detected,FastAPI,2020-09,medium,"15 ads from 12 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.09 pp (90% lower bound)"
+huggingface,Hugging Face,2023-06,False,,,,,
+llm,LLMs,2023-06,True,under_review,LLMs,2023-04,low,"7 ads from 4 employers in 3 of the last 6 months (US, ml_engineer); share up at least 10.74 pp (90% lower bound); below the evidence needed to call it a new skill"
+generative_ai,Generative AI,2023-06,False,,,,,
+rag,Retrieval-augmented generation,2023-06,False,,,,,
+prompt_engineering,Prompt engineering,2023-06,False,,,,,
+langchain,LangChain,2023-06,False,,,,,
+vector_db,Vector databases,2023-06,False,,,,,
+ai_agents,AI agents,2023-06,False,,,,,
+llm_evals,LLM evaluation,2023-06,False,,,,,
+openai_api,OpenAI API,2023-06,False,,,,,
+anthropic_claude,Claude,2023-06,False,,,,,
+mcp,Model Context Protocol,2023-06,False,,,,,
+ai_assisted_dev,AI-assisted development (AI tool use),2023-06,False,,,,,
+svelte,Svelte,2023-09,False,,,,,
+nextjs,Next.js,2023-09,True,under_review,Next.js,2017-09,medium,"25 ads from 22 employers in 5 of the last 6 months (US, software_engineer); share up at least 0.17 pp (90% lower bound); first seen 2017-09, so not new: an established term missing from the vocabulary, proposed for adding"
+fastapi,FastAPI,2023-09,False,,,,,
+huggingface,Hugging Face,2023-09,False,,,,,
+llm,LLMs,2023-09,True,under_review,LLM,2023-03,low,"7 ads from 5 employers in 3 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.29 pp (90% lower bound); below the evidence needed to call it a new skill"
+generative_ai,Generative AI,2023-09,False,,,,,
+rag,Retrieval-augmented generation,2023-09,False,,,,,
+prompt_engineering,Prompt engineering,2023-09,False,,,,,
+langchain,LangChain,2023-09,False,,,,,
+vector_db,Vector databases,2023-09,False,,,,,
+ai_agents,AI agents,2023-09,False,,,,,
+llm_evals,LLM evaluation,2023-09,False,,,,,
+openai_api,OpenAI API,2023-09,True,under_review,OpenAI,2018-10,low,"7 ads from 3 employers in 5 of the last 6 months (all countries, ml_engineer; discovery evidence only); share up at least 4.14 pp (90% lower bound); first seen 2018-10, so not new: an established term missing from the vocabulary, proposed for adding"
+anthropic_claude,Claude,2023-09,False,,,,,
+mcp,Model Context Protocol,2023-09,False,,,,,
+ai_assisted_dev,AI-assisted development (AI tool use),2023-09,False,,,,,
+svelte,Svelte,2023-12,False,,,,,
+nextjs,Next.js,2023-12,True,under_review,Next.js,2017-09,medium,"28 ads from 21 employers in 6 of the last 6 months (US, software_engineer); share up at least 0.55 pp (90% lower bound); first seen 2017-09, so not new: an established term missing from the vocabulary, proposed for adding"
+fastapi,FastAPI,2023-12,False,,,,,
+huggingface,Hugging Face,2023-12,False,,,,,
+llm,LLMs,2023-12,True,under_review,Large Language Models,2023-07,low,"5 ads from 3 employers in 4 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.19 pp (90% lower bound); below the evidence needed to call it a new skill"
+generative_ai,Generative AI,2023-12,False,,,,,
+rag,Retrieval-augmented generation,2023-12,False,,,,,
+prompt_engineering,Prompt engineering,2023-12,False,,,,,
+langchain,LangChain,2023-12,False,,,,,
+vector_db,Vector databases,2023-12,False,,,,,
+ai_agents,AI agents,2023-12,False,,,,,
+llm_evals,LLM evaluation,2023-12,False,,,,,
+openai_api,OpenAI API,2023-12,True,under_review,OpenAI,2018-10,low,"11 ads from 7 employers in 5 of the last 6 months (US, software_engineer); share up at least 0.85 pp (90% lower bound); first seen 2018-10, so not new: an established term missing from the vocabulary, proposed for adding"
+anthropic_claude,Claude,2023-12,False,,,,,
+mcp,Model Context Protocol,2023-12,False,,,,,
+ai_assisted_dev,AI-assisted development (AI tool use),2023-12,False,,,,,
+svelte,Svelte,2024-03,False,,,,,
+nextjs,Next.js,2024-03,False,,,,,
+fastapi,FastAPI,2024-03,False,,,,,
+huggingface,Hugging Face,2024-03,False,,,,,
+llm,LLMs,2024-03,True,under_review,LLM,2023-03,low,"9 ads from 8 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.14 pp (90% lower bound); below the evidence needed to call it a new skill"
+generative_ai,Generative AI,2024-03,False,,,,,
+rag,Retrieval-augmented generation,2024-03,True,under_review,RAG,2023-10,low,"9 ads from 5 employers in 6 of the last 6 months (all countries, ml_engineer; discovery evidence only); share up at least 4.38 pp (90% lower bound); below the evidence needed to call it a new skill"
+prompt_engineering,Prompt engineering,2024-03,False,,,,,
+langchain,LangChain,2024-03,False,,,,,
+vector_db,Vector databases,2024-03,False,,,,,
+ai_agents,AI agents,2024-03,False,,,,,
+llm_evals,LLM evaluation,2024-03,False,,,,,
+openai_api,OpenAI API,2024-03,True,under_review,OpenAI,2018-10,low,"14 ads from 6 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.30 pp (90% lower bound); first seen 2018-10, so not new: an established term missing from the vocabulary, proposed for adding"
+anthropic_claude,Claude,2024-03,False,,,,,
+mcp,Model Context Protocol,2024-03,False,,,,,
+ai_assisted_dev,AI-assisted development (AI tool use),2024-03,False,,,,,
+svelte,Svelte,2024-06,True,under_review,Svelte,2019-01,low,"12 ads from 10 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.12 pp (90% lower bound); first seen 2019-01, so not new: an established term missing from the vocabulary, proposed for adding"
+nextjs,Next.js,2024-06,True,under_review,Next.js,2017-09,high,"60 ads from 41 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.44 pp (90% lower bound); first seen 2017-09, so not new: an established term missing from the vocabulary, proposed for adding"
+fastapi,FastAPI,2024-06,False,,,,,
+huggingface,Hugging Face,2024-06,False,,,,,
+llm,LLMs,2024-06,True,newly_detected,LLM,2023-03,low,"12 ads from 7 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.12 pp (90% lower bound)"
+generative_ai,Generative AI,2024-06,False,,,,,
+rag,Retrieval-augmented generation,2024-06,True,under_review,RAG,2023-10,low,"7 ads from 3 employers in 5 of the last 6 months (US, ml_engineer); share up at least 4.38 pp (90% lower bound); below the evidence needed to call it a new skill"
+prompt_engineering,Prompt engineering,2024-06,False,,,,,
+langchain,LangChain,2024-06,False,,,,,
+vector_db,Vector databases,2024-06,False,,,,,
+ai_agents,AI agents,2024-06,False,,,,,
+llm_evals,LLM evaluation,2024-06,False,,,,,
+openai_api,OpenAI API,2024-06,False,,,,,
+anthropic_claude,Claude,2024-06,False,,,,,
+mcp,Model Context Protocol,2024-06,False,,,,,
+ai_assisted_dev,AI-assisted development (AI tool use),2024-06,False,,,,,
+svelte,Svelte,2024-09,False,,,,,
+nextjs,Next.js,2024-09,True,under_review,Next.js,2017-09,low,"11 ads from 7 employers in 5 of the last 6 months (GB, software_engineer); share up at least 4.29 pp (90% lower bound); first seen 2017-09, so not new: an established term missing from the vocabulary, proposed for adding"
+fastapi,FastAPI,2024-09,True,under_review,FastAPI,2020-09,medium,"25 ads from 15 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.37 pp (90% lower bound); first seen 2020-09, so not new: an established term missing from the vocabulary, proposed for adding"
+huggingface,Hugging Face,2024-09,False,,,,,
+llm,LLMs,2024-09,True,newly_detected,LLM,2023-03,medium,"25 ads from 19 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.72 pp (90% lower bound)"
+generative_ai,Generative AI,2024-09,False,,,,,
+rag,Retrieval-augmented generation,2024-09,True,newly_detected,RAG,2023-10,medium,"16 ads from 11 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.70 pp (90% lower bound)"
+prompt_engineering,Prompt engineering,2024-09,False,,,,,
+langchain,LangChain,2024-09,False,,,,,
+vector_db,Vector databases,2024-09,False,,,,,
+ai_agents,AI agents,2024-09,False,,,,,
+llm_evals,LLM evaluation,2024-09,False,,,,,
+openai_api,OpenAI API,2024-09,False,,,,,
+anthropic_claude,Claude,2024-09,False,,,,,
+mcp,Model Context Protocol,2024-09,False,,,,,
+ai_assisted_dev,AI-assisted development (AI tool use),2024-09,False,,,,,
+svelte,Svelte,2024-12,False,,,,,
+nextjs,Next.js,2024-12,True,under_review,Next.js,2017-09,high,"52 ads from 34 employers in 6 of the last 6 months (US, software_engineer); share up at least 1.67 pp (90% lower bound); first seen 2017-09, so not new: an established term missing from the vocabulary, proposed for adding"
+fastapi,FastAPI,2024-12,True,under_review,FastAPI,2020-09,medium,"25 ads from 18 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.36 pp (90% lower bound); first seen 2020-09, so not new: an established term missing from the vocabulary, proposed for adding"
+huggingface,Hugging Face,2024-12,False,,,,,
+llm,LLMs,2024-12,True,newly_detected,LLM,2023-03,medium,"28 ads from 23 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.70 pp (90% lower bound)"
+generative_ai,Generative AI,2024-12,True,newly_detected,GenAI,2023-04,low,"10 ads from 8 employers in 5 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.30 pp (90% lower bound)"
+rag,Retrieval-augmented generation,2024-12,True,newly_detected,RAG,2023-10,low,"14 ads from 9 employers in 5 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.38 pp (90% lower bound)"
+prompt_engineering,Prompt engineering,2024-12,False,,,,,
+langchain,LangChain,2024-12,False,,,,,
+vector_db,Vector databases,2024-12,False,,,,,
+ai_agents,AI agents,2024-12,False,,,,,
+llm_evals,LLM evaluation,2024-12,False,,,,,
+openai_api,OpenAI API,2024-12,False,,,,,
+anthropic_claude,Claude,2024-12,False,,,,,
+mcp,Model Context Protocol,2024-12,False,,,,,
+ai_assisted_dev,AI-assisted development (AI tool use),2024-12,False,,,,,
+svelte,Svelte,2025-03,False,,,,,
+nextjs,Next.js,2025-03,True,under_review,Next.js,2017-09,high,"54 ads from 36 employers in 6 of the last 6 months (US, software_engineer); share up at least 0.95 pp (90% lower bound); first seen 2017-09, so not new: an established term missing from the vocabulary, proposed for adding"
+fastapi,FastAPI,2025-03,True,under_review,FastAPI,2020-09,low,"11 ads from 11 employers in 4 of the last 6 months (US, software_engineer); share up at least 0.26 pp (90% lower bound); first seen 2020-09, so not new: an established term missing from the vocabulary, proposed for adding"
+huggingface,Hugging Face,2025-03,False,,,,,
+llm,LLMs,2025-03,True,newly_detected,LLMs,2023-04,medium,"19 ads from 12 employers in 6 of the last 6 months (US, software_engineer); share up at least 0.54 pp (90% lower bound)"
+generative_ai,Generative AI,2025-03,True,under_review,GenAI,2023-04,low,"7 ads from 6 employers in 5 of the last 6 months (all countries, ml_engineer; discovery evidence only); share up at least 1.45 pp (90% lower bound); below the evidence needed to call it a new skill"
+rag,Retrieval-augmented generation,2025-03,False,,,,,
+prompt_engineering,Prompt engineering,2025-03,False,,,,,
+langchain,LangChain,2025-03,False,,,,,
+vector_db,Vector databases,2025-03,False,,,,,
+ai_agents,AI agents,2025-03,False,,,,,
+llm_evals,LLM evaluation,2025-03,False,,,,,
+openai_api,OpenAI API,2025-03,False,,,,,
+anthropic_claude,Claude,2025-03,False,,,,,
+mcp,Model Context Protocol,2025-03,False,,,,,
+ai_assisted_dev,AI-assisted development (AI tool use),2025-03,False,,,,,
+svelte,Svelte,2025-06,False,,,,,
+nextjs,Next.js,2025-06,True,under_review,Next.js,2017-09,low,"9 ads from 4 employers in 5 of the last 6 months (CA, software_engineer); share up at least 4.68 pp (90% lower bound); first seen 2017-09, so not new: an established term missing from the vocabulary, proposed for adding"
+fastapi,FastAPI,2025-06,True,under_review,FastAPI,2020-09,medium,"26 ads from 19 employers in 5 of the last 6 months (US, software_engineer); share up at least 1.94 pp (90% lower bound); first seen 2020-09, so not new: an established term missing from the vocabulary, proposed for adding"
+huggingface,Hugging Face,2025-06,False,,,,,
+llm,LLMs,2025-06,True,newly_detected,LLM,2023-03,medium,"19 ads from 17 employers in 6 of the last 6 months (all countries, ml_engineer; discovery evidence only); share up at least 0.18 pp (90% lower bound)"
+generative_ai,Generative AI,2025-06,False,,,,,
+rag,Retrieval-augmented generation,2025-06,False,,,,,
+prompt_engineering,Prompt engineering,2025-06,False,,,,,
+langchain,LangChain,2025-06,False,,,,,
+vector_db,Vector databases,2025-06,False,,,,,
+ai_agents,AI agents,2025-06,False,,,,,
+llm_evals,LLM evaluation,2025-06,False,,,,,
+openai_api,OpenAI API,2025-06,False,,,,,
+anthropic_claude,Claude,2025-06,False,,,,,
+mcp,Model Context Protocol,2025-06,False,,,,,
+ai_assisted_dev,AI-assisted development (AI tool use),2025-06,False,,,,,
+svelte,Svelte,2025-09,False,,,,,
+nextjs,Next.js,2025-09,False,,,,,
+fastapi,FastAPI,2025-09,True,under_review,FastAPI,2020-09,medium,"27 ads from 21 employers in 6 of the last 6 months (US, software_engineer); share up at least 1.79 pp (90% lower bound); first seen 2020-09, so not new: an established term missing from the vocabulary, proposed for adding"
+huggingface,Hugging Face,2025-09,False,,,,,
+llm,LLMs,2025-09,True,newly_detected,LLM,2023-03,medium,"18 ads from 16 employers in 6 of the last 6 months (US, ml_engineer); share up at least 5.18 pp (90% lower bound)"
+generative_ai,Generative AI,2025-09,True,newly_detected,GenAI,2023-04,low,"12 ads from 7 employers in 5 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.12 pp (90% lower bound)"
+rag,Retrieval-augmented generation,2025-09,True,newly_detected,RAG,2023-10,low,"14 ads from 8 employers in 6 of the last 6 months (US, software_engineer); share up at least 0.60 pp (90% lower bound)"
+prompt_engineering,Prompt engineering,2025-09,False,,,,,
+langchain,LangChain,2025-09,False,,,,,
+vector_db,Vector databases,2025-09,False,,,,,
+ai_agents,AI agents,2025-09,False,,,,,
+llm_evals,LLM evaluation,2025-09,False,,,,,
+openai_api,OpenAI API,2025-09,True,under_review,ChatGPT,2023-04,low,"5 ads from 5 employers in 3 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.01 pp (90% lower bound); below the evidence needed to call it a new skill"
+anthropic_claude,Claude,2025-09,False,,,,,
+mcp,Model Context Protocol,2025-09,False,,,,,
+ai_assisted_dev,AI-assisted development (AI tool use),2025-09,False,,,,,
+svelte,Svelte,2025-12,True,under_review,Svelte,2019-01,low,"8 ads from 8 employers in 5 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.01 pp (90% lower bound); first seen 2019-01, so not new: an established term missing from the vocabulary, proposed for adding"
+nextjs,Next.js,2025-12,True,under_review,Next.js,2017-09,low,"12 ads from 7 employers in 6 of the last 6 months (US, ml_engineer); share up at least 1.79 pp (90% lower bound); first seen 2017-09, so not new: an established term missing from the vocabulary, proposed for adding"
+fastapi,FastAPI,2025-12,True,under_review,FastAPI,2020-09,medium,"27 ads from 25 employers in 6 of the last 6 months (US, software_engineer); share up at least 0.49 pp (90% lower bound); first seen 2020-09, so not new: an established term missing from the vocabulary, proposed for adding"
+huggingface,Hugging Face,2025-12,False,,,,,
+llm,LLMs,2025-12,True,newly_detected,LLM,2023-03,high,"44 ads from 35 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.75 pp (90% lower bound)"
+generative_ai,Generative AI,2025-12,False,,,,,
+rag,Retrieval-augmented generation,2025-12,True,newly_detected,RAG,2023-10,medium,"20 ads from 12 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.23 pp (90% lower bound)"
+prompt_engineering,Prompt engineering,2025-12,False,,,,,
+langchain,LangChain,2025-12,False,,,,,
+vector_db,Vector databases,2025-12,False,,,,,
+ai_agents,AI agents,2025-12,False,,,,,
+llm_evals,LLM evaluation,2025-12,False,,,,,
+openai_api,OpenAI API,2025-12,False,,,,,
+anthropic_claude,Claude,2025-12,True,newly_detected,Claude,2023-09,medium,"15 ads from 14 employers in 5 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.26 pp (90% lower bound)"
+mcp,Model Context Protocol,2025-12,False,,,,,
+ai_assisted_dev,AI-assisted development (AI tool use),2025-12,True,newly_detected,Claude Code,2025-07,low,"12 ads from 12 employers in 5 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.60 pp (90% lower bound)"
+svelte,Svelte,2026-03,True,under_review,Svelte,2019-01,low,"9 ads from 8 employers in 5 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.00 pp (90% lower bound); first seen 2019-01, so not new: an established term missing from the vocabulary, proposed for adding"
+nextjs,Next.js,2026-03,True,under_review,Next.js,2017-09,low,"12 ads from 8 employers in 6 of the last 6 months (US, ml_engineer); share up at least 1.24 pp (90% lower bound); first seen 2017-09, so not new: an established term missing from the vocabulary, proposed for adding"
+fastapi,FastAPI,2026-03,True,under_review,FastAPI,2020-09,high,"31 ads from 25 employers in 6 of the last 6 months (US, software_engineer); share up at least 0.49 pp (90% lower bound); first seen 2020-09, so not new: an established term missing from the vocabulary, proposed for adding"
+huggingface,Hugging Face,2026-03,False,,,,,
+llm,LLMs,2026-03,True,under_review,LLM,2023-03,medium,"28 ads from 20 employers in 6 of the last 6 months (US, software_engineer); share up at least 0.55 pp (90% lower bound); first seen 2023-03, so not new: an established term missing from the vocabulary, proposed for adding"
+generative_ai,Generative AI,2026-03,False,,,,,
+rag,Retrieval-augmented generation,2026-03,True,newly_detected,RAG,2023-10,medium,"20 ads from 12 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.19 pp (90% lower bound)"
+prompt_engineering,Prompt engineering,2026-03,False,,,,,
+langchain,LangChain,2026-03,True,newly_detected,LangChain,2023-04,low,"11 ads from 8 employers in 4 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.30 pp (90% lower bound)"
+vector_db,Vector databases,2026-03,False,,,,,
+ai_agents,AI agents,2026-03,False,,,,,
+llm_evals,LLM evaluation,2026-03,False,,,,,
+openai_api,OpenAI API,2026-03,False,,,,,
+anthropic_claude,Claude,2026-03,True,newly_detected,Anthropic,2023-11,low,"13 ads from 8 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.04 pp (90% lower bound)"
+mcp,Model Context Protocol,2026-03,False,,,,,
+ai_assisted_dev,AI-assisted development (AI tool use),2026-03,True,newly_detected,Claude Code,2025-07,medium,"23 ads from 22 employers in 5 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 1.15 pp (90% lower bound)"
+svelte,Svelte,2026-06,False,,,,,
+nextjs,Next.js,2026-06,True,under_review,Next.js,2017-09,high,"107 ads from 73 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.93 pp (90% lower bound); first seen 2017-09, so not new: an established term missing from the vocabulary, proposed for adding"
+fastapi,FastAPI,2026-06,False,,,,,
+huggingface,Hugging Face,2026-06,False,,,,,
+llm,LLMs,2026-06,True,under_review,LLM,2023-03,high,"34 ads from 24 employers in 6 of the last 6 months (US, software_engineer); share up at least 1.00 pp (90% lower bound); first seen 2023-03, so not new: an established term missing from the vocabulary, proposed for adding"
+generative_ai,Generative AI,2026-06,False,,,,,
+rag,Retrieval-augmented generation,2026-06,True,newly_detected,RAG,2023-10,low,"13 ads from 8 employers in 6 of the last 6 months (US, ml_engineer); share up at least 5.43 pp (90% lower bound)"
+prompt_engineering,Prompt engineering,2026-06,False,,,,,
+langchain,LangChain,2026-06,True,under_review,LangChain,2023-04,medium,"15 ads from 10 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.58 pp (90% lower bound); first seen 2023-04, so not new: an established term missing from the vocabulary, proposed for adding"
+vector_db,Vector databases,2026-06,False,,,,,
+ai_agents,AI agents,2026-06,False,,,,,
+llm_evals,LLM evaluation,2026-06,False,,,,,
+openai_api,OpenAI API,2026-06,True,under_review,OpenAI,2018-10,medium,"19 ads from 12 employers in 6 of the last 6 months (US, software_engineer); share up at least 0.12 pp (90% lower bound); first seen 2018-10, so not new: an established term missing from the vocabulary, proposed for adding"
+anthropic_claude,Claude,2026-06,True,newly_detected,Anthropic,2023-11,medium,"16 ads from 10 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.24 pp (90% lower bound)"
+mcp,Model Context Protocol,2026-06,True,under_review,MCP,2025-04,low,"5 ads from 4 employers in 3 of the last 6 months (US, software_engineer); share up at least 0.16 pp (90% lower bound); below the evidence needed to call it a new skill"
+ai_assisted_dev,AI-assisted development (AI tool use),2026-06,True,newly_detected,Claude Code,2025-07,high,"32 ads from 31 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 1.55 pp (90% lower bound)"
+svelte,Svelte,2026-09,False,,,,,
+nextjs,Next.js,2026-09,False,,,,,
+fastapi,FastAPI,2026-09,False,,,,,
+huggingface,Hugging Face,2026-09,False,,,,,
+llm,LLMs,2026-09,True,under_review,LLM,2023-03,high,"53 ads from 44 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 1.04 pp (90% lower bound); first seen 2023-03, so not new: an established term missing from the vocabulary, proposed for adding"
+generative_ai,Generative AI,2026-09,False,,,,,
+rag,Retrieval-augmented generation,2026-09,True,newly_detected,RAG,2023-10,medium,"18 ads from 11 employers in 6 of the last 6 months (US, ml_engineer); share up at least 8.76 pp (90% lower bound)"
+prompt_engineering,Prompt engineering,2026-09,False,,,,,
+langchain,LangChain,2026-09,True,under_review,LangChain,2023-04,medium,"15 ads from 9 employers in 6 of the last 6 months (all countries, ml_engineer; discovery evidence only); share up at least 3.88 pp (90% lower bound); first seen 2023-04, so not new: an established term missing from the vocabulary, proposed for adding"
+vector_db,Vector databases,2026-09,False,,,,,
+ai_agents,AI agents,2026-09,False,,,,,
+llm_evals,LLM evaluation,2026-09,False,,,,,
+openai_api,OpenAI API,2026-09,True,under_review,ChatGPT,2023-04,low,"5 ads from 3 employers in 2 of the last 6 months (US, software_engineer); share up at least 0.14 pp (90% lower bound); first seen 2023-04, so not new: an established term missing from the vocabulary, proposed for adding"
+anthropic_claude,Claude,2026-09,True,under_review,Anthropic,2023-11,low,"8 ads from 3 employers in 6 of the last 6 months (US, ml_engineer); share up at least 1.30 pp (90% lower bound); below the evidence needed to call it a new skill"
+mcp,Model Context Protocol,2026-09,True,newly_detected,MCP,2025-04,medium,"16 ads from 12 employers in 6 of the last 6 months (all countries, software_engineer; discovery evidence only); share up at least 0.91 pp (90% lower bound)"
+ai_assisted_dev,AI-assisted development (AI tool use),2026-09,True,newly_detected,Claude Code,2025-07,medium,"20 ads from 16 employers in 6 of the last 6 months (US, software_engineer); share up at least 1.63 pp (90% lower bound)"

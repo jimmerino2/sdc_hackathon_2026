@@ -1,0 +1,63 @@
+{
+  "run_id": "20261024T095314Z-8fe526",
+  "made_at": "2026-10-24T09:53:14.731794+00:00",
+  "model_version": "b1534684cf54",
+  "data_version": "8fe5261edf69",
+  "taxonomy_version": "2026-10-24.1",
+  "registry_version": 6,
+  "last_complete_month": "2026-09",
+  "partial_month": "2026-10",
+  "history_start": "2014-01",
+  "source_health": {
+    "onet": {
+      "source": "onet",
+      "release": "31.0",
+      "status": "ok",
+      "files": [
+        "software_skills.csv",
+        "job_titles.csv"
+      ],
+      "failed": []
+    },
+    "hn_whoishiring": {
+      "source": "hn_whoishiring",
+      "status": "cache_only",
+      "threads": 152
+    },
+    "so_dev_survey": {
+      "source": "so_dev_survey",
+      "status": "ok",
+      "years": [
+        2023,
+        2024,
+        2025
+      ],
+      "failed": []
+    },
+    "adzuna": {
+      "source": "adzuna",
+      "status": "not_requested_this_run"
+    }
+  },
+  "counts": {
+    "ads": 87454,
+    "eligible": 84783,
+    "classified": 56772,
+    "series": 3046,
+    "registry": {
+      "known": 154,
+      "under_review": 18,
+      "deprecated": 5
+    }
+  },
+  "served": {
+    "3": "mean12",
+    "6": "mean12",
+    "12": "shrink"
+  },
+  "status": {
+    "3": "validated",
+    "6": "validated",
+    "12": "validated"
+  }
+}

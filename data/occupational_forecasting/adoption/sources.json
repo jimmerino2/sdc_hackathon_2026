@@ -1,0 +1,54 @@
+{
+  "sources": [
+    {
+      "id": "so_dev_survey",
+      "target": "worker_ai_usage",
+      "measure_type": "observed",
+      "name": "Stack Overflow Developer Survey (2023, 2024, 2025)",
+      "population": "Employed survey respondents; self-selected, developer-heavy; not a probability sample",
+      "definition": "Uses AI tools in the development process (2025: daily, weekly or monthly/infrequently)",
+      "period": "Annual, fielded May-June",
+      "geography": "Global, with country breakdowns",
+      "licence": "ODbL",
+      "url": "https://survey.stackoverflow.co/"
+    },
+    {
+      "id": "rps",
+      "target": "worker_ai_usage",
+      "measure_type": "observed",
+      "name": "Real-Time Population Survey (St. Louis Fed / FRED)",
+      "population": "Employed US adults",
+      "definition": "Used generative AI for work",
+      "period": "Quarterly",
+      "geography": "US",
+      "limitation": "Smallest occupation unit is SOC major group 15 (all computer and mathematical occupations)",
+      "url": "https://www.realtimepopulationsurvey.com/"
+    },
+    {
+      "id": "hn_whoishiring",
+      "target": "employer_deployment_proxy",
+      "measure_type": "proxy",
+      "name": "HN 'Who is hiring?' ads expecting AI-tool use",
+      "population": "Tech companies posting on Hacker News",
+      "definition": "Ad expects the hire to use AI tools",
+      "period": "Monthly",
+      "geography": "Countries parsed from ad locations",
+      "limitation": "What employers ask for, not whether they deployed AI in the occupation's work"
+    },
+    {
+      "id": "anthropic_economic_index",
+      "target": "task_exposure",
+      "measure_type": "exposure_index",
+      "name": "Anthropic Economic Index (release 2026-06-26)",
+      "population": "Claude conversations",
+      "definition": "Percentile of observed Claude work usage for the occupation's tasks",
+      "period": "Apr-May 2026",
+      "geography": "Global usage",
+      "limitation": "Exposure, not adoption: never shown as a share of workers"
+    }
+  ],
+  "not_found": {
+    "employer_deployment_by_occupation": "No source found that measures whether employers deploy AI in a given occupation's work. Firm surveys (Census BTOS, OECD ICT surveys) report whether a firm uses AI at all, which cannot be split by occupation without assumptions. The page shows an ads-based proxy instead and labels it as such.",
+    "worker_usage_forecast": "Not published. Three annual Stack Overflow readings (wording and occupation categories changed in 2025) cannot identify a trend; the quarterly RPS series covers a whole occupation group, not one occupation."
+  }
+}

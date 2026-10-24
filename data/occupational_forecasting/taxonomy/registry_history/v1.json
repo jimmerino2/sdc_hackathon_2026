@@ -1,0 +1,3339 @@
+{
+  "built_at": "2026-10-24T09:14:46.401652+00:00",
+  "data_version": "78a046d91f25",
+  "last_complete_month": "2026-09",
+  "thresholds": {
+    "strong": {
+      "recent_ads": 10,
+      "employers": 6,
+      "months_present": 3
+    },
+    "weak": {
+      "recent_ads": 5,
+      "employers": 3,
+      "months_present": 2
+    },
+    "recent_months": 6,
+    "base_months": 12
+  },
+  "skills": [
+    {
+      "skill_id": "ab_testing",
+      "name": "A/B testing & experimentation",
+      "category": "analytics",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "agile",
+      "name": "Agile / Scrum",
+      "category": "practice",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "AGILE Scrum",
+        "Agile Scrum",
+        "Agile-Scrum",
+        "Kanban"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "ai_agents",
+      "name": "AI agents",
+      "category": "genai",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "AI Agent",
+        "AI Agents"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "ai_assisted_dev",
+      "name": "AI-assisted development (AI tool use)",
+      "category": "ai_tool_use",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "Claude Code",
+        "Codex",
+        "Cursor",
+        "GitHub Copilot"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "airflow",
+      "name": "Airflow",
+      "category": "data",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "android",
+      "name": "Android",
+      "category": "mobile",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "ANDROID"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "angular",
+      "name": "Angular",
+      "category": "frontend",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "anthropic_claude",
+      "name": "Claude",
+      "category": "genai",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "Anthropic"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "api_design",
+      "name": "API design",
+      "category": "practice",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "aws",
+      "name": "AWS",
+      "category": "cloud",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "Aws"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "azure",
+      "name": "Azure",
+      "category": "cloud",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "bash",
+      "name": "Shell scripting",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "bigquery",
+      "name": "BigQuery",
+      "category": "data",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "Big Query",
+        "Bigquery"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "blockchain",
+      "name": "Blockchain",
+      "category": "domain",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "Ethereum",
+        "Web3",
+        "web3"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "c",
+      "name": "C",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "cand:ci",
+      "name": "CI",
+      "category": "discovered",
+      "status": "newly_detected",
+      "origin": "discovered",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "possible_alias_of": null,
+      "first_seen": "2014-04",
+      "confidence": "medium",
+      "reason": "24 ads from 21 employers in 6 of the last 6 months (US, software_engineer); share up at least 0.63 pp (90% lower bound)",
+      "evidence": [
+        {
+          "ad_id": "hn_whoishiring:50090302",
+          "month": "2026-10",
+          "employer": "GovStar",
+          "url": "https://news.ycombinator.com/item?id=50090302",
+          "snippet": "…Python, React, TypeScript, Azure OpenAI, PostgreSQL, CosmosDB, Docker, Kubernetes, GitLab CI/CD, LLMs, and RAG. Requirements: U.S. citizenship • U.S. resident • Reside in Eastern or …"
+        },
+        {
+          "ad_id": "hn_whoishiring:49987144",
+          "month": "2026-10",
+          "employer": "Manifest",
+          "url": "https://news.ycombinator.com/item?id=49987144",
+          "snippet": "…d and buy—SBOMs, AIBOMs, vulnerabilities, and third-party risk. Founded by alumni of DoD, CISA, and Palantir, we're backed by First Round Capital, Ensemble VC, Homebrew, and BoxGroup…"
+        },
+        {
+          "ad_id": "hn_whoishiring:49963937",
+          "month": "2026-10",
+          "employer": "Rentman",
+          "url": "https://news.ycombinator.com/item?id=49963937",
+          "snippet": "… 100+ people, office in Utrecht and Toronto. DevOps Engineer: own our AWS infrastructure, CI/CD, observability and cloud security. The main projects are moving from ClickOps to infra…"
+        }
+      ]
+    },
+    {
+      "skill_id": "cand:ebpf",
+      "name": "eBPF",
+      "category": "discovered",
+      "status": "under_review",
+      "origin": "discovered",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "possible_alias_of": null,
+      "first_seen": "2022-07",
+      "confidence": "low",
+      "reason": "7 ads from 3 employers in 5 of the last 6 months (US, software_engineer); share up at least 0.61 pp (90% lower bound); below the evidence needed to call it a new skill",
+      "evidence": [
+        {
+          "ad_id": "hn_whoishiring:49922929",
+          "month": "2026-10",
+          "employer": "Fastly",
+          "url": "https://news.ycombinator.com/item?id=49922929",
+          "snippet": "…k: Rust, C/C++, Go, Javascript, Typescript, WebAssembly (Wasm/WASI), Wasmtime, Cranelift, eBPF/XDP, QUIC, HTTP, TLS, TCP, Varnish/VCL, Linux kernel internals, distributed systems, prof…"
+        },
+        {
+          "ad_id": "hn_whoishiring:49523835",
+          "month": "2026-09",
+          "employer": "*Fastly",
+          "url": "https://news.ycombinator.com/item?id=49523835",
+          "snippet": "…k: Rust, C/C++, Go, Javascript, Typescript, WebAssembly (Wasm/WASI), Wasmtime, Cranelift, eBPF/XDP, QUIC, HTTP, TLS, TCP, Varnish/VCL, Linux kernel internals, distributed systems, prof…"
+        },
+        {
+          "ad_id": "hn_whoishiring:48752786",
+          "month": "2026-07",
+          "employer": "MongoDB",
+          "url": "https://news.ycombinator.com/item?id=48752786",
+          "snippet": "…: Building infrastructure security controls and security observability tooling leveraging eBPF and Linux security mechanisms. - Fabric: Building out service mesh, networking, and inter…"
+        }
+      ]
+    },
+    {
+      "skill_id": "cand:electron",
+      "name": "Electron",
+      "category": "discovered",
+      "status": "under_review",
+      "origin": "discovered",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "possible_alias_of": null,
+      "first_seen": "2015-07",
+      "confidence": "low",
+      "reason": "7 ads from 4 employers in 5 of the last 6 months (US, software_engineer); share up at least 0.53 pp (90% lower bound); below the evidence needed to call it a new skill",
+      "evidence": [
+        {
+          "ad_id": "hn_whoishiring:49553487",
+          "month": "2026-09",
+          "employer": "Apex Dental Partners",
+          "url": "https://news.ycombinator.com/item?id=49553487",
+          "snippet": "…b, but the platform behind it is: we've built our own operations system (Rails 8 + React, Electron, Go, and C#/.NET against OpenDental, all on AWS) and we're pushing hard on automation and…"
+        },
+        {
+          "ad_id": "hn_whoishiring:48389476",
+          "month": "2026-06",
+          "employer": "Wand",
+          "url": "https://news.ycombinator.com/item?id=48389476",
+          "snippet": "… with the result - Outcome-oriented, low-ego Bonus: Unreal/Unity internals, full-stack TS/Electron down to C++, scripting/SDK layer (Lua/AngelScript/DSL), OBS or video capture internals, g…"
+        },
+        {
+          "ad_id": "hn_whoishiring:48364864",
+          "month": "2026-06",
+          "employer": "Factory AI",
+          "url": "https://news.ycombinator.com/item?id=48364864",
+          "snippet": "…auth, billing, terminal UIs - Frontend Engineer: web and desktop apps (React, TypeScript, Electron) - Platform Engineer: infrastructure, sandboxing, CI/CD, cloud - Product Engineer: end-to…"
+        }
+      ]
+    },
+    {
+      "skill_id": "cand:expo",
+      "name": "Expo",
+      "category": "discovered",
+      "status": "under_review",
+      "origin": "discovered",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "possible_alias_of": null,
+      "first_seen": "2017-03",
+      "confidence": "low",
+      "reason": "7 ads from 8 employers in 5 of the last 6 months (US, software_engineer); share up at least 0.09 pp (90% lower bound); below the evidence needed to call it a new skill",
+      "evidence": [
+        {
+          "ad_id": "hn_whoishiring:50025234",
+          "month": "2026-10",
+          "employer": "",
+          "url": "https://news.ycombinator.com/item?id=50025234",
+          "snippet": "…o relocate: No Technologies: React Native, React, Next.js, TypeScript, JavaScript, Astro, Expo, Redux Toolkit, Zustand, React Query, Node.js, Express, MongoDB, Firebase, Jest, React Te…"
+        },
+        {
+          "ad_id": "hn_whoishiring:49933969",
+          "month": "2026-10",
+          "employer": "HIFI Labs ( https://hifilabs.co )",
+          "url": "https://news.ycombinator.com/item?id=49933969",
+          "snippet": "… privacy. You'll work using AI-assisted workflows building with TypeScript, React/Next.js/Expo/Native, Firebase/GCP deploying to Cloudflare. CI/DI/DevOps is a requirement. You need to …"
+        },
+        {
+          "ad_id": "hn_whoishiring:49924974",
+          "month": "2026-10",
+          "employer": "Curai",
+          "url": "https://news.ycombinator.com/item?id=49924974",
+          "snippet": "…dc7-4594-a9c4-29f0dec4... Tech stack: Agents SDK, Braintrust, Python, React, React Native/Expo, AWS, Postgres, DynamoDB, Docker, Terraform."
+        }
+      ]
+    },
+    {
+      "skill_id": "cand:iac",
+      "name": "IaC",
+      "category": "discovered",
+      "status": "newly_detected",
+      "origin": "discovered",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "possible_alias_of": null,
+      "first_seen": "2017-11",
+      "confidence": "low",
+      "reason": "10 ads from 9 employers in 6 of the last 6 months (US, software_engineer); share up at least 0.33 pp (90% lower bound)",
+      "evidence": [
+        {
+          "ad_id": "hn_whoishiring:50002587",
+          "month": "2026-10",
+          "employer": "ICEYE",
+          "url": "https://news.ycombinator.com/item?id=50002587",
+          "snippet": "…ngineer: build and run core platform components (Go, K8s, ingress, service mesh, secrets, IaC). https://jobs.ashbyhq.com/iceye/c6b51b8b-94af-4007-8464-4a4b8... - Senior/Staff Platform…"
+        },
+        {
+          "ad_id": "hn_whoishiring:49932525",
+          "month": "2026-10",
+          "employer": "Proxima Fusion",
+          "url": "https://news.ycombinator.com/item?id=49932525",
+          "snippet": "… role owns: cloud + HPC clusters, K8s, Ray, Dask, and the platform work around it (CI/CD, IaC, observability). You'd sit directly next to the physicists and AI researchers burning thr…"
+        },
+        {
+          "ad_id": "hn_whoishiring:49552564",
+          "month": "2026-09",
+          "employer": "Confido Legal",
+          "url": "https://news.ycombinator.com/item?id=49552564",
+          "snippet": "…Stack: TypeScript everywhere, React + Next.js (mid-migration to Next.js), AWS with Pulumi IaC, Docker/ECS, GraphQL API, Figma (engineers participate in UI/UX). We're looking for an ex…"
+        }
+      ]
+    },
+    {
+      "skill_id": "cassandra",
+      "name": "Cassandra",
+      "category": "database",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "ScyllaDB"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "causal_inference",
+      "name": "Causal inference",
+      "category": "analytics",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "ci_cd",
+      "name": "CI/CD",
+      "category": "devops",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "CI-CD",
+        "CICD",
+        "Circle CI",
+        "CircleCI",
+        "CircleCi",
+        "Circleci",
+        "GitHub Actions",
+        "Github Actions",
+        "circleCI"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "clojure",
+      "name": "Clojure",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "ClojureScript",
+        "Clojurescript"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "cloud_infrastructure",
+      "name": "Cloud infrastructure",
+      "category": "cloud",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "Cloud Infrastructure"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "code_review",
+      "name": "Code review",
+      "category": "practice",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "Code Review",
+        "Code Reviews"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "collaboration",
+      "name": "Collaboration",
+      "category": "professional",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "communication",
+      "name": "Communication",
+      "category": "professional",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "compliance",
+      "name": "Compliance & auditing",
+      "category": "security",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "GDPR",
+        "HIPAA",
+        "SOC-2",
+        "SOC2"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "computer_vision",
+      "name": "Computer vision",
+      "category": "ml",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "COMPUTER VISION",
+        "Computer Vision"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "cpp",
+      "name": "C++",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "c++"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "cryptography",
+      "name": "Cryptography",
+      "category": "security",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "csharp",
+      "name": "C#",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "cuda",
+      "name": "CUDA / GPU programming",
+      "category": "ml",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "CUDA",
+        "Cuda",
+        "GPU Programming",
+        "GPU-programming"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "dart",
+      "name": "Dart",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "DART"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "data_engineering",
+      "name": "Data engineering",
+      "category": "data",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "data_modeling",
+      "name": "Data modeling",
+      "category": "data",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "data_visualization",
+      "name": "Data visualization",
+      "category": "analytics",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "D3.js",
+        "D3JS",
+        "D3js",
+        "d3.js",
+        "d3js"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "data_warehousing",
+      "name": "Data warehousing",
+      "category": "data",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "databricks",
+      "name": "Databricks",
+      "category": "data",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "DataBricks"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "dbt",
+      "name": "dbt",
+      "category": "data",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "deep_learning",
+      "name": "Deep learning",
+      "category": "ml",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "Neural Networks"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "devops",
+      "name": "DevOps",
+      "category": "devops",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "distributed_systems",
+      "name": "Distributed systems",
+      "category": "architecture",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "Distributed System",
+        "Distributed Systems"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "distributed_training",
+      "name": "Distributed training",
+      "category": "ml",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "django",
+      "name": "Django",
+      "category": "backend",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "DJango"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "docker",
+      "name": "Docker",
+      "category": "cloud",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "Dockers"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "dotnet",
+      "name": ".NET",
+      "category": "backend",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "dynamodb",
+      "name": "DynamoDB",
+      "category": "database",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "Dynamo DB",
+        "DynamoDb",
+        "Dynamodb",
+        "dynamoDB"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "elasticsearch",
+      "name": "Elasticsearch",
+      "category": "database",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "ELK",
+        "Elastic Search",
+        "ElasticSearch",
+        "OpenSearch",
+        "Opensearch"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "elixir",
+      "name": "Elixir",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "ELIXIR"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "embedded",
+      "name": "Embedded systems",
+      "category": "domain",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "EMBEDDED SYSTEMS",
+        "Embedded System",
+        "Embedded Systems",
+        "RTOS"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "erlang",
+      "name": "Erlang",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "etl",
+      "name": "ETL / data pipelines",
+      "category": "data",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "ELT",
+        "ETL",
+        "Etl"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "excel",
+      "name": "Excel",
+      "category": "analytics",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "fastapi",
+      "name": "FastAPI",
+      "category": "backend",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "Fast API",
+        "FastApi",
+        "Fastapi",
+        "fastAPI"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "fine_tuning",
+      "name": "Model fine-tuning",
+      "category": "genai",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "LoRA"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "fintech",
+      "name": "Payments / fintech",
+      "category": "domain",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "flask",
+      "name": "Flask",
+      "category": "backend",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "flutter",
+      "name": "Flutter",
+      "category": "mobile",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "forecasting",
+      "name": "Forecasting",
+      "category": "analytics",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "fsharp",
+      "name": "F#",
+      "category": "language",
+      "status": "deprecated",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "no ads named it in the last 24 months"
+    },
+    {
+      "skill_id": "game_dev",
+      "name": "Game development",
+      "category": "domain",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "gcp",
+      "name": "Google Cloud",
+      "category": "cloud",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "GCP"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "generative_ai",
+      "name": "Generative AI",
+      "category": "genai",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "Gen AI",
+        "GenAI",
+        "Generative-AI",
+        "genAI"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "git",
+      "name": "Git",
+      "category": "devops",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "GitLab",
+        "Gitlab"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "go",
+      "name": "Go",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "GO-lang",
+        "GOLANG",
+        "Go-lang",
+        "GoLang",
+        "Golang"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "graphql",
+      "name": "GraphQL",
+      "category": "backend",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "Graph QL",
+        "GraphQl",
+        "Graphql",
+        "graphQL"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "grpc",
+      "name": "gRPC",
+      "category": "backend",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "GRPC"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "hadoop",
+      "name": "Hadoop",
+      "category": "data",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "HDFS",
+        "Map Reduce",
+        "Map-Reduce",
+        "MapReduce",
+        "Mapreduce"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "haskell",
+      "name": "Haskell",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "HASKELL"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "hive",
+      "name": "Hive",
+      "category": "data",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "HIVE"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "html_css",
+      "name": "HTML/CSS",
+      "category": "frontend",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "CSS",
+        "CSS3",
+        "Css",
+        "HTML5",
+        "SASS",
+        "SaSS",
+        "Sass",
+        "Tailwind",
+        "Tailwinds",
+        "css3",
+        "html5"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "huggingface",
+      "name": "Hugging Face",
+      "category": "ml",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "ios",
+      "name": "iOS",
+      "category": "mobile",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "IOS",
+        "IoS",
+        "Ios",
+        "iOs",
+        "ioS"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "java",
+      "name": "Java",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "JAVA",
+        "JavaS"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "javascript",
+      "name": "JavaScript",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "ECMAScript",
+        "EcmaScript",
+        "Java Script",
+        "JavaSCript",
+        "JavaScripts",
+        "Javascript"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "jax",
+      "name": "JAX",
+      "category": "ml",
+      "status": "deprecated",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "no ads named it in the last 24 months"
+    },
+    {
+      "skill_id": "julia",
+      "name": "Julia",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "kafka",
+      "name": "Kafka",
+      "category": "data",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "kotlin",
+      "name": "Kotlin",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "kubernetes",
+      "name": "Kubernetes",
+      "category": "cloud",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "EKS",
+        "GKE",
+        "K8S",
+        "K8s",
+        "k8s"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "langchain",
+      "name": "LangChain",
+      "category": "genai",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "LangGraph",
+        "Langchain"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "leadership",
+      "name": "Leadership",
+      "category": "professional",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "linux",
+      "name": "Linux",
+      "category": "cloud",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "LINUX",
+        "UNIX",
+        "Unix"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "llamaindex",
+      "name": "LlamaIndex",
+      "category": "genai",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "Llama Index"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "llm",
+      "name": "LLMs",
+      "category": "genai",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "LLM",
+        "Large Language Models"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "llm_evals",
+      "name": "LLM evaluation",
+      "category": "genai",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "looker",
+      "name": "Looker",
+      "category": "analytics",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "machine_learning",
+      "name": "Machine learning",
+      "category": "ml",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "MACHINE LEARNING",
+        "ML",
+        "Machine Learning",
+        "Machine-Learning",
+        "Machine-learning",
+        "MachineLearning"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "matlab",
+      "name": "MATLAB",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "MatLAB",
+        "Matlab"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "mcp",
+      "name": "Model Context Protocol",
+      "category": "genai",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "MCP"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "mentoring",
+      "name": "Mentoring",
+      "category": "professional",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "microservices",
+      "name": "Microservices",
+      "category": "architecture",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "mlflow",
+      "name": "MLflow",
+      "category": "ml",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "Kubeflow",
+        "MLFlow"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "mlops",
+      "name": "MLOps",
+      "category": "ml",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "ML Ops",
+        "MLOPS",
+        "MLops"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "mongodb",
+      "name": "MongoDB",
+      "category": "database",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "MONGODB",
+        "Mongo",
+        "Mongo DB",
+        "MongoDb",
+        "Mongodb",
+        "mongoDB"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "mysql",
+      "name": "MySQL",
+      "category": "database",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "MYSQL",
+        "Maria DB",
+        "MariaDB",
+        "MariaDb",
+        "MySql",
+        "Mysql",
+        "mySQL",
+        "mySql"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "nextjs",
+      "name": "Next.js",
+      "category": "frontend",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "Next JS",
+        "Next.JS",
+        "NextJS",
+        "Nextjs",
+        "next.js"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "nlp",
+      "name": "NLP",
+      "category": "ml",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "Natural Language Processing"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "nodejs",
+      "name": "Node.js",
+      "category": "backend",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "Node.JS",
+        "NodeJS",
+        "NodeJs",
+        "Nodejs",
+        "node.js"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "numpy",
+      "name": "NumPy",
+      "category": "ml",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "observability",
+      "name": "Observability",
+      "category": "devops",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "DataDog",
+        "Datadog",
+        "Grafana",
+        "Open Telemetry",
+        "OpenTelemetry",
+        "Prometheus"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "ocaml",
+      "name": "OCaml",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "OCaML",
+        "Ocaml"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "openai_api",
+      "name": "OpenAI API",
+      "category": "genai",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "ChatGPT",
+        "Open AI",
+        "OpenAI"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "ownership",
+      "name": "Ownership",
+      "category": "professional",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "pandas",
+      "name": "pandas",
+      "category": "ml",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "Panda",
+        "Pandas"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "performance",
+      "name": "Performance optimization",
+      "category": "practice",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "perl",
+      "name": "Perl",
+      "category": "language",
+      "status": "deprecated",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "PERL"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "no ads named it in the last 24 months"
+    },
+    {
+      "skill_id": "php",
+      "name": "PHP",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "postgres",
+      "name": "PostgreSQL",
+      "category": "database",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "POSTGRES",
+        "POSTGRESQL",
+        "PostGres",
+        "Postgre",
+        "PostgreSql",
+        "Postgres",
+        "PostgresQL",
+        "Postgresql",
+        "postgreSQL"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "power_bi",
+      "name": "Power BI",
+      "category": "analytics",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "PowerBI"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "problem_solving",
+      "name": "Problem solving",
+      "category": "professional",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "product_sense",
+      "name": "Product sense",
+      "category": "professional",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "project_management",
+      "name": "Project management",
+      "category": "professional",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "Project Management"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "prompt_engineering",
+      "name": "Prompt engineering",
+      "category": "genai",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "python",
+      "name": "Python",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "PYTHON"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "pytorch",
+      "name": "PyTorch",
+      "category": "ml",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "Pytorch"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "r_lang",
+      "name": "R",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "rag",
+      "name": "Retrieval-augmented generation",
+      "category": "genai",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "RAG"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "rails",
+      "name": "Ruby on Rails",
+      "category": "backend",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "ROR",
+        "RoR",
+        "Ruby-On-Rails",
+        "Ruby-on-Rails",
+        "RubyOnRails"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "react",
+      "name": "React",
+      "category": "frontend",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "REACT"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "react_native",
+      "name": "React Native",
+      "category": "mobile",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "REACT NATIVE",
+        "React-Native",
+        "React-native",
+        "React.Native",
+        "ReactNative"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "recommender_systems",
+      "name": "Recommender systems",
+      "category": "ml",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "Recommender Systems"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "redis",
+      "name": "Redis",
+      "category": "database",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "REDIS"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "redshift",
+      "name": "Redshift",
+      "category": "data",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "RedShift"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "reinforcement_learning",
+      "name": "Reinforcement learning",
+      "category": "ml",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "RLHF",
+        "Reinforcement Learning"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "remote_work",
+      "name": "Remote collaboration",
+      "category": "professional",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "rest_api",
+      "name": "REST APIs",
+      "category": "backend",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "REST API",
+        "REST-API",
+        "RESTApi",
+        "RESTFUL",
+        "RESTFul",
+        "RESTful",
+        "Rest API",
+        "RestFul",
+        "Restful"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "robotics",
+      "name": "Robotics",
+      "category": "domain",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "ROS",
+        "ROS2"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "ruby",
+      "name": "Ruby",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "RUBY"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "rust",
+      "name": "Rust",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "RUST"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "sagemaker",
+      "name": "SageMaker / Vertex AI",
+      "category": "ml",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "SageMaker",
+        "Sagemaker",
+        "Vertex AI"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "sas",
+      "name": "SAS",
+      "category": "analytics",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "scala",
+      "name": "Scala",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "SCALA"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "scalability",
+      "name": "Scalability",
+      "category": "practice",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "scikit_learn",
+      "name": "scikit-learn",
+      "category": "ml",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "SciKit-Learn",
+        "Scikit Learn",
+        "Scikit-Learn",
+        "Scikit-learn",
+        "ScikitLearn"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "security",
+      "name": "Security engineering",
+      "category": "security",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "AppSec",
+        "Application Security",
+        "OWASP"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "serverless",
+      "name": "Serverless",
+      "category": "cloud",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "AWS Lambda",
+        "AWS Lambdas",
+        "AWS-lambda",
+        "Cloud Functions"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "snowflake",
+      "name": "Snowflake",
+      "category": "data",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "solidity",
+      "name": "Solidity",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "spark",
+      "name": "Apache Spark",
+      "category": "data",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "PySpark",
+        "Pyspark",
+        "SPARK",
+        "Spark"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "spring",
+      "name": "Spring",
+      "category": "backend",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "Spring Boot",
+        "Spring Framework",
+        "Spring Frameworks",
+        "Spring-Boot",
+        "Spring-boot",
+        "SpringBoot",
+        "Springboot",
+        "Springs"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "spss",
+      "name": "SPSS",
+      "category": "analytics",
+      "status": "deprecated",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "no ads named it in the last 24 months"
+    },
+    {
+      "skill_id": "sql",
+      "name": "SQL",
+      "category": "data",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "Sql"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "sqlite",
+      "name": "SQLite",
+      "category": "database",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "SQLITE",
+        "SQlite",
+        "Sqlite"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "stakeholder_management",
+      "name": "Stakeholder management",
+      "category": "professional",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "stata",
+      "name": "Stata",
+      "category": "analytics",
+      "status": "deprecated",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "no ads named it in the last 24 months"
+    },
+    {
+      "skill_id": "statistics",
+      "name": "Statistics",
+      "category": "analytics",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "svelte",
+      "name": "Svelte",
+      "category": "frontend",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "SvelteKit",
+        "Sveltekit"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "swift",
+      "name": "Swift",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "SWIFT"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "swiftui",
+      "name": "SwiftUI",
+      "category": "mobile",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "system_design",
+      "name": "System design",
+      "category": "architecture",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "tableau",
+      "name": "Tableau",
+      "category": "analytics",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "tensorflow",
+      "name": "TensorFlow",
+      "category": "ml",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "Keras",
+        "Tensorflow"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "terraform",
+      "name": "Terraform",
+      "category": "cloud",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "OpenTofu",
+        "TerraForm"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "testing",
+      "name": "Automated testing",
+      "category": "practice",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "Automated Testing",
+        "Cypress",
+        "JEST",
+        "Jest",
+        "Playwright",
+        "Selenium",
+        "TDD",
+        "TEST AUTOMATION",
+        "Test Automation"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "time_series",
+      "name": "Time-series analysis",
+      "category": "analytics",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "Timeseries"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "typescript",
+      "name": "TypeScript",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "TYPESCRIPT",
+        "Type Script",
+        "Typescript",
+        "typeScript"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "vector_db",
+      "name": "Vector databases",
+      "category": "genai",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "vue",
+      "name": "Vue.js",
+      "category": "frontend",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "Nuxt",
+        "Vue",
+        "Vue.JS",
+        "VueJS",
+        "VueJs",
+        "Vuejs",
+        "vue.js"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "webassembly",
+      "name": "WebAssembly",
+      "category": "frontend",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [
+        "WASM",
+        "Wasm",
+        "Web Assembly",
+        "Webassembly"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "xgboost",
+      "name": "Gradient boosting",
+      "category": "ml",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": true,
+      "aliases_seen": [
+        "XGBoost",
+        "XGboost"
+      ],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    },
+    {
+      "skill_id": "zig",
+      "name": "Zig",
+      "category": "language",
+      "status": "known",
+      "origin": "curated",
+      "in_onet": false,
+      "aliases_seen": [],
+      "merged_into": null,
+      "evidence": null,
+      "reason": "seed vocabulary (curated; O*NET coverage checked)"
+    }
+  ],
+  "version": 1,
+  "previous_version": null,
+  "changes": [
+    {
+      "skill_id": "ab_testing",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "agile",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "ai_agents",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "ai_assisted_dev",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "airflow",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "android",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "angular",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "anthropic_claude",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "api_design",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "aws",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "azure",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "bash",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "bigquery",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "blockchain",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "c",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "cand:ci",
+      "from": null,
+      "to": "newly_detected"
+    },
+    {
+      "skill_id": "cand:ebpf",
+      "from": null,
+      "to": "under_review"
+    },
+    {
+      "skill_id": "cand:electron",
+      "from": null,
+      "to": "under_review"
+    },
+    {
+      "skill_id": "cand:expo",
+      "from": null,
+      "to": "under_review"
+    },
+    {
+      "skill_id": "cand:iac",
+      "from": null,
+      "to": "newly_detected"
+    },
+    {
+      "skill_id": "cassandra",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "causal_inference",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "ci_cd",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "clojure",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "cloud_infrastructure",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "code_review",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "collaboration",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "communication",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "compliance",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "computer_vision",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "cpp",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "cryptography",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "csharp",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "cuda",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "dart",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "data_engineering",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "data_modeling",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "data_visualization",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "data_warehousing",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "databricks",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "dbt",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "deep_learning",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "devops",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "distributed_systems",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "distributed_training",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "django",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "docker",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "dotnet",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "dynamodb",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "elasticsearch",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "elixir",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "embedded",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "erlang",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "etl",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "excel",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "fastapi",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "fine_tuning",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "fintech",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "flask",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "flutter",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "forecasting",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "fsharp",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "game_dev",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "gcp",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "generative_ai",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "git",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "go",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "graphql",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "grpc",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "hadoop",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "haskell",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "hive",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "html_css",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "huggingface",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "ios",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "java",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "javascript",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "jax",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "julia",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "kafka",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "kotlin",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "kubernetes",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "langchain",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "leadership",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "linux",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "llamaindex",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "llm",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "llm_evals",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "looker",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "machine_learning",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "matlab",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "mcp",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "mentoring",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "microservices",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "mlflow",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "mlops",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "mongodb",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "mysql",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "nextjs",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "nlp",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "nodejs",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "numpy",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "observability",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "ocaml",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "openai_api",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "ownership",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "pandas",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "performance",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "perl",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "php",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "postgres",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "power_bi",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "problem_solving",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "product_sense",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "project_management",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "prompt_engineering",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "python",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "pytorch",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "r_lang",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "rag",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "rails",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "react",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "react_native",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "recommender_systems",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "redis",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "redshift",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "reinforcement_learning",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "remote_work",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "rest_api",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "robotics",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "ruby",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "rust",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "sagemaker",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "sas",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "scala",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "scalability",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "scikit_learn",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "security",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "serverless",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "snowflake",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "solidity",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "spark",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "spring",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "spss",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "sql",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "sqlite",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "stakeholder_management",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "stata",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "statistics",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "svelte",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "swift",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "swiftui",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "system_design",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "tableau",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "tensorflow",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "terraform",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "testing",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "time_series",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "typescript",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "vector_db",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "vue",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "webassembly",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "xgboost",
+      "from": null,
+      "to": "known"
+    },
+    {
+      "skill_id": "zig",
+      "from": null,
+      "to": "known"
+    }
+  ]
+}
