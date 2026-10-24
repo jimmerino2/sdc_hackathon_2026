@@ -494,10 +494,30 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
 
             <details class="card pad notes">
               <summary>Sources and what each one measures</summary>
-              <table class="tbl">
-                <thead><tr><th>Source</th><th>Type</th><th>Population</th><th>Definition</th><th>Period</th><th>Limitation</th></tr></thead>
-                <tbody><tr v-for="s in adoption.sources" :key="s.id"><td>{{ s.name }}</td><td>{{ s.measure_type }}</td><td>{{ s.population }}</td><td>{{ s.definition }}</td><td>{{ s.period }}</td><td>{{ s.limitation ?? '—' }}</td></tr></tbody>
-              </table>
+              <div class="notes-scroll">
+                <table class="tbl notes-tbl">
+                  <thead>
+                    <tr>
+                      <th class="col-source">Source</th>
+                      <th class="col-type">Type</th>
+                      <th class="col-pop">Population</th>
+                      <th class="col-def">Definition</th>
+                      <th class="col-period">Period</th>
+                      <th class="col-lim">Limitation</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="s in adoption.sources" :key="s.id">
+                      <td class="col-source">{{ s.name }}</td>
+                      <td class="col-type"><span class="tag">{{ s.measure_type }}</span></td>
+                      <td class="col-pop">{{ s.population }}</td>
+                      <td class="col-def">{{ s.definition }}</td>
+                      <td class="col-period">{{ s.period }}</td>
+                      <td class="col-lim">{{ s.limitation ?? '—' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </details>
           </template>
         </section>
@@ -626,7 +646,61 @@ select, input[type='search'] { font: inherit; font-size: 13.5px; font-weight: 70
 .ci { position: absolute; top: 6px; height: 4px; background: var(--ink); opacity: .55; border-radius: 2px; }
 .spark { width: 100%; height: 120px; display: block; margin: 6px 0; }
 .spark path { fill: none; stroke: var(--orange); stroke-width: 2.2; vector-effect: non-scaling-stroke; }
+.notes { max-width: 100%; overflow: hidden; }
 .notes summary { cursor: pointer; font-weight: 800; }
+.notes-scroll {
+  margin-top: 12px;
+  max-height: 420px;
+  overflow-y: auto;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  -webkit-overflow-scrolling: touch;
+}
+.notes-tbl {
+  width: 100%;
+  min-width: 730px;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  line-height: 1.45;
+  margin-top: 0;
+}
+.notes-tbl th,
+.notes-tbl td {
+  text-align: left;
+  vertical-align: top;
+  white-space: normal;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+.notes-tbl thead th {
+  position: sticky;
+  top: 0;
+  background: #faf9f6;
+  z-index: 2;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  border-bottom: 2px solid var(--line);
+}
+.notes-tbl tbody tr:hover {
+  background: #fffcf5;
+}
+.notes-tbl tbody tr:last-child td {
+  border-bottom: none;
+}
+.notes-tbl .col-source { width: 20%; min-width: 140px; font-weight: 800; color: var(--ink); }
+.notes-tbl .col-type { width: 10%; min-width: 80px; }
+.notes-tbl .col-pop { width: 22%; min-width: 140px; }
+.notes-tbl .col-def { width: 24%; min-width: 160px; }
+.notes-tbl .col-period { width: 10%; min-width: 90px; }
+.notes-tbl .col-lim { width: 14%; min-width: 120px; }
+.notes-tbl .tag { margin-left: 0; }
 .kv { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 6px 14px; font-size: 13px; }
 .kv dt { font-weight: 800; color: var(--muted); }
 .lim { margin: 4px 0 0 18px; display: flex; flex-direction: column; gap: 4px; }

@@ -269,7 +269,7 @@ onMounted(async () => {
 
     <div v-else class="jb learn">
       <div class="learn__main">
-        <SkillChips :skills="have" :owned="job?.skills_owned" :total="job?.skills_total" :more="job ? haveMore : 0" />
+        <SkillChips v-if="have.length" :skills="have" :owned="job?.skills_owned" :total="job?.skills_total" :more="job ? haveMore : 0" />
 
         <template v-for="sec in sections" :key="sec.section">
           <SectionBanner
