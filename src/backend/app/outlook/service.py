@@ -157,3 +157,27 @@ def regime_explained(target: str, unit: str) -> list[dict]:
                                  for x in (ev.get("regime_scores") or []) if x["h"] == h), None),
         })
     return out
+
+
+
+def success_curves() -> dict:
+    """Task lengths each model completes at several success rates (METR's curve, read beyond 50%). Display only."""
+    data = OUTPUT_DIR.parents[3] / "data" / "processed" / "forecasting"
+    t = _csv(data / "metr_success_curves.csv")
+    bins = _csv(data / "metr_success_bins.csv")
+    levels = [95, 90, 80, 75, 50, 25, 10]
+    longest = float(t["longest_task_minutes"].max())
+    models = []
+    for r in t.to_dict("records"):
+        hz = {str(p): (None if pd.isna(r.get(f"h{p}")) else float(r[f"h{p}"])) for p in levels}
+        models.append({"model": r["model"], "epoch_model": None if pd.isna(r.get("epoch_model")) else r["epoch_model"],
+                       "release_date": None if pd.isna(r.get("release_date")) else str(r["release_date"])[:10],
+                       "source": r["source"], "fitted": str(r["source"]).startswith("fitted"),
+                       "intercept": None if pd.isna(r.get("intercept")) else float(r["intercept"]),
+                       "slope": None if pd.isna(r.get("slope")) else float(r["slope"]),
+                       "horizons": hz,
+                       "observed": [{k: (v if not isinstance(v, float) or not pd.isna(v) else None) for k, v in b.items()
+                                     if k != "model"} for b in bins[bins["model"] == r["model"]].to_dict("records")]})
+    return {"levels": levels, "longest_task_minutes": longest, "models": models,
+            "note": "Fitted from METR's raw runs with METR's own method; reproduces the official 50% and 80% horizons. "
+                    "Values beyond the longest task METR tested are extrapolations."}

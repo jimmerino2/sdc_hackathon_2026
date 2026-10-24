@@ -68,3 +68,13 @@ def test_regime_explanation_reproduces_the_published_chances():
         assert abs(faster - r["p_faster"]) < 1e-9 and abs(slower - r["p_slower"]) < 1e-9  # counts = published %
         assert r["band_low_growth"] < r["same_pace_growth"] < r["band_high_growth"]
         assert sum(m["served"] for m in r["methods"]) == 1
+
+
+def test_success_curves_reproduce_official_horizons_and_are_ordered():
+    j = client.get("/outlook/capability/success-curves").json()
+    assert j["models"] and j["longest_task_minutes"] > 0
+    for m in j["models"]:
+        hz = {int(k): v for k, v in m["horizons"].items() if v is not None}
+        assert 50 in hz and 80 in hz
+        vals = [hz[p] for p in sorted(hz, reverse=True)]  # 95% ... 10%
+        assert vals == sorted(vals), m["model"]  # a higher success rate never means a longer task

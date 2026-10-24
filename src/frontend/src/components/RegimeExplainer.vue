@@ -83,8 +83,8 @@ const plot = computed(() => {
         <ol class="steps">
           <li>
             <h3>Where things stand</h3>
-            <p>The best measured AI model (released by {{ monthName(r.last_observed_period) }}) completes tasks that take a skilled person
-              about <b>{{ hours(r.last_observed) }}</b>, half the time. Over the past 12 months that length grew
+            <p>The best measured AI model (released by {{ monthName(r.last_observed_period) }}) succeeds half the time on tasks that take a skilled person
+              about <b>{{ hours(r.last_observed) }}</b> of work. Over the past 12 months that length grew
               <b>{{ x(r.past_growth) }}</b>.</p>
           </li>
           <li>

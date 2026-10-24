@@ -49,3 +49,10 @@ def get_regime(target: str, unit: str = Query(..., description="e.g. v1.1")):
     """How the faster / same pace / slower chances were worked out, step by step (capability only)."""
     _check(target)
     return service.regime_explained(target, unit)
+
+
+
+@router.get("/capability/success-curves")
+def get_success_curves():
+    """Task lengths the measured models complete at 95%, 90%, 80%, 75%, 50%, 25% and 10% success (display only)."""
+    return service.success_curves()

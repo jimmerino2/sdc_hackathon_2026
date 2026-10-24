@@ -284,6 +284,26 @@ Caveats:
 
 ---
 
+## 13. `forecasting/metr_success_curves.csv` and `forecasting/metr_success_bins.csv`
+
+Display only, not a model input. Task lengths each AI model completes at success rates other than METR's headline 50%. Built by `src/backend/forecasting/success_curves.py` from METR's raw attempts (`METR/eval-analysis-public`, `reports/time-horizon-1-1/data/raw/runs.jsonl`, suite v1.1). For each model it fits METR's own curve, P(success) = logistic(a + b · log₂ human minutes), with tasks weighted by 1/√attempts. The fit reproduces the official 50% and 80% horizons to within 0.5%; the build refuses to save otherwise.
+
+| Column | Source | Type | Derived from |
+| --- | --- | --- | --- |
+| `model` | METR | text | Model alias in METR's runs, or Epoch's name for official-only rows |
+| `source` | Ours | text | `fitted from METR raw runs`, or `official 50% / 80% only (no public raw runs)` for models METR has not released attempts for |
+| `n_runs` | METR | int | Attempts behind the fit |
+| `intercept`, `slope` | Ours | number | a and b of the fitted curve |
+| `h95` … `h10` | Ours | minutes | Task length completed with 95, 90, 80, 75, 50, 25 and 10% probability |
+| `official_h50`, `official_h80` | Epoch AI | minutes | METR's published 50% and 80% horizons (latest Epoch vintage) |
+| `epoch_model`, `release_date` | Epoch AI | text, date | Matched by the 50% horizon (the two files name models differently) |
+| `longest_task_minutes` | METR | minutes | Longest task in the suite (30 h). Horizons beyond it are extrapolations and are flagged on the page |
+| `metr_commit` | Ours | text | Commit of METR's repo the runs were read from |
+
+`metr_success_bins.csv`: one row per model × task-length group (<1 min … 16 h+), with `attempts` and the weighted `success_rate` observed. These are the dots on the page's curve.
+
+---
+
 ## Forecast outputs (`src/backend/forecasting/output/<target>/`)
 
 There is one folder per target: `ai_mention_share`, `btos_ai_use_rate`, `worker_genai_use_rate` and `frontier_time_horizon`.

@@ -130,3 +130,6 @@ METR's own repo (METR/eval-analysis-public) only has raw runs + 24 commits: not 
   x215 'jump'); origins without a measured frontier skipped; LightGBM mean fallback <60 rows. Results weaker:
   h12 now naive (baseline), regime chances worse than uniform at h3/h6 (Brier shown on card + dialog).
   NEXT: success-rate curves (other % than 50) from METR raw runs (data/raw/vintages/metr_full runs.jsonl).
+- 2026-10-24: success curves at 95..10% from METR raw runs (forecasting/success_curves.py, reproduces official
+  50%/80%), GET /outlook/capability/success-curves, SuccessCurves.vue table + curve on the capability card; card
+  relabelled "hours of human work". 70 tests pass.

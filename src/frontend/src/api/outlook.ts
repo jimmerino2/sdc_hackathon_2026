@@ -141,3 +141,28 @@ export const fetchRegime = (target: string, unit: string) =>
 
 export const fetchAccuracy = (target: string, unit: string) =>
   get<UnitAccuracy[]>(`/outlook/${encodeURIComponent(target)}/accuracy?unit=${encodeURIComponent(unit)}`);
+
+/** One model's task lengths (human minutes) at several success rates, from METR's success curve. */
+export interface SuccessModel {
+  model: string;
+  epoch_model: string | null;
+  release_date: string | null;
+  source: string;
+  /** true = full curve fitted from METR's raw runs; false = only the official 50% / 80% numbers exist. */
+  fitted: boolean;
+  intercept: number | null;
+  slope: number | null;
+  /** Success rate in % -> task length in human minutes (null when not available). */
+  horizons: Record<string, number | null>;
+  /** Observed success rate per task-length group, from the raw attempts. */
+  observed: { bin: string; median_human_minutes: number; attempts: number; success_rate: number }[];
+}
+
+export interface SuccessCurves {
+  levels: number[];
+  longest_task_minutes: number;
+  models: SuccessModel[];
+  note: string;
+}
+
+export const fetchSuccessCurves = () => get<SuccessCurves>('/outlook/capability/success-curves');

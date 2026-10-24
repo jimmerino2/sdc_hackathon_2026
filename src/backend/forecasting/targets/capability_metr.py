@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from .. import capability, registry
+from .. import capability, registry, success_curves
 from ..features import LOG2, Snapshot, lag_features, stack, wide_logit
 from . import TargetSpec
 
@@ -156,9 +156,14 @@ def health(data: dict, now: pd.Timestamp) -> dict:
     return {"epoch_metr": registry.health("epoch_metr", last, str(_month_of(last) - MEASUREMENT_LAG_MONTHS), now)}
 
 
+def _ingest(pull: bool) -> None:
+    capability.ingest(pull)
+    success_curves.ingest(pull)  # display only: curves at other success rates
+
+
 SPEC = TargetSpec(
     id="frontier_time_horizon", horizons=(3, 6, 12), period_unit="month", unit_kind="METR suite version",
     trend_steps=12, feature_groups=FEATURE_GROUPS, group_source=GROUP_SOURCE, load=load, origins=origins,
-    truth=truth, panel=panel, health=health, ingest=capability.ingest, segment=lambda u: u,
+    truth=truth, panel=panel, health=health, ingest=lambda pull: _ingest(pull), segment=lambda u: u,
     min_selection_origins=12, min_holdout=4, history_warning=HISTORY_WARNING, scale=LOG2,
     value_unit="minutes (50% task time horizon)", regimes=True, errors_on_model_scale=True)

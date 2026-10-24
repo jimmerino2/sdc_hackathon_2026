@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 import Bubble from '../components/Bubble.vue';
 import Icon from '../components/Icon.vue';
 import RegimeExplainer from '../components/RegimeExplainer.vue';
+import SuccessCurves from '../components/SuccessCurves.vue';
 import {
   fetchAccuracy, fetchOutlook, fetchRegime, fetchTargets, type RegimeExplained, type MethodScore, type OutlookRow, type TargetSummary, type UnitAccuracy,
 } from '../api/outlook';
@@ -28,8 +29,8 @@ interface Card {
 
 const cards: Card[] = [
   {
-    target: 'frontier_time_horizon', eyebrow: 'AI capability', title: 'How long a task can the best AI finish?',
-    blurb: 'Length of software tasks (in a skilled person’s working time) the best measured model completes half the time. Source: METR, via Epoch AI.',
+    target: 'frontier_time_horizon', eyebrow: 'AI capability', title: 'How big a task can the best AI finish?',
+    blurb: 'Task size is measured in human work: how long a skilled person needs for the task. The headline number is the biggest task the best measured AI model completes successfully half the time (not how long the AI takes). Mostly software tasks. Source: METR, via Epoch AI.',
     names: { 'v1.0': 'the best measured models (METR suite v1.0)', 'v1.1': 'the best measured models (METR suite v1.1)' },
     defaultUnit: 'v1.1', minutes: true,
   },
@@ -254,7 +255,7 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
           <template v-for="rs in [selected(c)]" :key="'rs'">
             <p v-if="rs.length" class="now">
               <span class="now-val">{{ fmt(c, rs[0].last_observed) }}</span>
-              <span class="now-lbl">latest, {{ period(rs[0].last_observed_period) }}</span>
+              <span class="now-lbl">{{ c.minutes ? 'of human work, ' : '' }}latest, {{ period(rs[0].last_observed_period) }}</span>
             </p>
 
             <ul class="rows">
@@ -359,6 +360,7 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
               </li>
             </ul>
 
+            <SuccessCurves v-if="c.minutes" />
             <p class="key"><span class="sw-dot" /> forecast <span class="sw-band" /> likely range (80%) <span class="sw-tick" /> latest</p>
 
             <details v-if="warnings(rs).length" class="notes">
