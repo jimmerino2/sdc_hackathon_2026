@@ -56,15 +56,6 @@ const demandTooltip = 'Forecasted hiring demand: (+) means job openings are grow
 
 <template>
   <div>
-    <div v-if="pct('accelerates') != null" class="prob-graph">
-      <p class="prob-title">Chances of each AI future, most likely first</p>
-      <div class="prob-labels">
-        <span v-for="s in rankedScenarios" :key="s.key" :style="{ width: pct(s.key) + '%', color: rankColor(s.key) ?? 'var(--muted)' }">{{ pct(s.key) }}%</span>
-      </div>
-      <div class="prob-bar" role="img" aria-label="Chances of each AI future">
-        <span v-for="s in rankedScenarios" :key="s.key" class="prob-seg" :style="{ width: pct(s.key) + '%', background: rankColor(s.key) ?? '#c2bfba' }" />
-      </div>
-    </div>
     <div class="metric-wrap">
       <span class="seg-label">From</span>
       <div class="metric-seg" role="radiogroup" aria-label="Metric the chances are based on">
@@ -150,12 +141,6 @@ const demandTooltip = 'Forecasted hiring demand: (+) means job openings are grow
 </template>
 
 <style scoped>
-.prob-graph { margin-bottom: 14px; }
-.prob-title { margin: 0 0 8px; font-size: 11px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-.prob-labels { display: flex; gap: 2px; margin-bottom: 4px; }
-.prob-labels span { display: block; min-width: 0; font-size: 11px; font-weight: 900; text-align: center; white-space: nowrap; overflow: visible; }
-.prob-bar { display: flex; gap: 2px; height: 12px; border-radius: 6px; overflow: hidden; }
-.prob-seg { display: block; height: 100%; min-width: 2px; }
 .seg-wrap, .metric-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 .seg-label { font-size: 13px; font-weight: 900; color: var(--muted); }
 .seg, .metric-seg { flex: 1; display: grid; padding: 4px; border-radius: 14px; background: var(--line); }

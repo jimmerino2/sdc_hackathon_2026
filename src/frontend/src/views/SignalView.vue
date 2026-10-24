@@ -15,7 +15,7 @@ const job = computed(() => state.value.jobs.data?.jobs.find((j) => j.onet_code =
 </script>
 
 <template>
-  <FlowShell :progress="5" next="gap" back="roles" gear="glasses" @next="state.chosenRoleId = onetCode">
+  <FlowShell next="gap" back="roles" gear="glasses" @next="state.chosenRoleId = onetCode">
     <template #bubble>Here’s how demand for {{ job?.title ?? 'this role' }} could change over the next year.</template>
     <RoleDetail :onet-code="onetCode" :job="job" compact />
   </FlowShell>

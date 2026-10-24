@@ -99,7 +99,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <FlowShell :progress="5" next="building" next-label="Build my roadmap" back="gap" :mood="mood" :next-disabled="step !== 'done'">
+  <FlowShell next="building" next-label="Build my roadmap" back="gap" :mood="mood" :next-disabled="step !== 'done'">
     <template #bubble>{{ say }}</template>
 
     <form v-if="step === 'email'" class="card block" @submit.prevent="sendCode">
