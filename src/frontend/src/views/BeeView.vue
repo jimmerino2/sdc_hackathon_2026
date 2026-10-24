@@ -7,6 +7,6 @@ import { bee } from '../bee';
 <template>
   <FlowShell :progress="0" next="name" back="landing" mood="wave">
     <template #bubble>Who should guide your career journey?</template>
-    <BeePicker plain @pick="bee = $event" />
+    <BeePicker plain flowers @pick="bee = $event" />
   </FlowShell>
 </template>
