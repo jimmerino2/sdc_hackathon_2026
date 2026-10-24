@@ -12,7 +12,7 @@
 | **Team Domain**       | Domain 1                                |
 | **SDG Track (1–17)**  | SDG 8 — Decent Work and Economic Growth |
 | **Team Leader**       | Lam Way Hou                             |
-| **University**        | Sunway University, Universityi          |
+| **University**        | Sunway University, Universiti Putra Malaysia |
 | **Number of Members** | 5                                       |
 
 ## Links
