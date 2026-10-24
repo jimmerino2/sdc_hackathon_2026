@@ -2,12 +2,12 @@
   "target": "worker_genai_use_rate",
   "promoted": {
     "1": {
-      "run_id": "20261024T043313Z-6c85d2",
-      "made_at": "2026-10-24T04:33:13Z",
+      "run_id": "20261024T043917Z-3b51da",
+      "made_at": "2026-10-24T04:39:17Z",
       "h": 1,
       "model": "pooled_mean",
       "chosen_model": "pooled_mean",
-      "model_version": "6c85d2688e3d",
+      "model_version": "3b51daa6a7d5",
       "status": "not_demonstrably_better",
       "selection_mae": 6.987117538857303,
       "holdout_mae": 6.564581334195567,
@@ -150,6 +150,36 @@
       "model": "naive",
       "chosen_model": "pooled_mean",
       "model_version": "6c85d2688e3d",
+      "status": "baseline_retained",
+      "selection_mae": 7.889531997229574,
+      "holdout_mae": 8.673236351599414,
+      "holdout_mase_vs_naive": 1.3105652513119628,
+      "accepted": false,
+      "rejected_because": [
+        "insufficient history for selection"
+      ]
+    },
+    {
+      "run_id": "20261024T043917Z-3b51da",
+      "made_at": "2026-10-24T04:39:17Z",
+      "h": 1,
+      "model": "pooled_mean",
+      "chosen_model": "pooled_mean",
+      "model_version": "3b51daa6a7d5",
+      "status": "not_demonstrably_better",
+      "selection_mae": 6.987117538857303,
+      "holdout_mae": 6.564581334195567,
+      "holdout_mase_vs_naive": 0.9996976388147736,
+      "accepted": true,
+      "rejected_because": []
+    },
+    {
+      "run_id": "20261024T043917Z-3b51da",
+      "made_at": "2026-10-24T04:39:17Z",
+      "h": 2,
+      "model": "naive",
+      "chosen_model": "pooled_mean",
+      "model_version": "3b51daa6a7d5",
       "status": "baseline_retained",
       "selection_mae": 7.889531997229574,
       "holdout_mae": 8.673236351599414,

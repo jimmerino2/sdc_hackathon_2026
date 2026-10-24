@@ -100,6 +100,13 @@ def acceptance(spec: TargetSpec, sel: pd.DataFrame, health: dict, h: int) -> lis
     return fails
 
 
+def range_bias(lo: float, hi: float) -> str:
+    """'under' / 'over' when the residual range (actual - forecast) excludes 0, else ''."""
+    if not np.isfinite([lo, hi]).all():
+        return ""
+    return "under" if lo > 0 else "over" if hi < 0 else ""
+
+
 def forecast(spec: TargetSpec, snap: F.Snapshot, sel: pd.DataFrame, bt: pd.DataFrame, run_id: str, made_at: str,
              health: dict) -> pd.DataFrame:
     """Forecast from the latest snapshot. Ranges (and regime probabilities) use every out-of-sample residual of
@@ -125,10 +132,10 @@ def forecast(spec: TargetSpec, snap: F.Snapshot, sel: pd.DataFrame, bt: pd.DataF
             warnings.append(f"point-in-time basis: {snap.kind}")
         if status == "baseline_retained":
             warnings.append(f"chosen model {chosen['candidate']} lost to naive on the holdout; baseline served")
-        outside = ~((lo <= 0) & (0 <= hi)) if np.isfinite([lo, hi]).all() else False
-        if outside:  # every past residual on one side: the model has been systematically biased
-            warnings.append("point forecast outside its own 10-90% range: this model has consistently "
-                            + ("under" if lo > 0 else "over") + "-forecast; read the range, not the point")
+        bias = range_bias(lo, hi)
+        if bias:  # every past residual on one side: the model has been systematically biased
+            warnings.append(f"point forecast outside its own 10-90% range: this model has consistently "
+                            f"{bias}-forecast; read the range, not the point")
         out.append(pd.DataFrame({
             "run_id": run_id, "made_at": made_at, "target": spec.id, "unit_kind": spec.unit_kind,
             "unit": rows_now["unit"], "segment": [spec.segment(u) for u in rows_now["unit"]],

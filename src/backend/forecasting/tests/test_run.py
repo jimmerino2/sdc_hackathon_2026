@@ -71,12 +71,19 @@ def test_chosen_model_that_loses_to_naive_is_not_served():
     assert served["candidate"] == "ridge" and status == "validated"
 
 
+def test_range_bias_names_the_direction():
+    assert run.range_bias(0.1, 0.5) == "under"  # outcomes always above the forecast
+    assert run.range_bias(-0.5, -0.1) == "over"
+    assert run.range_bias(-0.2, 0.3) == "" and run.range_bias(float("nan"), 1.0) == ""
+
+
 @pytest.mark.parametrize("tid", list(all_specs()))
 def test_published_forecast_is_timestamped_versioned_and_bounded(tid):
     latest = OUTPUT / tid / "latest_forecast.csv"
     if not latest.exists():
         pytest.skip("no forecast run yet")
     f = pd.read_csv(latest, dtype={"unit": str})
+    f["warnings"] = f["warnings"].fillna("").astype(str)
     log = pd.read_csv(OUTPUT / tid / "forecast_log.csv", dtype={"unit": str})
     assert set(f["unit"]) <= set(log["unit"])  # codes survive the round trip (e.g. SOC "00")
     assert f["run_id"].notna().all() and f["made_at"].notna().all() and f["data_as_of"].notna().all()
