@@ -11,17 +11,9 @@ import { go } from '../router';
       <div class="art"><HeroScene /></div>
       <div class="copy">
         <h1>Get ready for how AI is changing your next tech role.</h1>
-        <ul class="points">
-          <li>See which roles AI will change</li>
-          <li>Build skills on a path made for you</li>
-          <li>Pass quizzes, win medals, rank up</li>
-        </ul>
         <div class="ctas">
           <RouterLink :to="go('bee')" class="btn btn-primary">Get started</RouterLink>
           <RouterLink :to="go('login')" class="btn btn-secondary">I already have an account</RouterLink>
-        </div>
-        <div class="proof">
-          <p class="stats"><span><b>46</b> tech roles</span><span><b>260</b> skills mapped</span></p>
         </div>
       </div>
     </main>
@@ -38,12 +30,7 @@ header { padding: 28px 48px; }
 .art { position: relative; min-width: 0; }
 .copy { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 36px; max-width: 420px; margin: 0 auto; width: 100%; }
 h1 { text-wrap: balance; font-size: 40px; line-height: 1.18; font-weight: 900; letter-spacing: -.015em; color: var(--ink); animation: rise .5s cubic-bezier(.2, .8, .3, 1) both; }
-.points { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: -12px 0 0; padding: 0; list-style: none; animation: rise .5s .04s cubic-bezier(.2, .8, .3, 1) both; }
-.points li { padding: 7px 14px; border-radius: 999px; background: #fff; border: 2px solid var(--line-strong); font-size: 13px; font-weight: 800; }
 .ctas { display: flex; flex-direction: column; gap: 14px; width: 100%; animation: rise .5s .08s cubic-bezier(.2, .8, .3, 1) both; }
-.proof { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: -8px; animation: rise .5s .14s cubic-bezier(.2, .8, .3, 1) both; }
-.stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; font-size: 13px; font-weight: 700; color: var(--muted); }
-.stats b { font-size: 17px; font-weight: 900; color: var(--ink); }
 .ctas .btn { width: 100%; white-space: normal; text-align: center; }
 @keyframes hover { 0%, 100% { transform: translate(0, 0) rotate(-2deg); } 50% { transform: translate(6px, -14px) rotate(2deg); } }
 @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
@@ -54,5 +41,5 @@ h1 { text-wrap: balance; font-size: 40px; line-height: 1.18; font-weight: 900; l
   h1 { font-size: 30px; }
   .copy { gap: 28px; }
 }
-@media (prefers-reduced-motion: reduce) { h1, .ctas, .points, .proof { animation: none; } }
+@media (prefers-reduced-motion: reduce) { h1, .ctas { animation: none; } }
 </style>
