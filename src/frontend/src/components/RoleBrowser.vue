@@ -53,7 +53,7 @@ const heading = computed(() => {
 <template>
   <div>
     <div class="bar">
-      <div v-if="view === 'chart'" class="tabs">
+      <div class="tabs">
         <button
           v-for="s in rankedScenarios"
           :key="s.key"
@@ -90,6 +90,14 @@ const heading = computed(() => {
       </div>
     </template>
     <div v-else class="list-wrap" :class="{ center: pick }">
+      <h1 v-if="!cardsOnly">{{ heading }}</h1>
+      <p class="chart-source">
+        Chances of each future, from
+        <select v-model="metricTarget" aria-label="Metric the chances are based on">
+          <option v-for="m in metrics" :key="m.target" :value="m.target">{{ m.label }}</option>
+        </select>
+        forecasts, nearest-term.
+      </p>
       <RoleList :jobs="jobs" :selected="pick ? selected : undefined" :roadmaps="roadmaps" @select="emit('select', $event)" />
     </div>
     <p v-if="note && view === 'chart'" class="note">{{ note }}</p>
@@ -97,7 +105,7 @@ const heading = computed(() => {
 </template>
 
 <style scoped>
-.bar { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 22px; }
+.bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
 .tabs { display: flex; gap: 10px; flex-wrap: wrap; }
 .view { margin-left: auto; display: flex; padding: 4px; border-radius: 14px; background: var(--line); }
 .view button { padding: 8px 16px; border-radius: 10px; font-weight: 900; font-size: 13px; color: var(--muted); }
@@ -112,7 +120,7 @@ const heading = computed(() => {
 .tabs button.on { background: var(--rc); border-color: var(--rc); color: #fff; box-shadow: 0 4px 0 var(--rc); }
 .tab-pct { font-weight: 900; opacity: .85; }
 h1 { font-size: 30px; font-weight: 900; margin-bottom: 10px; }
-.chart-source { margin: 0 0 22px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.chart-source { margin: 0 0 16px; font-size: 12px; font-weight: 600; color: var(--muted); }
 .chart-source select { font: inherit; font-weight: 800; color: var(--ink); background: none; border: none; border-bottom: 2px solid var(--line-strong); padding: 0 2px 1px; cursor: pointer; }
 .note { margin-top: 22px; font-size: 12px; font-weight: 600; color: var(--muted); line-height: 1.5; max-width: 760px; }
 .list-wrap { max-width: 760px; }
