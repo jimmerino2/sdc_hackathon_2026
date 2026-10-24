@@ -28,6 +28,9 @@ None of these tables feeds the industry or AI-outlook models, and none of them i
 | `datasets/demand_counts.csv.gz` | tracked | `month, country, occupation, skill_id, n_ads_skill` |
 | `datasets/emerging.csv` | tracked | Per country × occupation × skill: recent (6 months) and base (12 months before) counts and shares, `change_pp`, `growth_lb_pp` / `growth_ub_pp` (80% band of the change), employers, months present, confidence, registry status, O\*NET coverage |
 | `datasets/discovery_backcheck.csv` | tracked | Withheld-skill back-check: per skill × quarterly as-of month, whether the detector flagged it from data available then |
+| `taxonomy/skill_signals.json` | tracked | Hand-written. Skill → packages (PyPI / npm) and related skills for the emerging-signals view, plus the reference basket |
+| `datasets/package_downloads.csv` | tracked | `source, package, month, downloads, days, retrieved_at`: monthly downloads (months with < 80% of days reported are treated as missing) |
+| `latest/signals.csv.gz`, `latest/signal_indicators.csv` | tracked | The served run's emerging-signals table (per cell × skill at 6 months) and its per-package evidence |
 | `datasets/adzuna_snapshots.csv` | tracked | `retrieved_at, country, occupation, skill_id, n_ads, n_ads_skill, share` from Adzuna snippets |
 | `datasets/coverage.csv` | tracked | Per source × month: ads, duplicates, eligible, classified, with a country, multi-occupation |
 | `adoption/worker_ai_usage.csv` | tracked | Stack Overflow survey per year × occupation × country: n, share using AI tools, 95% Wilson interval, wording, dev types, comparability note. Shares with n < 30 are flagged `published_ok = False` |

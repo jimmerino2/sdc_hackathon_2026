@@ -20,6 +20,9 @@ export const METHOD_NAMES: Record<string, string> = {
   trend: 'Damped trend',
   ridge: 'Ridge regression (pooled)',
   blend: 'Average of steadied share and ridge',
+  ewma: 'Recent share, weighted toward the latest months',
+  dtrend: 'Damped trend (shrunk by evidence)',
+  adaptive: 'Recent share plus tested trend',
 };
 export const methodName = (m: string) => METHOD_NAMES[m] ?? m;
 
@@ -43,6 +46,20 @@ export function trendOf(lb: number | null | undefined, ub: number | null | undef
   if (lb != null && lb > 0) return 'up';
   if (ub != null && ub < 0) return 'down';
   return 'flat';
+}
+
+/** A log growth (e.g. 0.4) as a percentage change string (+49%). */
+export function growth(g: number | null | undefined): string {
+  if (g == null || !Number.isFinite(g)) return '–';
+  const v = (Math.exp(g) - 1) * 100;
+  return `${v > 0 ? '+' : ''}${Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(1)}%`;
+}
+
+/** Scenario (not a forecast): the forecast share moved by `passThrough` (0-1) of a log-odds growth `g`. */
+export function scenarioShare(forecast: number, g: number, passThrough: number): number {
+  const p = Math.min(Math.max(forecast, 1e-4), 1 - 1e-4);
+  const z = Math.log(p / (1 - p)) + passThrough * g;
+  return 1 / (1 + Math.exp(-z));
 }
 
 /** Linear scale with a little padding; returns [scale, lo, hi]. */

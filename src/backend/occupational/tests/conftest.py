@@ -22,7 +22,7 @@ REAL_TAXONOMY = store.REPO / "data" / "occupational_forecasting" / "taxonomy"
 def data_dir(tmp_path, monkeypatch):
     d = tmp_path / "occ"
     (d / "taxonomy").mkdir(parents=True)
-    for f in ("occupations.json", "geo.json", "curated_skills.csv", "registry_overrides.csv"):
+    for f in ("occupations.json", "geo.json", "curated_skills.csv", "registry_overrides.csv", "skill_signals.json"):
         shutil.copy(REAL_TAXONOMY / f, d / "taxonomy" / f)
     monkeypatch.setenv("OCC_DATA_DIR", str(d))
     T.reset_caches()

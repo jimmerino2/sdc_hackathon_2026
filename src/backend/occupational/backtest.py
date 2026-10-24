@@ -7,11 +7,23 @@ target window had ended by the refit origin.
 Split by target month (chronological, no shuffling):
   test        targets in the last 12 complete months: untouched until the end, reported as is
   validation  targets in the 12 months before: chooses the method per horizon
-  train       everything earlier (ridge fitting; method behaviour)
+  train       everything earlier (ridge fitting; method behaviour). Its last TUNE_MONTHS of targets tune the
+              parameters of ewma / dtrend / adaptive (tune()), by the same selection score used on validation
+Selection (per horizon, on validation): the lowest composite score (score(); WEIGHTS) among methods whose error is
+no worse than persistence's and within MAE_TOLERANCE of the most accurate method. Then, conservatively, the
+simplest eligible method (SIMPLICITY order) that the best does not beat in at least CONFIDENCE of BOOTSTRAP paired
+resamples of series (all of a series' origins together) is served instead.
 Gate (as in the industry pipeline, but separately implemented): the method chosen on validation is served unless
 its test error is worse than persistence's; then persistence is served ("baseline_retained").
 
+Direction is measured from the baseline (models.baseline: the last 3 months' share at the origin). A realised move
+is "material" at a threshold when |actual - baseline| >= the threshold; "significant" when it is also beyond
+sampling noise (z >= Z_SIG, binomial standard error of the two pooled shares). Small cells move by several points
+from sampling alone, so the moving-skill parts of the selection score use significant moves; material-only
+moves are reported too.
+
 Which series count, decided with data available at the origin only:
+  scope     occupations in the IT / software sector (SCOPE_SECTOR); run.py passes them to Panel
   modelled  the cell (country x occupation) had >= MIN_CELL_N12 eligible ads in the last 12 months, and the skill
             was named at least once in that cell in the last 24 months
   scored    the target window has >= MIN_EVAL_N ads
@@ -19,10 +31,11 @@ Which series count, decided with data available at the origin only:
             flatter whichever method follows a trend; they get forecasts, flagged as not backtested.
 Intervals: 10th-90th percentile of past errors (actual - forecast, share points) for forecasts of a similar level
 and evidence (ads in the last 3 months at the origin), per method and horizon; calibrated on validation and checked
-on test. The published forecast is calibrated on
-validation + test.
+on test. The published forecast is calibrated on validation + test.
 """
 from __future__ import annotations
+
+import itertools
 
 import numpy as np
 import pandas as pd
@@ -37,14 +50,42 @@ REFIT = 6
 MIN_RIDGE_ROWS = 2000
 BUCKETS = (0, 60, 200, np.inf)
 MATERIAL_PP = 2.0
+MOVE_PP = (1.0, 2.0)
+Z_SIG = 1.96
 VALIDATED_RATIO = 0.95  # "validated" needs >= 5% lower test error than persistence
+SCOPE_SECTOR = "software_technology"
+TUNE_MONTHS = 48
+
+# Selection score: lower is better; every part is 0 for a perfect forecast and about 1 for persistence.
+#   accuracy   MAE / persistence MAE, all scored forecasts: forecasts must stay accurate overall
+#   moving     MAE / persistence MAE on significant moves (MATERIAL_PP): the skills users care about most
+#   direction  1 - direction accuracy on those moves: did it call rise vs fall
+#   bias       mean |signed error| of rising and of falling skills / persistence MAE on moves: a flat forecast
+#              under-calls rises and over-calls falls, which this exposes
+#   stability  worst origin quarter's MAE ratio to persistence, minus 1 (>= 0): no win from one good period
+# Overall accuracy carries the most weight so a jumpy method cannot win on direction alone; moving-skill error,
+# direction and bias together outweigh it, so a flat method cannot win on a tiny pooled-MAE edge.
+WEIGHTS = {"accuracy": 0.35, "moving": 0.25, "direction": 0.2, "bias": 0.1, "stability": 0.1}
+ALT_WEIGHTS = {"accuracy_heavy": {"accuracy": 0.6, "moving": 0.15, "direction": 0.1, "bias": 0.1, "stability": 0.05},
+               "movement_heavy": {"accuracy": 0.2, "moving": 0.3, "direction": 0.3, "bias": 0.15, "stability": 0.05},
+               "equal": dict.fromkeys(WEIGHTS, 0.2)}
+MAE_TOLERANCE = 0.05
+CONFIDENCE = 0.8
+BOOTSTRAP = 200
+SIMPLICITY = ("persistence", "mean12", "shrink", "ewma", "dtrend", "adaptive", "trend", "ridge", "blend")
+GRID = {"ewma": {"hl": (1.0, 2.0, 3.0, 4.5, 6.0, 9.0, 12.0, 18.0), "kappa": (0.0, 10.0, 30.0, 100.0, 300.0)},
+        "dtrend": {"W": (6, 9, 12, 18, 24), "phi": (0.8, 0.9, 0.95, 1.0), "consistency": (False, True)},
+        "adaptive": {"W": (6, 12, 18, 24), "source": ("cell", "pooled"), "consistency": (False, True)}}
+LEVEL = ("hl", "kappa")  # adaptive's level is ewma's: tuned there first, then held fixed
 
 
 class Panel:
     """Counts as arrays. months: complete months only; series: country x occupation x skill."""
 
-    def __init__(self, totals: pd.DataFrame, counts: pd.DataFrame, registry: dict):
+    def __init__(self, totals: pd.DataFrame, counts: pd.DataFrame, registry: dict, occupations=None):
         t = totals[~totals["is_partial"].astype(bool)]
+        if occupations is not None:
+            t = t[t["occupation"].isin(occupations)]
         self.months = pd.period_range(pd.Period(t["month"].min(), "M"), pd.Period(t["month"].max(), "M"), freq="M")
         cells = t[["country", "occupation"]].drop_duplicates().sort_values(["country", "occupation"])
         self.cells = list(cells.itertuples(index=False, name=None))
@@ -116,36 +157,117 @@ def _ridges(p: Panel, h: int, refit_points: list[int]) -> dict[int, M.RidgeModel
     return out
 
 
-def run_backtest(p: Panel) -> pd.DataFrame:
-    """Every scored prediction: series, origin, h, method, forecast, actual, role."""
+def _betas(p: Panel, h: int, q: dict, refit_points: list[int]) -> dict[int, np.ndarray]:
+    """Adaptive's trend persistence per evidence band (BUCKETS of ads in the last 3 months), fitted at each refit
+    origin r on rows (s, t) with t + h <= r (as _ridges)."""
+    all_cols = np.arange(MIN_HISTORY - 1, p.T - h)
+    rows, ci = np.nonzero(p.modelled(all_cols, curated_only=True))
+    cols = all_cols[ci]
+    k, n = p.actual(rows, cols, h)
+    keep = n >= 5
+    rows, cols, k, n = rows[keep], cols[keep], k[keep], n[keep]
+    lvl, x = M.adaptive_parts(p.f, rows, cols, h, q)
+    y = M.adaptive_target(p.f, k, n, rows, cols, lvl)
+    w = np.minimum(n, 300)
+    band = _bucket(p.f["n3"][rows, cols])
+    out = {}
+    for r in refit_points:
+        past = cols + h <= r
+        out[r] = np.array([M.fit_beta(x[past & (band == i)], y[past & (band == i)], w[past & (band == i)])
+                           for i in range(len(BUCKETS) - 1)])
+    return out
+
+
+def _refit_predict(p: Panel, m: str, rows: np.ndarray, cols: np.ndarray, h: int, q: dict | None = None) -> np.ndarray:
+    """Forecasts of a method whose fitted part is refit every REFIT months (ridge, blend, adaptive's beta); each
+    origin uses the fit from its latest refit point, which saw only targets observed by then."""
+    cols0 = MIN_HISTORY - 1
+    ref = cols - (cols - cols0) % REFIT
+    points = sorted(set(ref.tolist()))
+    fits = _betas(p, h, q, points) if m == "adaptive" else _ridges(p, h, points)
+    pred = np.full(len(rows), np.nan)
+    for r, fit in fits.items():
+        sel = ref == r
+        if m == "adaptive":
+            beta = fit[_bucket(p.f["n3"][rows[sel], cols[sel]])]
+            pred[sel] = M.predict(m, p.f, rows[sel], cols[sel], h, params={**q, "beta": beta})
+        elif fit is not None:
+            pred[sel] = M.predict(m, p.f, rows[sel], cols[sel], h, fit)
+    return pred
+
+
+def _role(p: Panel, target: np.ndarray) -> np.ndarray:
+    return np.where(target >= p.T - 12, "test", np.where(target >= p.T - 24, "validation", "train"))
+
+
+def _scored(p: Panel, h: int) -> pd.DataFrame:
+    """The (series, origin) pairs scored at horizon h, with the realised target and the baseline."""
+    cols_all = np.arange(MIN_HISTORY - 1, p.T - h)
+    ok = p.modelled(cols_all, curated_only=True)
+    rows, ci = np.nonzero(ok)
+    cols = cols_all[ci]
+    k, n = p.actual(rows, cols, h)
+    scored = n >= MIN_EVAL_N
+    rows, cols, k, n = rows[scored], cols[scored], k[scored], n[scored]
+    base = pd.DataFrame({"series": rows, "origin_idx": cols, "h": h, "actual_k": k, "actual_n": n,
+                         "n3_origin": p.f["n3"][rows, cols], "p12_origin": p.f["p12"][rows, cols],
+                         "p3_origin": M.baseline(p.f, rows, cols)})
+    base["role"] = _role(p, cols + h)
+    base["actual"] = base["actual_k"] / base["actual_n"]
+    return base
+
+
+def tune(p: Panel) -> dict:
+    """Parameters of ewma / dtrend / adaptive per horizon: the grid point with the lowest selection score on
+    training-period targets (the last TUNE_MONTHS before validation). Validation and test targets are not used."""
+    out = {}
+    for h in HORIZONS:
+        base = _scored(p, h)
+        tt = base["origin_idx"] + h
+        tr = base[(base["role"] == "train") & (tt >= p.T - 24 - TUNE_MONTHS)].reset_index(drop=True)
+        out[str(h)] = {"rows": int(len(tr))}
+        if not len(tr):
+            continue
+        rows, cols = tr["series"].to_numpy(), tr["origin_idx"].to_numpy()
+        naive = tr.assign(forecast=M.predict("persistence", p.f, rows, cols, h))
+        for m, grid in GRID.items():
+            tried = []
+            for combo in itertools.product(*grid.values()):
+                q = dict(zip(grid, combo))
+                if m == "adaptive":
+                    q.update({k: out[str(h)]["ewma"][k] for k in LEVEL})
+                pred = _refit_predict(p, m, rows, cols, h, q) if m == "adaptive" else M.predict(m, p.f, rows, cols, h, params=q)
+                s = score(tr.assign(forecast=pred), naive)
+                tried.append((s["score"], q))
+            best = min(tried, key=lambda x: x[0])
+            out[str(h)][m] = {**best[1], "tune_score": round(best[0], 4), "grid_points": len(tried)}
+    return out
+
+
+def params_for(tuned: dict, h: int, method: str) -> dict | None:
+    q = tuned.get(str(h), {}).get(method)
+    return None if q is None else {k: v for k, v in q.items() if k in GRID[method] or k in LEVEL}
+
+
+def run_backtest(p: Panel, tuned: dict | None = None) -> pd.DataFrame:
+    """Every scored prediction: series, origin, h, method, forecast, actual, baseline, role. Methods that need
+    tuned parameters are left out when `tuned` is None."""
     out = []
     for h in HORIZONS:
-        cols_all = np.arange(MIN_HISTORY - 1, p.T - h)
-        ok = p.modelled(cols_all, curated_only=True)
-        rows, ci = np.nonzero(ok)
-        cols = cols_all[ci]
-        k, n = p.actual(rows, cols, h)
-        scored = n >= MIN_EVAL_N
-        rows, cols, k, n = rows[scored], cols[scored], k[scored], n[scored]
-        refits = sorted({int(c - (c - cols_all[0]) % REFIT) for c in cols})
-        ridges = _ridges(p, h, refits)
-        base = pd.DataFrame({"series": rows, "origin_idx": cols, "h": h, "actual_k": k, "actual_n": n,
-                             "n3_origin": p.f["n3"][rows, cols], "p12_origin": p.f["p12"][rows, cols]})
-        tt = cols + h
-        base["role"] = np.where(tt >= p.T - 12, "test", np.where(tt >= p.T - 24, "validation", "train"))
+        base = _scored(p, h)
+        rows, cols = base["series"].to_numpy(), base["origin_idx"].to_numpy()
         for m in M.METHODS:
-            if m in ("ridge", "blend"):
-                pred = np.full(len(rows), np.nan)
-                ref = cols - (cols - cols_all[0]) % REFIT
-                for r, model in ridges.items():
-                    sel = ref == r
-                    if model is not None and sel.any():
-                        pred[sel] = M.predict(m, p.f, rows[sel], cols[sel], h, model)
+            q = params_for(tuned or {}, h, m) if m in M.TUNED else None
+            if m in M.TUNED and q is None:
+                continue
+            if m in ("ridge", "blend", "adaptive"):
+                pred = _refit_predict(p, m, rows, cols, h, q)
+            elif m in M.TUNED:
+                pred = M.predict(m, p.f, rows, cols, h, params=q)
             else:
                 pred = M.predict(m, p.f, rows, cols, h)
             out.append(base.assign(method=m, forecast=pred))
     b = pd.concat(out, ignore_index=True)
-    b["actual"] = b["actual_k"] / b["actual_n"]
     # score every method on the same rows: drop (series, origin, h) where any method has no forecast. A method
     # with no forecast at all (ridge before it has MIN_RIDGE_ROWS to learn from) is left out instead.
     present = [m for m, g in b.groupby("method") if g["forecast"].notna().any()]
@@ -154,19 +276,115 @@ def run_backtest(p: Panel) -> pd.DataFrame:
     return b[full].reset_index(drop=True)
 
 
-def metrics(g: pd.DataFrame, naive: pd.DataFrame | None = None) -> dict:
+def _moves(g: pd.DataFrame, thr: float) -> tuple[np.ndarray, np.ndarray]:
+    """(material, significant) masks of realised moves from the baseline of at least thr share points."""
+    d = (g["actual"] - g["p3_origin"]).to_numpy()
+    n0, n1 = np.nan_to_num(g["n3_origin"].to_numpy()), g["actual_n"].to_numpy()
+    pool = np.clip((g["p3_origin"].to_numpy() * n0 + g["actual"].to_numpy() * n1) / np.maximum(n0 + n1, 1), 1e-4, 1 - 1e-4)
+    se = np.sqrt(pool * (1 - pool) * (1 / np.maximum(n0, 1) + 1 / n1))
+    mat = np.abs(d) * 100 >= thr
+    return mat, mat & (np.abs(d) >= Z_SIG * se)
+
+
+def _aligned(g: pd.DataFrame, naive: pd.DataFrame | None) -> tuple[pd.DataFrame, pd.DataFrame | None]:
+    g = g.sort_values(["series", "origin_idx"]).reset_index(drop=True)
+    if naive is not None and len(naive):
+        naive = naive.sort_values(["series", "origin_idx"]).reset_index(drop=True)
+        assert len(naive) == len(g)
+    return g, naive
+
+
+def _move_stats(g: pd.DataFrame, mask: np.ndarray) -> dict:
+    err = (g["forecast"] - g["actual"]).to_numpy() * 100
+    up = mask & (g["actual"] > g["p3_origin"]).to_numpy()
+    down = mask & ~up
+    pc = np.sign(g["forecast"] - g["p3_origin"]).to_numpy()
+    ac = np.sign(g["actual"] - g["p3_origin"]).to_numpy()
+    nan = float("nan")
+    return {"n": int(mask.sum()), "n_rising": int(up.sum()), "n_falling": int(down.sum()),
+            "mae_pp": float(np.abs(err[mask]).mean()) if mask.any() else nan,
+            "mae_rising_pp": float(np.abs(err[up]).mean()) if up.any() else nan,
+            "mae_falling_pp": float(np.abs(err[down]).mean()) if down.any() else nan,
+            "bias_rising_pp": float(err[up].mean()) if up.any() else nan,
+            "bias_falling_pp": float(err[down].mean()) if down.any() else nan,
+            "direction_acc": float((pc[mask] == ac[mask]).mean()) if mask.any() else nan}
+
+
+def score(g: pd.DataFrame, naive: pd.DataFrame, weights: dict | None = None) -> dict:
+    """Composite selection score of forecasts g against persistence on the same rows (see WEIGHTS)."""
+    w = weights or WEIGHTS
+    g, naive = _aligned(g, naive)
+    err, nerr = (g["forecast"] - g["actual"]).abs(), (naive["forecast"] - naive["actual"]).abs()
+    _, sig = _moves(g, MATERIAL_PP)
+    ms, ns = _move_stats(g, sig), _move_stats(naive, sig)
+    parts = {"accuracy": float(err.mean() / max(nerr.mean(), 1e-12))}
+    if sig.any():
+        parts["moving"] = ms["mae_pp"] / max(ns["mae_pp"], 1e-12)
+        parts["direction"] = 1 - ms["direction_acc"]
+        parts["bias"] = np.nanmean([abs(ms["bias_rising_pp"]), abs(ms["bias_falling_pp"])]) / max(ns["mae_pp"], 1e-12)
+    else:
+        parts.update(moving=1.0, direction=1.0, bias=1.0)
+    q = g["origin_idx"].to_numpy() // 3
+    worst = 0.0
+    for qq in np.unique(q):
+        s = q == qq
+        if s.sum() >= 50:
+            worst = max(worst, float(err[s].mean() / max(nerr[s].mean(), 1e-12)) - 1)
+    parts["stability"] = worst
+    return {"score": float(sum(w[k] * parts[k] for k in w)), "parts": {k: round(float(v), 4) for k, v in parts.items()}}
+
+
+def metrics(g: pd.DataFrame, naive: pd.DataFrame | None = None, detail: bool = False) -> dict:
+    g, naive = _aligned(g, naive)
     err = (g["forecast"] - g["actual"]) * 100
     w = g["actual_n"]
     d = {"n": int(len(g)), "mae_pp": float(err.abs().mean()), "wmae_pp": float((err.abs() * w).sum() / w.sum()),
          "rmse_pp": float(np.sqrt((err ** 2).mean())), "bias_pp": float(err.mean())}
-    mat = (g["actual"] - g["p12_origin"]).abs() * 100 >= MATERIAL_PP
-    if mat.any():
-        d["direction_acc"] = float((np.sign(g.loc[mat, "forecast"] - g.loc[mat, "p12_origin"]) ==
-                                    np.sign(g.loc[mat, "actual"] - g.loc[mat, "p12_origin"])).mean())
-        d["n_material"] = int(mat.sum())
+    mat, sig = _moves(g, MATERIAL_PP)
+    if sig.any():
+        d["direction_acc"] = _move_stats(g, sig)["direction_acc"]
+    d["n_material"] = int(sig.sum())
     if naive is not None and len(naive):
         d["mae_ratio_vs_persistence"] = d["mae_pp"] / float(((naive["forecast"] - naive["actual"]).abs() * 100).mean())
+        s = score(g, naive)
+        d["selection_score"], d["score_parts"] = s["score"], s["parts"]
+    if not detail:
+        return d
+    moves = {}
+    for thr in MOVE_PP:
+        mat, sig = _moves(g, thr)
+        stable = (g["actual"] - g["p3_origin"]).abs().to_numpy() * 100 < thr
+        moves[f"{thr:g}pp"] = {"material": _move_stats(g, mat), "significant": _move_stats(g, sig),
+                               "stable": {"n": int(stable.sum()),
+                                          "mae_pp": float(err[stable].abs().mean()) if stable.any() else None}}
+    d["moves"] = moves
+    # the published label, scored against the realised change from the same baseline
+    lab = M.direction((g["forecast"] - g["p3_origin"]).to_numpy() * 100)
+    act = M.direction((g["actual"] - g["p3_origin"]).to_numpy() * 100)
+    d["label"] = {"threshold_pp": M.LABEL_PP, "accuracy_3class": float((lab == act).mean()),
+                  **{f"n_{c}": int((lab == c).sum()) for c in ("rising", "falling", "flat")},
+                  **{f"precision_{c}": float((act[lab == c] == c).mean()) if (lab == c).any() else None
+                     for c in ("rising", "falling")},
+                  **{f"right_sign_{c}": float(np.mean(np.sign((g["actual"] - g["p3_origin"]).to_numpy()[lab == c]) ==
+                                                      (1 if c == "rising" else -1))) if (lab == c).any() else None
+                     for c in ("rising", "falling")}}
+    band = lambda col, edges, labels: pd.cut(g[col], edges, labels=labels, right=False)
+    d["by_level"] = _bands(err, band("p3_origin", [0, 0.01, 0.05, 0.15, 1.01], ["<1%", "1-5%", "5-15%", ">=15%"]))
+    d["by_volume"] = _bands(err, band("n3_origin", [0, 60, 200, 600, np.inf], ["<60", "60-199", "200-599", ">=600"]))
+    by_q = {}
+    for qq, s in g.groupby(g["origin_idx"] // 3).groups.items():
+        e = err.loc[s].abs()
+        r = {"n": int(len(s)), "mae_pp": float(e.mean())}
+        if naive is not None and len(naive):
+            r["mae_ratio_vs_persistence"] = float(e.mean() / ((naive.loc[s, "forecast"] - naive.loc[s, "actual"]).abs() * 100).mean())
+        by_q[int(qq)] = r
+    d["by_origin_quarter"] = by_q
     return d
+
+
+def _bands(err: pd.Series, band: pd.Series) -> dict:
+    return {str(k): {"n": int(len(e)), "mae_pp": float(e.abs().mean()), "bias_pp": float(e.mean())}
+            for k, e in err.groupby(band, observed=True)}
 
 
 LEVELS = (0, 0.005, 0.02, 0.05, 0.10, 0.20, 1.01)  # forecast share bins for the interval errors
@@ -200,7 +418,46 @@ def apply_interval(q: dict, method: str, h: int, forecast: np.ndarray, n3: np.nd
     return np.clip(forecast + lo, 0, 1), np.clip(forecast + hi, 0, 1)
 
 
-def evaluate(b: pd.DataFrame) -> dict:
+def _beats(g: pd.DataFrame, a: str, b: str, weights: dict | None, seed: int = 0) -> float:
+    """Share of paired bootstrap resamples of series in which method a scores lower than method b."""
+    by = {m: x.sort_values(["series", "origin_idx"]).reset_index(drop=True) for m, x in g.groupby("method")}
+    ids = by["persistence"]["series"].to_numpy()
+    uniq, inv = np.unique(ids, return_inverse=True)
+    groups = [np.nonzero(inv == i)[0] for i in range(len(uniq))]
+    rng = np.random.default_rng(seed)
+    wins = 0
+    for _ in range(BOOTSTRAP):
+        idx = np.concatenate([groups[i] for i in rng.integers(0, len(uniq), len(uniq))])
+        sub = {m: by[m].iloc[idx].assign(series=np.arange(len(idx))) for m in (a, b, "persistence")}
+        wins += score(sub[a], sub["persistence"], weights)["score"] < score(sub[b], sub["persistence"], weights)["score"]
+    return wins / BOOTSTRAP
+
+
+def select(val: dict, weights: dict | None = None, g: pd.DataFrame | None = None) -> tuple[str, dict]:
+    """The method served by the selection rule (module docstring), from validation metrics per method and, for the
+    conservative check, the validation rows g. Returns (method, {simpler method: share of resamples best wins})."""
+    if not val:
+        return "persistence", {}
+    sc = {m: (score_of(v, weights) if weights else v["selection_score"]) for m, v in val.items()}
+    best_mae = min(v["mae_pp"] for v in val.values())
+    ok = [m for m, v in val.items() if v["mae_ratio_vs_persistence"] <= 1 and v["mae_pp"] <= best_mae * (1 + MAE_TOLERANCE)]
+    ok = ok or ["persistence"]
+    best = min(ok, key=lambda m: sc[m])
+    rank = lambda m: SIMPLICITY.index(m) if m in SIMPLICITY else len(SIMPLICITY)
+    checks = {}
+    if g is not None:
+        for m in sorted((m for m in ok if rank(m) < rank(best)), key=rank):
+            checks[m] = _beats(g, best, m, weights)
+            if checks[m] < CONFIDENCE:
+                return m, checks
+    return best, checks
+
+
+def score_of(v: dict, weights: dict) -> float:
+    return float(sum(weights[k] * v["score_parts"][k] for k in weights))
+
+
+def evaluate(b: pd.DataFrame, tuned: dict | None = None) -> dict:
     """Selection on validation, test scores for every method, interval coverage on test, the gate."""
     out = {"horizons": {}}
     q_val = interval_quantiles(b[b["role"] == "validation"])
@@ -210,9 +467,11 @@ def evaluate(b: pd.DataFrame) -> dict:
         for role in ("train", "validation", "test"):
             g = bh[bh["role"] == role]
             naive = g[g["method"] == "persistence"]
-            per[role] = {m: metrics(gm, naive) for m, gm in g.groupby("method")} if len(g) else {}
+            per[role] = {m: metrics(gm, naive, detail=role != "train") for m, gm in g.groupby("method")} if len(g) else {}
         val = per["validation"]
-        chosen = min(val, key=lambda m: val[m]["mae_pp"]) if val else "persistence"
+        chosen, checks = select(val, g=bh[bh["role"] == "validation"])
+        sensitivity = {name: select(val, w)[0] for name, w in ALT_WEIGHTS.items()}
+        sensitivity["mae_only"] = min(val, key=lambda m: val[m]["mae_pp"]) if val else "persistence"
         test = per["test"]
         status, served = "baseline", chosen
         if chosen != "persistence" and test:
@@ -226,9 +485,17 @@ def evaluate(b: pd.DataFrame) -> dict:
         for m, gm in t.groupby("method"):
             lo, hi = apply_interval(q_val, m, h, gm["forecast"].to_numpy(), gm["n3_origin"].to_numpy())
             inside = (gm["actual"].to_numpy() >= lo) & (gm["actual"].to_numpy() <= hi)
-            cov[m] = {"coverage_80": float(inside.mean()), "mean_width_pp": float(np.mean(hi - lo) * 100)}
+            _, sig = _moves(gm, MATERIAL_PP)
+            vol = _bucket(gm["n3_origin"].to_numpy())
+            cov[m] = {"coverage_80": float(inside.mean()), "mean_width_pp": float(np.mean(hi - lo) * 100),
+                      "coverage_80_significant_moves": float(inside[sig].mean()) if sig.any() else None,
+                      "coverage_80_by_volume": {f"{BUCKETS[i]:g}-{BUCKETS[i + 1]:g}": float(inside[vol == i].mean())
+                                                for i in range(len(BUCKETS) - 1) if (vol == i).any()}}
         out["horizons"][str(h)] = {"chosen_on_validation": chosen, "served": served, "status": status,
-                                   "scores": per, "interval_test": cov}
+                                   "best_score_on_validation": min(val, key=lambda m: val[m]["selection_score"]) if val else None,
+                                   "bootstrap_best_beats": checks,
+                                   "params": {m: params_for(tuned or {}, h, m) for m in M.TUNED},
+                                   "selection_sensitivity": sensitivity, "scores": per, "interval_test": cov}
     return out
 
 
@@ -239,12 +506,13 @@ def cell_accuracy(b: pd.DataFrame, p: Panel, ev: dict) -> pd.DataFrame:
     for (c, o, h, m), g in t.groupby(["country", "occupation", "h", "method"]):
         naive = t[(t["country"] == c) & (t["occupation"] == o) & (t["h"] == h) & (t["method"] == "persistence")]
         d = metrics(g, naive)
+        d.pop("score_parts", None)
         rows.append({"country": c, "occupation": o, "h": int(h), "method": m,
                      "served": m == ev["horizons"][str(h)]["served"], **d})
     return pd.DataFrame(rows)
 
 
-def forecast(p: Panel, b: pd.DataFrame, ev: dict, min_n12: int = 10) -> tuple[pd.DataFrame, dict]:
+def forecast(p: Panel, b: pd.DataFrame, ev: dict, tuned: dict | None = None, min_n12: int = 10) -> tuple[pd.DataFrame, dict]:
     """The published forecast at the last complete month, with intervals from validation + test errors."""
     t0 = p.T - 1
     q = interval_quantiles(b[b["role"].isin(["validation", "test"])])
@@ -254,15 +522,20 @@ def forecast(p: Panel, b: pd.DataFrame, ev: dict, min_n12: int = 10) -> tuple[pd
     cols = np.full(len(rows), t0)
     for h in HORIZONS:
         served = ev["horizons"][str(h)]["served"]
-        ridge = None
+        ridge, prm = None, params_for(tuned or {}, h, served) if served in M.TUNED else None
         if served in ("ridge", "blend"):
             ridge = _ridges(p, h, [t0])[t0]
             cards[str(h)] = ridge.card() if ridge else None
-        pred = M.predict(served, p.f, rows, cols, h, ridge)
+        if served == "adaptive":
+            fit = _betas(p, h, prm, [t0])[t0]
+            cards[str(h)] = {**prm, "beta_by_ads_3m": {f"{BUCKETS[i]:g}-{BUCKETS[i + 1]:g}": float(b) for i, b in enumerate(fit)}}
+            prm = {**prm, "beta": fit[_bucket(p.f["n3"][rows, cols])]}
+        pred = M.predict(served, p.f, rows, cols, h, ridge, params=prm)
         lo, hi = apply_interval(q, served, h, pred, p.f["n3"][rows, cols])
         rows_out.append(pd.DataFrame({
             "series": rows, "h": h, "origin_month": str(p.months[t0]), "target_month": str(p.months[t0] + h),
-            "forecast": pred, "low": lo, "high": hi, "model": served, "model_status": ev["horizons"][str(h)]["status"]}))
+            "forecast": pred, "low": lo, "high": hi, "model": served, "model_status": ev["horizons"][str(h)]["status"],
+            "baseline_share": M.baseline(p.f, rows, cols)}))
     fc = pd.concat(rows_out, ignore_index=True)
     s = p.series.loc[fc["series"]].reset_index(drop=True)
     fc = pd.concat([fc.reset_index(drop=True), s[["country", "occupation", "skill_id", "skill_origin"]]], axis=1)
@@ -274,9 +547,8 @@ def forecast(p: Panel, b: pd.DataFrame, ev: dict, min_n12: int = 10) -> tuple[pd
     fc["count_12m"] = p.f["k12"][fc["series"], t0]
     fc["evidence"] = np.select([fc["ads_12m"] >= 300, fc["ads_12m"] >= 100], ["high", "medium"], "low")
     fc["backtested"] = fc["skill_origin"] == "curated"
-    chg = (fc["forecast"] - fc["share_12m"]) * 100
-    thr = np.maximum(1.0, fc["share_12m"] * 100 * 0.15)
-    fc["direction"] = np.select([chg >= thr, chg <= -thr], ["rising", "falling"], "flat")
+    fc["change_pp"] = (fc["forecast"] - fc["baseline_share"]) * 100
+    fc["direction"] = M.direction(fc["change_pp"].to_numpy())
     return fc.drop(columns=["series"]), cards
 
 
@@ -290,4 +562,4 @@ def asof_rows(b: pd.DataFrame, p: Panel, ev: dict) -> pd.DataFrame:
     a["origin_month"] = [str(p.months[i]) for i in a["origin_idx"]]
     a["target_month"] = [str(p.months[i + h]) for i, h in zip(a["origin_idx"], a["h"])]
     return a[["country", "occupation", "skill_id", "origin_month", "target_month", "h", "method", "role", "forecast",
-              "actual", "actual_k", "actual_n", "p12_origin"]]
+              "actual", "actual_k", "actual_n", "p12_origin", "p3_origin"]]

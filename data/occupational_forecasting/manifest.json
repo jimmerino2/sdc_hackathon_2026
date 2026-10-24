@@ -1,10 +1,10 @@
 {
-  "run_id": "20261024T095314Z-8fe526",
-  "made_at": "2026-10-24T09:53:14.731794+00:00",
-  "model_version": "b1534684cf54",
-  "data_version": "8fe5261edf69",
+  "run_id": "20261024T200634Z-d6707b",
+  "made_at": "2026-10-24T20:06:34.944084+00:00",
+  "model_version": "492f2f35265e",
+  "data_version": "d6707b39fa5a",
   "taxonomy_version": "2026-10-24.1",
-  "registry_version": 6,
+  "registry_version": 8,
   "last_complete_month": "2026-09",
   "partial_month": "2026-10",
   "history_start": "2014-01",
@@ -37,6 +37,20 @@
     "adzuna": {
       "source": "adzuna",
       "status": "not_requested_this_run"
+    },
+    "packages": {
+      "source": "packages",
+      "status": "ok",
+      "latest_month": "2026-09",
+      "fetched_packages": {
+        "pypi": 0,
+        "npm": 0
+      },
+      "failed": [],
+      "missing_packages": {
+        "pypi": [],
+        "npm": []
+      }
     }
   },
   "counts": {
@@ -51,9 +65,9 @@
     }
   },
   "served": {
-    "3": "mean12",
-    "6": "mean12",
-    "12": "shrink"
+    "3": "ewma",
+    "6": "adaptive",
+    "12": "adaptive"
   },
   "status": {
     "3": "validated",

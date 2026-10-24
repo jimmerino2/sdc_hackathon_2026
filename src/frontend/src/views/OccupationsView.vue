@@ -4,20 +4,21 @@ import Bubble from '../components/Bubble.vue';
 import Icon from '../components/Icon.vue';
 import ShareChart from '../components/occ/ShareChart.vue';
 import {
-  fetchAdoption, fetchEmerging, fetchOccEvaluation, fetchOccMeta, fetchSkill, fetchSkills,
-  type AdoptionResponse, type AsOfRow, type EmergingResponse, type OccEvaluation, type OccMeta, type SkillDetail,
-  type SkillRow, type SkillsResponse,
+  fetchAdoption, fetchEmerging, fetchOccEvaluation, fetchOccMeta, fetchSignals, fetchSkill, fetchSkills,
+  type AdoptionResponse, type AsOfRow, type EmergingResponse, type OccEvaluation, type OccMeta, type SignalRow,
+  type SignalsResponse, type SkillDetail, type SkillRow, type SkillsResponse,
 } from '../api/occupational';
-import { METHOD_NAMES, STATUS_TEXT, TAXONOMY_TEXT, methodName, month, pct, pp, trendOf } from '../occupational/format';
+import { METHOD_NAMES, STATUS_TEXT, TAXONOMY_TEXT, growth, methodName, month, pct, pp, scenarioShare, trendOf } from '../occupational/format';
 
 /** Occupational forecasting: skill demand, emerging skills and AI adoption per country x occupation.
  *  Separate from the AI outlook tab: its own pipeline (src/backend/occupational), data and models. */
 
-type Tab = 'demand' | 'emerging' | 'adoption' | 'method';
+type Tab = 'demand' | 'emerging' | 'signals' | 'adoption' | 'method';
 const tab = ref<Tab>('demand');
 const tabs: { id: Tab; label: string; icon: string }[] = [
   { id: 'demand', label: 'Skill demand', icon: 'chart-bar' },
   { id: 'emerging', label: 'Emerging skills', icon: 'sparkles' },
+  { id: 'signals', label: 'Emerging signals', icon: 'activity' },
   { id: 'adoption', label: 'AI adoption', icon: 'users' },
   { id: 'method', label: 'Method & data', icon: 'search' },
 ];
@@ -109,8 +110,6 @@ const asofMae = computed(() => {
   const r = asofRows.value;
   return r.length ? r.reduce((s, x) => s + Math.abs(x.forecast - x.actual), 0) / r.length * 100 : null;
 });
-/** mean12 forecasts the 12-month share itself, so every row would read "flat". */
-const flatByConstruction = computed(() => latestRows.value.length > 0 && latestRows.value.every((r) => r.model === 'mean12'));
 const selRow = computed(() => latestRows.value.find((r) => r.skill_id === selected.value));
 const servedBacktest = computed(() => detail.value?.backtest.filter((b) => b.role === 'test') ?? []);
 
@@ -165,9 +164,55 @@ async function loadEvaluation() {
   }
 }
 
+// ---- emerging signals (evidence outside the skill's own job-ad series; not a forecast) ----
+const signals = ref<SignalsResponse | null>(null);
+const sigFilter = ref<'accelerating' | 'adoption' | 'all'>('accelerating');
+const sigOpen = ref<string | null>(null);
+const passThrough = ref(50);  // scenario only: % of the evidence's recent growth assumed to reach hiring demand
+async function loadSignals() {
+  signals.value = null;
+  try {
+    signals.value = await fetchSignals(country.value, occupation.value);
+  } catch {
+    signals.value = { status: 'failed', rows: [] } as unknown as SignalsResponse;
+  }
+}
+const SIGNAL_TEXT: Record<SignalRow['signal'], string> = {
+  accelerating: 'Adoption and related demand both rising',
+  some_acceleration: 'Some evidence rising',
+  contradictory: 'Evidence points both ways',
+  slowing: 'Adoption and related demand both falling',
+  some_slowing: 'Some evidence falling',
+  no_signal: 'No clear signal',
+};
+const sigRows = computed(() => (signals.value?.rows ?? []).filter((r) => {
+  if (sigFilter.value === 'accelerating') return r.signal === 'accelerating' || r.signal === 'some_acceleration';
+  if (sigFilter.value === 'adoption') return r.indicators.length > 0;
+  return true;
+}));
+/** The growth a scenario carries forward: package adoption growth, else related-skill demand. */
+function scenarioBasis(r: SignalRow): { g: number; label: string } | null {
+  if (r.adoption_g6 != null) return { g: r.adoption_g6, label: 'package adoption (relative downloads)' };
+  if (r.related_g6 != null) return { g: r.related_g6, label: 'related-skill job-ad demand' };
+  return null;
+}
+/** Scenario bars: observed, forecast and scenario shares, scaled to the largest of them and the range. */
+function scenarioBars(r: SignalRow, g: number) {
+  const sc = scenarioShare(r.forecast, g, passThrough.value / 100);
+  const bars = [
+    { label: 'Last 3 months (observed)', v: r.baseline_share ?? 0, cls: 'obs' },
+    { label: 'Job-ad forecast', v: r.forecast, cls: 'fc' },
+    { label: 'Scenario (illustration)', v: sc, cls: 'sc' },
+  ];
+  const top = Math.max(r.high ?? 0, scenarioShare(r.forecast, Math.abs(g), 1), ...bars.map((b) => b.v), 0.01);
+  return bars.map((b) => ({ ...b, w: Math.min(100, (b.v / top) * 100) }));
+}
+const relCorr = (k: string) => signals.value?.relationship.features[k]?.corr;
+
 watch([tab, country, occupation, () => meta.value], () => {
   if (!meta.value) return;
   if (tab.value === 'emerging') loadEmerging();
+  if (tab.value === 'signals') loadSignals();
   if (tab.value === 'adoption') loadAdoption();
   if (tab.value === 'method') loadEvaluation();
 });
@@ -354,22 +399,21 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
                 </div>
                 <div class="scroll">
                   <table class="tbl click">
-                    <thead><tr><th>Skill</th><th>12-month share</th><th>Ads</th><th>Last 3 months</th><th>Forecast, {{ h }} mo</th><th>Likely range</th><th v-if="!flatByConstruction">Direction</th><th>Evidence</th></tr></thead>
+                    <thead><tr><th>Skill</th><th>12-month share</th><th>Ads</th><th>Last 3 months</th><th>Forecast, {{ h }} mo</th><th>Likely range</th><th>Direction</th><th>Evidence</th></tr></thead>
                     <tbody>
                       <tr v-for="r in shownRows" :key="r.skill_id" :class="{ on: r.skill_id === selected }" tabindex="0"
                           @click="selected = r.skill_id" @keydown.enter="selected = r.skill_id">
                         <td>{{ r.skill_name }} <span v-if="r.skill_status !== 'known'" class="tag">{{ TAXONOMY_TEXT[r.skill_status] ?? r.skill_status }}</span><span v-if="!r.in_onet" class="tag new" title="Not among O*NET 31.0 technology skills (tools and software). Professional skills are rated separately in O*NET and are not checked here.">not in O*NET tech</span></td>
                         <td>{{ pct(r.share_12m) }}</td><td>{{ r.count_12m }}</td><td>{{ pct(r.last_share_3m) }}</td>
                         <td><b>{{ pct(r.forecast) }}</b></td><td>{{ pct(r.low) }}–{{ pct(r.high) }}</td>
-                        <td v-if="!flatByConstruction"><Icon :name="dirIcon(r.direction)" :size="14" /> {{ r.direction }}</td><td>{{ r.evidence }}</td>
+                        <td><Icon :name="dirIcon(r.direction)" :size="14" /> {{ r.direction }}</td><td>{{ r.evidence }}</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
                 <p class="muted small">
                   Forecasts are for the 3 months ending {{ month(latestRows[0]?.target_month) }}.
-                  <template v-if="flatByConstruction">The method that tested best here carries the last 12 months forward, so it forecasts no change in direction; use “Growing” and “Declining” above for movement, and the range for how far a share may move.</template>
-                  <template v-else>Direction compares the forecast with the last 12 months (needs a change of 1 pp and 15%).</template>
+                  Direction compares the forecast with the last 3 months’ share: rising or falling when it differs by at least {{ meta?.rules.direction_label_pp ?? 1 }} pp, otherwise flat (about stable).
                 </p>
               </div>
             </template>
@@ -430,6 +474,92 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
                 </table>
               </div>
               <p class="muted small">Misses are mostly lower-case phrases (“vector databases”, “prompt engineering”): the detector reads capitalised or tech-shaped terms only.</p>
+            </div>
+          </template>
+        </section>
+
+        <!-- ================= EMERGING SIGNALS ================= -->
+        <section v-else-if="tab === 'signals'" class="stack-col">
+          <div v-if="!signals" class="skel card mid-skel" />
+          <div v-else-if="signals.status !== 'ok'" class="card pad">
+            <h2>Emerging signals are not available</h2>
+            <p class="small">The last pipeline run did not produce them<template v-if="signals.error"> ({{ signals.error }})</template>. The job-ad forecast on “Skill demand” is unaffected.</p>
+          </div>
+          <template v-else>
+            <div class="card pad">
+              <h2>Is the job-ad forecast missing an emerging skill?</h2>
+              <p class="small">Big rises in hiring demand can start with little warning in a skill’s own job-ad history. This view puts evidence from outside that history next to the forecast:
+                <b>package adoption</b> (PyPI and npm downloads relative to a skill-neutral basket of packages) and <b>related-skill demand</b> (job-ad share of skills in the same technology family, across every IT cell).
+                Downloads include automated installs: they show ecosystem adoption, <b>not hiring</b>.</p>
+              <div class="verdicts">
+                <p class="small"><span class="tag" :class="signals.adjusted_forecast.validated ? 'ok' : 'new'">{{ signals.adjusted_forecast.validated ? 'validated' : 'not shown' }}</span>
+                  <b>Signal-adjusted forecast.</b>
+                  <template v-if="signals.adjusted_forecast.validated"> Passed its backtest; shown next to the job-ad forecast.</template>
+                  <template v-else> A model adding this evidence to the job-ad forecast did not beat the job-ad forecast on held-back months
+                    (test error {{ signals.test_summary.hybrid?.mae_pp.toFixed(2) }} pp vs {{ signals.test_summary.baseline?.mae_pp.toFixed(2) }} pp, {{ signals.test_summary.baseline?.n.toLocaleString('en') }} forecasts), so no adjusted number is shown.</template></p>
+                <p class="small"><span class="tag" :class="signals.radar.validated ? 'ok' : 'new'">{{ signals.radar.validated ? 'validated' : 'not shown' }}</span>
+                  <b>Rise alerts.</b>
+                  <template v-if="signals.radar.validated"> Probability of a rise of ≥ {{ signals.radar.rise_pp }} pp in {{ signals.horizon }} months, tested on held-back months.</template>
+                  <template v-else> On held-back months, alerts using this evidence caught {{ signals.radar_test.hybrid.true_alerts }} of {{ signals.radar_test.hybrid.positives }} real rises of ≥ {{ signals.radar.rise_pp }} pp with {{ signals.radar_test.hybrid.alerts - signals.radar_test.hybrid.true_alerts }} false alarms;
+                    job-ad history alone caught {{ signals.radar_test.own.true_alerts }} with {{ signals.radar_test.own.alerts - signals.radar_test.own.true_alerts }} false alarms. Not reliably better, so no alert or probability is shown.</template></p>
+                <p class="small muted">Historically (pooled across countries and occupations, {{ signals.relationship.period }}), 6-month package adoption growth correlated {{ relCorr('adoption_g6')?.toFixed(2) ?? '–' }} with the next {{ signals.horizon }} months’ change in a skill’s job-ad share, and related-skill demand {{ relCorr('related_g6')?.toFixed(2) ?? '–' }}: a weak link, too weak to move a forecast.</p>
+              </div>
+              <div class="chips">
+                <button v-for="f in ([['accelerating', 'Rising evidence'], ['adoption', 'With package data'], ['all', 'All']] as const)" :key="f[0]"
+                        type="button" :class="{ on: sigFilter === f[0] }" @click="sigFilter = f[0]">{{ f[1] }}</button>
+              </div>
+              <div class="scroll">
+                <table class="tbl click">
+                  <thead><tr><th>Skill</th><th>Last 3 months</th><th>Job-ad forecast, {{ signals.horizon }} mo</th><th>Change</th><th>Adoption, 6 mo</th><th>Related demand, 6 mo</th><th>Evidence</th><th>Job-ad data</th></tr></thead>
+                  <tbody>
+                    <template v-for="r in sigRows" :key="r.skill_id">
+                      <tr tabindex="0" :class="{ on: sigOpen === r.skill_id }" @click="sigOpen = sigOpen === r.skill_id ? null : r.skill_id" @keydown.enter="sigOpen = sigOpen === r.skill_id ? null : r.skill_id">
+                        <td>{{ r.skill_name }}</td><td>{{ pct(r.baseline_share) }}</td><td><b>{{ pct(r.forecast) }}</b></td>
+                        <td><Icon :name="dirIcon(r.direction)" :size="13" /> {{ pp(r.change_pp) }}</td>
+                        <td>{{ growth(r.adoption_g6) }}</td><td>{{ growth(r.related_g6) }}</td>
+                        <td>{{ SIGNAL_TEXT[r.signal] }}</td>
+                        <td :class="r.evidence_cell === 'large' ? 'c-high' : r.evidence_cell === 'medium' ? 'c-medium' : 'c-low'">{{ r.evidence_cell }} ({{ r.last_ads_3m }} ads)</td>
+                      </tr>
+                      <tr v-if="sigOpen === r.skill_id" class="more"><td colspan="8">
+                        <div class="sig-detail">
+                          <div>
+                            <h3>Evidence</h3>
+                            <p v-if="!r.indicators.length" class="small muted">No package is mapped to this skill (taxonomy/skill_signals.json); only related-skill demand applies.</p>
+                            <table v-else class="tbl">
+                              <thead><tr><th>Package</th><th>Latest month</th><th>Downloads, 3 mo</th><th>vs 6 mo before</th><th>vs 12 mo before</th><th>History</th><th>Quality</th></tr></thead>
+                              <tbody>
+                                <tr v-for="i in r.indicators" :key="i.source + i.package">
+                                  <td><a :href="i.url" target="_blank" rel="noopener">{{ i.package }}</a> <span class="tag">{{ i.source }}</span></td>
+                                  <td>{{ month(i.latest_month) }}<span v-if="!i.fresh" class="tag new">stale</span></td>
+                                  <td>{{ i.downloads_3m != null ? Math.round(i.downloads_3m).toLocaleString('en') : 'too few' }}</td>
+                                  <td>{{ growth(i.growth_vs_6m_before) }}</td><td>{{ growth(i.growth_vs_12m_before) }}</td>
+                                  <td>{{ i.months_of_history }} mo</td>
+                                  <td :class="i.quality === 'strong' ? 'c-high' : i.quality === 'moderate' ? 'c-medium' : 'c-low'">{{ i.quality }}</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                            <p class="small muted"><template v-if="r.indicators.length">{{ r.indicators[0].window }}. Growth is relative to the reference basket, so ecosystem-wide growth does not count. </template>Related skills: {{ r.related_skills.join(', ') || 'its curated category' }} (their demand {{ growth(r.related_g6) }} over 6 months, {{ growth(r.related_g12) }} over 12).</p>
+                          </div>
+                          <div v-if="scenarioBasis(r)" class="scenario">
+                            <h3>Scenario <span class="tag new">not a forecast</span></h3>
+                            <p class="small">If <b>{{ passThrough }}%</b> of the recent growth in {{ scenarioBasis(r)!.label }} ({{ growth(scenarioBasis(r)!.g) }} over 6 months) carried into job-ad demand over the next {{ signals.horizon }} months:</p>
+                            <input v-model.number="passThrough" type="range" min="0" max="100" step="10" aria-label="Share of the evidence's growth that reaches hiring demand" />
+                            <div class="bars">
+                              <div v-for="b in scenarioBars(r, scenarioBasis(r)!.g)" :key="b.label" class="bar-row">
+                                <span>{{ b.label }}</span><i :class="b.cls" :style="{ width: b.w + '%' }" /><b>{{ pct(b.v) }}</b>
+                              </div>
+                            </div>
+                            <p class="small muted">The pass-through is your assumption, not an estimate: historically this kind of evidence explained little of the next {{ signals.horizon }} months’ change. The job-ad forecast’s likely range is {{ pct(r.low) }}–{{ pct(r.high) }}.</p>
+                          </div>
+                        </div>
+                      </td></tr>
+                    </template>
+                    <tr v-if="!sigRows.length"><td colspan="8" class="muted">No skill in this selection.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="muted small">Sources: <a :href="signals.sources.pypi.url" target="_blank" rel="noopener">{{ signals.sources.pypi.name }}</a>; <a :href="signals.sources.npm.url" target="_blank" rel="noopener">{{ signals.sources.npm.name }}</a>.
+                Package data {{ month(signals.coverage.package_months.npm?.[0]) }} to {{ month(signals.coverage.package_months.npm?.[1] ?? signals.coverage.package_months.pypi?.[1]) }}<template v-if="signals.package_health?.status && signals.package_health.status !== 'ok'">; last refresh: {{ signals.package_health.status }}, showing cached observations</template>.</p>
             </div>
           </template>
         </section>
@@ -557,7 +687,7 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
                 </table>
                 <p class="muted small">{{ v.scores.test[v.served]?.n.toLocaleString('en') }} test forecasts (series × origin). Errors are the average absolute miss in share points.</p>
               </div>
-              <p class="muted small">* Among forecasts where the share really moved ≥ {{ evaluation.rules.material_change_pp }} pp from the 12-month level: did the method call the direction? Methods that never predict change score 0% by construction.</p>
+              <p class="muted small">* Among forecasts where the share really moved ≥ {{ evaluation.rules.material_change_pp }} pp from its last-3-months share, by more than sampling noise: did the forecast land on the same side of that share? “No change” scores 0% by construction.</p>
             </template>
           </div>
           <div class="card pad">
@@ -634,6 +764,16 @@ select, input[type='search'] { font: inherit; font-size: 13.5px; font-weight: 70
 .tbl tr.shown td { font-weight: 800; }
 .tbl tr.more td { background: #faf9f6; white-space: normal; text-align: left; }
 .c-high { color: #1e5e30; font-weight: 800; } .c-medium { color: var(--amber-ink); font-weight: 800; } .c-low { color: var(--muted); }
+.verdicts { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
+.verdicts .tag { margin: 0 6px 0 0; }
+.sig-detail { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; padding: 6px 0; }
+.sig-detail h3 { font-size: 13px; margin: 0 0 4px; }
+.scenario input { width: 100%; }
+.bar-row { display: grid; grid-template-columns: 150px 1fr 52px; gap: 8px; align-items: center; font-size: 12px; }
+.bar-row i { display: block; height: 10px; border-radius: 3px; background: var(--line-strong); }
+.bar-row i.fc { background: var(--yellow); }
+.bar-row i.sc { background: repeating-linear-gradient(45deg, var(--amber-ink) 0 4px, transparent 4px 7px); border: 1px solid var(--amber-ink); }
+@media (max-width: 760px) { .sig-detail { grid-template-columns: 1fr; } }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
 .chips button { font: inherit; font-size: 12px; font-weight: 800; padding: 5px 11px; border-radius: 999px; border: 2px solid var(--line-strong); background: #fff; cursor: pointer; }
 .chips button.on { background: var(--cream); border-color: var(--yellow); }

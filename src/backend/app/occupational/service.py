@@ -115,7 +115,8 @@ def skills(country: str, occupation: str, h: int, origin: str | None = None) -> 
               (a["origin_month"] == origin) & (a["method"] == served)]
         rows = [{"skill_id": r["skill_id"], "skill_name": reg.get(r["skill_id"], {}).get("name", r["skill_id"]),
                  "forecast": r["forecast"], "actual": r["actual"], "actual_ads": r["actual_n"],
-                 "share_12m": r["p12_origin"], "target_month": r["target_month"], "model": served}
+                 "share_12m": r["p12_origin"], "share_3m": r.get("p3_origin"), "target_month": r["target_month"],
+                 "model": served}
                 for r in records(a)]
         return _clean({"mode": "asof", "origin": origin, "rows": sorted(rows, key=lambda r: -(r["forecast"] or 0)),
                        "cell": _cell(country, occupation, h)})
@@ -202,6 +203,36 @@ def adoption(occupation: str) -> dict:
         "employer_signal": records(sig[(sig["occupation"] == occupation) & (sig["month"] >= "2018-01")]) if len(sig) else [],
         "task_exposure": records(exp[exp["occupation"] == occupation]) if len(exp) else [],
         **doc("adoption/sources.json")})
+
+
+def signals(country: str, occupation: str) -> dict:
+    """The skill-emergence engine's output for one cell. Evidence and scenarios are never presented as forecasts:
+    `adjusted_forecast` / `rise_probability` are filled only when that model passed its backtest."""
+    ev = doc("latest/evaluation.json")
+    sev = ev.get("signals") or {"status": "not_built"}
+    if sev.get("status") != "ok" or not store.exists("latest/signals.csv.gz"):
+        return _clean({"status": sev.get("status", "not_built"), "error": sev.get("error"), "rows": []})
+    reg = _registry()
+    rows = table("latest/signals.csv.gz")
+    rows = rows[(rows["country"] == country) & (rows["occupation"] == occupation)]
+    ind = table("latest/signal_indicators.csv") if store.exists("latest/signal_indicators.csv") else pd.DataFrame()
+    by_skill = {s: records(g.drop(columns=["skill_id"])) for s, g in ind.groupby("skill_id")} if len(ind) else {}
+    cfg = store.read_json("taxonomy/skill_signals.json")
+    out = []
+    for r in records(rows):
+        out.append({**r, "skill_name": reg.get(r["skill_id"], {}).get("name", r["skill_id"]),
+                    "indicators": by_skill.get(r["skill_id"], []),
+                    "related_skills": [reg.get(s, {}).get("name", s) for s in cfg["skills"].get(r["skill_id"], {}).get("related", [])]})
+    out.sort(key=lambda r: (r["signal"] != "accelerating", -(r["adoption_g6"] or -9)))
+    test = sev["roles"]["test"]["scores"]
+    summary = {m: {k: test[m].get(k) for k in ("n", "mae_pp", "bias_pp", "direction_acc", "selection_score")}
+               for m in ("baseline", "control", "hybrid") if m in test}
+    return _clean({"status": "ok", "horizon": sev["horizon"], "baseline_method": sev["baseline_method"],
+                   "adjusted_forecast": sev["adjusted_forecast"], "radar": {k: sev["radar"][k] for k in
+                   ("validated", "hybrid_beats_own_ap_in_bootstrap", "rise_pp", "min_ads_3m")},
+                   "radar_test": sev["radar"]["roles"]["test"], "test_summary": summary,
+                   "relationship": sev["relationship"], "coverage": sev["coverage"],
+                   "package_health": sev.get("package_health"), "sources": cfg["sources"], "rows": out})
 
 
 def evaluation() -> dict:

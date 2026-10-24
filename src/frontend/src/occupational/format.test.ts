@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { addMonths, linear, month, monthsBetween, pct, pp, ticks, trendOf } from './format';
+import { addMonths, growth, linear, month, monthsBetween, pct, pp, scenarioShare, ticks, trendOf } from './format';
 
 describe('occupational format helpers', () => {
+  it('formats log growth as a percentage change and keeps scenarios bounded', () => {
+    expect(growth(Math.log(1.5))).toBe('+50.0%');
+    expect(growth(Math.log(0.8))).toBe('-20.0%');
+    expect(growth(null)).toBe('–');
+    expect(scenarioShare(0.2, 1, 0)).toBeCloseTo(0.2);  // no pass-through: the forecast itself
+    expect(scenarioShare(0.2, 1, 1)).toBeGreaterThan(0.2);
+    expect(scenarioShare(0.99, 50, 1)).toBeLessThanOrEqual(1);
+    expect(scenarioShare(0.01, -50, 1)).toBeGreaterThanOrEqual(0);
+  });
+
   it('formats shares and point changes, with a dash for missing values', () => {
     expect(pct(0.1234)).toBe('12.3%');
     expect(pct(null)).toBe('–');

@@ -68,3 +68,9 @@ def test_api_serves_the_outputs(built):
     a = c.get("/occupational/adoption", params={"occupation": "software_engineer"}).json()
     assert "not_found" in a and a["worker_usage"] == []  # no survey files in the test dir: shown as missing, not invented
     assert c.get("/occupational/evaluation").status_code == 200
+    # emerging signals: no package data in the test dir, so adoption is missing (not zero) and nothing is validated
+    g = c.get("/occupational/signals", params={"country": "US", "occupation": "software_engineer"}).json()
+    assert g["status"] == "ok" and g["rows"]
+    assert all(r["adoption_g6"] is None and r["adjusted_forecast"] is None for r in g["rows"])
+    base = {r["skill_id"]: r["forecast"] for r in s["rows"]}
+    assert all(abs(r["forecast"] - base[r["skill_id"]]) < 1e-12 for r in g["rows"])  # the baseline, unchanged
