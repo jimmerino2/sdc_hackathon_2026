@@ -70,6 +70,8 @@ aside { width: 240px; flex: none; border-right: 2px solid var(--line); padding: 
 aside { display: flex; }
 .jb-nav { display: flex; flex-direction: column; flex: 1; }
 .jb-nav__insights { margin-top: auto; padding-top: 16px; border-top: 2px solid var(--line); }
+/* The pill is positioned from the padding edge, so it skips the divider's padding. */
+.jb-nav__insights .jb-nav__pill { top: 16px; }
 .jb-nav__logout { margin-top: 8px; width: 100%; }
 @media (max-width: 860px) {
   .jb-nav__insights { margin-top: 0; padding-top: 0; border-top: 0; padding-left: 12px; border-left: 2px solid var(--line); }
