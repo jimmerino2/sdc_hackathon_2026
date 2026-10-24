@@ -44,6 +44,7 @@ const haveMore = computed(() => Math.max(0, haveAll.value.length - MAX_CHIPS));
 const nodes = computed(() => allNodes(roadmap.value));
 const resolved = computed(() => resolveNodes(nodes.value, (n) => skillLabel(n.skill_name)));
 const counts = computed(() => progress(roadmap.value));
+const isRoleReady = computed(() => counts.value.total > 0 && counts.value.done >= counts.value.total);
 const sections = computed(() => (roadmap.value?.sections ?? []).map((s) => ({ section: s.section, title: s.title, units: resolveUnits(roadmap.value!, s.section, (n) => skillLabel(n.skill_name)), count: s.units.reduce((t, u) => t + u.nodes.length, 0) })));
 
 const selectedId = ref<string | null>(null);
@@ -299,7 +300,14 @@ onMounted(async () => {
           />
         </template>
 
-        <div class="jb-end"><span class="jb-end__disc"><Icon name="trophy" :size="28" /></span>Role-ready!</div>
+        <RouterLink v-if="isRoleReady" :to="go('suggested')" class="jb-end jb-end--reached" aria-label="Role-ready! Explore your next pathway">
+          <span class="jb-end__disc"><Icon name="trophy" :size="28" /></span>
+          <strong>Role-ready!</strong>
+          <span class="jb-end__link">Choose your next role pathway →</span>
+        </RouterLink>
+        <div v-else class="jb-end jb-end--pending">
+          <span class="jb-end__disc"><Icon name="trophy" :size="28" /></span>Role-ready!
+        </div>
       </div>
 
       <aside class="learn__side">
@@ -314,7 +322,12 @@ onMounted(async () => {
           />
         </div>
         <ProgressCard :done="counts.done" :total="counts.total" :role="roadmap.title" />
-        <BeeGuide :message="message" :mood="mood" />
+        <BeeGuide
+          :message="message"
+          :mood="mood"
+          :to="isRoleReady ? go('suggested') : undefined"
+          :action-text="isRoleReady ? 'Pick your next pathway →' : undefined"
+        />
       </aside>
     </div>
   </div>
