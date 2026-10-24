@@ -162,6 +162,7 @@ function vsNaive(m: MethodScore, a: UnitAccuracy): string {
 }
 const pct0 = (v: number | undefined) => (v == null ? '–' : `${Math.round(v)}%`);
 const accOf = (a: UnitAccuracy, m: string) => pct0(a.methods.find((x) => x.method === m)?.accuracy_pct);
+const missOf = (c: Card, a: UnitAccuracy, m: string) => fmt(c, a.methods.find((x) => x.method === m)?.avg_miss ?? null);
 const pooledAcc = (a: UnitAccuracy, m: string) => pct0(a.all_units.find((x) => x.method === m)?.accuracy_pct);
 const best = (a: UnitAccuracy) => a.methods[0];
 
@@ -271,10 +272,11 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
                       <b>Tested on {{ a.n_test_points }} past forecast{{ a.n_test_points === 1 ? '' : 's' }}</b> for {{ unitName(c, r.unit) }}.
                       <template v-if="a.served_model !== 'naive'">
                         The method shown ({{ methodName(a.served_model) }}) was <b>{{ accOf(a, a.served_model) }} accurate</b>
-                        (off by {{ err(c, a.served_mae) }} on average); “no change” was <b>{{ accOf(a, 'naive') }}</b> ({{ err(c, a.naive_mae) }}).
+                        (off by {{ err(c, a.served_mae) }}{{ c.minutes ? `, about ${missOf(c, a, a.served_model)}` : '' }} on average);
+                        “no change” was <b>{{ accOf(a, 'naive') }}</b> ({{ err(c, a.naive_mae) }}{{ c.minutes ? `, about ${missOf(c, a, 'naive')}` : '' }}).
                       </template>
                       <template v-else>
-                        The forecast shown is “no change”: <b>{{ accOf(a, 'naive') }} accurate</b> (off by {{ err(c, a.naive_mae) }} on average).
+                        The forecast shown is “no change”: <b>{{ accOf(a, 'naive') }} accurate</b> (off by {{ err(c, a.naive_mae) }}{{ c.minutes ? `, about ${missOf(c, a, 'naive')}` : '' }} on average).
                         <template v-if="best(a).method !== 'naive'">The most accurate method here was {{ methodName(best(a).method) }}: {{ accOf(a, best(a).method) }} ({{ err(c, best(a).mae) }}).</template>
                       </template>
                     </p>
@@ -292,6 +294,7 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
                         <thead>
                           <tr>
                             <th scope="col">Method</th><th scope="col">Accuracy</th><th scope="col">Avg error</th>
+                            <th v-if="c.minutes" scope="col">Avg miss in time</th>
                             <th scope="col">vs “no change”</th>
                             <th v-if="c.pickerLabel" scope="col">Accuracy, all {{ c.plural }}</th>
                           </tr>
@@ -301,6 +304,7 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
                             <td>{{ methodName(m.method) }}<span v-if="m.method === a.served_model" class="tag">shown</span></td>
                             <td>{{ Math.round(m.accuracy_pct) }}%</td>
                             <td>{{ err(c, m.mae) }}</td>
+                            <td v-if="c.minutes">{{ fmt(c, m.avg_miss) }}</td>
                             <td>{{ vsNaive(m, a) }}</td>
                             <td v-if="c.pickerLabel">{{ pooledAcc(a, m.method) }}</td>
                           </tr>
@@ -309,7 +313,7 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
                       <p class="table-note">
                         Tested on months the methods hadn’t seen. Accuracy = the smaller of forecast and actual divided by the larger,
                         averaged (forecast 30, actual 40 → 75%).
-                        Avg error is {{ c.minutes ? 'a factor (×1.30 = typically 30% too high or too low)' : 'in percentage points' }};
+                        Avg error is {{ c.minutes ? 'a factor (×1.30 = typically 30% too high or too low); avg miss in time is the plain difference in working time, which recent (longer) tasks dominate' : 'in percentage points' }};
                         a negative “vs no change” means a smaller error than “no change”.
                         <template v-if="c.pickerLabel">
                           A series is one line of numbers over time; here, {{ c.series?.(unitName(c, r.unit)) }}.

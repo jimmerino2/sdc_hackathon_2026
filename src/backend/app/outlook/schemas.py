@@ -65,6 +65,7 @@ class MethodScore(BaseModel):
     bias: float = Field(description="Average error (forecast minus outcome); negative = forecasts were too low")
     pct_off: float = Field(description="Average % the forecast was off from the actual value")
     accuracy_pct: float = Field(description="Average of smaller/larger of forecast and actual, in % (100 = exact)")
+    avg_miss: float = Field(description="Average |forecast - actual| in the value's own unit (pp, or minutes)")
     n: int = Field(description="Number of held-back test forecasts")
 
 

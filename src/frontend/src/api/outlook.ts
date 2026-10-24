@@ -77,6 +77,8 @@ export interface MethodScore {
   pct_off: number;
   /** Average of smaller / larger of forecast and actual, in % (100 = exact). */
   accuracy_pct: number;
+  /** Average |forecast - actual| in the value's own unit (pp, or minutes). */
+  avg_miss: number;
   n: number;
 }
 

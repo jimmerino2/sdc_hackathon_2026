@@ -93,12 +93,14 @@ def accuracy(target: str, unit: str) -> list[dict]:
             # Bounded 0-100 and symmetric, so it also works for time horizons, where a forecast can be several times
             # off. % off = |forecast - actual| / actual.
             lo, hi = d[["pred", "actual"]].min(axis=1), d[["pred", "actual"]].max(axis=1)
-            d = d.assign(acc=lo / hi * 100, pct_off=(d["pred"] - d["actual"]).abs() / d["actual"] * 100)
+            d = d.assign(acc=lo / hi * 100, pct_off=(d["pred"] - d["actual"]).abs() / d["actual"] * 100,
+                         miss=(d["pred"] - d["actual"]).abs())  # in the value's own unit (pp, or minutes)
             g = d.groupby("candidate")
             t = pd.DataFrame({"mae": g["error"].apply(lambda x: x.abs().mean()), "bias": g["error"].mean(),
-                              "pct_off": g["pct_off"].mean(), "acc": g["acc"].mean(), "n": g.size()})
+                              "pct_off": g["pct_off"].mean(), "acc": g["acc"].mean(), "miss": g["miss"].mean(),
+                              "n": g.size()})
             return [{"method": m, "mae": float(r.mae), "bias": float(r.bias), "pct_off": float(r.pct_off),
-                     "accuracy_pct": float(r.acc), "n": int(r.n)}
+                     "accuracy_pct": float(r.acc), "avg_miss": float(r.miss), "n": int(r.n)}
                     for m, r in t.sort_values("mae").iterrows()]
 
         rows = score(mine)
