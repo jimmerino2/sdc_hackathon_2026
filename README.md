@@ -6,24 +6,24 @@
 
 ## Team Information
 
-| Field                 | Details                                 |
-| --------------------- | --------------------------------------- |
-| **Team Name**         | Claypot Chicken Rice                    |
-| **Team Domain**       | Domain 1                                |
-| **SDG Track (1–17)**  | SDG 8 — Decent Work and Economic Growth |
-| **Team Leader**       | Lam Way Hou                             |
+| Field                 | Details                                      |
+| --------------------- | -------------------------------------------- |
+| **Team Name**         | Claypot Chicken Rice                         |
+| **Team Domain**       | Domain 1                                     |
+| **SDG Track (1–17)**  | SDG 8 — Decent Work and Economic Growth      |
+| **Team Leader**       | Lam Way Hou                                  |
 | **University**        | Sunway University, Universiti Putra Malaysia |
-| **Number of Members** | 5                                       |
+| **Number of Members** | 5                                            |
 
 ## Links
 
-| Resource          | Link                                             |
-| ----------------- | ------------------------------------------------ |
-| GitHub Repository | https://github.com/jimmerino2/sdc_hackathon_2026 |
-| Live Demo         | https://jobee-sdchack.replit.app/                |
+| Resource          | Link                                                          |
+| ----------------- | ------------------------------------------------------------- |
+| GitHub Repository | https://github.com/jimmerino2/sdc_hackathon_2026              |
+| Live Demo         | https://jobee-sdchack.replit.app/                             |
 | RunPod            | Serverless endpoint hosting OpenJev (resume skill extraction) |
-| Slide Deck        | https://canva.link/bzbux2f8xgpbkka               |
-| Demo Video        | TODO                                             |
+| Slide Deck        | https://canva.link/bzbux2f8xgpbkka                            |
+| Demo Video        | https://youtu.be/Hny9_auRplk                                  |
 
 ---
 
