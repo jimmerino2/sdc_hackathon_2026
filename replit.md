@@ -61,3 +61,12 @@ See `pipeline/README.md` for refresh commands and manual O*NET/Economic Index
 inputs. Raw data is gitignored and can be large; choose durable asset storage
 before downloading it. Forecasting routes are available under `/forecast`;
 the included outputs are in `src/backend/ml/output/`.
+
+## Production deployment (Replit Autoscale)
+
+Migrated from Vercel. The deployment builds the frontend with `VITE_API_URL=/api` and runs
+`app.serve:asgi`, which serves `src/frontend/dist` and mounts the API under `/api` on the
+same origin. A separate frontend origin is not needed, so CORS is not required for this
+deployment. `api/index.py` and `vercel.json` are kept only for the Vercel deployment.
+Set the secrets listed above in the Replit deployment before publishing. Node.js 22 is
+configured because locked frontend dependencies require Node.js 22.18 or newer.

@@ -278,7 +278,7 @@ h1 { font-size: 30px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .pill-chance { background: none; box-shadow: inset 0 0 0 1.5px var(--rc, var(--line-strong)); color: var(--rc, var(--muted)); }
 .metric-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .seg-label { font-size: 13px; font-weight: 900; color: var(--muted); }
-.metric-seg { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); padding: 4px; border-radius: 14px; background: var(--line); }
+.metric-seg { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); padding: 4px; border-radius: 14px; background: var(--line); }
 .metric-seg button { padding: 7px 4px; border-radius: 10px; font-weight: 900; font-size: 11px; color: var(--muted); text-align: center; line-height: 1.2; transition: background .15s, color .15s; }
 .metric-seg button:hover { color: var(--ink); }
 .metric-seg button.on { background: #fff; color: var(--ink); box-shadow: 0 2px 0 rgba(30, 30, 30, .1); }

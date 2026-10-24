@@ -11,13 +11,12 @@ export interface ScenarioMetric {
 }
 
 export const SCENARIO_METRICS: ScenarioMetric[] = [
-  { target: 'ai_mention_share', unit: 'US', label: 'Job ads' },
   { target: 'frontier_time_horizon', unit: 'v1.1', label: 'AI capability' },
   { target: 'btos_ai_use_rate', unit: 'US|new', label: 'Business adoption' },
   { target: 'worker_genai_use_rate', unit: '00', label: 'Worker adoption' },
 ];
 
-export const DEFAULT_SCENARIO_METRIC = 'ai_mention_share';
+export const DEFAULT_SCENARIO_METRIC = 'frontier_time_horizon';
 
 export type ScenarioProbabilities = Record<ScenarioKey, number>;
 

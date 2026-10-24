@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { fetchSuccessCurves, type SuccessCurves, type SuccessModel } from '../api/outlook';
+import ChartHover, { type HoverPoint } from './ChartHover.vue';
 
 /** Task lengths each AI model completes at several success rates, plus one model's full success curve. */
 const data = ref<SuccessCurves | null>(null);
@@ -53,13 +54,34 @@ const chart = computed(() => {
     { min: 480, t: '8 h' }, { min: 2400, t: '40 h' }, { min: 9600, t: '160 h' },
   ].filter((k) => Math.log2(k.min) >= lo && Math.log2(k.min) <= hi);
   const marks = [80, 50].map((p) => ({ p, min: m.horizons[String(p)] })).filter((k) => k.min != null) as { p: number; min: number }[];
-  return { sx, sy, line: pts.join(' '), ticks, marks, xLongest: sx(data.value.longest_task_minutes) };
+  // hover: the fitted chance at evenly spaced task lengths, plus each observed task-length group
+  const p = (min: number) => 1 / (1 + Math.exp(-(m.intercept! + m.slope! * Math.log2(min))));
+  const hover: HoverPoint[] = [];
+  for (let i = 0; i <= 40; i++) {
+    const min = 2 ** (lo + ((hi - lo) * i) / 40);
+    hover.push({
+      x: sx(min), title: `Task of ${dur(min)}`,
+      rows: [{ label: 'Chance of success (curve)', value: `${Math.round(p(min) * 100)}%`, color: '#2a78d6' },
+        ...(beyond(min) ? [{ label: 'Beyond the longest task tested', value: '', muted: true }] : [])],
+      dots: [{ y: sy(p(min)), color: '#2a78d6' }],
+    });
+  }
+  for (const o of m.observed) {
+    hover.push({
+      x: sx(o.median_human_minutes), title: `${o.bin} tasks (median ${dur(o.median_human_minutes)})`,
+      rows: [{ label: 'Observed success', value: `${Math.round(o.success_rate * 100)}%`, color: '#2a78d6' },
+        { label: 'Attempts', value: String(o.attempts), muted: true },
+        { label: 'Curve says', value: `${Math.round(p(o.median_human_minutes) * 100)}%`, muted: true }],
+      dots: [{ y: sy(o.success_rate), color: '#2a78d6' }],
+    });
+  }
+  return { sx, sy, line: pts.join(' '), ticks, marks, hover, xLongest: sx(data.value.longest_task_minutes) };
 });
 </script>
 
 <template>
-  <section class="sc" aria-labelledby="sc-h">
-    <h3 id="sc-h">At other success rates</h3>
+  <details class="sc">
+    <summary><span class="sum-h">What about tasks it finishes more (or less) reliably?</span></summary>
     <p class="lead">
       The headline number is the task length the AI finishes <b>half</b> the time. The same AI finishes shorter tasks more
       reliably and longer ones less often. Read across a row to see how long a task each model handles at each success rate.
@@ -107,6 +129,7 @@ const chart = computed(() => {
             <option v-for="m in fitted" :key="m.model" :value="m.model">{{ label(m) }}</option>
           </select>
         </label>
+        <ChartHover :w="W" :h="H" :top="T" :bottom="H - B" :points="chart.hover">
         <svg :viewBox="`0 0 ${W} ${H}`" role="img"
              :aria-label="`Chance that ${label(model)} completes a task, by task length; 50% at ${dur(model.horizons['50'])}, 80% at ${dur(model.horizons['80'])}`">
           <g v-for="p in [0, 0.25, 0.5, 0.75, 1]" :key="p">
@@ -129,15 +152,22 @@ const chart = computed(() => {
             <title>{{ o.bin }} tasks: succeeded {{ Math.round(o.success_rate * 100) }}% of {{ o.attempts }} attempts</title>
           </circle>
         </svg>
+        </ChartHover>
         <p class="key"><span><i class="ln" /> fitted curve</span><span><i class="dt" /> observed success rate per task-length group (bigger = more attempts)</span></p>
       </div>
     </template>
-  </section>
+  </details>
 </template>
 
 <style scoped>
-.sc { border-top: 2px solid var(--line); padding-top: 14px; margin-top: 6px; display: flex; flex-direction: column; gap: 8px; }
-h3 { font-size: 16px; }
+.sc { border-top: 2px solid var(--line); padding-top: 12px; }
+.sc > * + * { margin-top: 8px; }
+.sc > summary { cursor: pointer; list-style: none; }
+.sc > summary::-webkit-details-marker { display: none; }
+.sum-h { font-size: 15px; font-weight: 800; }
+.sum-h::before { content: '+ '; color: var(--orange); font-weight: 900; }
+.sc[open] .sum-h::before { content: '− '; }
+.more { display: block; }
 .lead { font-size: 13px; line-height: 1.5; }
 .muted { color: var(--muted); font-size: 13px; }
 .scroll { overflow-x: auto; }
@@ -157,7 +187,8 @@ thead th:first-child { text-align: left; }
 .chart { margin-top: 6px; }
 .pick { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; color: var(--muted); }
 .pick select { font: inherit; font-size: 13px; font-weight: 700; color: var(--ink); padding: 6px 8px; border: 2px solid var(--line-strong); border-radius: 10px; background: #fff; }
-svg { width: 100%; height: auto; margin-top: 6px; }
+svg { width: 100%; height: auto; }
+.chart :deep(.ch) { margin-top: 6px; }
 .grid { stroke: var(--line); stroke-width: 1; }
 .tick { font-size: 11px; fill: var(--muted); }
 .beyond { fill: #f0efec; opacity: .6; }

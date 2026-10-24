@@ -4,13 +4,11 @@ import Icon from './Icon.vue';
 import { backendScenario } from '../api/forecast';
 import { matchPercent, type JobMatch } from '../api/jobs';
 import type { RoadmapSummary } from '../api/roadmap';
-import { scenarios } from '../data/flows';
 import { roadmapStatus } from '../data/roadmapStatus';
 import { skillLabel } from '../data/skills';
 import { useFlow } from '../state';
-import { useScenarioProbabilities } from '../composables/useScenarioProbabilities';
 
-/** The "If [AI future]" toggle and the compact list of matched roles. Shared by the onboarding roles page and the logged-in one. */
+/** The compact list of matched roles. Shared by the onboarding roles page and the logged-in one. */
 const props = defineProps<{
   jobs: JobMatch[];
   /** The picked role, shown open. Leave it out when a row opens the role's page instead of picking it. */
@@ -24,9 +22,6 @@ const CHIPS = 3; // skills shown per side in the open row
 
 const { state } = useFlow();
 const scenarioName = computed(() => backendScenario[state.value.scenario]);
-const { metrics, metricTarget, pct, ranked, rankColor } = useScenarioProbabilities();
-/** The 3 AI-future scenarios, most likely first. */
-const rankedScenarios = computed(() => ranked.value.map((k) => scenarios.find((s) => s.key === k)!));
 /** The roles, best match first under the chosen AI future, so the order and the Best match tag follow the tab. */
 const ordered = computed(() => [...props.jobs].sort((a, b) => matchPercent(b, scenarioName.value) - matchPercent(a, scenarioName.value) || a.rank - b.rank));
 /** Rows pick a role when a selection is tracked; otherwise they act as links. */
@@ -56,49 +51,6 @@ const demandTooltip = 'Forecasted hiring demand: (+) means job openings are grow
 
 <template>
   <div>
-    <div v-if="pct('accelerates') != null" class="prob-graph">
-      <p class="prob-title">Chances of each AI future, most likely first</p>
-      <div class="prob-labels">
-        <span v-for="s in rankedScenarios" :key="s.key" :style="{ width: pct(s.key) + '%', color: rankColor(s.key) ?? 'var(--muted)' }">{{ pct(s.key) }}%</span>
-      </div>
-      <div class="prob-bar" role="img" aria-label="Chances of each AI future">
-        <span v-for="s in rankedScenarios" :key="s.key" class="prob-seg" :style="{ width: pct(s.key) + '%', background: rankColor(s.key) ?? '#c2bfba' }" />
-      </div>
-    </div>
-    <div class="metric-wrap">
-      <span class="seg-label">From</span>
-      <div class="metric-seg" role="radiogroup" aria-label="Metric the chances are based on">
-        <button
-          v-for="m in metrics"
-          :key="m.target"
-          type="button"
-          role="radio"
-          :aria-checked="metricTarget === m.target"
-          :class="{ on: metricTarget === m.target }"
-          @click="metricTarget = m.target"
-        >{{ m.label }}</button>
-      </div>
-    </div>
-    <p class="seg-caption">Nearest-term forecast.</p>
-    <div class="seg-wrap">
-      <span class="seg-label">If</span>
-      <div class="seg" role="radiogroup" aria-label="Possible AI future, most likely first">
-        <button
-          v-for="s in rankedScenarios"
-          :key="s.key"
-          type="button"
-          role="radio"
-          :aria-checked="state.scenario === s.key"
-          :class="{ on: state.scenario === s.key }"
-          :style="{ '--rc': rankColor(s.key) ?? 'var(--line-strong)' }"
-          @click="state.scenario = s.key"
-        >
-          {{ s.label }}
-          <small v-if="pct(s.key) != null" class="seg-pct">{{ pct(s.key) }}%</small>
-        </button>
-      </div>
-    </div>
-
     <div class="list" :role="picking ? 'radiogroup' : undefined" aria-label="Roles that fit you">
       <button
         v-for="(j, idx) in ordered"
@@ -150,26 +102,6 @@ const demandTooltip = 'Forecasted hiring demand: (+) means job openings are grow
 </template>
 
 <style scoped>
-.prob-graph { margin-bottom: 14px; }
-.prob-title { margin: 0 0 8px; font-size: 11px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-.prob-labels { display: flex; gap: 2px; margin-bottom: 4px; }
-.prob-labels span { display: block; min-width: 0; font-size: 11px; font-weight: 900; text-align: center; white-space: nowrap; overflow: visible; }
-.prob-bar { display: flex; gap: 2px; height: 12px; border-radius: 6px; overflow: hidden; }
-.prob-seg { display: block; height: 100%; min-width: 2px; }
-.seg-wrap, .metric-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-.seg-label { font-size: 13px; font-weight: 900; color: var(--muted); }
-.seg, .metric-seg { flex: 1; display: grid; padding: 4px; border-radius: 14px; background: var(--line); }
-.seg { grid-template-columns: repeat(3, 1fr); }
-.metric-seg { grid-template-columns: repeat(4, 1fr); }
-.seg button, .metric-seg button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 8px 6px 6px; border-radius: 10px; font-weight: 900; font-size: 13px; color: var(--muted); text-align: center; line-height: 1.2; border-bottom: 3px solid var(--rc, transparent); transition: background .15s, color .15s, border-color .15s; }
-.metric-seg button { font-size: 11px; padding: 7px 4px; border-bottom: none; }
-.seg button:hover, .metric-seg button:hover { color: var(--ink); }
-.seg button.on { background: #fff; color: var(--rc, var(--ink)); box-shadow: 0 2px 0 rgba(30, 30, 30, .1); }
-.metric-seg button.on { background: #fff; color: var(--ink); box-shadow: 0 2px 0 rgba(30, 30, 30, .1); }
-.seg-pct { font-size: 11px; font-weight: 800; color: var(--muted); }
-.seg button.on .seg-pct { color: var(--rc, var(--muted)); }
-.seg-caption { margin: 0 0 16px; font-size: 12px; font-weight: 600; color: var(--muted); }
-
 .list { display: flex; flex-direction: column; gap: 12px; }
 .role { align-items: flex-start; padding: 16px 18px; }
 /* Match ring: the filled arc is the match %. */
@@ -203,8 +135,5 @@ const demandTooltip = 'Forecasted hiring demand: (+) means job openings are grow
 .go { flex: none; margin-top: 2px; color: var(--muted); }
 .note { margin-top: 16px; font-size: 12px; font-weight: 600; color: var(--muted); line-height: 1.5; }
 @keyframes open { from { opacity: 0; transform: translateY(-4px); } }
-@media (max-width: 480px) {
-  .seg button { font-size: 11px; }
-  .seg-label { display: none; }
-}
+
 </style>

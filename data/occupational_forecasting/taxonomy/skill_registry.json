@@ -1,6 +1,6 @@
 {
-  "built_at": "2026-10-24T09:54:16.292492+00:00",
-  "data_version": "8fe5261edf69",
+  "built_at": "2026-10-24T20:07:38.695182+00:00",
+  "data_version": "d6707b39fa5a",
   "last_complete_month": "2026-09",
   "thresholds": {
     "strong": {
@@ -3031,8 +3031,8 @@
       "reason": "seed vocabulary (curated; O*NET coverage checked)"
     }
   ],
-  "version": 6,
-  "previous_version": 5,
+  "version": 8,
+  "previous_version": 7,
   "changes": [
     {
       "skill_id": "fsharp",

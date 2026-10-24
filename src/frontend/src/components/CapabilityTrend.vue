@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { EngineDetail, TrendClass } from '../api/outlook';
+import ChartHover, { type HoverPoint } from './ChartHover.vue';
 
 /** Secondary output: the model-estimated underlying growth trend under the observed frontier, and whether it is
  *  speeding up. Kept visually and verbally apart from the observed-frontier forecast. */
@@ -46,8 +47,31 @@ const c = computed(() => {
   }
   const xt: { x: number; t: string }[] = [];
   for (let y = 2023; y <= 2028; y++) if ((y - 1970) * 12 >= x0 && (y - 1970) * 12 <= x1) xt.push({ x: sx((y - 1970) * 12), t: String(y) });
+  // one hover stop per month: the measured frontier, the estimated trend and, after the split, its projection
+  const hover: HoverPoint[] = [];
+  const short = (p: string) => new Date(`${p}-01`).toLocaleDateString('en', { month: 'short', year: 'numeric' });
+  for (const p of hist) {
+    const f = front.find((q) => q.period === p.period);
+    hover.push({
+      x: sx(mid(p.period)), title: short(p.period),
+      rows: [
+        ...(f ? [{ label: 'Measured frontier', value: dur(f.minutes!), color: 'var(--ink)' }] : []),
+        { label: 'Estimated trend', value: dur(p.minutes!), color: '#1f6f66' },
+        { label: '80% band', value: `${dur(p.low!)}–${dur(p.high!)}`, muted: true },
+        ...(p.pace_per_year != null ? [{ label: 'Growth then', value: `${f1(p.pace_per_year)} doublings/yr`, muted: true }] : []),
+      ],
+      dots: [...(f ? [{ y: sy(f.minutes!) }] : []), { y: sy(p.minutes!), color: '#1f6f66' }],
+    });
+  }
+  for (const p of d.forecast) {
+    hover.push({
+      x: sx(mid(p.period)), title: `${short(p.period)} · projection`,
+      rows: [{ label: 'Projected trend', value: dur(p.minutes), color: '#1f6f66' }, { label: '80% band', value: `${dur(p.low)}–${dur(p.high)}`, muted: true }],
+      dots: [{ y: sy(p.minutes), color: '#1f6f66' }],
+    });
+  }
   return {
-    steps, smooth: line(hist.map((p) => ({ x: mid(p.period), y: p.minutes! }))),
+    hover, steps, smooth: line(hist.map((p) => ({ x: mid(p.period), y: p.minutes! }))),
     smoothBand: band(hist.map((p) => ({ x: mid(p.period), lo: p.low!, hi: p.high! }))),
     fcLine: line(fc), fcBand: band(fc), yt, xt, split: sx(mi(lastH.period) + 1),
   };
@@ -72,14 +96,17 @@ const shown = computed(() => {
 </script>
 
 <template>
-  <section v-if="t && c" class="tr" aria-labelledby="tr-h">
-    <p class="tag">Secondary · model-estimated, not a measurement</p>
-    <h3 id="tr-h">Is the underlying trend speeding up?</h3>
+  <details v-if="t && c" class="tr">
+    <summary>
+      <span class="sum-h">Is the underlying trend speeding up?</span>
+      <span class="tag">Secondary · model-estimated, not a measurement</span>
+    </summary>
     <p class="lead">
       The measured frontier (black steps) jumps whenever a stronger model is measured. A smoothing model estimates the
       steadier trend underneath it (teal) and how fast that trend is growing. This is an estimate, so it has its own
       uncertainty, and it can differ from what the frontier itself does over the next few months.
     </p>
+    <ChartHover :w="W" :h="H" :top="T" :bottom="H - B" :points="c.hover">
     <svg :viewBox="`0 0 ${W} ${H}`" role="img"
          :aria-label="`Estimated underlying trend: growing ${f1(t.pace_now)} doublings a year now, ${f1(t.past_pace)} on average over the past year.`">
       <g v-for="y in c.yt" :key="y.t">
@@ -95,6 +122,7 @@ const shown = computed(() => {
       <path :d="c.smooth" class="smooth" />
       <path :d="c.fcLine" class="smooth dashed" />
     </svg>
+    </ChartHover>
     <p class="key">
       <span><i class="k-front" /> measured frontier</span>
       <span><i class="k-smooth" /> estimated trend (80% band)</span>
@@ -149,11 +177,17 @@ const shown = computed(() => {
         </tbody>
       </table>
     </details>
-  </section>
+  </details>
 </template>
 
 <style scoped>
-.tr { border-top: 2px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.tr { border-top: 2px solid var(--line); padding-top: 12px; }
+.tr > * + * { margin-top: 8px; }
+.tr > summary { cursor: pointer; display: flex; flex-direction: column; gap: 2px; list-style: none; }
+.tr > summary::-webkit-details-marker { display: none; }
+.sum-h { font-size: 15px; font-weight: 800; }
+.sum-h::before { content: '+ '; color: var(--orange); font-weight: 900; }
+.tr[open] .sum-h::before { content: '− '; }
 .tag { font-size: 10.5px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: #1f6f66; }
 h3 { font-size: 15px; }
 .lead, .stat { font-size: 12.5px; line-height: 1.5; }

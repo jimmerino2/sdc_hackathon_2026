@@ -22,8 +22,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from . import adoption, backtest as B, demand, emerging, models as M, normalize, store, taxonomy as T
-from .sources import adzuna, hn, onet, so_survey
+from . import adoption, backtest as B, demand, emerging, models as M, normalize, signals as SG, store, taxonomy as T
+from .sources import adzuna, hn, onet, packages, so_survey
 
 HERE = Path(__file__).parent
 
@@ -42,6 +42,10 @@ def _log(msg: str, t0: float) -> None:
 def ingest(pull: bool, take_adzuna: bool) -> dict:
     health = {"onet": onet.fetch(pull), "hn_whoishiring": hn.fetch(pull), "so_dev_survey": so_survey.fetch(pull)}
     health["adzuna"] = adzuna.collect() if take_adzuna else {"source": "adzuna", "status": "not_requested_this_run"}
+    try:
+        health["packages"] = packages.fetch(pull)
+    except Exception as e:  # adoption indicators are optional: the baseline never depends on them
+        health["packages"] = {"source": "packages", "status": "failed", "error": f"{type(e).__name__}: {e}"[:200]}
     T.reset_caches()
     return health
 
@@ -109,14 +113,18 @@ def build(health: dict, now: datetime, t0: float) -> dict:
          f"withheld skills flagged", t0)
 
     # skill-demand models
-    panel = B.Panel(totals, counts, reg)
+    scope = [o.id for o in T.occupations() if o.sector_id == B.SCOPE_SECTOR]
+    panel = B.Panel(totals, counts, reg, scope)
     _log(f"panel: {len(panel.series)} series, {len(panel.cells)} cells, months {panel.months[0]}..{panel.months[-1]}", t0)
-    bt = B.run_backtest(panel)
+    tuned = B.tune(panel)
+    _log("tuned: " + json.dumps({h: {m: B.params_for(tuned, int(h), m) for m in M.TUNED} for h in tuned}), t0)
+    bt = B.run_backtest(panel, tuned)
     _log(f"backtest: {len(bt)} scored predictions", t0)
-    ev = B.evaluate(bt)
-    fc, cards = B.forecast(panel, bt, ev)
+    ev = B.evaluate(bt, tuned)
+    fc, cards = B.forecast(panel, bt, ev, tuned)
     _log(f"forecast: {len(fc)} rows", t0)
     acc = B.cell_accuracy(bt, panel, ev)
+    sig_eval, sig_rows, sig_ind = _signals(panel, bt, ev, fc, health, t0)
     asof = B.asof_rows(bt, panel, ev)
     names = info["name"].to_dict()
     fc["skill_name"] = fc["skill_id"].map(names).fillna(fc["skill_id"])
@@ -138,17 +146,29 @@ def build(health: dict, now: datetime, t0: float) -> dict:
         "taxonomy_version": T.taxonomy_version(), "registry_version": reg["version"],
         "target": "Share of an occupation's eligible HN job ads in a country naming the skill, pooled over the 3 "
                   "months ending at the target month", "horizons_months": list(B.HORIZONS), "split": split,
+        "scope": {"sector": B.SCOPE_SECTOR, "occupations": scope},
         "rules": {"min_cell_ads_12m": B.MIN_CELL_N12, "min_target_ads": B.MIN_EVAL_N, "ridge_refit_months": B.REFIT,
-                  "validated_ratio": B.VALIDATED_RATIO, "material_change_pp": B.MATERIAL_PP},
+                  "validated_ratio": B.VALIDATED_RATIO, "material_change_pp": B.MATERIAL_PP,
+                  "move_thresholds_pp": list(B.MOVE_PP), "significance_z": B.Z_SIG, "direction_label_pp": M.LABEL_PP,
+                  "direction_baseline": "last 3 months' pooled share at the origin",
+                  "selection": {"weights": B.WEIGHTS, "alternative_weights": B.ALT_WEIGHTS,
+                                "mae_tolerance": B.MAE_TOLERANCE, "confidence": B.CONFIDENCE,
+                                "bootstrap": B.BOOTSTRAP, "simplicity": list(B.SIMPLICITY)},
+                  "tuning": {"targets": f"{panel.months[-24 - B.TUNE_MONTHS]}..{panel.months[-25]}",
+                             "grid": {m: {k: list(v) for k, v in g.items()} for m, g in B.GRID.items()}}},
         "methods": {"persistence": "last 3 months' share", "mean12": "last 12 months' share",
                     "shrink": "3-month share shrunk to 12-month share by evidence", "trend": "damped logit trend",
                     "ridge": "pooled ridge regression on lagged shares, volume and cross-cell skill change",
-                    "blend": "average of shrink and ridge"},
+                    "blend": "average of shrink and ridge",
+                    "ewma": "exponentially weighted recent share, partially pooled across countries",
+                    "dtrend": "shrunk, damped logit-share trend from a weighted line over recent months",
+                    "adaptive": "recent level plus a trend scaled by its measured persistence per evidence band"},
+        "tuned": tuned,
         "post_hoc_methods": list(M.POST_HOC),
         "last_complete_month": str(last), "n_series": int(len(panel.series)), "ridge_cards": cards,
         "discovery_backcheck": {"as_of_months": [str(m) for m in as_of], "withheld": list(emerging.WITHHELD),
                                 "reference": "12-month share of US software-engineer ads first >= 2%",
-                                "skills": discovery}, **ev}
+                                "skills": discovery}, "signals": sig_eval, **ev}
     run_dir = f"runs/{run_id}"
     # validation + test rows only (train scores are in evaluation.json); gitignored, regenerable
     held = bt[bt["role"] != "train"]
@@ -158,6 +178,8 @@ def build(health: dict, now: datetime, t0: float) -> dict:
     store.write_table(f"{run_dir}/forecast.csv.gz", fc)
     store.write_table(f"{run_dir}/cell_accuracy.csv", acc)
     store.write_table(f"{run_dir}/asof.csv.gz", asof)
+    store.write_table(f"{run_dir}/signals.csv.gz", sig_rows, allow_empty=True)
+    store.write_table(f"{run_dir}/signal_indicators.csv", sig_ind, allow_empty=True)
     if fc.empty or not all(str(h) in ev["horizons"] for h in B.HORIZONS):
         raise RuntimeError("run produced no forecast; latest/ left unchanged")
     _promote(run_dir)
@@ -173,6 +195,27 @@ def build(health: dict, now: datetime, t0: float) -> dict:
         "status": {h: v["status"] for h, v in ev["horizons"].items()}}
     store.write_json("manifest.json", manifest)
     return manifest
+
+
+def _signals(panel, bt, ev, fc, health, t0) -> tuple[dict, pd.DataFrame, pd.DataFrame]:
+    """The skill-emergence engine (signals.py). Never fails the run: on any error the baseline is still
+    published and the error is recorded in evaluation.json."""
+    try:
+        dl = packages.monthly()
+        if len(dl):
+            store.write_table(packages.TRACKED, packages.load())
+        cfg = packages.config()
+        sig_eval, sg, state = SG.evaluate(panel, bt, ev, dl, cfg)
+        rows = SG.latest(panel, sg, fc, sig_eval, state, dl)
+        ind = SG.indicators(sg, dl, cfg, str(panel.months[-1]))
+        sig_eval.update(status="ok", config_version=cfg["version"], package_health=health.get("packages"))
+        _log(f"signals: adjusted validated={sig_eval['adjusted_forecast']['validated']}, "
+             f"radar validated={sig_eval['radar']['validated']}, {len(ind)} indicators", t0)
+        return sig_eval, rows, ind
+    except Exception as e:
+        _log(f"signals failed: {type(e).__name__}: {e}", t0)
+        return ({"status": "failed", "error": f"{type(e).__name__}: {e}"[:300], "trace": traceback.format_exc()[-1500:]},
+                pd.DataFrame(), pd.DataFrame())
 
 
 def _backcheck_summary(bc: pd.DataFrame, totals: pd.DataFrame, counts: pd.DataFrame, ref_share: float = 0.02) -> list:

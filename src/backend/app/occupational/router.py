@@ -49,6 +49,13 @@ def get_adoption(occupation: str = Query(...)):
     return _run(service.adoption, occupation)
 
 
+@router.get("/signals")
+def get_signals(country: str = Query(...), occupation: str = Query(...)):
+    """Emerging-skill evidence next to the job-ad baseline: adoption indicators, related-skill demand, whether an
+    adjusted forecast or rise alert passed validation, and the basis for a labelled scenario."""
+    return _run(service.signals, country, occupation)
+
+
 @router.get("/evaluation")
 def get_evaluation():
     """Full evaluation of the served run: split, every method's scores, interval coverage, cell accuracy."""

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { EngineUnit } from '../api/outlook';
+import ChartHover, { type HoverPoint } from './ChartHover.vue';
 
 /** Time-horizon chart: measured models, bridged estimates, the measured frontier and the forecast fan (log scale). */
 const props = defineProps<{ unit: EngineUnit; saturationHours: number; lagMonths: number }>();
@@ -68,6 +69,40 @@ const c = computed(() => {
   };
 });
 
+/** One hover stop per month: the best measured so far, models released that month, or the forecast. */
+const hover = computed<HoverPoint[]>(() => {
+  const u = props.unit, { sx, sy, obs, bri } = c.value;
+  const x0 = mi(`${FROM}-01`), last = monthEnd(u.last_period);
+  const out: HoverPoint[] = [];
+  for (const f of u.frontier) {
+    const a = mi(`${f.period}-01`);
+    if (a < x0) continue;
+    const released = [...obs, ...bri].filter((p) => p.release_date.startsWith(f.period));
+    const rows = [];
+    if (f.minutes != null) rows.push({ label: `Best so far${f.model ? ` (${f.model})` : ''}`, value: dur(f.minutes), color: 'var(--ink)' });
+    for (const p of released) rows.push({ label: `${p.model}${p.layer === 'bridged' ? ' (bridged)' : ''}`, value: dur(p.minutes), muted: true });
+    if (a + 1 > last) rows.push({ label: 'Still being measured', value: '', muted: true });
+    if (!rows.length) continue;
+    out.push({
+      x: sx(a + 0.5), title: short(f.period), rows,
+      dots: [...(f.minutes != null ? [{ y: sy(f.minutes) }] : []), ...released.map((p) => ({ y: sy(p.minutes), color: '#c9c4ba' }))],
+    });
+  }
+  for (const f of u.fan) {
+    const hz = u.horizons.find((h) => h.target_period === f.period);
+    out.push({
+      x: sx(monthEnd(f.period)), title: `${short(f.period)}${hz ? ` · ${hz.h}-month forecast` : ' · forecast'}`,
+      rows: [
+        { label: 'Median', value: dur(f.q50), color: 'var(--amber-ink)' },
+        { label: '50% range', value: `${dur(f.q25)}–${dur(f.q75)}` },
+        { label: '80% range', value: `${dur(f.q10)}–${dur(f.q90)}`, muted: true },
+      ],
+      dots: [{ y: sy(f.q50), color: 'var(--amber-ink)' }],
+    });
+  }
+  return out;
+});
+
 const label = computed(() => {
   const u = props.unit;
   const h = u.horizons.map((x) => `${x.h} months: ${dur(x.median_minutes)}`).join(', ');
@@ -77,6 +112,7 @@ const label = computed(() => {
 
 <template>
   <figure class="cc">
+    <ChartHover :w="W" :h="H" :top="T" :bottom="H - B" :points="hover">
     <svg :viewBox="`0 0 ${W} ${H}`" role="img" :aria-label="label">
       <g v-for="t in c.yt" :key="t.t">
         <line :x1="L" :x2="W - R" :y1="t.y" :y2="t.y" class="grid" />
@@ -121,6 +157,7 @@ const label = computed(() => {
               :text-anchor="up ? 'end' : 'start'" class="mark-t">{{ m.h }} mo: {{ dur(m.v) }}</text>
       </g>
     </svg>
+    </ChartHover>
     <figcaption class="key">
       <span><i class="k-obs" /> measured model (line = 95% CI)</span>
       <span><i class="k-bri" /> older-suite model, bridged estimate</span>

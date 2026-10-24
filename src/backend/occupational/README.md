@@ -27,6 +27,7 @@ A run that fails, or produces no forecast, is logged to `runs/run_log.jsonl` and
 | --- | --- | --- |
 | HN "Ask HN: Who is hiring?" (hn.algolia.com) | Skill-demand series and emerging-skill discovery | Monthly since 2014-01: 152 threads, 85k posts |
 | Adzuna API (free tier) | Dated live-ad snapshots, shown as a cross-check only | From 2026-10-23 onward. The API has no past ads, so nothing is back-filled |
+| PyPI downloads (ClickPy, a public mirror of the PyPI BigQuery logs) and npm download counts | Package-adoption evidence for the emerging-signals view (`signals.py`), never an input to the job-ad baseline | PyPI from 2016-01, npm from 2015-12; monthly, one query (PyPI) and about 8 calls per package (npm) |
 | Stack Overflow Developer Survey microdata | Worker AI usage per occupation and country (measured) | 2023, 2024, 2025 |
 | O\*NET 31.0 software skills | Whether a skill is covered by O\*NET | Reference only |
 | RPS (`data/processed/forecasting/rps_observations.csv`) | Context: SOC group 15 worker GenAI use | Raw observations, not the industry models' predictions |
@@ -42,8 +43,10 @@ A run that fails, or produces no forecast, is logged to `runs/run_log.jsonl` and
 | `normalize.py` | One row per ad: occupation(s), country(ies), duplicates, eligibility, known skills (cached) |
 | `emerging.py` | Candidate terms from ad text, evidence windows, versioned skill registry, withheld-term back-check |
 | `demand.py` | Panel: eligible ads (denominator) and ads naming each skill, per month × country × occupation |
-| `models.py` | Methods: persistence, 12-month mean, shrink, damped trend, pooled ridge, blend |
-| `backtest.py` | Rolling-origin backtest, train / validation / test split by target month, selection, gate, intervals, published forecast |
+| `models.py` | Methods: persistence, 12-month mean, shrink, trend, pooled ridge, blend, and the tuned ewma (recent level), dtrend (shrunk damped trend) and adaptive (recent level plus tested trend); the shared direction label |
+| `backtest.py` | Parameter tuning on training targets, rolling-origin backtest, train / validation / test split by target month, multi-metric selection, gate, intervals, published forecast |
+| `sources/packages.py` | Monthly package downloads for the indicators in `taxonomy/skill_signals.json`, cached in `raw/packages/` (tracked copy: `datasets/package_downloads.csv`) |
+| `signals.py` | Skill-emergence engine: adoption and related-skill evidence, a control (own-series) and a hybrid correction to the baseline, a rise radar, their backtests, and the published evidence table |
 | `adoption.py` | Worker usage (measured), employer-side proxy and task exposure, kept separate |
 | `run.py` | CLI: ingest → build → evaluate → promote |
 
@@ -51,13 +54,17 @@ A run that fails, or produces no forecast, is logged to `runs/run_log.jsonl` and
 
 - **Eligible ad:** not a duplicate (same author in the same thread, the same opening text in the same month, or the same Adzuna id), and has a description (≥ 150 characters for HN; ≥ 60 for an Adzuna snippet).
 - **Skill-demand share** for (month, country, occupation, skill) = ads naming the skill ÷ eligible ads classified into that occupation and country. Counts are kept next to every share.
-- **Forecast target:** the share pooled over the 3 months ending at origin + h, for h = 3, 6 and 12 months.
+- **Scope:** occupations in the `software_technology` sector of `occupations.json` (all four today).
+- **Forecast target:** the share pooled over the 3 months ending at origin + h (ads naming the skill ÷ eligible ads, summed over those months), for h = 3, 6 and 12 months. Months with no ads in a cell are missing and carry no weight; a month with ads but no mention is an observed zero.
 - **Split:** by target month.
   - The last 12 complete months are the test period. It is untouched until scoring.
   - The 12 months before them are validation, which chooses the method per horizon.
-  - Everything earlier is training.
+  - Everything earlier is training. Its last 48 months of targets tune the parameters of ewma, dtrend and adaptive (grid search on the selection score).
+- **Direction:** forecast minus the last 3 months' share at the origin (the baseline), in share points. Rising or falling at ±1 pp or more, otherwise flat (about stable). The backtest and the published forecast use the same function (`models.direction`). A realised move is *material* at a threshold (1 or 2 pp) and *significant* when it is also beyond sampling noise (z ≥ 1.96).
+- **Selection:** a composite score against persistence on validation: overall MAE (0.35), MAE on significant 2 pp moves (0.25), direction on those moves (0.2), bias on rising and falling skills (0.1), worst origin quarter (0.1). A method must be no worse than persistence overall and within 5% of the most accurate method's MAE. A simpler method is kept unless the best beats it in at least 80% of 200 paired bootstrap resamples of series. `evaluation.json` also records the winner under other weightings.
 - **Gate:** if the chosen method's test error is worse than persistence's, persistence is served (`baseline_retained`).
-- **Intervals:** the 10th to 90th percentile of past errors, grouped by forecast level and evidence. They are checked on the test period.
+- **Emerging signals:** package adoption (downloads relative to a skill-neutral reference basket, 3-month sums, ≥ 30k downloads in both windows compared) and related-skill demand (pooled over every IT cell, the skill itself excluded). A hybrid correction is published as `adjusted_forecast` only if it beats both the baseline and an own-series control on validation (series bootstrap, 80%) and is no worse on test; rise alerts only if they beat own-series alerts on average precision the same way. Otherwise the page shows the evidence and a scenario labelled as such.
+- **Intervals:** the 10th to 90th percentile of past errors, grouped by forecast level and evidence. They are checked on the test period, overall, on significant moves and by evidence band.
 
 ## API
 
@@ -68,6 +75,7 @@ The backend serves these from `app/occupational/`. They are read-only and pick u
 - `GET /occupational/skills/{skill_id}?country=&occupation=`
 - `GET /occupational/emerging?country=&occupation=`
 - `GET /occupational/adoption?occupation=`
+- `GET /occupational/signals?country=&occupation=`: the baseline next to its emerging-skill evidence, whether an adjusted forecast or rise alerts passed validation, and each indicator's source, freshness and quality
 - `GET /occupational/evaluation`
 
 The frontend page is `src/frontend/src/views/OccupationsView.vue`, route `/occupations` ("Occupations" in the sidebar). `?tab=emerging|adoption|method` opens a section directly.

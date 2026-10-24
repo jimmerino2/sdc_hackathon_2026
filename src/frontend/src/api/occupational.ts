@@ -41,8 +41,16 @@ export interface OccMeta {
   counts: { ads: number; eligible: number; classified: number; series: number; registry: Record<string, number> };
   split: Record<string, string>;
   target: string;
-  rules: Record<string, number>;
+  rules: OccRules;
   post_hoc_methods: string[];
+}
+
+/** Pipeline rules from evaluation.json; numbers plus nested selection / tuning settings. */
+export interface OccRules {
+  min_target_ads: number;
+  material_change_pp: number;
+  direction_label_pp?: number;
+  [k: string]: unknown;
 }
 
 export interface MethodAccuracy {
@@ -84,7 +92,10 @@ export interface SkillRow {
   count_12m: number;
   evidence: 'high' | 'medium' | 'low';
   backtested: boolean;
+  /** Forecast minus the last 3 months' share, in share points; `direction` is its label (flat = about stable). */
   direction: 'rising' | 'falling' | 'flat';
+  baseline_share?: number | null;
+  change_pp?: number | null;
   change_pp_recent_vs_base: number | null;
   growth_lb_pp: number | null;
   growth_ub_pp: number | null;
@@ -97,6 +108,7 @@ export interface AsOfRow {
   actual: number;
   actual_ads: number;
   share_12m: number;
+  share_3m?: number | null;
   target_month: string;
   model: string;
 }
@@ -238,13 +250,72 @@ export const fetchSkill = (skill: string, country: string, occupation: string) =
 export const fetchEmerging = (country: string, occupation: string) => get<EmergingResponse>(`/occupational/emerging?${q({ country, occupation })}`);
 export const fetchAdoption = (occupation: string) => get<AdoptionResponse>(`/occupational/adoption?${q({ occupation })}`);
 
+export interface SignalIndicator {
+  source: 'pypi' | 'npm';
+  package: string;
+  latest_month: string | null;
+  downloads_3m: number | null;
+  growth_vs_6m_before: number | null;
+  growth_vs_12m_before: number | null;
+  window: string;
+  months_of_history: number;
+  quality: 'strong' | 'moderate' | 'weak';
+  fresh: boolean;
+  url: string;
+}
+
+export interface SignalRow {
+  skill_id: string;
+  skill_name: string;
+  forecast: number;
+  low: number | null;
+  high: number | null;
+  baseline_share: number | null;
+  change_pp: number | null;
+  direction: 'rising' | 'falling' | 'flat';
+  target_month: string;
+  last_ads_3m: number;
+  evidence_cell: 'large' | 'medium' | 'low';
+  /** Log growth (not %) of relative downloads / related-skill logit share; null = no data. */
+  adoption_g6: number | null;
+  adoption_g12: number | null;
+  related_g6: number | null;
+  related_g12: number | null;
+  signal: 'accelerating' | 'contradictory' | 'some_acceleration' | 'slowing' | 'some_slowing' | 'no_signal';
+  adjusted_forecast: number | null;
+  rise_probability: number | null;
+  rise_alert: boolean;
+  indicators: SignalIndicator[];
+  related_skills: string[];
+}
+
+export interface RadarScores { n: number; positives: number; alerts: number; true_alerts: number; precision: number | null; recall: number | null; false_positive_rate: number | null; base_rate: number | null; average_precision: number | null }
+
+export interface SignalsResponse {
+  status: 'ok' | 'not_built' | 'failed';
+  error?: string;
+  horizon: number;
+  baseline_method: string;
+  adjusted_forecast: { validated: boolean; best_on_validation: string; rule: string };
+  radar: { validated: boolean; hybrid_beats_own_ap_in_bootstrap: number; rise_pp: number; min_ads_3m: number };
+  radar_test: Record<'own' | 'hybrid', RadarScores>;
+  test_summary: Record<'baseline' | 'control' | 'hybrid', { n: number; mae_pp: number; bias_pp: number; direction_acc?: number; selection_score: number }>;
+  relationship: { period: string; features: Record<string, { n: number; corr: number | null; slope: number | null }> };
+  coverage: { skills_with_adoption_indicators: string[]; package_months: Record<string, [string, string]> };
+  package_health?: { status: string; latest_month?: string; failed?: string[] };
+  sources: Record<string, { name: string; url: string }>;
+  rows: SignalRow[];
+}
+
+export const fetchSignals = (country: string, occupation: string) => get<SignalsResponse>(`/occupational/signals?${q({ country, occupation })}`);
+
 export interface MethodScores { n: number; mae_pp: number; wmae_pp: number; bias_pp: number; direction_acc?: number; mae_ratio_vs_persistence?: number }
 export interface OccEvaluation {
   run_id: string;
   made_at: string;
   target: string;
   split: Record<string, string>;
-  rules: Record<string, number>;
+  rules: OccRules;
   methods: Record<string, string>;
   post_hoc_methods: string[];
   horizons: Record<string, {

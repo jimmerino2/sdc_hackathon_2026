@@ -13,7 +13,7 @@ const pct = computed(() => (job.value ? (job.value.skills_owned / Math.max(job.v
 </script>
 
 <template>
-  <FlowShell :progress="5" next="sync" next-label="Build my pathway" back="signal" :mood="job ? 'happy' : 'idle'" gear="glasses">
+  <FlowShell next="sync" next-label="Build my pathway" back="signal" :mood="job ? 'happy' : 'idle'" gear="glasses">
     <template #bubble>
       <template v-if="job">You already have {{ job.skills_owned }} of {{ job.skills_total }} key skills for {{ job.title }}.</template>
       <template v-else>Here’s how close you are to this role.</template>

@@ -44,7 +44,7 @@ const metrDoubling = computed(() => props.detail.data.metr_published_doubling_da
 
 <template>
   <details v-if="u" class="meth">
-    <summary>How this forecast is made, and how well it has done</summary>
+    <summary><span class="sum-h">How this forecast is made, and how well it has done</span></summary>
 
     <h4>Data</h4>
     <ul class="facts">
@@ -187,7 +187,12 @@ const metrDoubling = computed(() => props.detail.data.metr_published_doubling_da
 
 <style scoped>
 .meth { font-size: 12.5px; border-top: 2px solid var(--line); padding-top: 10px; }
-summary { cursor: pointer; font-weight: 800; color: var(--ink); font-size: 13px; }
+.meth { padding-top: 12px; }
+.meth > summary { cursor: pointer; list-style: none; }
+.meth > summary::-webkit-details-marker { display: none; }
+.sum-h { font-size: 15px; font-weight: 800; color: var(--ink); }
+.sum-h::before { content: '+ '; color: var(--orange); font-weight: 900; }
+.meth[open] .sum-h::before { content: '− '; }
 h4 { font-size: 12.5px; margin: 14px 0 4px; }
 .facts { margin: 0 0 0 16px; display: flex; flex-direction: column; gap: 4px; line-height: 1.5; color: var(--ink); }
 .w { display: block; color: var(--muted); }

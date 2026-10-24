@@ -76,7 +76,6 @@ const status = computed(() => items.value[Math.min(stage.value, items.value.leng
         <Transition name="swap" mode="out-in"><span :key="status">{{ status }}</span></Transition>
       </p>
     </div>
-    <RouterLink :to="go('roles')" class="skip">Skip</RouterLink>
   </div>
 </template>
 
@@ -86,8 +85,6 @@ const status = computed(() => items.value[Math.min(stage.value, items.value.leng
 .stack :deep(.fpv) { margin-bottom: 28px; }
 .progress { width: 100%; height: 14px; margin-bottom: 18px; }
 .status { min-height: 2.8em; text-align: center; font-weight: 800; font-size: 17px; line-height: 1.4; color: var(--ink); }
-.skip { font-size: 13px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 8px 12px; border-radius: 10px; }
-.skip:hover { color: var(--ink); }
 .swap-enter-active, .swap-leave-active { transition: opacity .2s ease, transform .2s ease; }
 .swap-enter-from { opacity: 0; transform: translateY(6px); }
 .swap-leave-to { opacity: 0; transform: translateY(-6px); }
