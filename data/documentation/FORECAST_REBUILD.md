@@ -9,7 +9,7 @@ Branch `feat/ai-prediction`. This replaces the AI-adoption forecasting on `feat/
 | `ai_mention_share` | skill demand | Indeed, 9 countries, monthly | 1, 3, 6 months |
 | `btos_ai_use_rate` | business adoption | Census BTOS, US + 19 sectors, per wording, fortnightly | 6, 13 fortnights |
 | `worker_genai_use_rate` | occupation adoption | RPS worker survey, 22 SOC groups + all workers, quarterly | 1, 2 quarters |
-| `frontier_time_horizon` | AI capability | METR 50% task time horizon of the best model, via Epoch AI, per METR suite version, monthly | 3, 6, 12 months, with P(acceleration / stable / slowdown) |
+| `frontier_time_horizon` | AI capability | METR 50% task time horizon of the best model, via Epoch AI, per METR suite version, monthly | 3, 6, 12 months, with P(faster / same / slower), from the capability engine (§8c) |
 
 None feeds another.
 
@@ -296,35 +296,125 @@ What it means:
   - Effect: that artefact was the largest past error behind the regime chances. Origins before GPT-4 (Mar 2023) are now skipped, since there was nothing recent to forecast from.
   - Also: LightGBM falls back to the mean change when it has fewer than 60 training rows, instead of failing.
 
-**Results** (run `20261024T082956Z-cb5caa`, after the stale-frontier fix; errors in doublings):
+**Previous results** (run `20261024T082956Z-cb5caa`, generic engine, kept for comparison): ridge was chosen at 3 and 6 months (holdout MAE 0.65 / 0.83 doublings, beaten by drift-type baselines), and at 12 months every method tied in selection, so "no change" was served (holdout 3.27 doublings, ×9.7 typical miss, range not containing its own point). The regime chances came from residual counts and scored **worse than a ⅓ guess** at 3 and 6 months.
 
-| h (months) | Chosen | Selection MAE (naive) | Holdout MAE (naive) | MASE vs naive | MASE vs drift | Status |
+### Capability engine (`forecasting/capability_engine.py`, 25 Oct 2026)
+
+Brief: `AI_CAPABILITY_IMPROVEMENT.md`. Same target (frontier METR 50% horizon), horizons, origins, split and truth as the generic engine. The generic candidates still run and are reported next to it. Wired in through `TargetSpec.engine`; `run.py` is otherwise unchanged.
+
+**Why the generic models were inaccurate here.** They saw only the monthly staircase (flat months, then jumps), not the models behind it: no measurement CIs, no saturation, no use of the older suite, and a 12-month `trend` column that is missing for the first year of every unit (so all methods tied at h=12). The regime chances were not a forecast distribution.
+
+**Data layers** (never mixed):
+- *A, observed:* the model-level rows behind each origin's frontier, from that origin's vintage and cut (`snapshot().extras["models"]`): value, 95% CI (as two log₂ SEs, so asymmetric), release date, suite. Cross-checked against METR's own file (`SOURCES.md` §8a): 23 of 23 match.
+- *B, bridged:* v1.0-only models mapped onto v1.1 through the models measured on both, from the same vintage (Theil-Sen line in log₂ hours, 300 bootstraps). Latest bridge: 9 pairs, slope 1.18 (80% 1.08–1.29: v1.1 rates old models lower and new ones higher), residual SD 0.24 doublings. Below 6 pairs or with an implausible slope it falls back to slope 1 with doubled spread (weak prior). Bridged rows feed only the jump model's trend and release rate, at half weight, with the mapping's uncertainty added; they are never frontier values or outcomes.
+- *C, simulated:* 5,000 trajectories (2,000 per backtest origin), seeded; used for ranges and pace chances only.
+
+**Components** (log₂ hours; every trajectory is non-decreasing and floored at the current frontier):
+- *damped_trend:* last 12 months' slope, damping φ fitted on the snapshot's own history, spread from its own in-snapshot h-month errors.
+- *robust_local_trend:* local linear trend with Huber-robust updates; variances by MAP (robust likelihood plus log-normal priors: observation 0.3, level 0.15, slope 0.01 doublings per month, log-variance sd 1.5); predictive variance computed exactly.
+- *jump_process:* frontier-relevant models (within 1 doubling of the frontier when released) arrive as a Poisson process (Gamma posterior on the rate; prior = the unit's long-run rate, worth 12 months); each scores trend + Student-t(4) noise. Trend: recency-weighted (half-life 18 months) Huber fit, bootstrapped over models and their measurement error, slope shrunk by precision towards the long-run slope (models since 2023). Points above 16 h are left out of the fit (METR's rule). Checks reported, not used to switch models: lag-1 autocorrelation of monthly frontier changes −0.20; release dispersion index 0.82 (≈ Poisson).
+- *ensemble:* a mixture; trajectories per component ∝ weights = 50% equal + 50% inverse squared MAE on cases resolved before the origin (equal below 6 cases). The served forecast is the ensemble by design, not by contest.
+
+**Pace chances.** Past pace = change of the measured frontier over the last 12 months (doublings/year), each end drawn from its CI per trajectory. Future pace = (12/h)(frontier at T+h − frontier at T) per trajectory. "Same" = within max(0.25 doublings/year, 20% of the past pace). Chances = shares of trajectories, so they sum to 1. Fallbacks, labelled in `pace_basis`: bridged 12-month history, then the trend's slope. If the selection-period Brier score does not beat both a ⅓ guess and the rolling base rate on ≥10 cases, 25% of each chance is moved to the base rate and the row says "prior-assisted". In this run all three horizons showed selection skill, so nothing is shrunk.
+
+**Results** (run `20261024T161031Z-3451f0`; MAE in doublings on exactly the same cases; holdout = origins from Mar 2025, real and reconstructed):
+
+| h | Ensemble holdout (selection) | Drift | Naive | Damped / local / jump (holdout) | 80% coverage holdout (selection) | Holdout cases |
 | --- | --- | --- | --- | --- | --- | --- |
-| 3 | ridge | 0.59 (0.75) | 0.65 (0.83) | 0.79 | 1.44 | validated |
-| 6 | ridge | 0.94 (1.16) | 0.83 (1.66) | 0.50 | 1.04 | validated |
-| 12 | naive (all methods tied at 2.04 in selection; the simplest wins) | 2.04 (2.04) | 3.27 (3.27) | 1.00 | 2.51 | baseline |
+| 3 | **0.38** (0.73) | 0.45 (0.66) | 0.83 (0.75) | 0.46 / 0.46 / 0.48 | 100% (67%) | 16 |
+| 6 | **0.53** (0.99) | 0.80 (1.04) | 1.66 (1.16) | 0.66 / 0.63 / 0.70 | 100% (61%) | 14 |
+| 12 | **0.96** (1.61) | 1.30 (2.05) | 3.27 (2.05) | 1.26 / 1.40 / 1.46 | 100% (48%) | 6 |
 
-Regime probabilities on the holdout (Brier, lower is better):
+Pace chances (Brier; lower is better; ⅓ guess = 0.67):
 
-| h | n | Model | Climatology | Uniform ⅓ |
-| --- | --- | --- | --- | --- |
-| 3 | 16 | 0.80 | 1.05 | 0.67 |
-| 6 | 14 | 0.82 | 1.24 | 0.67 |
-| 12 | 6 | 0.49 | 2.00 | 0.67 |
+| h | Selection: model / base rate (n) | Holdout: model / base rate (n) |
+| --- | --- | --- |
+| 3 | 0.61 / 0.73 (39) | 0.56 / 0.90 (16) |
+| 6 | 0.52 / 0.58 (33) | 0.50 / 1.23 (14) |
+| 12 | 0.40 / 0.67 (21) | 0.55 / 1.80 (6) |
+
+Log loss is also below the ⅓ guess in every cell. Calibration tables per class are in `engine.json`.
 
 What it means:
+- The ensemble beats naive and drift on the holdout at every horizon and is promoted as `validated`. In the **selection** period drift was better at 3 months (0.66 vs 0.73), so the ensemble is not uniformly better.
+- **The 80% range is not calibrated:** it is too narrow in the selection period (2023–24 growth outran every method) and too wide in the holdout. It is labelled a predictive interval, not a calibrated one.
+- The pace chances beat both simple references in both periods, but the margins are modest, and the 12-month holdout has only 6 cases.
+- Served forecast (data complete through Jul 2026; current frontier Claude Mythos Preview, 17.4 h, CI 8.5–55 h): 33 h at 3 months (80%: 16–76 h), 56 h at 6 months (23–151 h), 162 h at 12 months (48–566 h). Chances faster / same / slower: 44/13/43%, 39/20/41%, 33/29/38%. The ranges start below today's value because today's measurement is itself uncertain (it is above 16 h, near the top of the suite).
+- The jump model's trend implies a doubling every 3.8 months; METR's own fit since 2023 is 4.2 months (3.4–5.2). Not an input; shown for comparison.
 
-- **The earlier, better-looking results depended on the GPT-2 artefact.** They showed ridge validated at every horizon, beating drift, and regime chances beating guessing.
-- **3 and 6 months:** ridge beats "no change" (21% and 50% smaller error) but **not** continuing last year's trend. Damped drift and pooled mean did best on the holdout.
-- **12 months:** with only 12 selection origins, most methods tie, so "no change" is served. It is the worst method on the holdout (×9.7 typical miss) and has always under-forecast, so its range lies wholly above it (the forecast says so).
-- **Regime chances:** at 3 and 6 months they did **worse than a plain one-in-three guess**; at 12 months better, but on 6 test points. The page and dialog now show these scores next to the chances.
+**Changed after the first engine run (disclosed; none re-selects on the holdout):**
+1. A unit complete only to an earlier month than the snapshot was held flat up to the snapshot's month (v1.0 vs v1.1 at mixed origins), so "not yet measured" read as "no progress". It is now skipped, as the generic engine does. Bug fix.
+2. Damped and local-trend noise was a random walk inside a running maximum, which pushes medians up. Now each trajectory draws one quantile across horizons (correct marginals, still non-decreasing). Bug fix.
+3. The local trend's maximum-likelihood variances were degenerate on the staircase (slope variance 0, or slopes of 20+ doublings/year; 12-month holdout error 6.6 doublings). I added the MAP priors above. This modelling change was made after seeing that result; the priors were set from what the variances mean (how much a slope may drift in a year), not tuned to scores.
 
 **Model card:**
+- **Intended use:** an indicative outlook for one capability dimension (software-task time horizons of frontier models under METR's conditions) and whether its pace is speeding up or slowing down.
+- **Not a measure of:** general intelligence, capability in other domains, adoption, or labour-market impact.
+- **Supported claim:** on a mostly reconstructed backtest, the ensemble's median beat "no change" and trend extrapolation on the held-back months at 3, 6 and 12 months, and its pace chances beat a ⅓ guess and the base rate. Not supported: calibrated ranges, or any claim from the 12-month holdout alone (6 cases).
+- **Known gaps:** only METR-evaluated models are seen (selection bias); the bridge rests on 9 models; real point-in-time vintages exist only from Jun 2025.
 
-- **Intended use:** an indicative outlook for one capability dimension (software-task time horizons of frontier models) and whether its growth rate is speeding up or slowing down.
-- **Not a measure of:** general intelligence, adoption, or labour-market impact.
-- **Supported claim:** on a mostly reconstructed backtest, trend-based methods beat persistence at 3 and 6 months. Nothing beats simple trend extrapolation reliably, and the regime chances are not yet better than guessing at 3 and 6 months.
-- **Will improve** as real vintages accumulate.
+### Second round (`AI_CAPABILITY_IMPROVEMENT_V2.MD`, 25 Oct 2026)
+
+New modules: `capability_record.py` (two-stage record model), `capability_trend.py` (smoothed trend, secondary output), `capability_eval.py` (Brier definition, temperature calibration, non-overlapping cases, block bootstrap), `capability_signals.py` (external candidate predictors). The engine runs in two passes: components, record-chance variants and the trend forecast at every origin; then decisions on selection cases only; then the ensemble at every origin with weights and a temperature fitted on cases resolved before it.
+
+**Brier score** (everywhere in the capability engine and on the page): sum over classes of (p − outcome)², averaged; 0 perfect, 2 worst; a ⅓ guess scores 0.67 for three classes, a 50/50 guess 0.5 for yes/no.
+
+**Two-stage record model** (`record_jump`). Stage A: a constant monthly chance of a new record (Beta posterior, last 24 months, prior worth 12 months at the unit's rate); a record never becomes "due". Stage B: log-normal jump size, Normal-Inverse-Gamma posterior with a conservative prior (median 0.7 doublings), so 13 observed jumps cannot pin the tail. Only months in the latest unbroken stretch of measured frontier count: before a gap, METR measured too little to know whether a record could have happened. The constant hazard is supported by the record rate not rising with months since the last record (reported in `iid_checks`).
+
+**Decisions, all on selection cases only:**
+
+| Decision | Rule | Result |
+| --- | --- | --- |
+| Components with the damped trend | interval score ≤ 1.10 × the damped trend's on ≥ 10 shared cases | jump model in (1.06, 21 cases), two-stage record model in (0.99, 57), robust local trend out (1.19, 72) |
+| External signals in stage A | beats the same logistic model without it in ≥ 90% of block-bootstrap resamples, and beats the constant hazard | neither kept: compute growth raised log loss (+0.061); lab releases lowered it in only 4% of resamples |
+| Pace chances | raw or temperature-calibrated (lower selection log loss), then the existing shrink rule | raw at 3 and 12 months, calibrated at 6; no shrink (selection skill shown) |
+| Chance of no new record | stage A if its selection log loss beats the rolling base rate, else the base rate | base rate at every horizon: stage A said 23% / 33% / 50% for a record within 3 / 6 / 12 months when 78% / 95% / 100% happened |
+
+External data looked at: Epoch AI models data (2,080 language models, approximately point-in-time: only today's file exists; release dates are public, compute is estimated later), tested as above. SWE-bench Verified, LiveBench, Terminal-Bench and Aider Polyglot (via Epoch's benchmark archive) were inventoried and **not tested**: they appear in Epoch's archive only from Nov 2025 and cover releases from Feb 2024 – Jun 2025 onwards, so validating them would need the holdout. LiveBench's own site and data were reachable but have the same coverage problem.
+
+**Leakage:** the v1.0 → v1.1 bridge is no longer fitted at origins where v1.1 was not yet published (it would use the 2026 file). External features use only releases up to each month.
+
+**Results** (run `20261024T165353Z-56a2b9`; MAE in doublings; same cases for every method):
+
+| h | Ensemble holdout (selection) | Damped trend | Drift | Naive | Two-stage record | 80% coverage holdout (selection) |
+| --- | --- | --- | --- | --- | --- | --- |
+| 3 | 0.45 (0.74) | 0.50 (0.71) | 0.45 (0.66) | 0.83 (0.75) | 0.62 (0.98) | 100% (69%) |
+| 6 | **0.57** (0.99) | 0.74 (0.90) | 0.80 (1.04) | 1.66 (1.16) | 0.94 (1.47) | 100% (67%) |
+| 12 | **0.96** (1.53) | 1.41 (1.47) | 1.30 (2.05) | 3.27 (2.05) | 1.93 (2.14) | 100% (48%) |
+
+Dependence-aware checks (all scored cases):
+
+| h | Non-overlapping cases | MAE ensemble / drift / naive | Ensemble − drift, 80% (95%) block bootstrap | Pace Brier − ⅓ guess, 80% (95%) |
+| --- | --- | --- | --- | --- |
+| 3 | 19 | 0.64 / 0.55 / 0.77 | +0.06: 0.00 to 0.11 (−0.03 to 0.14) | −0.07: −0.16 to −0.00 (−0.20 to 0.04) |
+| 6 | 9 | 1.03 / 0.90 / 1.36 | −0.10: −0.18 to −0.01 (−0.22 to 0.04) | −0.16: −0.26 to −0.10 (−0.30 to −0.07) |
+| 12 | 3 | 1.08 / 0.85 / 1.92 | −0.48: −0.55 to −0.38 (−0.57 to −0.32) | −0.25: −0.28 to −0.15 (−0.31 to −0.12) |
+
+Pace chances (served): Brier 0.62 / 0.51 / 0.39 in selection and 0.54 / 0.49 / 0.49 in holdout at 3 / 6 / 12 months, against 0.67 for a ⅓ guess and 0.58–1.80 for the base rate; log loss below the ⅓ guess everywhere.
+
+What it means:
+- **Against naive:** better at every horizon, robustly.
+- **Against drift:** worse at 3 months (bootstrap 80% interval above 0); better at 6 months but not at 95%; clearly better at 12 months on all scored cases. The non-overlapping cases (19 / 9 / 3) favour drift at every horizon, and the 12-month subset has 3 cases. **The non-overlapping evaluation does not support a claim that the ensemble beats trend extrapolation.**
+- **Against its simplest component:** in the selection period the ensemble's median missed by more than the damped trend at every horizon (0.74 / 0.99 / 1.53 vs 0.71 / 0.90 / 1.47), with interval scores within 1% and pace Brier slightly better. It is better on the holdout. The ensemble is served because it was declared the forecast before any scores existed (first round); V2's "if inconclusive, keep the simpler model" would serve the damped trend. Left to the owner.
+- **Pace chances:** better than a ⅓ guess at 6 and 12 months even allowing for overlap (95% intervals below 0); at 3 months only at 80%.
+- **No new record:** the two-stage model under-predicted records throughout (the record rate rose as METR measured more models); the base rate is served. Served: 18% / 4% / 3% within 3 / 6 / 12 months.
+
+**Secondary output: underlying trend.** Smooth-trend state-space model (level moves only through a slowly drifting growth rate; staircase jumps are deviations), robust updates, MAP variances, Rauch-Tung-Striebel smoother. Estimand: mean growth rate over the next h months vs the past 12, in doublings/year, same tolerance as the frontier pace; scored against the same smoother run on the latest data. Current estimate: 2.0 doublings/year now (±1.3) vs 3.1 over the past 12 months, so P(decelerating) ≈ 0.57–0.58.
+
+| h | Brier selection / holdout (⅓ guess 0.67) | Base rate selection / holdout | Pace MAE vs "keep last year's" (selection; holdout) |
+| --- | --- | --- | --- |
+| 3 | 0.61 / 1.04 | 0.79 / 0.94 | 1.68 vs 1.81; 2.35 vs 1.65 |
+| 6 | 0.61 / 1.15 | 0.94 / 1.03 | 1.76 vs 1.79; 2.27 vs 1.56 |
+| 12 | 0.60 / 1.17 | 0.67 / 0.99 | 1.44 vs 1.34; 3.58 vs 1.77 |
+
+**No demonstrated skill:** better than both references in the selection period, worse than guessing on the holdout, and its pace forecasts lose to "keep last year's pace" on the holdout. The page says so and labels it experimental and model-estimated; it is not blended into the frontier chances.
+
+**Changed after seeing V2 results (disclosed):**
+1. Record months before a measurement gap no longer count (bug: the GPT-2 year read as 12 months without a record, giving a 1.5% monthly record chance).
+2. A kept external signal must also beat the constant hazard (both signals had passed only against a miscalibrated logistic baseline).
+3. Trend chances use the difference between current and past growth (they share most of their uncertainty); the first version treated them as independent, which pushed every chance towards ⅓.
+4. The trend model's level has no shocks of its own (the first version followed the staircase step by step, so it was not a smoothed trend).
+5. The no-record chance falls back to the base rate when stage A does not beat it (rule added after stage A's selection scores).
 
 ## 9. How this answers the BTOS problem
 
@@ -391,6 +481,8 @@ python -m pytest forecasting/tests                          # 61 tests, offline,
    - an inline note when the point falls outside its range;
    - the warnings (collapsed);
    - the data date.
+
+   The capability card also has a time-horizon chart (`CapabilityChart.vue`: measured models with CIs, bridged estimates hollow, the measured frontier, the 50% / 80% forecast fan, the 16 h line and the not-yet-measured months), a collapsible methodology and diagnostics panel (`CapabilityMethod.vue`), and a step-by-step explainer of the pace chances (`RegimeExplainer.vue`).
 
    The capability card also shows the regime probabilities as a labelled bar. Its colours (orange `#eb6834` / grey `#9e9a92` / blue `#2a78d6`) were checked with the dataviz palette validator. Every segment carries a text label, so colour is never the only cue.
 

@@ -51,6 +51,15 @@ def get_regime(target: str, unit: str = Query(..., description="e.g. v1.1")):
     return service.regime_explained(target, unit)
 
 
+# Example: http://127.0.0.1:8000/outlook/frontier_time_horizon/engine
+@router.get("/{target}/engine")
+def get_engine(target: str):
+    """Capability engine detail for the served run: measured and bridged models, the frontier, the forecast fan
+    (10-90%), per-horizon pace chances, backtest scores against the baselines, and data limitations."""
+    _check(target)
+    return service.engine(target)
+
+
 
 @router.get("/capability/success-curves")
 def get_success_curves():
