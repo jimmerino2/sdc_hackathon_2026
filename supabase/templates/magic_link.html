@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>Your Jobee login code</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0; padding:0; background:#fffdf5; font-family:'Nunito', 'Segoe UI', Helvetica, Arial, sans-serif; color:#1e1e1e;">
+  <div style="display:none; max-height:0; overflow:hidden;">Your Jobee code: {{ .Token }}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fffdf5;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;">
+
+          <!-- Wordmark -->
+          <tr>
+            <td style="padding:0 0 20px 4px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="width:34px; height:34px; background:#ffc107; border-radius:10px; text-align:center; vertical-align:middle; font-size:16px; font-weight:900; line-height:34px;">&#8226;&#8226;</td>
+                  <td style="padding-left:10px; font-size:26px; font-weight:900; letter-spacing:-0.5px;">jobee</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Card -->
+          <tr>
+            <td style="background:#ffffff; border:2px solid #eceae5; border-radius:20px; box-shadow:0 4px 0 #eceae5; padding:32px 28px;">
+              <p style="margin:0 0 6px; font-size:11px; font-weight:900; letter-spacing:1.2px; text-transform:uppercase; color:#9a5200;">Welcome back</p>
+              <h1 style="margin:0 0 12px; font-size:24px; line-height:1.25; font-weight:900;">Here’s your code</h1>
+              <p style="margin:0 0 24px; font-size:15px; line-height:1.55; font-weight:600; color:#6b665e;">
+                Type this into Jobee to continue. Your roles, roadmaps and skills are waiting for you.
+              </p>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" style="background:#fff3cc; border:2px solid #ffc107; border-radius:16px; box-shadow:0 4px 0 #ff9800; padding:20px 12px;">
+                    <span style="font-family:'Nunito', 'Segoe UI', Helvetica, Arial, sans-serif; font-size:36px; font-weight:900; letter-spacing:10px; padding-left:10px; color:#1e1e1e;">{{ .Token }}</span>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:24px 0 0; font-size:13px; line-height:1.5; font-weight:600; color:#6b665e;">
+                The code only works once and expires soon. Didn’t try to log in? You can ignore this email; nobody can get in without the code.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 4px 0; font-size:12px; line-height:1.5; font-weight:600; color:#6b665e;">
+              Sent to {{ .Email }} by Jobee, your guide to where AI is taking tech jobs.
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
