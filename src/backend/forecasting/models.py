@@ -14,7 +14,6 @@ contains: the training rows, and for local_trend the snapshot's own series (`pan
 """
 from __future__ import annotations
 
-import lightgbm as lgb
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
@@ -195,6 +194,7 @@ class LightGBMModel(Model):
 
     def fit(self, train, h, features, trend_steps=12, panel=None):
         super().fit(train, h, features, trend_steps, panel)
+        import lightgbm as lgb  # lazy: needs libgomp, which the serverless API runtime lacks and never trains with
         # Too few rows to split (a leaf needs min_child_samples): no trees, just the average change
         self.m = (lgb.LGBMRegressor(**LGB_PARAMS).fit(train[features], train["target"])
                   if len(train) >= 2 * LGB_PARAMS["min_child_samples"] else None)
