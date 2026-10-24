@@ -30,7 +30,6 @@ onMounted(() => {
 
 <template>
   <FlowShell
-    wide
     next="signal"
     back="skills"
     :next-disabled="!selected || loading"
