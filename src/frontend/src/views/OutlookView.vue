@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import Bubble from '../components/Bubble.vue';
 import Icon from '../components/Icon.vue';
+import RegimeExplainer from '../components/RegimeExplainer.vue';
 import {
   fetchAccuracy, fetchOutlook, fetchTargets, type MethodScore, type OutlookRow, type TargetSummary, type UnitAccuracy,
 } from '../api/outlook';
@@ -18,6 +19,10 @@ interface Card {
   key?: (unit: string) => string;
   defaultUnit: string;
   pickerLabel?: string;
+  /** Plural of pickerLabel, for "all sectors" etc. */
+  plural?: string;
+  /** What one series is, in words, for the selected unit's name. */
+  series?: (name: string) => string;
   minutes?: boolean;
 }
 
@@ -31,21 +36,25 @@ const cards: Card[] = [
   {
     target: 'ai_mention_share', eyebrow: 'Skill demand', title: 'How many job ads ask for AI?',
     blurb: 'Share of new job ads that mention AI. Source: Indeed Hiring Lab.',
-    names: COUNTRIES, defaultUnit: 'US', pickerLabel: 'Country',
+    names: COUNTRIES, defaultUnit: 'US', pickerLabel: 'Country', plural: 'countries',
+    series: (n) => `the share of job ads in ${n} that mention AI, month by month`,
   },
   {
     target: 'btos_ai_use_rate', eyebrow: 'Business adoption', title: 'How many US businesses use AI?',
     blurb: 'Share of US businesses that used AI in the last two weeks. Source: US Census Bureau survey.',
-    names: SECTORS, key: (u) => u.split('|')[0], defaultUnit: 'US|new', pickerLabel: 'Sector',
+    names: SECTORS, key: (u) => u.split('|')[0], defaultUnit: 'US|new', pickerLabel: 'Sector', plural: 'sectors',
+    series: (n) => `the share of businesses in “${n}” using AI, every two weeks`,
   },
   {
     target: 'worker_genai_use_rate', eyebrow: 'Worker adoption', title: 'How many workers use AI on the job?',
     blurb: 'Share of employed US adults using generative AI for their job. Source: Real-Time Population Survey.',
-    names: OCCUPATIONS, defaultUnit: '00', pickerLabel: 'Occupation group',
+    names: OCCUPATIONS, defaultUnit: '00', pickerLabel: 'Occupation group', plural: 'occupation groups',
+    series: (n) => `the share of workers in “${n}” using AI on the job, quarter by quarter`,
   },
 ];
 
 const status = ref<'loading' | 'done' | 'error'>('loading');
+const explain = ref(false);
 const summaries = ref<Record<string, TargetSummary>>({});
 const rows = ref<Record<string, OutlookRow[]>>({});
 const picked = reactive<Record<string, string>>(Object.fromEntries(cards.map((c) => [c.target, c.defaultUnit])));
@@ -62,7 +71,10 @@ async function load() {
     status.value = 'error';
   }
 }
-onMounted(load);
+onMounted(async () => {
+  await load();
+  if (new URLSearchParams(location.search).has('explain')) explain.value = true;  // link straight to the explanation
+});
 
 const shown = computed(() => cards.filter((c) => rows.value[c.target]?.length));
 
@@ -274,14 +286,14 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
                     <p v-if="a.n_test_points < 5" class="few">
                       Only {{ a.n_test_points }} test points here, so this comparison can easily be luck.
                     </p>
-                    <details class="methods">
-                      <summary>All methods tested for {{ unitName(c, r.unit) }}</summary>
+                    <div class="methods">
+                      <p class="methods-h">Every method tested for {{ unitName(c, r.unit) }}</p>
                       <table>
                         <thead>
                           <tr>
                             <th scope="col">Method</th><th scope="col">Accuracy</th><th scope="col">Avg error</th>
                             <th scope="col">vs “no change”</th>
-                            <th v-if="c.pickerLabel" scope="col">Accuracy, all {{ c.pickerLabel.toLowerCase() }}s</th>
+                            <th v-if="c.pickerLabel" scope="col">Accuracy, all {{ c.plural }}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -300,11 +312,12 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
                         Avg error is {{ c.minutes ? 'a factor (×1.30 = typically 30% too high or too low)' : 'in percentage points' }};
                         a negative “vs no change” means a smaller error than “no change”.
                         <template v-if="c.pickerLabel">
-                          The last column averages over every {{ c.pickerLabel.toLowerCase() }} in this card. That pooled score
-                          is what chose the method shown, so it can differ from the best method for this one.
+                          A series is one line of numbers over time; here, {{ c.series?.(unitName(c, r.unit)) }}.
+                          The last column averages a method over every series in this card ({{ units(c).length }} {{ c.plural }}).
+                          That pooled score chose the method shown, so it can differ from the best method for this one.
                         </template>
                       </p>
-                    </details>
+                    </div>
                   </template>
                 </div>
 
@@ -319,6 +332,9 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
                     <span v-for="g in REGIMES" v-show="(r[g.key] ?? 0) > 0" :key="g.key" class="seg"
                           :style="{ flexGrow: r[g.key] ?? 0, background: g.color }" :title="`${g.label}: ${pct(r[g.key])}`" />
                   </div>
+                  <button v-if="c.minutes" type="button" class="btn btn-secondary explain" @click="explain = true">
+                    <Icon name="search" :size="16" /> How is this worked out?
+                  </button>
                   <ul class="legend">
                     <li v-for="g in REGIMES" :key="g.key"><span class="sw" :style="{ background: g.color }" />{{ g.label }} <b>{{ pct(r[g.key]) }}</b></li>
                   </ul>
@@ -333,6 +349,8 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
               <ul><li v-for="w in warnings(rs)" :key="w">{{ w }}</li></ul>
             </details>
             <p v-if="asOf(c)" class="asof">Data as of {{ asOf(c) }}</p>
+            <RegimeExplainer v-if="c.minutes && selectedUnit(c)" v-model:open="explain" :target="c.target"
+                             :unit="selectedUnit(c)!" :method-names="METHODS" />
           </template>
         </section>
       </div>
@@ -345,9 +363,9 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
 .eyebrow, .kicker { font-size: 11px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--orange); }
 h1 { margin: 6px 0 14px; font-size: 28px; line-height: 1.15; }
 .intro { margin-bottom: 22px; max-width: 720px; }
-.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
 .card-skel { height: 420px; }
-.outlook { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+.outlook { padding: 24px 28px; display: flex; flex-direction: column; gap: 10px; }
 h2 { font-size: 19px; line-height: 1.25; }
 .blurb { font-size: 13px; color: var(--muted); line-height: 1.45; }
 .picker { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 800; color: var(--muted); }
@@ -375,7 +393,7 @@ h2 { font-size: 19px; line-height: 1.25; }
 .verdict.same { background: #f0efec; color: var(--ink); }
 .few { font-size: 12px; font-weight: 700; color: var(--amber-ink); }
 .methods { font-size: 12px; }
-.methods summary { cursor: pointer; font-weight: 800; color: var(--ink); }
+.methods-h { font-weight: 800; color: var(--ink); font-size: 12.5px; }
 .methods table { width: 100%; border-collapse: collapse; margin-top: 8px; font-variant-numeric: tabular-nums; }
 .methods th, .methods td { text-align: right; padding: 5px 6px; border-bottom: 1px solid var(--line); }
 .methods th:first-child, .methods td:first-child { text-align: left; }
@@ -387,6 +405,7 @@ h2 { font-size: 19px; line-height: 1.25; }
 .regime { margin-top: 4px; display: flex; flex-direction: column; gap: 6px; }
 .regime-q { font-size: 13px; font-weight: 800; }
 .regime-help { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+.explain { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; font-size: 13px; }
 .stack { display: flex; gap: 2px; height: 12px; }
 .seg { border-radius: 4px; min-width: 4px; }
 .legend { list-style: none; display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 0; margin: 0; font-size: 12px; font-weight: 700; color: var(--muted); }

@@ -156,6 +156,11 @@ def forecast(spec: TargetSpec, snap: F.Snapshot, sel: pd.DataFrame, bt: pd.DataF
                  else np.full((len(rows_now), 3), np.nan))
             for i, r in enumerate(E.REGIMES):
                 out[-1][f"p_{r}"] = p[:, i]
+            # The ingredients, on the modelling scale, so the probabilities can be explained and re-derived
+            out[-1]["regime_past_change"] = np.nan_to_num(rows_now["trend"].to_numpy()) * h / spec.trend_steps
+            out[-1]["regime_band_low"], out[-1]["regime_band_high"] = lo_b, hi_b
+            out[-1]["regime_pred_change"] = base - rows_now["lvl"].to_numpy()
+            out[-1]["regime_n_residuals"] = len(resid)
             out[-1]["regime_rule"] = (f"rate over next {h} vs trailing rate over {spec.trend_steps} periods; "
                                       f"tolerance +-{E.REGIME_TOL:.0%} (min {E.REGIME_TOL_FLOOR} per period); "
                                       f"from {len(resid)} out-of-sample residuals (few: tails are coarse)")

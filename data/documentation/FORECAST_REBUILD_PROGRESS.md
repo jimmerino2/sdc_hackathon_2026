@@ -121,3 +121,8 @@ METR's own repo (METR/eval-analysis-public) only has raw runs + 24 commits: not 
 - 2026-10-24: per-unit test results on the AI outlook page (user asked to see accuracy and beats-no-change per
   country/sector/group, not one pooled chip): GET /outlook/{target}/accuracy?unit=, OutlookView shows result line,
   verdict, few-points warning and an all-methods table. Pooled status chip removed. 67 tests pass.
+- 2026-10-24: AI outlook page: accuracy % (smaller/larger of forecast and actual, averaged) per method and unit;
+  method tables always visible; one-column full-width cards; capability "How is this worked out?" dialog
+  (components/RegimeExplainer.vue, GET /outlook/{target}/regime?unit=, ?explain=1 opens it); capability forecasts
+  now store regime_past_change / band / pred_change / n_residuals. NOTE: user runs their own backend on :8000
+  (`--app-dir src/backend`); test on other ports, never kill it.

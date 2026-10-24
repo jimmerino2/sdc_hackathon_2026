@@ -56,3 +56,15 @@ def test_accuracy_is_per_unit_and_includes_no_change():
                 assert a["beats_naive"] is None
             else:
                 assert a["beats_naive"] == (a["served_mae"] < a["naive_mae"])
+
+
+@pytest.mark.skipif("frontier_time_horizon" not in service.targets(), reason="no capability run yet")
+def test_regime_explanation_reproduces_the_published_chances():
+    for r in client.get("/outlook/frontier_time_horizon/regime", params={"unit": "v1.1"}).json():
+        g = [o["growth"] for o in r["possible_outcomes"]]
+        assert len(g) == r["n"] > 0
+        faster = sum(x > r["band_high_growth"] for x in g) / len(g)
+        slower = sum(x < r["band_low_growth"] for x in g) / len(g)
+        assert abs(faster - r["p_faster"]) < 1e-9 and abs(slower - r["p_slower"]) < 1e-9  # counts = published %
+        assert r["band_low_growth"] < r["same_pace_growth"] < r["band_high_growth"]
+        assert sum(m["served"] for m in r["methods"]) == 1

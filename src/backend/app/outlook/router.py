@@ -41,3 +41,11 @@ def get_accuracy(target: str, unit: str = Query(..., description="e.g. US, 62|ne
     published forecast beat 'no change' there."""
     _check(target)
     return service.accuracy(target, unit)
+
+
+# Example: http://127.0.0.1:8000/outlook/frontier_time_horizon/regime?unit=v1.1
+@router.get("/{target}/regime")
+def get_regime(target: str, unit: str = Query(..., description="e.g. v1.1")):
+    """How the faster / same pace / slower chances were worked out, step by step (capability only)."""
+    _check(target)
+    return service.regime_explained(target, unit)

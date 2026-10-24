@@ -110,3 +110,46 @@ def accuracy(target: str, unit: str) -> list[dict]:
                     "beats_naive": (served["mae"] < naive["mae"]) if served and naive and e["model"] != "naive" else None,
                     "methods": rows, "all_units": score(b), "run_id": e["run_id"]})
     return out
+
+
+def regime_explained(target: str, unit: str) -> list[dict]:
+    """Every ingredient of the P(faster / same pace / slower) bars, per published horizon, in plain units.
+
+    Changes are growth factors over the horizon (x2.0 = doubled). The probabilities are the share of 'possible
+    outcomes' in each band, where each possible outcome = today's forecast change + one past error of the method."""
+    from forecasting import evaluation as E  # thresholds used by the pipeline itself
+
+    spec = all_specs()[target]
+    if not spec.regimes:
+        return []
+    f = _csv(OUTPUT_DIR / target / "latest_forecast.csv")
+    f = f[f["unit"].str.lower() == unit.lower()]
+    out = []
+    for r in f.sort_values("h").to_dict("records"):
+        h, run_id, model = int(r["h"]), r["run_id"], r["model"]
+        b = _csv(OUTPUT_DIR / target / "runs" / run_id / "backtest.csv.gz")
+        res = b[(b["feature_set"] == "all") & (b["candidate"] == model) & (b["h"] == h)
+                & b["role"].isin(["selection", "holdout"]) & b["resid"].notna()]
+        outcomes = r["regime_pred_change"] + res["resid"].to_numpy()
+        lo, hi = r["regime_band_low"], r["regime_band_high"]
+        ev = _json(OUTPUT_DIR / target / "runs" / run_id / "evaluation.json")
+        methods = [{"method": s["candidate"], "chosen": bool(s["chosen"]), "served": s["candidate"] == model,
+                    "selection_typical_miss": 2 ** s["selection_mae"] if s["selection_mae"] is not None else None,
+                    "holdout_typical_miss": 2 ** s["holdout_mae"] if s["holdout_mae"] is not None else None}
+                   for s in ev["selection"] if s["h"] == h]
+        to_x = lambda v: float(2 ** v)  # noqa: E731 (doublings -> growth factor)
+        out.append({
+            "h": h, "unit": r["unit"], "period_unit": r["period_unit"], "model": model,
+            "last_observed": r["last_observed"], "last_observed_period": r["last_observed_period"],
+            "past_growth": to_x(r["regime_past_change"] / h * spec.trend_steps),  # over the past 12 months
+            "same_pace_growth": to_x(r["regime_past_change"]),  # that pace, over h months
+            "band_low_growth": to_x(lo), "band_high_growth": to_x(hi),
+            "tolerance_pct": E.REGIME_TOL * 100, "forecast_growth": to_x(r["regime_pred_change"]),
+            "forecast": r["forecast"],
+            "possible_outcomes": [{"growth": to_x(o), "origin": str(t)[:10], "role": role}
+                                  for o, t, role in zip(outcomes, res["origin"], res["role"])],
+            "p_faster": r["p_acceleration"], "p_same": r["p_stable"], "p_slower": r["p_slowdown"],
+            "n_faster": int((outcomes > hi).sum()), "n_slower": int((outcomes < lo).sum()), "n": int(len(outcomes)),
+            "methods": methods,
+        })
+    return out

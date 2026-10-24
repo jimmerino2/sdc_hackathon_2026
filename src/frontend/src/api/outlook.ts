@@ -97,5 +97,43 @@ export interface UnitAccuracy {
   run_id: string;
 }
 
+/** Every ingredient of the faster / same pace / slower chances for one horizon (growth factors: 2 = doubled). */
+export interface RegimeExplained {
+  h: number;
+  unit: string;
+  period_unit: string;
+  model: string;
+  last_observed: number;
+  last_observed_period: string;
+  /** Growth over the past 12 months. */
+  past_growth: number;
+  /** The same pace, over this horizon. */
+  same_pace_growth: number;
+  band_low_growth: number;
+  band_high_growth: number;
+  tolerance_pct: number;
+  forecast_growth: number;
+  forecast: number;
+  /** Today's forecast change plus one past error of the method, each. */
+  possible_outcomes: { growth: number; origin: string; role: string }[];
+  p_faster: number;
+  p_same: number;
+  p_slower: number;
+  n_faster: number;
+  n_slower: number;
+  n: number;
+  methods: {
+    method: string;
+    chosen: boolean;
+    served: boolean;
+    /** Typical miss as a factor (2 = typically twice or half the actual). */
+    selection_typical_miss: number | null;
+    holdout_typical_miss: number | null;
+  }[];
+}
+
+export const fetchRegime = (target: string, unit: string) =>
+  get<RegimeExplained[]>(`/outlook/${encodeURIComponent(target)}/regime?unit=${encodeURIComponent(unit)}`);
+
 export const fetchAccuracy = (target: string, unit: string) =>
   get<UnitAccuracy[]>(`/outlook/${encodeURIComponent(target)}/accuracy?unit=${encodeURIComponent(unit)}`);
