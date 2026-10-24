@@ -35,9 +35,9 @@ export interface Persona {
 }
 
 export const whoOptions = [
-  { title: 'I’m still studying IT or CS', sub: 'Undergrad, any year', icon: 'grad' },
-  { title: 'I graduated and I’m job hunting', sub: 'Fresh grad, 0–2 years', icon: 'target' },
-  { title: 'I already work in tech', sub: 'Engineer, analyst, IT pro', icon: 'briefcase' },
+  { title: 'I’m still studying IT or CS', short: 'Studying', sub: 'Undergrad, any year', icon: 'grad' },
+  { title: 'I graduated and I’m job hunting', short: 'Fresh Graduate', sub: 'Fresh grad, 0–2 years', icon: 'target' },
+  { title: 'I already work in tech', short: 'Employed', sub: 'Engineer, analyst, IT pro', icon: 'briefcase' },
 ] as const;
 
 export const levels = ['New', 'Basic', 'Good', 'Strong'] as const;

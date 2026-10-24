@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive } from 'vue';
 import Mascot from './Mascot.vue';
+import Flower, { type FlowerColors } from './Flower.vue';
 import Icon from './Icon.vue';
 import { bee, BEES, beeInfo, type BeeName } from '../bee';
 
@@ -9,7 +10,7 @@ defineProps<{ columns?: number; /** Names only, no taglines (onboarding). */ pla
 const emit = defineEmits<{ pick: [bee: BeeName] }>();
 
 /** Petal, heart and leaf colours per bee: Libbee and Phoebee pink, Tobee and Barnabee blue, four different shades. */
-const FLOWER: Record<BeeName, { petal: string; edge: string; core: string }> = {
+const FLOWER: Record<BeeName, FlowerColors> = {
   Libbee: { petal: '#ffb3d1', edge: '#f27fae', core: '#ffd23f' },
   Tobee: { petal: '#7cc6ff', edge: '#3f9be8', core: '#fff1a8' },
   Barnabee: { petal: '#5b7fe0', edge: '#3a55b8', core: '#ffc83d' },
@@ -22,15 +23,7 @@ const landed = reactive<Record<string, boolean>>({});
   <div class="grid" :style="{ gridTemplateColumns: `repeat(${columns ?? 2}, 1fr)` }">
     <button v-for="b in BEES" :key="b" type="button" class="option bee" :class="{ selected: bee === b }" :aria-pressed="bee === b" @click="emit('pick', b)">
       <div v-if="flowers" class="stage" :class="{ landed: landed[b] }" :style="{ '--d': BEES.indexOf(b) * 0.35 + 's', '--side': BEES.indexOf(b) % 2 ? 1 : -1 }">
-        <svg class="flower" viewBox="0 0 120 120" width="140" height="140" aria-hidden="true">
-          <path d="M60 58 C60 82 58 100 60 120" stroke="#4fa86a" stroke-width="5" fill="none" stroke-linecap="round" />
-          <path d="M59 100 C42 98 34 88 32 80 C48 80 57 88 59 100Z" fill="#6cc283" />
-          <path d="M61 92 C78 90 86 80 88 72 C72 72 63 80 61 92Z" fill="#6cc283" />
-          <g class="head">
-            <ellipse v-for="n in 8" :key="n" cx="60" cy="30" rx="12" ry="22" :fill="FLOWER[b].petal" :stroke="FLOWER[b].edge" stroke-width="2" :transform="`rotate(${(n - 1) * 45} 60 52)`" />
-            <circle cx="60" cy="52" r="13" :fill="FLOWER[b].core" :stroke="FLOWER[b].edge" stroke-width="2" />
-          </g>
-        </svg>
+        <Flower :colors="FLOWER[b]" />
         <Mascot class="fly" :size="84" :bee="b" :wings="!landed[b]" :mood="landed[b] ? (bee === b ? 'happy' : 'idle') : 'surprised'" :look="false" @animationend.self="landed[b] = true" />
       </div>
       <Mascot v-else :size="84" :bee="b" :mood="bee === b ? 'happy' : 'idle'" :look="false" class="m" />
