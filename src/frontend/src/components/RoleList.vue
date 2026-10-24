@@ -50,6 +50,8 @@ const by = computed(() => {
   const [y, m] = o.forecast_for.split('-');
   return `by ${months[Number(m) - 1]} ${y}`;
 });
+
+const demandTooltip = 'Forecasted hiring demand: (+) means job openings are growing, (−) means openings are shrinking.';
 </script>
 
 <template>
@@ -131,7 +133,12 @@ const by = computed(() => {
             </span>
           </span>
         </span>
-        <span class="trend" :class="trendClass[outlook(j)?.trend ?? 'stable']">
+        <span
+          class="trend"
+          :class="trendClass[outlook(j)?.trend ?? 'stable']"
+          :title="demandTooltip"
+          :aria-label="demandTooltip"
+        >
           <Icon :name="trendIcon[outlook(j)?.trend ?? 'stable']" :size="18" :stroke="2.6" />
           <b>{{ change(j) }}</b>
         </span>
