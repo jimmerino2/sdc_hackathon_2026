@@ -96,12 +96,41 @@ function period(p: string): string {
   return q ? `Q${q[2]} ${q[1]}` : p;
 }
 
-const STATUS: Record<OutlookStatus, { label: string; tone: 'good' | 'neutral' | 'caution'; icon: string }> = {
-  validated: { label: 'Beat “no change” in testing', tone: 'good', icon: 'check' },
-  baseline: { label: 'No model beat “no change”', tone: 'neutral', icon: 'scale' },
-  not_demonstrably_better: { label: 'Not shown to beat “no change”', tone: 'caution', icon: 'shield-alert' },
-  baseline_retained: { label: 'Model failed its test: showing “no change”', tone: 'caution', icon: 'shield-alert' },
+/** Plain-language result of the out-of-sample test. "No change" winning is a normal outcome, not an error. */
+const STATUS: Record<OutlookStatus, { label: string; tone: 'good' | 'neutral'; icon: string; hint: string }> = {
+  validated: {
+    label: 'Beat “no change” in testing', tone: 'good', icon: 'check',
+    hint: 'On recent months it hadn’t seen, this method was clearly more accurate than assuming nothing changes.',
+  },
+  baseline: {
+    label: 'No method beat “no change”', tone: 'neutral', icon: 'scale',
+    hint: 'On recent months, assuming nothing changes was as accurate as any method we tried, so that is what’s shown.',
+  },
+  not_demonstrably_better: {
+    label: 'About as accurate as “no change”', tone: 'neutral', icon: 'scale',
+    hint: 'This method did about as well as assuming nothing changes on recent months, not clearly better.',
+  },
+  baseline_retained: {
+    label: 'No method reliably beat “no change”', tone: 'neutral', icon: 'scale',
+    hint: 'The best method from earlier tests didn’t beat “no change” on recent months, so “no change” is shown instead.',
+  },
 };
+
+/** The pipeline's technical warnings, said plainly. Unknown ones are shown as they are. */
+function friendly(w: string): string | null {
+  if (w.startsWith('point forecast outside')) return null; // already said on the row itself
+  if (w.startsWith('chosen model')) return STATUS.baseline_retained.hint;
+  if (w.startsWith('point-in-time basis: reconstructed') || w.startsWith('point-in-time basis: mixed'))
+    return 'Part of the test history was rebuilt from later data, so the test scores are approximate.';
+  if (w.startsWith('point-in-time basis: current_only'))
+    return 'The test used today’s data rather than what was published at the time, so its scores may be optimistic.';
+  if (w === 'insufficient history') return 'There isn’t much history yet, so treat this as a rough guide.';
+  if (w === 'stale target data') return 'The source hasn’t published new data recently.';
+  if (w.startsWith('short history')) return 'Only 9 survey readings exist so far, so this is a rough guide.';
+  if (w.startsWith('few real vintages'))
+    return 'Most of the test history for this measure was rebuilt from later releases, so test scores are approximate.';
+  return w;
+}
 
 /** One shared scale per card so the horizons compare at a glance; log for time horizons (they double). */
 function scale(c: Card, rs: OutlookRow[]) {
@@ -116,7 +145,7 @@ function scale(c: Card, rs: OutlookRow[]) {
 }
 
 function warnings(rs: OutlookRow[]): string[] {
-  return [...new Set(rs.flatMap((r) => r.warnings))];
+  return [...new Set(rs.flatMap((r) => r.warnings).map(friendly).filter((w): w is string => !!w))];
 }
 function asOf(c: Card): string | null {
   const s = summaries.value[c.target];
@@ -184,7 +213,7 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
                 <p v-if="r.low != null && r.high != null && (r.forecast < r.low || r.forecast > r.high)" class="skew">
                   Forecasts like this have always come in too {{ r.forecast < r.low ? 'low' : 'high' }}, so the range is the better guide here.
                 </p>
-                <span class="chip" :class="STATUS[r.status].tone">
+                <span class="chip" :class="STATUS[r.status].tone" :title="STATUS[r.status].hint">
                   <Icon :name="STATUS[r.status].icon" :size="14" /> {{ STATUS[r.status].label }}
                 </span>
 
@@ -246,7 +275,6 @@ h2 { font-size: 19px; line-height: 1.25; }
 .chip { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; }
 .chip.good { background: #e7f4ea; color: #1e5e30; }
 .chip.neutral { background: #f0efec; color: var(--ink); }
-.chip.caution { background: var(--cream); color: var(--amber-ink); }
 .regime { margin-top: 4px; display: flex; flex-direction: column; gap: 6px; }
 .regime-q { font-size: 13px; font-weight: 800; }
 .stack { display: flex; gap: 2px; height: 12px; }
