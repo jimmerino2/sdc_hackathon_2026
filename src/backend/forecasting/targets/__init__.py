@@ -40,6 +40,7 @@ class TargetSpec:
     value_unit: str = "percent"  # unit of forecast values
     regimes: bool = False  # also report P(acceleration / stable / slowdown) per forecast (capability targets)
     errors_on_model_scale: bool = False  # score errors on the modelling scale (e.g. doublings for exponential growth)
+    engine: Callable | None = None  # target-specific forecaster run after the generic backtest (capability_engine.run)
 
     @property
     def error_unit(self) -> str:

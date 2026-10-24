@@ -114,47 +114,70 @@ def accuracy(target: str, unit: str) -> list[dict]:
     return out
 
 
+def _engine_file(target: str) -> Path | None:
+    """engine.json of the run behind the served forecast (capability only)."""
+    f = _csv(OUTPUT_DIR / target / "latest_forecast.csv")
+    runs = sorted(set(f["run_id"]))
+    p = OUTPUT_DIR / target / "runs" / runs[-1] / "engine.json" if runs else None
+    return p if p is not None and p.exists() else None
+
+
+def engine(target: str) -> dict:
+    """The capability engine's chart series (observed, bridged, frontier, forecast fan), per-horizon pace detail,
+    backtest scores and diagnostics, for the run that is served. Empty for targets without an engine."""
+    p = _engine_file(target)
+    return _json(p) if p else {}
+
+
 def regime_explained(target: str, unit: str) -> list[dict]:
     """Every ingredient of the P(faster / same pace / slower) bars, per published horizon, in plain units.
 
-    Changes are growth factors over the horizon (x2.0 = doubled). The probabilities are the share of 'possible
-    outcomes' in each band, where each possible outcome = today's forecast change + one past error of the method."""
-    from forecasting import evaluation as E  # thresholds used by the pipeline itself
-
+    Paces are in doublings per year. The chances are the shares of simulated trajectories whose pace over the
+    horizon is above, within or below the band around the past 12 months' pace (capability_engine)."""
     spec = all_specs()[target]
-    if not spec.regimes:
+    eng = engine(target)
+    u = eng.get("units", {}).get(unit) or next((v for k, v in eng.get("units", {}).items() if k.lower() == unit.lower()), None)
+    if not spec.regimes or not u:
         return []
     f = _csv(OUTPUT_DIR / target / "latest_forecast.csv")
     f = f[f["unit"].str.lower() == unit.lower()]
+    ev = _json(OUTPUT_DIR / target / "runs" / f["run_id"].iloc[0] / "evaluation.json") if len(f) else {}
+    bt = eng["backtest"]
     out = []
-    for r in f.sort_values("h").to_dict("records"):
-        h, run_id, model = int(r["h"]), r["run_id"], r["model"]
-        b = _csv(OUTPUT_DIR / target / "runs" / run_id / "backtest.csv.gz")
-        res = b[(b["feature_set"] == "all") & (b["candidate"] == model) & (b["h"] == h)
-                & b["role"].isin(["selection", "holdout"]) & b["resid"].notna()]
-        outcomes = r["regime_pred_change"] + res["resid"].to_numpy()
-        lo, hi = r["regime_band_low"], r["regime_band_high"]
-        ev = _json(OUTPUT_DIR / target / "runs" / run_id / "evaluation.json")
-        methods = [{"method": s["candidate"], "chosen": bool(s["chosen"]), "served": s["candidate"] == model,
-                    "selection_typical_miss": 2 ** s["selection_mae"] if s["selection_mae"] is not None else None,
-                    "holdout_typical_miss": 2 ** s["holdout_mae"] if s["holdout_mae"] is not None else None}
-                   for s in ev["selection"] if s["h"] == h]
-        to_x = lambda v: float(2 ** v)  # noqa: E731 (doublings -> growth factor)
+    for x in u["horizons"]:
+        h = x["h"]
+        r = f[f["h"] == h].to_dict("records")
+        if not r:
+            continue
+        r = r[0]
+        pace = lambda role, c="ensemble": next((p for p in bt["pace"] if p["h"] == h and p["role"] == role  # noqa: E731
+                                                and p["candidate"] == c), None)
+        point = lambda role, c: next((p for p in bt["point"] if p["h"] == h and p["role"] == role  # noqa: E731
+                                      and p["candidate"] == c), {})
+        methods = [{"method": c, "served": c == r["model"], "weight": x["weights"].get(c),
+                    "selection_typical_miss": point("selection", c).get("typical_factor"),
+                    "holdout_typical_miss": point("holdout", c).get("typical_factor"),
+                    "holdout_coverage_80": point("holdout", c).get("coverage_80"),
+                    "n_holdout": point("holdout", c).get("n")}
+                   for c in ("ensemble", "damped_trend", "robust_local_trend", "jump_process", "drift", "naive")]
         out.append({
-            "h": h, "unit": r["unit"], "period_unit": r["period_unit"], "model": model,
+            "h": h, "unit": r["unit"], "period_unit": r["period_unit"], "model": r["model"], "status": r["status"],
             "last_observed": r["last_observed"], "last_observed_period": r["last_observed_period"],
-            "past_growth": to_x(r["regime_past_change"] / h * spec.trend_steps),  # over the past 12 months
-            "same_pace_growth": to_x(r["regime_past_change"]),  # that pace, over h months
-            "band_low_growth": to_x(lo), "band_high_growth": to_x(hi),
-            "tolerance_pct": E.REGIME_TOL * 100, "forecast_growth": to_x(r["regime_pred_change"]),
-            "forecast": r["forecast"],
-            "possible_outcomes": [{"growth": to_x(o), "origin": str(t)[:10], "role": role}
-                                  for o, t, role in zip(outcomes, res["origin"], res["role"])],
+            "current_model": u["current_model"], "current_saturated": u["current_saturated"],
+            "forecast": r["forecast"], "low": r["low"], "high": r["high"], "target_period": r["target_period"],
+            "pace_basis": u["pace_basis"], "hist_pace": x["hist_pace"], "hist_pace_range": x["hist_pace_q10_q90"],
+            "tolerance": x["tolerance"], "same_band": x["same_band"],
+            "future_pace_median": x["future_pace_median"], "future_pace_range": x["future_pace_q10_q90"],
+            "pace_histogram": x["pace_histogram"], "n_sims": eng["config"]["n_sims"],
             "p_faster": r["p_acceleration"], "p_same": r["p_stable"], "p_slower": r["p_slowdown"],
-            "n_faster": int((outcomes > hi).sum()), "n_slower": int((outcomes < lo).sum()), "n": int(len(outcomes)),
+            "p_simulated": x["p_simulated"], "base_rate": x["base_rate"], "prior_assisted": x["prior_assisted"],
+            "shrink": x["shrink"], "p_no_new_record": x.get("p_no_new_record"),
+            "components": {c: {**v, "weight": x["weights"].get(c)} for c, v in x["components"].items()},
             "methods": methods,
-            "reliability": next(({k: x.get(k) for k in ("n", "brier_model", "brier_climatology", "brier_uniform")}
-                                 for x in (ev.get("regime_scores") or []) if x["h"] == h), None),
+            "reliability": next(({k: s.get(k) for k in ("n", "brier_model", "brier_climatology", "brier_uniform")}
+                                 for s in (ev.get("regime_scores") or []) if s["h"] == h), None),
+            "pace_scores": {"selection": pace("selection"), "holdout": pace("holdout")},
+            "pace_rule": bt["shrink"].get(str(h)),
         })
     return out
 

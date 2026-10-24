@@ -313,6 +313,7 @@ There is one folder per target: `ai_mention_share`, `btos_ai_use_rate`, `worker_
 | `runs/<run_id>/backtest.csv.gz` | origin × horizon × candidate × feature set × unit | Every out-of-sample prediction with `actual`, `error` (pp for shares, doublings for time horizons), `resid` (modelling scale), `role` (`selection` / `holdout` / `purged`), `vintage_kind` and `segment` |
 | `runs/<run_id>/evaluation.json` | run                                               | Split, selection table, holdout scores, interval coverage, ablations, breakdown by role / vintage kind / segment, and source health |
 | `runs/<run_id>/forecast.csv`    | unit × horizon                                    | That run's forecast                                                                            |
+| `runs/<run_id>/engine.json`     | run (capability only)                             | The capability engine's detail: measured and bridged models, monthly frontier, forecast fan (10/25/50/75/90% per month), per-horizon pace chances and their ingredients, backtest scores against naive and drift, config, data checks, limitations. Served by `GET /outlook/frontier_time_horizon/engine` |
 | `forecast_log.csv`              | unit × horizon × run                              | Every forecast ever issued (append only)                                                       |
 | `latest_forecast.csv`           | unit × horizon                                    | The forecast of the promoted run per horizon: what the app should show. A horizon with no promoted model is absent |
 | `model_registry.json`           | horizon                                           | The promoted model per horizon, and every attempt with its acceptance verdict                  |
@@ -330,9 +331,13 @@ Forecast columns:
 - `holdout_mae`, `naive_holdout_mae`: in pp for shares, in doublings for time horizons.
 - `vintage`, `data_as_of`: the data the forecast was cut from, and when it was available.
 - `warnings`: e.g. short history, stale data, point-in-time basis `current_only` / `mixed`, baseline retained, or a one-sided range.
-- Capability only:
-  - `p_acceleration`, `p_stable`, `p_slowdown`: these sum to 1;
-  - `regime_rule`: the rule, its tolerance, and the number of residuals behind the probabilities.
+- Capability only (from `capability_engine.py`; `forecast` is the median and `low` / `high` the 80% predictive interval of 5,000 simulated trajectories, `model` = `ensemble`):
+  - `p_acceleration`, `p_stable`, `p_slowdown`: P(faster / about the same / slower than the past 12 months' pace), the shares of those trajectories; they sum to 1;
+  - `regime_past_change`, `regime_band_low`, `regime_band_high`, `regime_pred_change`: the past pace, the "same" band and the median change, as log₂ changes over h months;
+  - `regime_n_residuals`: the number of trajectories (the column name predates the engine);
+  - `pace_basis`: `observed_12m`, `bridged_12m`, `trend_prior` or `none` (how the past pace was obtained);
+  - `pace_prior_assisted`: true when the chances were partly shrunk to the base rate (no skill in the selection period);
+  - `regime_rule`: the rule in words.
 
 Older rows were converted to these column names, so the logs keep one schema:
 

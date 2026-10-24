@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import Bubble from '../components/Bubble.vue';
+import CapabilityChart from '../components/CapabilityChart.vue';
+import CapabilityMethod from '../components/CapabilityMethod.vue';
 import Icon from '../components/Icon.vue';
 import RegimeExplainer from '../components/RegimeExplainer.vue';
 import SuccessCurves from '../components/SuccessCurves.vue';
 import {
-  fetchAccuracy, fetchOutlook, fetchRegime, fetchTargets, type RegimeExplained, type MethodScore, type OutlookRow, type TargetSummary, type UnitAccuracy,
+  fetchAccuracy, fetchEngine, fetchOutlook, fetchRegime, fetchTargets, type EngineDetail, type RegimeExplained, type MethodScore, type OutlookRow,
+  type TargetSummary, type UnitAccuracy,
 } from '../api/outlook';
 import { COUNTRIES, OCCUPATIONS, SECTORS } from '../data/outlookNames';
 
@@ -58,6 +61,10 @@ const status = ref<'loading' | 'done' | 'error'>('loading');
 const explain = ref(false);
 /** Capability: past-test reliability of the faster / same / slower chances, per horizon. */
 const regimes = ref<RegimeExplained[]>([]);
+/** Capability: chart series, backtest scores and diagnostics from the forecasting engine. */
+const engine = ref<EngineDetail | null>(null);
+const regimeOf = (h: number) => regimes.value.find((r) => r.h === h);
+const pace = (v: number) => `${v.toFixed(1)} doublings a year`;
 function reliability(h: number) {
   const x = regimes.value.find((r) => r.h === h)?.reliability;
   if (!x || x.brier_model == null || x.brier_uniform == null) return null;
@@ -82,7 +89,10 @@ async function load() {
 onMounted(async () => {
   await load();
   const cap = cards.find((c) => c.minutes);
-  if (cap && rows.value[cap.target]?.length) fetchRegime(cap.target, cap.defaultUnit).then((r) => { regimes.value = r; }).catch(() => {});
+  if (cap && rows.value[cap.target]?.length) {
+    fetchRegime(cap.target, cap.defaultUnit).then((r) => { regimes.value = r; }).catch(() => {});
+    fetchEngine(cap.target).then((e) => { engine.value = e?.units ? e : null; }).catch(() => {});
+  }
   if (new URLSearchParams(location.search).has('explain')) explain.value = true;  // link straight to the explanation
 });
 
@@ -133,6 +143,10 @@ const METHODS: Record<string, string> = {
   local_trend: 'Local trend model',
   ridge: 'Ridge regression',
   lightgbm: 'LightGBM',
+  ensemble: 'Ensemble of the three below',
+  damped_trend: 'Damped trend (simulated)',
+  robust_local_trend: 'Robust local trend',
+  jump_process: 'Jump model (new models arrive at random)',
 };
 const methodName = (m: string) => METHODS[m] ?? m;
 
@@ -190,6 +204,13 @@ function friendly(w: string): string | null {
   if (w.startsWith('short history')) return 'Only 9 survey readings exist so far, so this is a rough guide.';
   if (w.startsWith('few real vintages'))
     return 'Most of the test history for this measure was rebuilt from later releases, so test scores are approximate.';
+  if (w.startsWith('pace chances prior-assisted'))
+    return 'The faster / same / slower chances didn’t beat simple guesses in earlier tests, so they are partly pulled towards how often each happened before.';
+  if (w.startsWith('historical pace basis: bridged'))
+    return 'There is no full year of history on METR’s current task suite, so the past pace is estimated from its older suite.';
+  if (w.startsWith('historical pace basis')) return 'The past year’s pace is estimated from the trend, not measured directly.';
+  if (w.startsWith('current frontier is above'))
+    return 'The best model’s result is near the top of METR’s task suite, so its own measurement is wide (that is why the range starts below today’s value).';
   return w;
 }
 
@@ -257,6 +278,9 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
               <span class="now-val">{{ fmt(c, rs[0].last_observed) }}</span>
               <span class="now-lbl">{{ c.minutes ? 'of human work, ' : '' }}latest, {{ period(rs[0].last_observed_period) }}</span>
             </p>
+            <CapabilityChart v-if="c.minutes && engine && selectedUnit(c) && engine.units[selectedUnit(c)!]"
+                             :unit="engine.units[selectedUnit(c)!]" :saturation-hours="engine.config.saturation_hours"
+                             :lag-months="engine.data.measurement_lag_months" />
 
             <ul class="rows">
               <li v-for="r in rs" :key="r.h" class="row">
@@ -270,7 +294,7 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
                   <span class="tick now-tick" :style="{ left: `${s(r.last_observed)}%` }" aria-hidden="true" />
                   <span class="dot" :style="{ left: `${s(r.forecast)}%` }" aria-hidden="true" />
                 </div>
-                <p class="range">Likely range {{ fmt(c, r.low) }} to {{ fmt(c, r.high) }}</p>
+                <p class="range">{{ c.minutes ? '80% range' : 'Likely range' }} {{ fmt(c, r.low) }} to {{ fmt(c, r.high) }}</p>
                 <p v-if="r.low != null && r.high != null && (r.forecast < r.low || r.forecast > r.high)" class="skew">
                   Forecasts like this have always come in too {{ r.forecast < r.low ? 'low' : 'high' }}, so the range is the better guide here.
                 </p>
@@ -337,9 +361,13 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
 
                 <div v-if="r.p_acceleration != null" class="regime">
                   <p class="regime-q">Will task length grow faster {{ horizon(r) }} than over the past year?</p>
-                  <p class="regime-help">
-                    Compares the forecast growth with the pace of the last 12 months; within ±25% counts as “about the same”.
-                    Chances come from how wrong this method was in past tests.
+                  <p v-for="x in [regimeOf(r.h)]" :key="'help'" class="regime-help">
+                    <template v-if="x">
+                      Over the past 12 months the best model’s task length grew {{ pace(x.hist_pace) }}. Each of {{ x.n_sims.toLocaleString('en') }} simulated futures
+                      is counted as faster, about the same (within ±{{ x.tolerance.toFixed(2) }} doublings a year) or slower over the next {{ r.h }} months.
+                      <template v-if="x.prior_assisted">These chances are partly pulled towards past frequencies, because they didn’t beat simple guesses in earlier tests.</template>
+                    </template>
+                    <template v-else>Compares growth over the next {{ r.h }} months with the pace of the past 12 months.</template>
                   </p>
                   <p v-for="rel in [reliability(r.h)]" v-show="rel" :key="'rel'" class="rel" :class="rel?.better ? 'ok' : 'bad'">
                     In past tests these chances scored {{ rel?.model }} (lower is better) vs {{ rel?.uniform }} for a plain
@@ -361,6 +389,7 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
             </ul>
 
             <SuccessCurves v-if="c.minutes" />
+            <CapabilityMethod v-if="c.minutes && engine && selectedUnit(c)" :detail="engine" :unit="selectedUnit(c)!" />
             <p class="key"><span class="sw-dot" /> forecast <span class="sw-band" /> likely range (80%) <span class="sw-tick" /> latest</p>
 
             <details v-if="warnings(rs).length" class="notes">

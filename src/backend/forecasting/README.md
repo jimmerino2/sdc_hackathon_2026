@@ -46,6 +46,7 @@ These are served by the backend (`app/outlook/`), read-only, and new runs appear
 - `GET /outlook`: the targets with promoted horizons, status and source health;
 - `GET /outlook/{target}?unit=&h=`: the promoted forecasts, each with `status`, range and `warnings`;
 - `GET /outlook/{target}/evaluation`: the newest run's evaluation;
+- `GET /outlook/{target}/engine` (capability): chart series, forecast fan, pace detail, backtest scores and limitations of the served run;
 - `GET /outlook/{target}/accuracy?unit=`: for one country, sector or group, every method's average error on the held-back test data per published horizon, and whether the published forecast beat "no change" there.
 
 The older `/forecast` endpoints (sector LightGBM) are unchanged. The frontend's **AI outlook** tab (`src/frontend/src/views/OutlookView.vue`) reads `/outlook`.
@@ -75,5 +76,6 @@ Failure handling:
 | `targets/` | One module per target exposing a `TargetSpec`: load, origins (snapshots), truth, features, labels |
 | `features.py` | Shared snapshot, value scales (logit, log2), lag-feature and label code |
 | `models.py` | Baselines (naive, drift, damped drift, pooled mean), local linear trend (Kalman), ridge, and a LightGBM challenger |
+| `capability_engine.py` | AI capability only (`TargetSpec.engine`): measurement-aware data layers and v1.0→v1.1 bridge, damped / robust local / jump-process components simulated as trajectories, shrunk mixture ensemble, pace chances from the same trajectories, its own backtest scores and `engine.json` |
 | `evaluation.py` | Purged chronological split, rolling-origin backtest, metrics, selection, coverage, ablations, regime probabilities and Brier scores |
 | `run.py` | CLI, outputs, acceptance, baseline-retained gate and promotion |

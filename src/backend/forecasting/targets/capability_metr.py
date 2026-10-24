@@ -81,8 +81,13 @@ def _unit_rows(d: pd.DataFrame, vid: str, unit: str) -> pd.DataFrame:
 
 def snapshot(d: pd.DataFrame, act: dict, origin: pd.Timestamp, last: pd.Period | None = None) -> Snapshot:
     """Per unit: its latest active vintage published by `origin` (real), or its first active vintage cut at the
-    origin's month (reconstructed) if none was published yet and the unit is not retired by then."""
+    origin's month (reconstructed) if none was published yet and the unit is not retired by then.
+
+    extras["models"][unit]: the model-level rows behind that unit's frontier (same vintage, same cut), for the
+    capability engine. extras["legacy"][unit]: the older suite's rows in that same vintage and cut, for the bridge
+    between suites; only what the origin could see either way."""
     parts, kinds, vids = [], set(), []
+    models, legacy = {}, {}
     for unit, vs in act.items():
         if not vs:
             continue
@@ -104,9 +109,15 @@ def snapshot(d: pd.DataFrame, act: dict, origin: pd.Timestamp, last: pd.Period |
         f = frontier(rows, unit_last).assign(unit=unit)
         parts.append(f)
         vids.append(f"{unit}:{vid}")
+        models[unit] = rows.assign(available_at=when, snapshot_kind="real" if pub else "reconstructed")
+        older = [u for u in UNITS.values() if u < unit]
+        if older:
+            old = _unit_rows(d, vid, older[-1])
+            legacy[unit] = old[old["release_date"].dt.to_period("M") <= unit_last]
     vals = pd.concat(parts, ignore_index=True).dropna(subset=["value"])
     kind = kinds.pop() if len(kinds) == 1 else "mixed"
-    return Snapshot(origin, vals["period"].max(), kind, vals[["unit", "period", "value"]], ",".join(vids))
+    return Snapshot(origin, vals["period"].max(), kind, vals[["unit", "period", "value"]], ",".join(vids),
+                    extras={"models": models, "legacy": legacy})
 
 
 def load() -> dict:
@@ -161,9 +172,14 @@ def _ingest(pull: bool) -> None:
     success_curves.ingest(pull)  # display only: curves at other success rates
 
 
+def _engine(*args, **kwargs):
+    from .. import capability_engine  # it imports this module
+    return capability_engine.run(*args, **kwargs)
+
+
 SPEC = TargetSpec(
     id="frontier_time_horizon", horizons=(3, 6, 12), period_unit="month", unit_kind="METR suite version",
     trend_steps=12, feature_groups=FEATURE_GROUPS, group_source=GROUP_SOURCE, load=load, origins=origins,
     truth=truth, panel=panel, health=health, ingest=lambda pull: _ingest(pull), segment=lambda u: u,
     min_selection_origins=12, min_holdout=4, history_warning=HISTORY_WARNING, scale=LOG2,
-    value_unit="minutes (50% task time horizon)", regimes=True, errors_on_model_scale=True)
+    value_unit="minutes (50% task time horizon)", regimes=True, errors_on_model_scale=True, engine=_engine)

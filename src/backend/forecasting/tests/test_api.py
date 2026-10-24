@@ -60,13 +60,16 @@ def test_accuracy_is_per_unit_and_includes_no_change():
 
 @pytest.mark.skipif("frontier_time_horizon" not in service.targets(), reason="no capability run yet")
 def test_regime_explanation_reproduces_the_published_chances():
-    for r in client.get("/outlook/frontier_time_horizon/regime", params={"unit": "v1.1"}).json():
-        g = [o["growth"] for o in r["possible_outcomes"]]
-        assert len(g) == r["n"] > 0
-        faster = sum(x > r["band_high_growth"] for x in g) / len(g)
-        slower = sum(x < r["band_low_growth"] for x in g) / len(g)
-        assert abs(faster - r["p_faster"]) < 1e-9 and abs(slower - r["p_slower"]) < 1e-9  # counts = published %
-        assert r["band_low_growth"] < r["same_pace_growth"] < r["band_high_growth"]
+    rs = client.get("/outlook/frontier_time_horizon/regime", params={"unit": "v1.1"}).json()
+    assert rs
+    for r in rs:
+        published = [r["p_faster"], r["p_same"], r["p_slower"]]
+        sim, base = [r["p_simulated"][k] for k in ("faster", "same", "slower")], [r["base_rate"][k] for k in ("faster", "same", "slower")]
+        expect = [(1 - r["shrink"]) * s + r["shrink"] * b for s, b in zip(sim, base)]  # shrink 0 = the simulation itself
+        assert all(abs(p - e) < 1e-9 for p, e in zip(published, expect)) and abs(sum(published) - 1) < 1e-9
+        assert sum(r["pace_histogram"]["counts"]) == r["n_sims"]  # every simulated future is in the picture
+        assert r["same_band"][0] < r["hist_pace"] < r["same_band"][1]
+        assert abs((r["same_band"][1] - r["same_band"][0]) / 2 - max(0.25, 0.2 * abs(r["hist_pace"]))) < 1e-9
         assert sum(m["served"] for m in r["methods"]) == 1
 
 

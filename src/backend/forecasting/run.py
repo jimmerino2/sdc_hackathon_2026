@@ -223,13 +223,17 @@ def run_target(spec: TargetSpec, now: pd.Timestamp | None = None) -> dict:
           f"(last observed {spec.label(split.holdout_last)}): {split.n_selection} selection, "
           f"{split.n_holdout} holdout origins")
     bt = E.backtest(spec, snaps, y_true, split, feature_sets=feature_sets(spec))
-    bt.to_csv(run_dir / "backtest.csv.gz", index=False)
 
     sel = E.select(bt, spec.min_selection_origins)
     cov = E.coverage(bt, E.interval_quantiles(bt, ("selection",)))
     abl = E.ablation_table(bt)
 
-    fc = forecast(spec, snaps[-1], sel, bt, run_id, made_at, health)
+    extra = {}
+    if spec.engine is not None:  # e.g. capability: adds its own candidates and makes the forecast itself
+        bt, sel, fc, extra = spec.engine(spec, data, snaps, y_true, split, bt, sel, health, run_id, made_at, run_dir)
+    else:
+        fc = forecast(spec, snaps[-1], sel, bt, run_id, made_at, health)
+    bt.to_csv(run_dir / "backtest.csv.gz", index=False)
     fc.to_csv(run_dir / "forecast.csv", index=False)
     append_log(out / "forecast_log.csv", fc)
 
@@ -255,6 +259,7 @@ def run_target(spec: TargetSpec, now: pd.Timestamp | None = None) -> dict:
         "value_unit": spec.value_unit, "error_unit": spec.error_unit, "modelling_scale": spec.scale.name,
         "regime_scores": E.regime_scores(spec, bt, sel) if spec.regimes else None,
         "source_health": health,
+        **extra,  # an engine's own regime scores and diagnostics replace the generic ones
     }
     (run_dir / "evaluation.json").write_text(json.dumps(evaluation, indent=2, default=str))
     reg = promote(spec, out, run_id, made_at, sel, health, version)

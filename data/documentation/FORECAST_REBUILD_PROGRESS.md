@@ -133,3 +133,4 @@ METR's own repo (METR/eval-analysis-public) only has raw runs + 24 commits: not 
 - 2026-10-24: success curves at 95..10% from METR raw runs (forecasting/success_curves.py, reproduces official
   50%/80%), GET /outlook/capability/success-curves, SuccessCurves.vue table + curve on the capability card; card
   relabelled "hours of human work". 70 tests pass.
+- 2026-10-25: capability engine (`forecasting/capability_engine.py`, brief `AI_CAPABILITY_IMPROVEMENT.md`): model-level data layers, v1.0→v1.1 bridge, damped / robust local / jump components, shrunk mixture ensemble, pace chances from 5,000 trajectories, its own backtest scores; METR's file pulled to `data/raw/metr/`; `/outlook/{target}/engine`; chart, method panel and new explainer in the UI; 18 new tests (86 pass). Promoted run `20261024T161031Z-3451f0`. Results and post-run changes: `FORECAST_REBUILD.md` §8c.

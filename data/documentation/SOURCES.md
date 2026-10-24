@@ -130,6 +130,14 @@ Four external datasets, one per question the app has to answer, plus one Malaysi
 - **Used for:** the **AI-capability** target (`frontier_time_horizon`, see `FORECAST_REBUILD.md` §8c), METR only.
 - **Not used:** ECI is refitted with every update and has too few vintages to backtest without retrospective normalisation. It is stored for later.
 
+## 8a. METR benchmark results file (Time Horizon 1.1) — forecast rebuild only
+
+- **URL:** https://metr.org/assets/benchmark_results_1_1.yaml (current suite); analysis code and raw runs at https://github.com/METR/eval-analysis-public
+- **Publisher:** METR.
+- **What it contains:** per model, the 50% and 80% time horizons with 95% CIs, release date and `is_sota`; METR's own doubling-time fits (since 2023: 128.7 days, CI 104–158); the note that points above 16 hours are left out of trend fits.
+- **Stored:** a dated copy per change in `data/raw/metr/` (gitignored), fetched by `python -m forecasting.capability`. A hand-placed `data/raw/metr/benchmark_results_1_1.yaml` is also read; with no file at all the engine still runs.
+- **Used for:** a cross-check of Epoch's v1.1 values (23 of 23 match on 24 Oct 2026), the 16-hour saturation rule, and a display-only comparison of doubling times. It has no history, so point-in-time availability still comes from Epoch's vintages, and METR's fitted doubling time is never a model input.
+
 ## Not used in models
 
 - **Adzuna job-ads API:** the account is on the free tier (25 calls a day), so stored snapshots will never reach a history long enough to train or backtest on. It is context only (decision of 24 Oct 2026). The occupational forecasting page shows its dated snapshots as a cross-check, never as model input.

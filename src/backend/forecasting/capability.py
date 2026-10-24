@@ -192,6 +192,7 @@ def load() -> pd.DataFrame:
 def ingest(pull_first: bool) -> None:
     if pull_first:
         pull()
+        pull_metr()
     d = build()
     validate(d)
     OUT.mkdir(parents=True, exist_ok=True)
@@ -201,6 +202,59 @@ def ingest(pull_first: bool) -> None:
     g = d.groupby("measure")["vintage_id"].agg(["nunique", "min", "max"])
     print(f"capability: {len(d):,} rows")
     print(g.to_string())
+
+
+# METR's own benchmark file (Time Horizon 1.1): the primary source for current v1.1 values, release dates, CIs and
+# METR's trend-fitting rule. It has no history, so point-in-time availability still comes from Epoch's vintages.
+METR_URL = "https://metr.org/assets/benchmark_results_1_1.yaml"
+METR_RAW = ROOT / "data" / "raw" / "metr"  # dated copies; a hand-placed benchmark_results_1_1.yaml is also read
+
+
+def pull_metr() -> None:
+    """Store today's METR file if it changed. A failure keeps the stored copies."""
+    try:
+        body = _get(METR_URL, timeout=60)
+        yaml_safe_load(body)  # must parse, not be an error page
+    except Exception as e:  # noqa: BLE001 (network or parse failure: keep what is stored)
+        print(f"warning: METR benchmark file not downloaded ({e})")
+        return
+    METR_RAW.mkdir(parents=True, exist_ok=True)
+    old = sorted(METR_RAW.glob("*_benchmark_results_1_1.yaml"))
+    if old and hashlib.sha256(old[-1].read_bytes()).digest() == hashlib.sha256(body).digest():
+        return
+    (METR_RAW / f"{pd.Timestamp.now(tz='UTC'):%Y%m%dT%H%M%SZ}_benchmark_results_1_1.yaml").write_bytes(body)
+
+
+def yaml_safe_load(body: bytes) -> dict:
+    import yaml  # PyYAML; only needed for METR's file
+    d = yaml.safe_load(body)
+    if not isinstance(d, dict) or "results" not in d:
+        raise ValueError("not a METR benchmark results file")
+    return d
+
+
+def metr_official() -> dict | None:
+    """Newest stored METR file as {"models": DataFrame, "meta": dict, "file": name}, or None if there is none.
+    Rows: model, release_date, value (p50 minutes), ci_low, ci_high, is_sota."""
+    files = sorted(METR_RAW.glob("*_benchmark_results_1_1.yaml")) + sorted(METR_RAW.glob("benchmark_results_1_1.yaml"))
+    if not files:
+        return None
+    f = files[-1]
+    try:
+        d = yaml_safe_load(f.read_bytes())
+    except Exception as e:  # noqa: BLE001
+        print(f"warning: {f.name} unreadable ({e}); METR file ignored")
+        return None
+    rows = []
+    for k, v in d["results"].items():
+        m = (v.get("metrics") or {}).get("p50_horizon_length") or {}
+        if m.get("estimate") is None:
+            continue
+        rows.append({"model": k, "release_date": pd.to_datetime(v.get("release_date"), errors="coerce"),
+                     "value": float(m["estimate"]), "ci_low": m.get("ci_low"), "ci_high": m.get("ci_high"),
+                     "is_sota": bool((v.get("metrics") or {}).get("is_sota"))})
+    meta = {k: v for k, v in d.items() if k != "results"}
+    return {"models": pd.DataFrame(rows), "meta": meta, "file": f.name}
 
 
 def main() -> None:
