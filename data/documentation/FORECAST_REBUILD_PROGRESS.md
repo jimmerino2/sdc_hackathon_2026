@@ -111,3 +111,7 @@ METR's own repo (METR/eval-analysis-public) only has raw runs + 24 commits: not 
   Merge gate part 1 done: fresh clone -> 65 tests pass, full run reproduces all 69,388 backtest predictions exactly.
   Part 2 pending: second run on newer data (sources publish again early Nov 2026).
   OPEN QUESTIONS FOR USER: frontend page for /outlook? FRED_API_KEY for RPS vintages? merge timing.
+- 2026-10-24: user chose: new frontend page (done: AI outlook tab, OutlookView.vue + api/outlook.ts +
+  data/outlookNames.ts, router + SideNav item); user will add FRED_API_KEY (then `python -m forecasting.rps`);
+  merge check after ~10 Nov 2026 when user asks. Page verified by headless screenshots at 1440 px and 520 px
+  (Edge cannot lay out narrower than ~500 px; the 390 px clipping seen was the tool, not the page).

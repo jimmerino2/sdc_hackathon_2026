@@ -377,7 +377,18 @@ python -m pytest forecasting/tests                          # 61 tests, offline,
    - cost-adjusted capability;
    - GDELT news as a candidate leading feature, kept only if the ablation shows a gain.
 6. **Scenario engine:** connecting capability regimes to adoption and skill demand needs a tested link between them. None is estimated yet, so no scenarios are produced.
-7. **UI:** the `/outlook` API is in place; no frontend page uses it yet. The old adoption pages on `feat/ai-adoption-mc` show discarded outputs and were not ported.
+7. **UI:** the **AI outlook** tab (`src/frontend/src/views/OutlookView.vue`, route `/outlook`, in the sidebar) shows all four targets from `/outlook`. Each card has:
+   - a unit picker;
+   - the latest value;
+   - per-horizon forecast markers with their 80% ranges;
+   - a plain-language status chip;
+   - an inline note when the point falls outside its range;
+   - the warnings (collapsed);
+   - the data date.
+
+   The capability card also shows the regime probabilities as a labelled bar. Its colours (orange `#eb6834` / grey `#9e9a92` / blue `#2a78d6`) were checked with the dataviz palette validator. Every segment carries a text label, so colour is never the only cue.
+
+   Not done: the old adoption pages on `feat/ai-adoption-mc` show discarded outputs and were not ported; and the page does not yet link to role pages.
 8. **Merge gate:** do not merge to `main` until both of these hold:
    - the tests pass on a fresh clone — **done** 24 Oct 2026;
    - a second run on newer data has been promoted or rejected by the rules above — **pending**. The sources next publish in early November 2026: BTOS around 5 Nov, Indeed's AI share in the first half of the month.

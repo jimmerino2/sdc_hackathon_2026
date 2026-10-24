@@ -47,7 +47,7 @@ These are served by the backend (`app/outlook/`), read-only, and new runs appear
 - `GET /outlook/{target}?unit=&h=`: the promoted forecasts, each with `status`, range and `warnings`;
 - `GET /outlook/{target}/evaluation`: the newest run's evaluation.
 
-The older `/forecast` endpoints (sector LightGBM) are unchanged.
+The older `/forecast` endpoints (sector LightGBM) are unchanged. The frontend's **AI outlook** tab (`src/frontend/src/views/OutlookView.vue`) reads `/outlook`.
 
 ## Schedule
 
