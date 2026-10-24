@@ -1,12 +1,13 @@
 # forecasting
 
-Point-in-time forecasting pipeline with three separate targets. None of them feeds another.
+Point-in-time forecasting pipeline with four separate targets, one per domain. None of them feeds another.
 
 | Target | Domain | Source | Unit | Horizons |
 | --- | --- | --- | --- | --- |
 | `ai_mention_share` | skill demand | Indeed AI Tracker (+ postings) | country × month | 1, 3, 6 months |
 | `btos_ai_use_rate` | business adoption | Census BTOS | NAICS sector × wording × fortnight | 6, 13 fortnights |
 | `worker_genai_use_rate` | occupation adoption | RPS worker survey | SOC major group × quarter | 1, 2 quarters |
+| `frontier_time_horizon` | AI capability | METR time horizons via Epoch AI | METR suite version × month | 3, 6, 12 months + regime probabilities |
 
 Design, audit, results and model cards are in `data/documentation/FORECAST_REBUILD.md`.
 
@@ -15,12 +16,13 @@ Design, audit, results and model cards are in `data/documentation/FORECAST_REBUI
 From `src/backend`, using the backend venv (`venv/Scripts/python.exe` on Windows):
 
 ```
-python -m forecasting.run                                   # all targets, fetching new data first (~3 min)
+python -m forecasting.run                                   # all targets, fetching new data first (~6 min)
 python -m forecasting.run --no-pull                         # from local data only
 python -m forecasting.run --target btos_ai_use_rate --skip-ingest
 python -m forecasting.vintages                              # Indeed: rebuild the vintage tables
 python -m forecasting.btos                                  # BTOS: download (dated copy kept), rebuild
 python -m forecasting.rps                                   # RPS: download, rebuild (ALFRED vintages if FRED_API_KEY is set)
+python -m forecasting.capability                            # Epoch AI: monthly Wayback captures + today's file, rebuild
 python -m pytest forecasting/tests                          # offline tests, no credentials needed
 ```
 
@@ -43,7 +45,8 @@ Run `python -m forecasting.run` weekly. The sources publish at different rates:
 
 - Indeed: AI share monthly, postings weekly;
 - BTOS: fortnightly;
-- RPS: quarterly.
+- RPS: quarterly;
+- Epoch AI: irregular.
 
 Failure handling:
 
@@ -57,9 +60,9 @@ Failure handling:
 | --- | --- |
 | `registry.py` | Sources: what each one measures, the domains it may label or feed, freshness |
 | `contracts.py` | Targets per domain and `check_sources()`, which refuses invalid uses (e.g. BTOS for skill demand or occupations) |
-| `vintages.py`, `btos.py`, `rps.py` | Ingestion: point-in-time tables per source |
+| `vintages.py`, `btos.py`, `rps.py`, `capability.py` | Ingestion: point-in-time tables per source |
 | `targets/` | One module per target exposing a `TargetSpec`: load, origins (snapshots), truth, features, labels |
-| `features.py` | Shared snapshot, logit, lag-feature and label code |
-| `models.py` | Baselines (naive, drift, damped drift, pooled mean), ridge, and a LightGBM challenger |
-| `evaluation.py` | Purged chronological split, rolling-origin backtest, metrics, selection, coverage, ablations |
-| `run.py` | CLI, outputs, acceptance and promotion |
+| `features.py` | Shared snapshot, value scales (logit, log2), lag-feature and label code |
+| `models.py` | Baselines (naive, drift, damped drift, pooled mean), local linear trend (Kalman), ridge, and a LightGBM challenger |
+| `evaluation.py` | Purged chronological split, rolling-origin backtest, metrics, selection, coverage, ablations, regime probabilities and Brier scores |
+| `run.py` | CLI, outputs, acceptance, baseline-retained gate and promotion |

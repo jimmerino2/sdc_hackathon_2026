@@ -9,8 +9,13 @@ Branch `feat/ai-prediction`. This replaces the AI-adoption forecasting on `feat/
 | `ai_mention_share` | skill demand | Indeed, 9 countries, monthly | 1, 3, 6 months |
 | `btos_ai_use_rate` | business adoption | Census BTOS, US + 19 sectors, per wording, fortnightly | 6, 13 fortnights |
 | `worker_genai_use_rate` | occupation adoption | RPS worker survey, 22 SOC groups + all workers, quarterly | 1, 2 quarters |
+| `frontier_time_horizon` | AI capability | METR 50% task time horizon of the best model, via Epoch AI, per METR suite version, monthly | 3, 6, 12 months, with P(acceleration / stable / slowdown) |
 
-None feeds another. **AI capability progress** is still only a contract (no benchmark data yet), and there is **no scenario engine**. Adzuna is context only: the account is on the free tier, so its snapshots will stay too thin to train on (decision of 24 Oct 2026).
+None feeds another.
+
+- **Capability is one dimension.** The Epoch Capabilities Index is stored but not modelled: it only appears in Epoch's data from Sep 2026, and it is refitted jointly, so it cannot be backtested honestly yet.
+- **There is no scenario engine.**
+- **Adzuna is context only:** the account is on the free tier, so its snapshots will stay too thin to train on (decision of 24 Oct 2026).
 
 ---
 
@@ -71,7 +76,7 @@ None feeds another. **AI capability progress** is still only a contract (no benc
 | `ai_mention_share`: monthly % of new Indeed postings mentioning AI terms, per country | skill demand | Indeed AI Tracker | **implemented** |
 | `btos_ai_use_rate`: % of US firms using AI, within one wording | business adoption | Census BTOS | **implemented** |
 | `worker_genai_use_rate`: % of workers in a SOC group using GenAI | occupation adoption | RPS | **implemented** |
-| `frontier_capability_index` (definition pending) | AI capability | benchmarks (Epoch / METR) | planned |
+| `frontier_time_horizon`: longest METR 50% time horizon among models released by each month, per METR suite version | AI capability | METR via Epoch AI | **implemented** |
 
 Refused by contract (each one tested): BTOS as a skill-demand feature; BTOS or task exposure (Anthropic EI) as an occupation-adoption label; AI skill demand as adoption; posting volume as skill demand; news volume as capability.
 
@@ -96,7 +101,12 @@ What the history showed:
 
 ## 5. Features and models
 
-- **Modelling scale:** logit of the share. The label at anchor month *m* is `logit(share[m+h]) − logit(share[m])`. Training rows are every country × anchor month whose *m + h* is inside the origin's snapshot.
+- **Modelling scale** (set per target):
+  - shares use the logit;
+  - METR time horizons use log₂ (minutes), so a constant doubling time is a straight line.
+
+  The label at anchor period *p* is `y[p+h] − y[p]` on that scale. Training rows are every unit × anchor period whose *p + h* is inside the origin's snapshot.
+- **Errors** are reported in percentage points for shares and in **doublings** for time horizons. On a minutes scale, a 20% miss at 1,000 minutes would count 100× a 20% miss at 10 minutes.
 - **Feature groups** (each one can be dropped in an ablation):
   - `level`: `lvl`
   - `own_trend`: `d1 d3 d6 d12`
@@ -110,6 +120,7 @@ What the history showed:
 | drift | The country's last 12-month change continues |
 | damped_drift | Drift with a damping factor φ fitted on the snapshot |
 | pooled_mean | Average h-month change across countries over the last 12 months |
+| local_trend | Local-linear-trend state-space model (the spec's primary capability model). Observation = level + noise; the level moves by a slope that drifts. Variances are fitted by Kalman-filter maximum likelihood on the snapshot. Forecast = level + h × slope. Runs as a candidate for every target |
 | ridge | Ridge on all feature groups. α is chosen by time-ordered inner CV with an h-month gap |
 | lightgbm | Challenger: 4 leaves, ≥30 rows per leaf, λ = 5, 150 trees, no early stopping |
 
@@ -136,28 +147,41 @@ What the history showed:
 - **Status label:**
   - `validated`: the chosen model's holdout error is at least 5% below naive's (MASE ≤ 0.95);
   - `baseline`: naive was chosen;
-  - `not_demonstrably_better`: anything else.
+  - `not_demonstrably_better`: the chosen model is between 5% better and equal to naive on the holdout;
+  - `baseline_retained`: the chosen model was *worse* than naive on the holdout, so naive is served instead. The chosen model is still recorded (`chosen_model`).
 
-  The 5% margin was added after an RPS run labelled a 0.03% "gain" on three noisy origins as `validated`. It changes labels only, never which model is chosen.
+  Both the 5% margin and the `baseline_retained` gate were added after seeing results, and they are disclosed here:
+  - the margin after an RPS run labelled a 0.03% "gain" on three noisy origins as `validated`;
+  - the gate after BTOS h=13 chose `local_trend`, which then lost to naive by 70% on the new-wording holdout.
+
+  Neither re-selects on the holdout. They only stop a model that failed the baseline comparison from being labelled or served as if it had passed (spec 16.1).
+- **Second baseline:** every run also reports holdout MASE against **drift** (`holdout_mase_vs_drift`). For trending series, beating "no change" is easy; beating trend extrapolation is the real bar.
+- **Ranges:** forecast ranges use all out-of-sample residuals of the served model. If they all fall on one side (the model has always under- or over-forecast), the point lies outside its own range. The forecast then says so in `warnings`, and the range should be read rather than the point. This happens for BTOS h=13 naive, which has always under-forecast the new wording.
+- **Regime probabilities** (capability only), per spec 10.1:
+  - the forecast change over the next h months is compared with the trailing rate (change over the last 12 months, scaled to h);
+  - it counts as **acceleration** or **slowdown** only beyond ±25% of that rate (and at least 0.02 log₂ per month);
+  - probabilities are the share of past out-of-sample residuals, added to the forecast, that fall in each band, so they sum to 1;
+  - they are scored on the holdout with the **Brier score**, against climatology (the selection period's regime frequencies) and a uniform ⅓ each.
 - **Per target:** the minimum holdout and selection sizes are set in each `TargetSpec`. Skill demand and BTOS require 6 holdout and 12 selection origins. RPS has only 9 quarters, so it requires 2 and 3, and every RPS forecast carries a short-history warning.
 
-## 7. Results: skill demand (promoted run `20261023T180055Z-bd0071`, same numbers as the first run)
+## 7. Results: skill demand (promoted run `20261024T043443Z-3b51da`)
 
 MAE in percentage points. Selection covers 42–47 origins; the holdout covers 12–17 real-vintage origins with 9 countries each.
 
-| h | Chosen | Selection MAE (naive) | Holdout MAE (naive) | Holdout MASE | Best on holdout (not usable for choosing) |
-| --- | --- | --- | --- | --- | --- |
-| 1 | drift | 0.367 (0.374) | 0.389 (0.484) | 0.80 | pooled_mean / ridge 0.371 |
-| 3 | pooled_mean | 0.411 (0.432) | 0.709 (1.075) | 0.66 | pooled_mean |
-| 6 | naive | 0.523 (0.523) | 2.045 (2.045) | 1.00 | drift 1.242 |
+| h | Chosen | Selection MAE (naive) | Holdout MAE (naive) | MASE vs naive | MASE vs drift | Best on holdout (not usable for choosing) |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | pooled_mean | 0.362 (0.374) | 0.371 (0.484) | 0.77 | 0.95 | pooled_mean / ridge 0.371 |
+| 3 | pooled_mean | 0.411 (0.432) | 0.709 (1.075) | 0.66 | 0.97 | pooled_mean |
+| 6 | naive | 0.523 (0.523) | 2.045 (2.045) | 1.00 | 1.65 | drift 1.242 |
 
-Holdout 80% interval coverage of the chosen models: 0.85 (h1), 0.90 (h3), **0.57 (h6)**.
+Holdout 80% interval coverage of the chosen models: 0.84 (h1), 0.90 (h3), **0.57 (h6)**.
 
 What the results mean:
 
-- At 1 and 3 months the chosen simple models beat "no change" on data they never saw, by 20% and 34%.
+- At 1 and 3 months the chosen simple models beat "no change" on data they never saw, by 23% and 34%. Against drift the edge is small (3–5%).
+- **h=1 changed** from drift to pooled_mean when `local_trend` joined the candidates. `local_trend` scored best in selection (0.359), which put drift (0.367) just outside the 2% band. The holdout error improved from 0.389 to 0.371.
 - **At 6 months the selection period picked naive, which then did badly on the holdout.** AI-mention shares rose much faster from 2025 on than in 2021–24, and naive's 80% range held only 57% of outcomes. The rule was not changed after seeing this; choosing again on the holdout would be tuning on it. The 6-month forecast is served as `baseline`, and this failure is the most important known weakness.
-- **Ridge and LightGBM never beat the best simple baseline** in selection, so neither is deployed.
+- **Ridge, LightGBM and local_trend** never won selection by more than the 2% band, so none is deployed.
 - **Ablations:** removing the postings group changes selection MAE by −0.009 to +0.024 pp depending on model and horizon, with no consistent sign. Posting volume therefore adds no demonstrated value. Removing cross-country trends *improves* h = 6 by about 0.04 pp. Neither changes which model is chosen.
 - **Real vs reconstructed:** naive's selection MAE is 0.43 pp on reconstructed origins and 0.50 pp on real ones. Reconstructed scores are, if anything, not flattering, but they should still be read as approximate.
 - All forecasts underpredicted during the holdout (naive bias −1.1 pp). The ranges are therefore skewed upward, which is visible in `latest_forecast.csv`.
@@ -200,7 +224,9 @@ All of these come from BTOS. Here BTOS is the label, so using it is legitimate.
 | h (fortnights) | Chosen | Selection MAE (naive) | Holdout MAE (naive) | Holdout MASE | 80% coverage | Status |
 | --- | --- | --- | --- | --- | --- | --- |
 | 6 (~3 months) | naive | 1.11 (1.11) | 2.34 (2.34) | 1.00 | 0.91 | baseline |
-| 13 (~6 months) | ridge | 1.47 (2.15) | 3.76 (4.21) | 0.89 | 0.80 | validated |
+| 13 (~6 months) | local_trend → **naive served** | 1.45 (2.15) | 7.15 (4.21) | 1.70 | 0.54 | baseline_retained |
+
+h=13 changed after `local_trend` joined the candidates. Before that, ridge was chosen and beat naive by 11% (MASE 0.89). `local_trend` won selection on the old wording by 1%, then failed on the new wording: with few post-break fortnights it extrapolates unstable slopes. Naive is therefore served. Its range lies above its point forecast (adoption has always risen faster than "no change"), and the forecast carries that warning.
 
 What it means:
 
@@ -210,7 +236,7 @@ What it means:
 - **Model card:**
   - Intended use: US firm-level AI use, by sector, about 3 and 6 months ahead, in the new wording only.
   - Not a measure of worker or occupation adoption, and not transferable to other countries.
-  - Supported claim: h13 ridge beat persistence by 11% on the post-break holdout. For h6 there is no claim beyond the baseline.
+  - Supported claim: none beyond the baseline at either horizon. Both serve naive, and naive has consistently under-forecast the new wording, so read the ranges.
 
 ## 8b. Occupation adoption (`worker_genai_use_rate`)
 
@@ -240,6 +266,61 @@ What it means:
   - Supported claims: none beyond "indicative".
   - Will improve as quarters accumulate and if ALFRED vintages are enabled.
 
+## 8c. AI capability (`frontier_time_horizon`)
+
+**Data** (`forecasting/capability.py` → `capability_vintages.csv`):
+
+- METR's 50% task time horizons (minutes) as published in Epoch AI's benchmark data. One vintage per month comes from Wayback Machine captures of `epoch.ai/data/benchmark_data.zip`: 17 captures from Mar 2025, 14 of which contain METR data (from Jun 2025).
+- Some captures are served gzip-encoded; they are decompressed.
+- Availability is Epoch's own Last-Modified time where the archive recorded it, else the capture time. Both are upper bounds on publication.
+- Release dates missing from the two earliest files (28 rows) are filled from later vintages by model name and flagged `joined`. A release date is public at release.
+
+**Two decisions the data forced:**
+
+1. **METR suite versions are separate units.** v1.1 (in Epoch's data from Mar 2026) re-measured older models and moved them a lot: Claude 3.5 Sonnet 18.7 → 11.4 minutes, GPT-5.1-Codex-Max 162 → 224. METR also later deleted some legacy v1.0 rows.
+   - A version is used only in the vintages where it is the current suite: v1.0 from Jun 2025 to Feb 2026, v1.1 from Mar 2026.
+   - Its truth is its last active vintage.
+   - A retired series is never scored as if it had stopped improving.
+2. **Measurement lag.** METR measures a model 38–139 days after release (median 64; the upper end is inflated by gaps between captures). A vintage therefore counts as complete only up to **3 months** before it was published. Later months are "not yet measured", not "no progress".
+
+**Target and features:**
+
+- **Target:** frontier = the longest horizon among models released by each month, on log₂ minutes.
+- **Features:** `level`, and `own_trend` (d1, d3, d6, d12).
+- **Origins:** 42, from 2023-01 (28 reconstructed, 7 mixed, 7 real). Reconstructed origins started at 2024-01 in the first run; I moved the start to 2023-01 after that run left too few selection origins at h=6 and h=12. This is disclosed as a post-run change of the evaluation window.
+
+**Results** (run `20261024T043921Z-3b51da`; errors in doublings):
+
+| h (months) | Chosen | Selection MAE (naive) | Holdout MAE (naive) | MASE vs naive | MASE vs drift | 80% coverage | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 3 | ridge | 0.91 (1.05) | 0.38 (0.83) | 0.46 | 0.84 | 0.94 | validated |
+| 6 | ridge | 1.11 (1.50) | 0.36 (1.66) | 0.22 | 0.46 | 1.00 | validated |
+| 12 | ridge | 1.80 (2.54) | 1.25 (3.27) | 0.38 | 0.96 | 1.00 | validated |
+
+Regime probabilities on the holdout (Brier, lower is better):
+
+| h | n | Model | Climatology | Uniform ⅓ |
+| --- | --- | --- | --- | --- |
+| 3 | 16 | 0.57 | 0.73 | 0.67 |
+| 6 | 14 | 0.57 | 0.81 | 0.67 |
+| 12 | 6 | 0.48 | 0.81 | 0.67 |
+
+What it means:
+
+- **"No change" is a weak bar for a frontier that doubles every few months.** Against drift, ridge is 16% better at 3 months and 54% better at 6 months, but only 4% better at 12 months.
+- **At 12 months, local_trend did best on the holdout** (0.74 doublings) but was poor in selection, so it was not chosen.
+- **Real-vintage evidence is small:** the holdout has 4 real-vintage rows at h=3, 2 at h=6 and none at h=12. The rest is reconstructed or mixed. Every forecast carries this warning.
+- **Ridge depends on the trend features:** removing them makes selection error worse by 0.11 and 0.29 doublings at h=3 and h=6. LightGBM cannot split on this few rows and equals naive.
+- **The current forecast is a trend projection.** From 1,045 minutes (frontier of models released by Jul 2026, measured under v1.1), it projects about 1,800 minutes by Oct 2026 and about 11,900 by Jul 2027. The 10–90% range at 12 months is 8,700–126,000 minutes.
+- **Regime probabilities** at 12 months: acceleration 0.62, stable 0.38, slowdown 0.00. They come from about 20 residuals, so the tails are coarse; a 0.00 means "not seen in this small sample", not "impossible".
+
+**Model card:**
+
+- **Intended use:** an indicative outlook for one capability dimension (software-task time horizons of frontier models) and whether its growth rate is speeding up or slowing down.
+- **Not a measure of:** general intelligence, adoption, or labour-market impact.
+- **Supported claim:** on a mostly reconstructed backtest, trend-based models beat persistence clearly, and beat drift at 3 and 6 months.
+- **Will improve** as real vintages accumulate.
+
 ## 9. How this answers the BTOS problem
 
 | Old weakness | Now |
@@ -258,32 +339,38 @@ What it means:
 From `src/backend` with the backend venv:
 
 ```
-python -m forecasting.run                                   # all three targets, fetching new data first (~3 min)
+python -m forecasting.run                                   # all four targets, fetching new data first (~6 min)
 python -m forecasting.run --no-pull                         # from local data only
 python -m forecasting.run --target btos_ai_use_rate --skip-ingest   # one target, tables as they are
-python -m forecasting.vintages | forecasting.btos | forecasting.rps  # rebuild one source's tables
-python -m pytest forecasting/tests                          # 50 tests, offline, no credentials
+python -m forecasting.vintages | forecasting.btos | forecasting.rps | forecasting.capability  # one source
+python -m pytest forecasting/tests                          # 61 tests, offline, no credentials
 ```
 
 - **Optional:** set `FRED_API_KEY` (free) to give RPS real vintages.
 - **Scheduling:** run `python -m forecasting.run` weekly. The sources publish at different rates:
   - Indeed: AI share monthly, postings weekly;
   - BTOS: fortnightly;
-  - RPS: quarterly.
+  - RPS: quarterly;
+  - Epoch AI: irregular (the capability ingest also stores today's file, so real vintages keep accumulating).
 
   A failed fetch keeps the local history. A failed build leaves the previous tables in place. A failed acceptance keeps the previous promoted model. Each target's outputs are in `src/backend/forecasting/output/<target>/`.
 - **Freshness:** `registry.health()` marks a source stale after 2× its cadence. A stale target blocks promotion and is written into the forecast `warnings`.
 
 ## 11. Limitations and next steps
 
-1. **Long horizons under-forecast fast growth** in all three domains (skill demand h6, BTOS h13, RPS). Candidates worth testing next, under the same procedure: a local-linear-trend state-space model, and a shorter or weighted training window.
+1. **Long horizons under-forecast fast growth** (skill demand h6, BTOS h13, RPS). `local_trend` was tested and did not fix it: it was unstable on the short post-break BTOS series. Next to test under the same procedure: a shorter or weighted training window.
 2. **Data:**
    - skill-demand origins before Apr 2024 are reconstructed;
    - BTOS is assumed unrevised;
    - RPS availability dates are assumed until a FRED key is set;
+   - capability origins are mostly reconstructed or mixed (real METR vintages only from Jun 2025; v1.1 from Mar 2026);
    - in every case the truth is the latest data, which may itself be revised.
 3. **RPS is too short** (9 quarters) for any supported claim. Group-level noise is 6–9 pp.
 4. **Skill-level demand** (named skills, not just "AI") has no source with history. Adzuna's free tier can't build one.
-5. **AI capability** (benchmarks such as Epoch AI or METR) is not started. Scenarios come only after it exists and is tested.
-6. **API/UI:** serve each target's `latest_forecast.csv` and evaluation through `/forecast` and show freshness. The current app endpoints are untouched.
-7. **Merge gate:** do not merge to `main` until the tests pass on a fresh clone, and a second run on newer data has been promoted or rejected by the rules above.
+5. **AI capability is one dimension** (METR time horizons). Planned additions, each as a separate series:
+   - ECI, once about 12 monthly vintages exist (from Sep 2026), or a per-origin index fitted only on data available then;
+   - cost-adjusted capability;
+   - GDELT news as a candidate leading feature, kept only if the ablation shows a gain.
+6. **Scenario engine:** connecting capability regimes to adoption and skill demand needs a tested link between them. None is estimated yet, so no scenarios are produced.
+7. **API/UI:** serve each target's `latest_forecast.csv` and evaluation through `/forecast` and show freshness. The current app endpoints are untouched.
+8. **Merge gate:** do not merge to `main` until the tests pass on a fresh clone, and a second run on newer data has been promoted or rejected by the rules above.

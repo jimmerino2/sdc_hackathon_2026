@@ -258,13 +258,39 @@ Caveats:
 
 ---
 
+## 12. `forecasting/capability_vintages.csv`
+
+Epoch AI capability data as point-in-time vintages: one row per **vintage × measure × METR version × model**. 1,338 rows; 14 vintages with METR time horizons (from Jun 2025) and 3 with ECI (from Sep 2026). Built by `src/backend/forecasting/capability.py` from Wayback Machine captures of `https://epoch.ai/data/benchmark_data.zip` (one per month) and today's file. The raw zips and their `meta.json` are in `data/raw/epoch/snapshots/<capture timestamp>/`.
+
+| Column                | Source   | Type      | Derived from                                                                                                   |
+| --------------------- | -------- | --------- | -------------------------------------------------------------------------------------------------------------- |
+| `vintage_id`          | Ours     | text      | Capture timestamp `YYYYMMDDhhmmss`                                                                             |
+| `available_at`        | Wayback / Epoch | timestamp | Epoch's `Last-Modified` as recorded by the archive, else the capture time. Both are upper bounds on publication |
+| `availability_basis`  | Ours     | text      | `last_modified` or `capture_time`                                                                              |
+| `measure`             | Ours     | text      | `metr_h50_minutes` (METR 50% task time horizon) or `eci` (Epoch Capabilities Index)                            |
+| `metr_version`        | Epoch    | text      | `METR-Horizon-v1.1` or `METR-Horizon-v1.0`. Unlabelled rows are the original suite and are stored as v1.0. Blank for ECI |
+| `model`               | Epoch    | text      | Model version name as published                                                                                |
+| `release_date`        | Epoch    | date      | Model release date                                                                                             |
+| `release_date_source` | Ours     | text      | `file`, or `joined` (filled from a later vintage by model name; the two earliest files have no release dates)  |
+| `value`               | Epoch    | number    | Minutes (METR) or ECI points                                                                                   |
+| `ci_low`, `ci_high`   | Epoch    | number    | Published confidence interval                                                                                  |
+| `source_file`, `zip_sha256` | Ours | text    | File inside the zip, and the zip's hash (first 16 hex characters)                                              |
+
+Caveats:
+
+- **METR v1.1 re-measured older models.** Values moved a lot (e.g. 18.7 → 11.4 minutes), so the two versions are separate series.
+- **METR deleted some legacy v1.0 rows** from Sep 2026.
+- **ECI is refitted with every update.** It is stored for later, not modelled.
+
+---
+
 ## Forecast outputs (`src/backend/forecasting/output/<target>/`)
 
-There is one folder per target: `ai_mention_share`, `btos_ai_use_rate` and `worker_genai_use_rate`.
+There is one folder per target: `ai_mention_share`, `btos_ai_use_rate`, `worker_genai_use_rate` and `frontier_time_horizon`.
 
 | File                            | One row per                                       | What it is                                                                                     |
 | ------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `runs/<run_id>/backtest.csv.gz` | origin × horizon × candidate × feature set × unit | Every out-of-sample prediction with `actual`, `error` (pp), `role` (`selection` / `holdout` / `purged`), `vintage_kind` and `segment` |
+| `runs/<run_id>/backtest.csv.gz` | origin × horizon × candidate × feature set × unit | Every out-of-sample prediction with `actual`, `error` (pp for shares, doublings for time horizons), `resid` (modelling scale), `role` (`selection` / `holdout` / `purged`), `vintage_kind` and `segment` |
 | `runs/<run_id>/evaluation.json` | run                                               | Split, selection table, holdout scores, interval coverage, ablations, breakdown by role / vintage kind / segment, and source health |
 | `runs/<run_id>/forecast.csv`    | unit × horizon                                    | That run's forecast                                                                            |
 | `forecast_log.csv`              | unit × horizon × run                              | Every forecast ever issued (append only)                                                       |
@@ -275,16 +301,25 @@ Forecast columns:
 
 - `run_id`, `made_at`: the run and when it ran (UTC).
 - `target`, `unit_kind`, `unit`, `segment`: e.g. `country` / `US`; `NAICS sector (or US) x wording` / `54|new` / `new wording`; `SOC major group` / `15`.
-- `last_observed_period`, `last_observed_pct`.
+- `last_observed_period`, `last_observed`.
 - `h`, `period_unit` (`month` / `fortnight` / `quarter`), `target_period`. BTOS periods are written as `smpdt (ref <end date>)`.
-- `model`: the chosen candidate.
-- `forecast_pct`, `low_pct`, `high_pct`: the forecast and its 10–90% empirical range.
-- `status`: `validated` (holdout MAE at least 5% below naive), `baseline` or `not_demonstrably_better`.
-- `holdout_mae_pp`, `naive_holdout_mae_pp`.
+- `value_unit`: `percent`, or `minutes (50% task time horizon)`.
+- `model`: the model served. `chosen_model` is the one selection chose; they differ only when `status` is `baseline_retained`.
+- `forecast`, `low`, `high`: the forecast and its 10–90% empirical range, in `value_unit`. When every past residual falls on one side, the point can lie outside the range; `warnings` then says so.
+- `status`: `validated` (holdout error at least 5% below naive), `baseline`, `not_demonstrably_better`, or `baseline_retained` (the chosen model lost to naive on the holdout, so naive is served).
+- `holdout_mae`, `naive_holdout_mae`: in pp for shares, in doublings for time horizons.
 - `vintage`, `data_as_of`: the data the forecast was cut from, and when it was available.
-- `warnings`: e.g. short history, stale data, or point-in-time basis `current_only`.
+- `warnings`: e.g. short history, stale data, point-in-time basis `current_only` / `mixed`, baseline retained, or a one-sided range.
+- Capability only:
+  - `p_acceleration`, `p_stable`, `p_slowdown`: these sum to 1;
+  - `regime_rule`: the rule, its tolerance, and the number of residuals behind the probabilities.
 
-The `ai_mention_share` rows issued before the engine refactor were converted to these column names (`geo` → `unit`, `ai_vintage` → `vintage`, `*_month` → `*_period`).
+Older rows were converted to these column names, so the logs keep one schema:
+
+- before the engine refactor: `geo` → `unit`, `ai_vintage` → `vintage`, `*_month` → `*_period`;
+- before value scales: `*_pct` → plain names, `*_mae_pp` → `*_mae`, `value_unit` = `percent`.
+
+Columns added later are blank in older rows.
 
 ---
 

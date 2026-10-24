@@ -114,6 +114,22 @@ Four external datasets, one per question the app has to answer, plus one Malaysi
 - **Used for:** the **occupation-adoption** target only (`worker_genai_use_rate`, see `FORECAST_REBUILD.md` §8b). It is the only direct, worker-level evidence on occupational AI use.
 - **Point in time:** past vintages need a free `FRED_API_KEY` (ALFRED). Without one, availability dates are assumed and labelled.
 
+## 8. Epoch AI benchmark data (METR time horizons, Epoch Capabilities Index) — forecast rebuild only
+
+- **URL:** https://epoch.ai/benchmarks (download `https://epoch.ai/data/benchmark_data.zip`)
+- **Publisher:** Epoch AI. The time horizons are measured by METR (https://metr.org).
+- **License:** CC-BY-4.0 (cite "Epoch AI, 'Capabilities & benchmarking'")
+- **What it contains:** benchmark results for AI models. Two parts are used:
+  - `metr_time_horizons_external.csv`: the length of tasks (in human minutes) a model completes with 50% reliability, with CIs, release dates and METR suite version;
+  - `epoch_capabilities_index/eci_scores.csv`: a composite index fitted over about 60 benchmarks.
+- **Coverage:**
+  - METR: about 50 models, released 2019–2026;
+  - ECI: about 270 models.
+- **Vintages:** 17 Wayback Machine captures from Mar 2025, one per month. METR appears from Jun 2025, ECI only from Sep 2026.
+- **As of:** 23 Oct 2026 (Last-Modified)
+- **Used for:** the **AI-capability** target (`frontier_time_horizon`, see `FORECAST_REBUILD.md` §8c), METR only.
+- **Not used:** ECI is refitted with every update and has too few vintages to backtest without retrospective normalisation. It is stored for later.
+
 ## Not used in models
 
 - **Adzuna job-ads API:** the account is on the free tier (25 calls a day), so stored snapshots will never reach a history long enough to train or backtest on. It is context only (decision of 24 Oct 2026).

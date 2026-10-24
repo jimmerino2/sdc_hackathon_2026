@@ -28,9 +28,10 @@ The data behind our model, which forecasts job demand 12 months ahead and how AI
 | `forecasting/btos_ai_observations.csv` | Census BTOS: % of firms using / expecting to use AI, by sector, wording and fortnight, with publication dates |
 | `forecasting/btos_calendar.csv` | BTOS fortnight calendar (numbering, reference dates, publication dates) |
 | `forecasting/rps_observations.csv` | RPS: % of workers using GenAI, by SOC major group and quarter |
+| `forecasting/capability_vintages.csv` | Epoch AI: METR time horizons and ECI per model, one set per archived vintage |
 
 ## Refreshing
 
 Tables are rebuilt with `python pipeline/refresh.py`. The scripts live in `pipeline/` at the repo root; how to run them, and which inputs you must download by hand, is in `pipeline/README.md`.
 
-The `forecasting/` tables belong to the rebuilt forecast. From `src/backend` they are rebuilt with `python -m forecasting.vintages` (Indeed), `python -m forecasting.btos` and `python -m forecasting.rps`, or all at once with `python -m forecasting.run` (see `src/backend/forecasting/README.md` and `documentation/FORECAST_REBUILD.md`).
+The `forecasting/` tables belong to the rebuilt forecast. From `src/backend` they are rebuilt with `python -m forecasting.vintages` (Indeed), `python -m forecasting.btos`, `python -m forecasting.rps` and `python -m forecasting.capability`, or all at once with `python -m forecasting.run` (see `src/backend/forecasting/README.md` and `documentation/FORECAST_REBUILD.md`).

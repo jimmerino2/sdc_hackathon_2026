@@ -91,7 +91,7 @@ METR's own repo (METR/eval-analysis-public) only has raw runs + 24 commits: not 
 | 16 | Engine: per-target value transform (logit / identity / log2), metric names without `_pp` | done |
 | 17 | Local-linear-trend (Kalman) candidate; regime probabilities + Brier score vs climatology | done |
 | 18 | targets/capability_eci.py (+ METR horizon if vintages allow), run, tests | done |
-| 19 | Docs | todo |
+| 19 | Docs | done |
 - 2026-10-24: capability.py (17 monthly Epoch captures via Wayback, gzip-encoded ones decompressed, Last-Modified
   kept as availability); ECI only in 3 vintages (from 2026-09) -> stored, not modelled. targets/capability_metr.py:
   frontier METR 50% time horizon per suite version (v1.0 active 2025-06..2026-02, v1.1 from 2026-03), log2 scale,
@@ -99,3 +99,11 @@ METR's own repo (METR/eval-analysis-public) only has raw runs + 24 commits: not 
   columns forecast/low/high/value_unit (old logs converted), local_trend (Kalman LLT) candidate for every target,
   regime probabilities + Brier, holdout_mase_vs_drift. FIRST_RECONSTRUCTED moved 2024-01 -> 2023-01 after first run
   (too few selection origins) - disclose in docs. 59 tests pass. NEXT: rerun all targets, then step 19 docs.
+- 2026-10-24: added baseline_retained gate (BTOS h13 local_trend lost to naive by 70% -> naive served), drift as a
+  second baseline, warning when the point forecast lies outside its own range (BTOS h13 naive), schema-tolerant
+  forecast log. Final runs: skill 043443Z, BTOS 043730Z, RPS 043917Z, capability 043921Z. 61 tests pass.
+  Step 19 docs done: FORECAST_REBUILD.md (status, §5 scales/local_trend, §6 labels/gates/regimes, §7 updated,
+  §8a updated, new §8c capability, §10, §11), STRUCTURE.md §12 + forecast columns, SOURCES.md §8 Epoch,
+  data/README.md, forecasting/README.md.
+  NEXT (not started): serve latest_forecast.csv via /forecast + UI; merge gate (fresh-clone test + second run);
+  shorter/weighted training window for long horizons; ECI once ~12 vintages exist; GDELT as candidate feature.
