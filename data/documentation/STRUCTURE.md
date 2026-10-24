@@ -313,7 +313,7 @@ There is one folder per target: `ai_mention_share`, `btos_ai_use_rate`, `worker_
 | `runs/<run_id>/backtest.csv.gz` | origin × horizon × candidate × feature set × unit | Every out-of-sample prediction with `actual`, `error` (pp for shares, doublings for time horizons), `resid` (modelling scale), `role` (`selection` / `holdout` / `purged`), `vintage_kind` and `segment` |
 | `runs/<run_id>/evaluation.json` | run                                               | Split, selection table, holdout scores, interval coverage, ablations, breakdown by role / vintage kind / segment, and source health |
 | `runs/<run_id>/forecast.csv`    | unit × horizon                                    | That run's forecast                                                                            |
-| `runs/<run_id>/engine.json`     | run (capability only)                             | The capability engine's detail: measured and bridged models, monthly frontier, forecast fan (10/25/50/75/90% per month), per-horizon pace chances and their ingredients, backtest scores against naive and drift, config, data checks, limitations. Served by `GET /outlook/frontier_time_horizon/engine` |
+| `runs/<run_id>/engine.json`     | run (capability only)                             | The capability engine's detail: measured and bridged models, monthly frontier, forecast fan (10/25/50/75/90% per month), per-horizon pace chances and their ingredients, the chance of no new record, the secondary smoothed trend (history, projection, P(accelerating / stable / decelerating)), the decisions (components, external signals, calibration), backtest scores against naive and drift, non-overlapping and block-bootstrap checks, config, data checks, limitations. Served by `GET /outlook/frontier_time_horizon/engine` |
 | `forecast_log.csv`              | unit × horizon × run                              | Every forecast ever issued (append only)                                                       |
 | `latest_forecast.csv`           | unit × horizon                                    | The forecast of the promoted run per horizon: what the app should show. A horizon with no promoted model is absent |
 | `model_registry.json`           | horizon                                           | The promoted model per horizon, and every attempt with its acceptance verdict                  |
@@ -337,6 +337,7 @@ Forecast columns:
   - `regime_n_residuals`: the number of trajectories (the column name predates the engine);
   - `pace_basis`: `observed_12m`, `bridged_12m`, `trend_prior` or `none` (how the past pace was obtained);
   - `pace_prior_assisted`: true when the chances were partly shrunk to the base rate (no skill in the selection period);
+  - `p_no_new_record`: chance that the frontier sets no new record by `target_period` (stage-A model or, when it did not beat it in the selection period, the base rate; `engine.json` says which);
   - `regime_rule`: the rule in words.
 
 Older rows were converted to these column names, so the logs keep one schema:

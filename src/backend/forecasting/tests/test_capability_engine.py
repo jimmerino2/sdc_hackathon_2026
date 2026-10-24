@@ -94,9 +94,10 @@ def test_ensemble_weights_use_only_cases_resolved_before_the_origin():
     errs = pd.DataFrame([{"origin": i, "unit": "u", "h": 3, "candidate": c, "abs_err": e}
                          for i in range(8) for c, e in (("damped_trend", 1.0), ("robust_local_trend", 0.5),
                                                         ("jump_process", 0.25))])
-    eq = CE.ensemble_weights(errs.iloc[:9], 3, CE.COMPONENTS)  # 3 cases < min_weight_cases
+    three = ("damped_trend", "robust_local_trend", "jump_process")
+    eq = CE.ensemble_weights(errs.iloc[:9], 3, three)  # 3 cases < min_weight_cases
     assert all(abs(v - 1 / 3) < 1e-12 for v in eq.values())
-    w = CE.ensemble_weights(errs, 3, CE.COMPONENTS)
+    w = CE.ensemble_weights(errs, 3, three)
     assert abs(sum(w.values()) - 1) < 1e-12 and w["jump_process"] > w["robust_local_trend"] > w["damped_trend"]
     assert min(w.values()) >= CE.CFG.ensemble_shrink / 3  # shrinkage keeps every component in
 
@@ -158,7 +159,8 @@ def test_base_rate_and_scores_against_a_one_in_three_guess():
     assert np.allclose(CE.base_rate([]), 1 / 3)
     assert np.allclose(CE.base_rate(["faster", "faster"]), [3 / 5, 1 / 5, 1 / 5])
     d = pd.DataFrame({"origin": range(4), "realised_class": ["faster"] * 4, "p_faster": 0.9, "p_same": 0.05,
-                      "p_slower": 0.05, "clim_faster": 1 / 3, "clim_same": 1 / 3, "clim_slower": 1 / 3})
+                      "p_slower": 0.05, "clim_faster": 1 / 3, "clim_same": 1 / 3, "clim_slower": 1 / 3,
+                      "pc_faster": 0.9, "pc_same": 0.05, "pc_slower": 0.05})  # calibrated = raw here
     s = CE.pace_scores(d, shrink=0.5)
     assert s["brier_model"] < s["brier_served"] < s["brier_uniform"]
     assert np.isclose(s["brier_uniform"], 2 / 3) and s["log_loss_model"] < s["log_loss_uniform"]

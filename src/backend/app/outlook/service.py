@@ -159,7 +159,7 @@ def regime_explained(target: str, unit: str) -> list[dict]:
                     "holdout_typical_miss": point("holdout", c).get("typical_factor"),
                     "holdout_coverage_80": point("holdout", c).get("coverage_80"),
                     "n_holdout": point("holdout", c).get("n")}
-                   for c in ("ensemble", "damped_trend", "robust_local_trend", "jump_process", "drift", "naive")]
+                   for c in ("ensemble", "damped_trend", "robust_local_trend", "jump_process", "record_jump", "drift", "naive")]
         out.append({
             "h": h, "unit": r["unit"], "period_unit": r["period_unit"], "model": r["model"], "status": r["status"],
             "last_observed": r["last_observed"], "last_observed_period": r["last_observed_period"],
@@ -172,6 +172,9 @@ def regime_explained(target: str, unit: str) -> list[dict]:
             "p_faster": r["p_acceleration"], "p_same": r["p_stable"], "p_slower": r["p_slowdown"],
             "p_simulated": x["p_simulated"], "base_rate": x["base_rate"], "prior_assisted": x["prior_assisted"],
             "shrink": x["shrink"], "p_no_new_record": x.get("p_no_new_record"),
+            "p_no_new_record_model": x.get("p_no_new_record_model"), "no_record_method": x.get("no_record_method"),
+            "probability_method": x.get("probability_method", "raw"), "temperature": x.get("temperature", 1.0),
+            "p_calibrated": x.get("p_calibrated"),
             "components": {c: {**v, "weight": x["weights"].get(c)} for c, v in x["components"].items()},
             "methods": methods,
             "reliability": next(({k: s.get(k) for k in ("n", "brier_model", "brier_climatology", "brier_uniform")}

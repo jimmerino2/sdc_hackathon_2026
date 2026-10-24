@@ -353,6 +353,69 @@ What it means:
 - **Supported claim:** on a mostly reconstructed backtest, the ensemble's median beat "no change" and trend extrapolation on the held-back months at 3, 6 and 12 months, and its pace chances beat a ⅓ guess and the base rate. Not supported: calibrated ranges, or any claim from the 12-month holdout alone (6 cases).
 - **Known gaps:** only METR-evaluated models are seen (selection bias); the bridge rests on 9 models; real point-in-time vintages exist only from Jun 2025.
 
+### Second round (`AI_CAPABILITY_IMPROVEMENT_V2.MD`, 25 Oct 2026)
+
+New modules: `capability_record.py` (two-stage record model), `capability_trend.py` (smoothed trend, secondary output), `capability_eval.py` (Brier definition, temperature calibration, non-overlapping cases, block bootstrap), `capability_signals.py` (external candidate predictors). The engine runs in two passes: components, record-chance variants and the trend forecast at every origin; then decisions on selection cases only; then the ensemble at every origin with weights and a temperature fitted on cases resolved before it.
+
+**Brier score** (everywhere in the capability engine and on the page): sum over classes of (p − outcome)², averaged; 0 perfect, 2 worst; a ⅓ guess scores 0.67 for three classes, a 50/50 guess 0.5 for yes/no.
+
+**Two-stage record model** (`record_jump`). Stage A: a constant monthly chance of a new record (Beta posterior, last 24 months, prior worth 12 months at the unit's rate); a record never becomes "due". Stage B: log-normal jump size, Normal-Inverse-Gamma posterior with a conservative prior (median 0.7 doublings), so 13 observed jumps cannot pin the tail. Only months in the latest unbroken stretch of measured frontier count: before a gap, METR measured too little to know whether a record could have happened. The constant hazard is supported by the record rate not rising with months since the last record (reported in `iid_checks`).
+
+**Decisions, all on selection cases only:**
+
+| Decision | Rule | Result |
+| --- | --- | --- |
+| Components with the damped trend | interval score ≤ 1.10 × the damped trend's on ≥ 10 shared cases | jump model in (1.06, 21 cases), two-stage record model in (0.99, 57), robust local trend out (1.19, 72) |
+| External signals in stage A | beats the same logistic model without it in ≥ 90% of block-bootstrap resamples, and beats the constant hazard | neither kept: compute growth raised log loss (+0.061); lab releases lowered it in only 4% of resamples |
+| Pace chances | raw or temperature-calibrated (lower selection log loss), then the existing shrink rule | raw at 3 and 12 months, calibrated at 6; no shrink (selection skill shown) |
+| Chance of no new record | stage A if its selection log loss beats the rolling base rate, else the base rate | base rate at every horizon: stage A said 23% / 33% / 50% for a record within 3 / 6 / 12 months when 78% / 95% / 100% happened |
+
+External data looked at: Epoch AI models data (2,080 language models, approximately point-in-time: only today's file exists; release dates are public, compute is estimated later), tested as above. SWE-bench Verified, LiveBench, Terminal-Bench and Aider Polyglot (via Epoch's benchmark archive) were inventoried and **not tested**: they appear in Epoch's archive only from Nov 2025 and cover releases from Feb 2024 – Jun 2025 onwards, so validating them would need the holdout. LiveBench's own site and data were reachable but have the same coverage problem.
+
+**Leakage:** the v1.0 → v1.1 bridge is no longer fitted at origins where v1.1 was not yet published (it would use the 2026 file). External features use only releases up to each month.
+
+**Results** (run `20261024T165353Z-56a2b9`; MAE in doublings; same cases for every method):
+
+| h | Ensemble holdout (selection) | Damped trend | Drift | Naive | Two-stage record | 80% coverage holdout (selection) |
+| --- | --- | --- | --- | --- | --- | --- |
+| 3 | 0.45 (0.74) | 0.50 (0.71) | 0.45 (0.66) | 0.83 (0.75) | 0.62 (0.98) | 100% (69%) |
+| 6 | **0.57** (0.99) | 0.74 (0.90) | 0.80 (1.04) | 1.66 (1.16) | 0.94 (1.47) | 100% (67%) |
+| 12 | **0.96** (1.53) | 1.41 (1.47) | 1.30 (2.05) | 3.27 (2.05) | 1.93 (2.14) | 100% (48%) |
+
+Dependence-aware checks (all scored cases):
+
+| h | Non-overlapping cases | MAE ensemble / drift / naive | Ensemble − drift, 80% (95%) block bootstrap | Pace Brier − ⅓ guess, 80% (95%) |
+| --- | --- | --- | --- | --- |
+| 3 | 19 | 0.64 / 0.55 / 0.77 | +0.06: 0.00 to 0.11 (−0.03 to 0.14) | −0.07: −0.16 to −0.00 (−0.20 to 0.04) |
+| 6 | 9 | 1.03 / 0.90 / 1.36 | −0.10: −0.18 to −0.01 (−0.22 to 0.04) | −0.16: −0.26 to −0.10 (−0.30 to −0.07) |
+| 12 | 3 | 1.08 / 0.85 / 1.92 | −0.48: −0.55 to −0.38 (−0.57 to −0.32) | −0.25: −0.28 to −0.15 (−0.31 to −0.12) |
+
+Pace chances (served): Brier 0.62 / 0.51 / 0.39 in selection and 0.54 / 0.49 / 0.49 in holdout at 3 / 6 / 12 months, against 0.67 for a ⅓ guess and 0.58–1.80 for the base rate; log loss below the ⅓ guess everywhere.
+
+What it means:
+- **Against naive:** better at every horizon, robustly.
+- **Against drift:** worse at 3 months (bootstrap 80% interval above 0); better at 6 months but not at 95%; clearly better at 12 months on all scored cases. The non-overlapping cases (19 / 9 / 3) favour drift at every horizon, and the 12-month subset has 3 cases. **The non-overlapping evaluation does not support a claim that the ensemble beats trend extrapolation.**
+- **Against its simplest component:** in the selection period the ensemble's median missed by more than the damped trend at every horizon (0.74 / 0.99 / 1.53 vs 0.71 / 0.90 / 1.47), with interval scores within 1% and pace Brier slightly better. It is better on the holdout. The ensemble is served because it was declared the forecast before any scores existed (first round); V2's "if inconclusive, keep the simpler model" would serve the damped trend. Left to the owner.
+- **Pace chances:** better than a ⅓ guess at 6 and 12 months even allowing for overlap (95% intervals below 0); at 3 months only at 80%.
+- **No new record:** the two-stage model under-predicted records throughout (the record rate rose as METR measured more models); the base rate is served. Served: 18% / 4% / 3% within 3 / 6 / 12 months.
+
+**Secondary output: underlying trend.** Smooth-trend state-space model (level moves only through a slowly drifting growth rate; staircase jumps are deviations), robust updates, MAP variances, Rauch-Tung-Striebel smoother. Estimand: mean growth rate over the next h months vs the past 12, in doublings/year, same tolerance as the frontier pace; scored against the same smoother run on the latest data. Current estimate: 2.0 doublings/year now (±1.3) vs 3.1 over the past 12 months, so P(decelerating) ≈ 0.57–0.58.
+
+| h | Brier selection / holdout (⅓ guess 0.67) | Base rate selection / holdout | Pace MAE vs "keep last year's" (selection; holdout) |
+| --- | --- | --- | --- |
+| 3 | 0.61 / 1.04 | 0.79 / 0.94 | 1.68 vs 1.81; 2.35 vs 1.65 |
+| 6 | 0.61 / 1.15 | 0.94 / 1.03 | 1.76 vs 1.79; 2.27 vs 1.56 |
+| 12 | 0.60 / 1.17 | 0.67 / 0.99 | 1.44 vs 1.34; 3.58 vs 1.77 |
+
+**No demonstrated skill:** better than both references in the selection period, worse than guessing on the holdout, and its pace forecasts lose to "keep last year's pace" on the holdout. The page says so and labels it experimental and model-estimated; it is not blended into the frontier chances.
+
+**Changed after seeing V2 results (disclosed):**
+1. Record months before a measurement gap no longer count (bug: the GPT-2 year read as 12 months without a record, giving a 1.5% monthly record chance).
+2. A kept external signal must also beat the constant hazard (both signals had passed only against a miscalibrated logistic baseline).
+3. Trend chances use the difference between current and past growth (they share most of their uncertainty); the first version treated them as independent, which pushed every chance towards ⅓.
+4. The trend model's level has no shocks of its own (the first version followed the staircase step by step, so it was not a smoothed trend).
+5. The no-record chance falls back to the base rate when stage A does not beat it (rule added after stage A's selection scores).
+
 ## 9. How this answers the BTOS problem
 
 | Old weakness | Now |

@@ -157,6 +157,10 @@ const comps = computed(() => Object.entries(r.value?.components ?? {}));
               </tbody>
             </table>
             <p v-if="r.prior_assisted" class="note">These chances didn’t beat simple guesses in the earlier tests, so {{ pct(r.shrink) }} of each is the past frequency (set in advance).</p>
+            <p v-if="r.probability_method === 'calibrated'" class="note">Calibrated: the simulated shares were softened or sharpened by one factor
+              (temperature {{ r.temperature.toFixed(2) }}) fitted on earlier forecasts only, because that lowered the error in the earlier tests.</p>
+            <p v-if="r.p_no_new_record != null" class="note">Separately, the chance that no new record appears at all within {{ months(r.h) }} is
+              <b>{{ pct(r.p_no_new_record) }}</b>{{ r.no_record_method === 'model' ? ' (two-stage record model)' : ': how often past windows this long had none, because the record model did worse than that in tests' }}.</p>
             <h3 class="sub">Did chances like these work in past tests?</h3>
             <table class="tbl">
               <thead><tr><th scope="col">Tests</th><th scope="col">Cases</th><th scope="col">These chances</th><th scope="col">Past frequency</th><th scope="col">⅓ each</th></tr></thead>

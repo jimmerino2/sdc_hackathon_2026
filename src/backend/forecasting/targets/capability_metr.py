@@ -170,6 +170,9 @@ def health(data: dict, now: pd.Timestamp) -> dict:
 def _ingest(pull: bool) -> None:
     capability.ingest(pull)
     success_curves.ingest(pull)  # display only: curves at other success rates
+    if pull:
+        from .. import capability_signals
+        capability_signals.pull()  # candidate external predictors, tested inside the capability engine
 
 
 def _engine(*args, **kwargs):

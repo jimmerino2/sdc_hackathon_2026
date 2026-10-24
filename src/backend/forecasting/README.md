@@ -76,6 +76,7 @@ Failure handling:
 | `targets/` | One module per target exposing a `TargetSpec`: load, origins (snapshots), truth, features, labels |
 | `features.py` | Shared snapshot, value scales (logit, log2), lag-feature and label code |
 | `models.py` | Baselines (naive, drift, damped drift, pooled mean), local linear trend (Kalman), ridge, and a LightGBM challenger |
+| `capability_record.py`, `capability_trend.py`, `capability_eval.py`, `capability_signals.py` | Capability engine parts: two-stage record model; smoothed-trend secondary output; Brier / calibration / non-overlap / bootstrap; external candidate predictors (tested, kept only if they help) |
 | `capability_engine.py` | AI capability only (`TargetSpec.engine`): measurement-aware data layers and v1.0→v1.1 bridge, damped / robust local / jump-process components simulated as trajectories, shrunk mixture ensemble, pace chances from the same trajectories, its own backtest scores and `engine.json` |
 | `evaluation.py` | Purged chronological split, rolling-origin backtest, metrics, selection, coverage, ablations, regime probabilities and Brier scores |
 | `run.py` | CLI, outputs, acceptance, baseline-retained gate and promotion |

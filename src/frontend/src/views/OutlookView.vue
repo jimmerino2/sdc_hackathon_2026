@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 import Bubble from '../components/Bubble.vue';
 import CapabilityChart from '../components/CapabilityChart.vue';
 import CapabilityMethod from '../components/CapabilityMethod.vue';
+import CapabilityTrend from '../components/CapabilityTrend.vue';
 import Icon from '../components/Icon.vue';
 import RegimeExplainer from '../components/RegimeExplainer.vue';
 import SuccessCurves from '../components/SuccessCurves.vue';
@@ -143,10 +144,11 @@ const METHODS: Record<string, string> = {
   local_trend: 'Local trend model',
   ridge: 'Ridge regression',
   lightgbm: 'LightGBM',
-  ensemble: 'Ensemble of the three below',
+  ensemble: 'Ensemble (mix of the approaches that passed testing)',
   damped_trend: 'Damped trend (simulated)',
   robust_local_trend: 'Robust local trend',
   jump_process: 'Jump model (new models arrive at random)',
+  record_jump: 'Two-stage record model (will a record come, how big)',
 };
 const methodName = (m: string) => METHODS[m] ?? m;
 
@@ -295,6 +297,10 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
                   <span class="dot" :style="{ left: `${s(r.forecast)}%` }" aria-hidden="true" />
                 </div>
                 <p class="range">{{ c.minutes ? '80% range' : 'Likely range' }} {{ fmt(c, r.low) }} to {{ fmt(c, r.high) }}</p>
+                <p v-for="x in [c.minutes ? regimeOf(r.h) : undefined]" v-show="x?.p_no_new_record != null" :key="'nr'" class="norec">
+                  Chance of <b>no new record</b> by then: <b>{{ pct(x?.p_no_new_record ?? null) }}</b>{{ ' ' }}
+                  <span class="muted">({{ x?.no_record_method === 'model' ? 'two-stage record model' : 'how often past windows this long had none; the record model did worse in tests' }})</span>
+                </p>
                 <p v-if="r.low != null && r.high != null && (r.forecast < r.low || r.forecast > r.high)" class="skew">
                   Forecasts like this have always come in too {{ r.forecast < r.low ? 'low' : 'high' }}, so the range is the better guide here.
                 </p>
@@ -360,7 +366,7 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
                 </div>
 
                 <div v-if="r.p_acceleration != null" class="regime">
-                  <p class="regime-q">Will task length grow faster {{ horizon(r) }} than over the past year?</p>
+                  <p class="regime-q">{{ c.minutes ? "Will the measured frontier" : "Will task length" }} grow faster {{ horizon(r) }} than over the past year?</p>
                   <p v-for="x in [regimeOf(r.h)]" :key="'help'" class="regime-help">
                     <template v-if="x">
                       Over the past 12 months the best model’s task length grew {{ pace(x.hist_pace) }}. Each of {{ x.n_sims.toLocaleString('en') }} simulated futures
@@ -388,6 +394,7 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
               </li>
             </ul>
 
+            <CapabilityTrend v-if="c.minutes && engine && selectedUnit(c)" :detail="engine" :unit="selectedUnit(c)!" />
             <SuccessCurves v-if="c.minutes" />
             <CapabilityMethod v-if="c.minutes && engine && selectedUnit(c)" :detail="engine" :unit="selectedUnit(c)!" />
             <p class="key"><span class="sw-dot" /> forecast <span class="sw-band" /> likely range (80%) <span class="sw-tick" /> latest</p>
@@ -432,6 +439,8 @@ h2 { font-size: 19px; line-height: 1.25; }
 .dot { position: absolute; top: 3px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 2px #fff; }
 .tick { position: absolute; top: 1px; width: 2px; height: 16px; margin-left: -1px; background: var(--muted); }
 .range { font-size: 12px; font-weight: 700; color: var(--muted); }
+.norec { font-size: 12px; font-weight: 700; color: var(--ink); line-height: 1.4; }
+.norec .muted { font-weight: 600; }
 .skew { font-size: 12px; font-weight: 700; color: var(--amber-ink); line-height: 1.4; }
 .test { display: flex; flex-direction: column; gap: 6px; }
 .test-line { font-size: 12.5px; line-height: 1.5; color: var(--ink); }
