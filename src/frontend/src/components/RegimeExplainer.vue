@@ -158,6 +158,17 @@ const plot = computed(() => {
                 <tr><td>Slower than the past year</td><td>{{ r.n_slower }} of {{ r.n }}</td><td><b>{{ pct(r.p_slower) }}</b></td></tr>
               </tbody>
             </table>
+            <template v-if="r.reliability?.brier_model != null">
+              <h3 class="sub">Did chances like these work in past tests?</h3>
+              <p>On {{ r.reliability.n }} past forecasts whose outcome is now known, these chances scored
+                <b>{{ r.reliability.brier_model.toFixed(2) }}</b> (Brier score: 0 = perfect, lower is better). A plain
+                one-in-three guess scored <b>{{ r.reliability.brier_uniform?.toFixed(2) }}</b>.
+                <b :class="r.reliability.brier_model < (r.reliability.brier_uniform ?? 0) ? 'ok' : 'bad'">
+                  {{ r.reliability.brier_model < (r.reliability.brier_uniform ?? 0)
+                    ? 'They did better than guessing.'
+                    : 'They did worse than guessing, so treat these chances with caution.' }}
+                </b></p>
+            </template>
             <p class="note">With {{ r.n }} dots, a 0% only means none of the past errors pointed that way, not that it cannot happen.
               Most past errors come from rebuilt history (see “What to keep in mind” on the card).</p>
           </li>
@@ -201,4 +212,7 @@ p { font-size: 14px; line-height: 1.55; }
 .pace-k { border-top-style: dashed; }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
 .result td:last-child { font-size: 15px; }
+.sub { margin-top: 12px; }
+.ok { color: #1e5e30; }
+.bad { color: #a12a22; }
 </style>

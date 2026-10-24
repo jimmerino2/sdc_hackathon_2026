@@ -36,6 +36,7 @@ FEATURE_GROUPS = {"level": ["lvl"], "own_trend": ["d1", "d3", "d6", "d12"]}
 GROUP_SOURCE = {g: "epoch_metr" for g in FEATURE_GROUPS}
 FIRST_RECONSTRUCTED = pd.Period("2023-01", freq="M")  # from GPT-4-era models; was 2024-01 in the first run,
                                                      # moved after it left too few selection origins (documented)
+MAX_STALE_MONTHS = 12  # a month has a measured frontier only if a measured model was released in the past 12
 MEASUREMENT_LAG_MONTHS = 3  # METR measures a model 38-139 days after release (median 64; upper end inflated by
                             # gaps between archive captures): a vintage counts as complete only up to 3 months back
 UNITS = {"METR-Horizon-v1.0": "v1.0", "METR-Horizon-v1.1": "v1.1"}
@@ -63,7 +64,13 @@ def frontier(rows: pd.DataFrame, last: pd.Period) -> pd.DataFrame:
         return pd.DataFrame(columns=["period", "value"])
     rel = rows.assign(period=rows["release_date"].dt.to_period("M"))
     months = pd.period_range(rel["period"].min(), last, freq="M")
-    best = rel.groupby("period")["value"].max().reindex(months).ffill().cummax()  # no release: frontier holds
+    by_month = rel.groupby("period")["value"].max().reindex(months)
+    best = by_month.ffill().cummax()  # no release: frontier holds
+    # ... but only while a measured model is recent. METR measured almost nothing from 2019-2022, so before GPT-4
+    # the "frontier" would be GPT-2 (2019); a later jump from it says nothing about the pace of progress.
+    last_release = pd.Series(months, index=months).where(by_month.notna()).ffill()
+    stale = [(m - r).n > MAX_STALE_MONTHS if pd.notna(r) else True for m, r in zip(months, last_release)]
+    best[stale] = float("nan")
     return pd.DataFrame({"period": months, "value": best.to_numpy()})
 
 
@@ -118,7 +125,9 @@ def origins(data: dict) -> list[Snapshot]:
     recon = []
     for m in pd.period_range(FIRST_RECONSTRUCTED, first_real - 1, freq="M"):
         origin = ((m + 1).to_timestamp() + pd.Timedelta(days=14)).tz_localize("UTC")
-        recon.append(snapshot(d, act, origin, last=m))
+        s = snapshot(d, act, origin, last=m)
+        if s.last == m:  # skip months with no measured frontier (nothing recent to forecast from)
+            recon.append(s)
     return recon + [by_last[m] for m in sorted(by_last)]
 
 

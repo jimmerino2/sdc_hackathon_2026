@@ -153,5 +153,7 @@ def regime_explained(target: str, unit: str) -> list[dict]:
             "p_faster": r["p_acceleration"], "p_same": r["p_stable"], "p_slower": r["p_slowdown"],
             "n_faster": int((outcomes > hi).sum()), "n_slower": int((outcomes < lo).sum()), "n": int(len(outcomes)),
             "methods": methods,
+            "reliability": next(({k: x.get(k) for k in ("n", "brier_model", "brier_climatology", "brier_uniform")}
+                                 for x in (ev.get("regime_scores") or []) if x["h"] == h), None),
         })
     return out

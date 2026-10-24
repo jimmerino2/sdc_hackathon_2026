@@ -132,6 +132,8 @@ export interface RegimeExplained {
     selection_typical_miss: number | null;
     holdout_typical_miss: number | null;
   }[];
+  /** Brier scores of these chances on past tests (lower is better); a plain 1/3-each guess scores brier_uniform. */
+  reliability: { n: number; brier_model: number | null; brier_climatology: number | null; brier_uniform: number | null } | null;
 }
 
 export const fetchRegime = (target: string, unit: string) =>

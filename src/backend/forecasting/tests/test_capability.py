@@ -90,3 +90,11 @@ def test_capability_errors_are_in_doublings():
     spec = CM.SPEC
     assert spec.errors_on_model_scale and spec.error_unit == "doublings (log2)"
     assert np.isclose(F.LOG2.to_model(np.array([8.0]))[0], 3.0)
+
+
+def test_frontier_is_unknown_when_no_measured_model_is_recent():
+    rows = pd.DataFrame({"release_date": pd.to_datetime(["2019-11-05", "2023-03-14"]), "value": [0.04, 5.4]})
+    f = CM.frontier(rows, pd.Period("2023-04", freq="M")).set_index("period")["value"]
+    assert f[pd.Period("2020-06", freq="M")] == 0.04  # within 12 months of GPT-2: holds
+    assert np.isnan(f[pd.Period("2023-02", freq="M")])  # 3+ years stale: unknown, not "GPT-2 is the frontier"
+    assert f[pd.Period("2023-04", freq="M")] == 5.4

@@ -4,7 +4,7 @@ import Bubble from '../components/Bubble.vue';
 import Icon from '../components/Icon.vue';
 import RegimeExplainer from '../components/RegimeExplainer.vue';
 import {
-  fetchAccuracy, fetchOutlook, fetchTargets, type MethodScore, type OutlookRow, type TargetSummary, type UnitAccuracy,
+  fetchAccuracy, fetchOutlook, fetchRegime, fetchTargets, type RegimeExplained, type MethodScore, type OutlookRow, type TargetSummary, type UnitAccuracy,
 } from '../api/outlook';
 import { COUNTRIES, OCCUPATIONS, SECTORS } from '../data/outlookNames';
 
@@ -55,6 +55,13 @@ const cards: Card[] = [
 
 const status = ref<'loading' | 'done' | 'error'>('loading');
 const explain = ref(false);
+/** Capability: past-test reliability of the faster / same / slower chances, per horizon. */
+const regimes = ref<RegimeExplained[]>([]);
+function reliability(h: number) {
+  const x = regimes.value.find((r) => r.h === h)?.reliability;
+  if (!x || x.brier_model == null || x.brier_uniform == null) return null;
+  return { model: x.brier_model.toFixed(2), uniform: x.brier_uniform.toFixed(2), better: x.brier_model < x.brier_uniform };
+}
 const summaries = ref<Record<string, TargetSummary>>({});
 const rows = ref<Record<string, OutlookRow[]>>({});
 const picked = reactive<Record<string, string>>(Object.fromEntries(cards.map((c) => [c.target, c.defaultUnit])));
@@ -73,6 +80,8 @@ async function load() {
 }
 onMounted(async () => {
   await load();
+  const cap = cards.find((c) => c.minutes);
+  if (cap && rows.value[cap.target]?.length) fetchRegime(cap.target, cap.defaultUnit).then((r) => { regimes.value = r; }).catch(() => {});
   if (new URLSearchParams(location.search).has('explain')) explain.value = true;  // link straight to the explanation
 });
 
@@ -331,6 +340,10 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
                     Compares the forecast growth with the pace of the last 12 months; within ±25% counts as “about the same”.
                     Chances come from how wrong this method was in past tests.
                   </p>
+                  <p v-for="rel in [reliability(r.h)]" v-show="rel" :key="'rel'" class="rel" :class="rel?.better ? 'ok' : 'bad'">
+                    In past tests these chances scored {{ rel?.model }} (lower is better) vs {{ rel?.uniform }} for a plain
+                    one-in-three guess: {{ rel?.better ? 'better than guessing.' : 'worse than guessing, so treat them with caution.' }}
+                  </p>
                   <div class="stack" role="img"
                        :aria-label="REGIMES.map((g) => `${g.label} ${pct(r[g.key])}`).join(', ')">
                     <span v-for="g in REGIMES" v-show="(r[g.key] ?? 0) > 0" :key="g.key" class="seg"
@@ -409,6 +422,9 @@ h2 { font-size: 19px; line-height: 1.25; }
 .regime { margin-top: 4px; display: flex; flex-direction: column; gap: 6px; }
 .regime-q { font-size: 13px; font-weight: 800; }
 .regime-help { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+.rel { font-size: 12px; font-weight: 700; line-height: 1.45; }
+.rel.ok { color: #1e5e30; }
+.rel.bad { color: #a12a22; }
 .explain { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; font-size: 13px; }
 .stack { display: flex; gap: 2px; height: 12px; }
 .seg { border-radius: 4px; min-width: 4px; }

@@ -290,38 +290,40 @@ What it means:
 
 - **Target:** frontier = the longest horizon among models released by each month, on log₂ minutes.
 - **Features:** `level`, and `own_trend` (d1, d3, d6, d12).
-- **Origins:** 42, from 2023-01 (28 reconstructed, 7 mixed, 7 real). Reconstructed origins started at 2024-01 in the first run; I moved the start to 2023-01 after that run left too few selection origins at h=6 and h=12. This is disclosed as a post-run change of the evaluation window.
+- **Origins:** 40, from 2023-03 (26 reconstructed, 7 mixed, 7 real). Reconstructed origins started at 2024-01 in the first run, then moved to 2023-01 after that run left too few selection origins at h=6 and h=12 (a post-run change of the evaluation window, disclosed here).
+- **Stale frontier = unknown** (added 24 Oct 2026 after a user question). A month has a measured frontier only if a measured model was released in the previous 12 months.
+  - Why: METR measured almost no models from 2019–2022, and davinci-002 has no release date. So in Feb 2023 the "frontier" was GPT-2 (2019, 0.04 minutes), and the next year's GPT-4-class models looked like a ×215 jump.
+  - Effect: that artefact was the largest past error behind the regime chances. Origins before GPT-4 (Mar 2023) are now skipped, since there was nothing recent to forecast from.
+  - Also: LightGBM falls back to the mean change when it has fewer than 60 training rows, instead of failing.
 
-**Results** (run `20261024T043921Z-3b51da`; errors in doublings):
+**Results** (run `20261024T082956Z-cb5caa`, after the stale-frontier fix; errors in doublings):
 
-| h (months) | Chosen | Selection MAE (naive) | Holdout MAE (naive) | MASE vs naive | MASE vs drift | 80% coverage | Status |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 3 | ridge | 0.91 (1.05) | 0.38 (0.83) | 0.46 | 0.84 | 0.94 | validated |
-| 6 | ridge | 1.11 (1.50) | 0.36 (1.66) | 0.22 | 0.46 | 1.00 | validated |
-| 12 | ridge | 1.80 (2.54) | 1.25 (3.27) | 0.38 | 0.96 | 1.00 | validated |
+| h (months) | Chosen | Selection MAE (naive) | Holdout MAE (naive) | MASE vs naive | MASE vs drift | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| 3 | ridge | 0.59 (0.75) | 0.65 (0.83) | 0.79 | 1.44 | validated |
+| 6 | ridge | 0.94 (1.16) | 0.83 (1.66) | 0.50 | 1.04 | validated |
+| 12 | naive (all methods tied at 2.04 in selection; the simplest wins) | 2.04 (2.04) | 3.27 (3.27) | 1.00 | 2.51 | baseline |
 
 Regime probabilities on the holdout (Brier, lower is better):
 
 | h | n | Model | Climatology | Uniform ⅓ |
 | --- | --- | --- | --- | --- |
-| 3 | 16 | 0.57 | 0.73 | 0.67 |
-| 6 | 14 | 0.57 | 0.81 | 0.67 |
-| 12 | 6 | 0.48 | 0.81 | 0.67 |
+| 3 | 16 | 0.80 | 1.05 | 0.67 |
+| 6 | 14 | 0.82 | 1.24 | 0.67 |
+| 12 | 6 | 0.49 | 2.00 | 0.67 |
 
 What it means:
 
-- **"No change" is a weak bar for a frontier that doubles every few months.** Against drift, ridge is 16% better at 3 months and 54% better at 6 months, but only 4% better at 12 months.
-- **At 12 months, local_trend did best on the holdout** (0.74 doublings) but was poor in selection, so it was not chosen.
-- **Real-vintage evidence is small:** the holdout has 4 real-vintage rows at h=3, 2 at h=6 and none at h=12. The rest is reconstructed or mixed. Every forecast carries this warning.
-- **Ridge depends on the trend features:** removing them makes selection error worse by 0.11 and 0.29 doublings at h=3 and h=6. LightGBM cannot split on this few rows and equals naive.
-- **The current forecast is a trend projection.** From 1,045 minutes (frontier of models released by Jul 2026, measured under v1.1), it projects about 1,800 minutes by Oct 2026 and about 11,900 by Jul 2027. The 10–90% range at 12 months is 8,700–126,000 minutes.
-- **Regime probabilities** at 12 months: acceleration 0.62, stable 0.38, slowdown 0.00. They come from about 20 residuals, so the tails are coarse; a 0.00 means "not seen in this small sample", not "impossible".
+- **The earlier, better-looking results depended on the GPT-2 artefact.** They showed ridge validated at every horizon, beating drift, and regime chances beating guessing.
+- **3 and 6 months:** ridge beats "no change" (21% and 50% smaller error) but **not** continuing last year's trend. Damped drift and pooled mean did best on the holdout.
+- **12 months:** with only 12 selection origins, most methods tie, so "no change" is served. It is the worst method on the holdout (×9.7 typical miss) and has always under-forecast, so its range lies wholly above it (the forecast says so).
+- **Regime chances:** at 3 and 6 months they did **worse than a plain one-in-three guess**; at 12 months better, but on 6 test points. The page and dialog now show these scores next to the chances.
 
 **Model card:**
 
 - **Intended use:** an indicative outlook for one capability dimension (software-task time horizons of frontier models) and whether its growth rate is speeding up or slowing down.
 - **Not a measure of:** general intelligence, adoption, or labour-market impact.
-- **Supported claim:** on a mostly reconstructed backtest, trend-based models beat persistence clearly, and beat drift at 3 and 6 months.
+- **Supported claim:** on a mostly reconstructed backtest, trend-based methods beat persistence at 3 and 6 months. Nothing beats simple trend extrapolation reliably, and the regime chances are not yet better than guessing at 3 and 6 months.
 - **Will improve** as real vintages accumulate.
 
 ## 9. How this answers the BTOS problem

@@ -195,11 +195,14 @@ class LightGBMModel(Model):
 
     def fit(self, train, h, features, trend_steps=12, panel=None):
         super().fit(train, h, features, trend_steps, panel)
-        self.m = lgb.LGBMRegressor(**LGB_PARAMS).fit(train[features], train["target"])
+        # Too few rows to split (a leaf needs min_child_samples): no trees, just the average change
+        self.m = (lgb.LGBMRegressor(**LGB_PARAMS).fit(train[features], train["target"])
+                  if len(train) >= 2 * LGB_PARAMS["min_child_samples"] else None)
+        self.mean = float(train["target"].mean()) if len(train) else 0.0
         return self
 
     def predict(self, rows):
-        return self.m.predict(rows[self.features])
+        return self.m.predict(rows[self.features]) if self.m is not None else np.full(len(rows), self.mean)
 
 
 CANDIDATES: dict[str, type[Model]] = {c.name: c for c in

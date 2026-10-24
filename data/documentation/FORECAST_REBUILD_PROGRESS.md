@@ -126,3 +126,7 @@ METR's own repo (METR/eval-analysis-public) only has raw runs + 24 commits: not 
   (components/RegimeExplainer.vue, GET /outlook/{target}/regime?unit=, ?explain=1 opens it); capability forecasts
   now store regime_past_change / band / pred_change / n_residuals. NOTE: user runs their own backend on :8000
   (`--app-dir src/backend`); test on other ports, never kill it.
+- 2026-10-24: capability fix: frontier unknown when no measured model released in prior 12 months (GPT-2 artefact,
+  x215 'jump'); origins without a measured frontier skipped; LightGBM mean fallback <60 rows. Results weaker:
+  h12 now naive (baseline), regime chances worse than uniform at h3/h6 (Brier shown on card + dialog).
+  NEXT: success-rate curves (other % than 50) from METR raw runs (data/raw/vintages/metr_full runs.jsonl).
