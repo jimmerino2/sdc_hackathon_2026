@@ -64,8 +64,9 @@ the included outputs are in `src/backend/ml/output/`.
 
 ## Production deployment (Replit Autoscale)
 
-The production build creates the Vue frontend with `VITE_API_URL=/api` and runs
-`app.serve:asgi`, which serves the frontend and mounts the API under `/api` on
-the same origin. A separate frontend origin is not needed, so CORS is not
-required for this deployment. Node.js 22 is configured because locked frontend
-dependencies require Node.js 22.18 or newer.
+Migrated from Vercel. The deployment builds the frontend with `VITE_API_URL=/api` and runs
+`app.serve:asgi`, which serves `src/frontend/dist` and mounts the API under `/api` on the
+same origin. A separate frontend origin is not needed, so CORS is not required for this
+deployment. `api/index.py` and `vercel.json` are kept only for the Vercel deployment.
+Set the secrets listed above in the Replit deployment before publishing. Node.js 22 is
+configured because locked frontend dependencies require Node.js 22.18 or newer.
