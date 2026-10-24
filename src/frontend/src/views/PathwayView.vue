@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import '../learn.css';
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import Bubble from '../components/Bubble.vue';
 import Icon from '../components/Icon.vue';
 import SkillChips from '../components/learn/SkillChips.vue';
@@ -9,6 +9,7 @@ import SkillPath from '../components/learn/SkillPath.vue';
 import NextUpCard, { type NextUpSkill } from '../components/learn/NextUpCard.vue';
 import ProgressCard from '../components/learn/ProgressCard.vue';
 import SignalCard from '../components/learn/SignalCard.vue';
+import ForecastCard from '../components/learn/ForecastCard.vue';
 import BeeGuide from '../components/learn/BeeGuide.vue';
 import ChallengeCard from '../components/learn/ChallengeCard.vue';
 import { completeNode, deleteRoadmap, fetchRoadmapSummaries, RoadmapError, submitChallenge, type RoadmapChallenge, type RoadmapNode, type RoadmapSource, type RoadmapSummary } from '../api/roadmap';
@@ -16,6 +17,8 @@ import { readProfileId } from '../api/profile';
 import { skillLabel } from '../data/skills';
 import { allNodes, completeLocally, learningLinks, progress, resolveNodes, resolveUnits, sectionCleared, type ResolvedSkill } from '../learn/skillState';
 import { prefersReducedMotion } from '../composables/useCountUp';
+import { loadRoleForecast, normalizeSkillName, type RoleForecast } from '../occupational/forecastMatch';
+import type { SkillRow } from '../api/occupational';
 import { loadRoadmap, openRoadmap, useFlow } from '../state';
 import { go } from '../router';
 
@@ -49,6 +52,27 @@ const busyId = ref<string | null>(null);
 const error = ref<string | null>(null);
 const cleared = ref(false);
 const sideCard = ref<HTMLElement | null>(null);
+
+/* ---------- demand forecast: a trend badge on tech skills that match the AI-prediction data ---------- */
+const roleForecast = ref<RoleForecast | null>(null);
+
+/** The forecast row for a resolved skill, when it's a 'tech' node matched by name; null otherwise. */
+function forecastRowFor(s: ResolvedSkill): SkillRow | null {
+  if (s.node.skill_type !== 'tech' || !roleForecast.value) return null;
+  return roleForecast.value.rows.get(normalizeSkillName(skillLabel(s.node.skill_name))) ?? null;
+}
+const forecastDirectionFor = (s: ResolvedSkill) => forecastRowFor(s)?.direction ?? null;
+/** The demand forecast for the selected skill, shown alongside its sources (not instead of). */
+const forecastSelected = computed(() => {
+  const s = selected.value;
+  const row = s && forecastRowFor(s);
+  return s && row ? { name: skillLabel(s.node.skill_name), row } : null;
+});
+
+watch(() => roadmap.value?.onet_code, async (code) => {
+  roleForecast.value = null;
+  if (code) roleForecast.value = await loadRoleForecast(code);
+}, { immediate: true });
 
 const firstReady = computed(() => [...resolved.value.values()].find((s) => s.state === 'ready') ?? null);
 const selected = computed(() => (selectedId.value ? resolved.value.get(selectedId.value) ?? null : null));
@@ -262,6 +286,7 @@ onMounted(async () => {
               :busy-id="busyId"
               :label="(s) => skillLabel(s.node.skill_name)"
               :kind="kindOf"
+              :forecast="forecastDirectionFor"
               @select="select"
             />
           </div>
@@ -279,8 +304,15 @@ onMounted(async () => {
       </div>
 
       <aside class="learn__side">
-        <div ref="sideCard">
+        <div ref="sideCard" class="learn__sidecards">
           <NextUpCard :skill="nextUp" :selected="!!selected" :busy="!!busyId" :error="error" @complete="markDone" />
+          <ForecastCard
+            v-if="forecastSelected && roleForecast"
+            :name="forecastSelected.name"
+            :row="forecastSelected.row"
+            :occupation="roleForecast.occupation"
+            :country="roleForecast.country"
+          />
         </div>
         <ProgressCard :done="counts.done" :total="counts.total" :role="roadmap.title" />
         <SignalCard :title="`Signal: ${scenario.label}`" />

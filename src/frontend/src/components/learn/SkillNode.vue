@@ -4,7 +4,7 @@ import Icon from '../Icon.vue';
 import { useFlash } from '../../composables/useFlash';
 import type { SkillState } from '../../learn/skillState';
 
-const props = defineProps<{ name: string; kind?: string; resources?: number; state: SkillState; selected?: boolean; tag?: string | null; busy?: boolean; /** Orb above its label, for the graph layout. */ stack?: boolean; /** The skill group's icon and yellow shade (0 lightest): they mark the orb. */ icon?: string; shade?: number }>();
+const props = defineProps<{ name: string; kind?: string; resources?: number; state: SkillState; selected?: boolean; tag?: string | null; busy?: boolean; /** Orb above its label, for the graph layout. */ stack?: boolean; /** The skill group's icon and yellow shade (0 lightest): they mark the orb. */ icon?: string; shade?: number; /** Set when a demand forecast matched this skill; shows a trend badge the learner can click to select it. */ forecastDirection?: 'rising' | 'falling' | 'flat' | null }>();
 const emit = defineEmits<{ select: [] }>();
 
 const { on: shaking, trigger: shake } = useFlash(480);
@@ -20,9 +20,16 @@ const particles = Array.from({ length: 14 }, (_, i) => {
 });
 
 const status = { done: 'completed', locked: 'locked', ready: 'ready to learn' } as const;
+const dirIcon = { rising: 'tup', falling: 'tdown' } as const;
 
 function click() {
   if (props.state === 'locked') shake();
+  emit('select');
+}
+
+/** The forecast badge selects the node too (same side panel, just a second way in). */
+function clickForecast(e: MouseEvent) {
+  e.stopPropagation();
   emit('select');
 }
 </script>
@@ -36,6 +43,9 @@ function click() {
         <Icon v-else :name="icon ?? (state === 'locked' ? 'lock' : 'star')" :size="state === 'locked' ? 26 : 30" />
       </button>
       <span v-if="state === 'locked' && icon" class="jb-node__lock" aria-hidden="true"><Icon name="lock" :size="13" :stroke="2.8" /></span>
+      <button v-if="forecastDirection === 'rising' || forecastDirection === 'falling'" type="button" class="jb-node__forecast" :data-direction="forecastDirection" :aria-label="`${name} demand forecast: ${forecastDirection}`" @click="clickForecast">
+        <Icon :name="dirIcon[forecastDirection]" :size="13" :stroke="2.8" />
+      </button>
       <span v-if="burstKey > 0" :key="burstKey" class="jb-burst" aria-hidden="true"><i v-for="(p, i) in particles" :key="i" :style="p" /></span>
     </div>
     <div class="jb-node__label">

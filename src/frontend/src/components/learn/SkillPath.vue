@@ -14,6 +14,8 @@ const props = defineProps<{
   label: (s: ResolvedSkill) => string;
   /** The skill's category: it picks the column, the shade and the icon. */
   kind: (s: ResolvedSkill) => string;
+  /** The skill's demand-forecast direction, when one was matched. */
+  forecast?: (s: ResolvedSkill) => 'rising' | 'falling' | 'flat' | null | undefined;
 }>();
 defineEmits<{ select: [skill: ResolvedSkill] }>();
 
@@ -41,6 +43,7 @@ const { el, scale } = useFit(() => layout.value.width);
           :selected="selectedId === it.skill.id"
           :tag="it.skill.id === startId ? 'START' : null"
           :busy="busyId === it.skill.id"
+          :forecast-direction="forecast?.(it.skill)"
           @select="$emit('select', it.skill)"
         />
       </template>
