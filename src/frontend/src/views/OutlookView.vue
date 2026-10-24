@@ -148,7 +148,9 @@ function vsNaive(m: MethodScore, a: UnitAccuracy): string {
   const d = Math.round((m.mae / n - 1) * 100);
   return `${d > 0 ? '+' : ''}${d}%`;
 }
-const pooled = (a: UnitAccuracy, m: string) => a.all_units.find((x) => x.method === m)?.mae;
+const pct0 = (v: number | undefined) => (v == null ? '–' : `${Math.round(v)}%`);
+const accOf = (a: UnitAccuracy, m: string) => pct0(a.methods.find((x) => x.method === m)?.accuracy_pct);
+const pooledAcc = (a: UnitAccuracy, m: string) => pct0(a.all_units.find((x) => x.method === m)?.accuracy_pct);
 const best = (a: UnitAccuracy) => a.methods[0];
 
 /** The pipeline's technical warnings, said plainly. Unknown ones are shown as they are. */
@@ -189,9 +191,9 @@ function asOf(c: Card): string | null {
   return h?.last_available_at ? new Date(h.last_available_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
 }
 const REGIMES = [
-  { key: 'p_acceleration', label: 'Faster', color: '#eb6834' },
-  { key: 'p_stable', label: 'About the same', color: '#9e9a92' },
-  { key: 'p_slowdown', label: 'Slower', color: '#2a78d6' },
+  { key: 'p_acceleration', label: 'Faster than the past year', color: '#eb6834' },
+  { key: 'p_stable', label: 'About the same pace', color: '#9e9a92' },
+  { key: 'p_slowdown', label: 'Slower than the past year', color: '#2a78d6' },
 ] as const;
 const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
 </script>
@@ -256,12 +258,12 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
                     <p class="test-line">
                       <b>Tested on {{ a.n_test_points }} past forecast{{ a.n_test_points === 1 ? '' : 's' }}</b> for {{ unitName(c, r.unit) }}.
                       <template v-if="a.served_model !== 'naive'">
-                        The method shown ({{ methodName(a.served_model) }}) was off by <b>{{ err(c, a.served_mae) }}</b> on average;
-                        “no change” was off by <b>{{ err(c, a.naive_mae) }}</b>.
+                        The method shown ({{ methodName(a.served_model) }}) was <b>{{ accOf(a, a.served_model) }} accurate</b>
+                        (off by {{ err(c, a.served_mae) }} on average); “no change” was <b>{{ accOf(a, 'naive') }}</b> ({{ err(c, a.naive_mae) }}).
                       </template>
                       <template v-else>
-                        The forecast shown is “no change”, off by <b>{{ err(c, a.naive_mae) }}</b> on average.
-                        <template v-if="best(a).method !== 'naive'">The most accurate method here was {{ methodName(best(a).method) }} ({{ err(c, best(a).mae) }}).</template>
+                        The forecast shown is “no change”: <b>{{ accOf(a, 'naive') }} accurate</b> (off by {{ err(c, a.naive_mae) }} on average).
+                        <template v-if="best(a).method !== 'naive'">The most accurate method here was {{ methodName(best(a).method) }}: {{ accOf(a, best(a).method) }} ({{ err(c, best(a).mae) }}).</template>
                       </template>
                     </p>
                     <span v-if="a.beats_naive !== null" class="verdict" :class="a.beats_naive ? 'yes' : 'no'">
@@ -277,30 +279,41 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
                       <table>
                         <thead>
                           <tr>
-                            <th scope="col">Method</th><th scope="col">Avg error here</th><th scope="col">vs “no change”</th>
-                            <th v-if="c.pickerLabel" scope="col">All series</th>
+                            <th scope="col">Method</th><th scope="col">Accuracy</th><th scope="col">Avg error</th>
+                            <th scope="col">vs “no change”</th>
+                            <th v-if="c.pickerLabel" scope="col">Accuracy, all {{ c.pickerLabel.toLowerCase() }}s</th>
                           </tr>
                         </thead>
                         <tbody>
                           <tr v-for="m in a.methods" :key="m.method" :class="{ shown: m.method === a.served_model, base: m.method === 'naive' }">
                             <td>{{ methodName(m.method) }}<span v-if="m.method === a.served_model" class="tag">shown</span></td>
+                            <td>{{ Math.round(m.accuracy_pct) }}%</td>
                             <td>{{ err(c, m.mae) }}</td>
                             <td>{{ vsNaive(m, a) }}</td>
-                            <td v-if="c.pickerLabel">{{ err(c, pooled(a, m.method)) }}</td>
+                            <td v-if="c.pickerLabel">{{ pooledAcc(a, m.method) }}</td>
                           </tr>
                         </tbody>
                       </table>
                       <p class="table-note">
-                        Average error on months the methods hadn’t seen{{ c.minutes ? ' (×1.30 = typically 30% too high or too low)' : ', in percentage points' }}.
-                        A negative “vs no change” means more accurate than “no change”.
-                        <template v-if="c.pickerLabel">“All series” pools every {{ c.pickerLabel.toLowerCase() }}; that pooled score is what picked the method shown.</template>
+                        Tested on months the methods hadn’t seen. Accuracy = the smaller of forecast and actual divided by the larger,
+                        averaged (forecast 30, actual 40 → 75%).
+                        Avg error is {{ c.minutes ? 'a factor (×1.30 = typically 30% too high or too low)' : 'in percentage points' }};
+                        a negative “vs no change” means a smaller error than “no change”.
+                        <template v-if="c.pickerLabel">
+                          The last column averages over every {{ c.pickerLabel.toLowerCase() }} in this card. That pooled score
+                          is what chose the method shown, so it can differ from the best method for this one.
+                        </template>
                       </p>
                     </details>
                   </template>
                 </div>
 
                 <div v-if="r.p_acceleration != null" class="regime">
-                  <p class="regime-q">Will progress speed up {{ horizon(r) }}?</p>
+                  <p class="regime-q">Will task length grow faster {{ horizon(r) }} than over the past year?</p>
+                  <p class="regime-help">
+                    Compares the forecast growth with the pace of the last 12 months; within ±25% counts as “about the same”.
+                    Chances come from how wrong this method was in past tests.
+                  </p>
                   <div class="stack" role="img"
                        :aria-label="REGIMES.map((g) => `${g.label} ${pct(r[g.key])}`).join(', ')">
                     <span v-for="g in REGIMES" v-show="(r[g.key] ?? 0) > 0" :key="g.key" class="seg"
@@ -373,6 +386,7 @@ h2 { font-size: 19px; line-height: 1.25; }
 .table-note { margin-top: 6px; color: var(--muted); line-height: 1.45; }
 .regime { margin-top: 4px; display: flex; flex-direction: column; gap: 6px; }
 .regime-q { font-size: 13px; font-weight: 800; }
+.regime-help { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
 .stack { display: flex; gap: 2px; height: 12px; }
 .seg { border-radius: 4px; min-width: 4px; }
 .legend { list-style: none; display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 0; margin: 0; font-size: 12px; font-weight: 700; color: var(--muted); }

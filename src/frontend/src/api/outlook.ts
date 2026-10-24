@@ -73,6 +73,10 @@ export interface MethodScore {
   mae: number;
   /** Average error; negative = forecasts were too low. */
   bias: number;
+  /** Average % the forecast was off from the actual value. */
+  pct_off: number;
+  /** Average of smaller / larger of forecast and actual, in % (100 = exact). */
+  accuracy_pct: number;
   n: number;
 }
 

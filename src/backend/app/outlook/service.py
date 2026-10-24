@@ -89,9 +89,16 @@ def accuracy(target: str, unit: str) -> list[dict]:
         mine = b[b["unit"].str.lower() == unit.lower()]
 
         def score(d: pd.DataFrame) -> list[dict]:
-            g = d.groupby("candidate")["error"]
-            t = pd.DataFrame({"mae": g.apply(lambda x: x.abs().mean()), "bias": g.mean(), "n": g.size()})
-            return [{"method": m, "mae": float(r.mae), "bias": float(r.bias), "n": int(r.n)}
+            # Accuracy per forecast = smaller / larger of forecast and actual (30 vs 40 -> 75%, either way round).
+            # Bounded 0-100 and symmetric, so it also works for time horizons, where a forecast can be several times
+            # off. % off = |forecast - actual| / actual.
+            lo, hi = d[["pred", "actual"]].min(axis=1), d[["pred", "actual"]].max(axis=1)
+            d = d.assign(acc=lo / hi * 100, pct_off=(d["pred"] - d["actual"]).abs() / d["actual"] * 100)
+            g = d.groupby("candidate")
+            t = pd.DataFrame({"mae": g["error"].apply(lambda x: x.abs().mean()), "bias": g["error"].mean(),
+                              "pct_off": g["pct_off"].mean(), "acc": g["acc"].mean(), "n": g.size()})
+            return [{"method": m, "mae": float(r.mae), "bias": float(r.bias), "pct_off": float(r.pct_off),
+                     "accuracy_pct": float(r.acc), "n": int(r.n)}
                     for m, r in t.sort_values("mae").iterrows()]
 
         rows = score(mine)

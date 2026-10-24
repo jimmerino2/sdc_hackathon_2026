@@ -63,6 +63,8 @@ class MethodScore(BaseModel):
     method: str = Field(description="naive = no change; drift, damped_drift, pooled_mean, local_trend, ridge, lightgbm")
     mae: float = Field(description="Average absolute error on the held-back test data, in error_unit")
     bias: float = Field(description="Average error (forecast minus outcome); negative = forecasts were too low")
+    pct_off: float = Field(description="Average % the forecast was off from the actual value")
+    accuracy_pct: float = Field(description="Average of smaller/larger of forecast and actual, in % (100 = exact)")
     n: int = Field(description="Number of held-back test forecasts")
 
 
