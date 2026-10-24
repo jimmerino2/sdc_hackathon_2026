@@ -355,6 +355,11 @@ python -m pytest forecasting/tests                          # 61 tests, offline,
 
   A failed fetch keeps the local history. A failed build leaves the previous tables in place. A failed acceptance keeps the previous promoted model. Each target's outputs are in `src/backend/forecasting/output/<target>/`.
 - **Freshness:** `registry.health()` marks a source stale after 2× its cadence. A stale target blocks promotion and is written into the forecast `warnings`.
+- **API** (read-only, added alongside the existing `/forecast`, which is unchanged). New runs show up without a restart. Every row carries `status`, its range and `warnings`:
+  - `GET /outlook` lists the targets with promoted horizons, status and source health;
+  - `GET /outlook/{target}?unit=&h=` returns the promoted forecasts;
+  - `GET /outlook/{target}/evaluation` returns the newest run's evaluation.
+- **Reproducibility (checked 24 Oct 2026):** on a fresh clone of the branch, with no raw data, the 65 tests pass. `python -m forecasting.run --skip-ingest` reproduces all 69,388 backtest predictions of the main checkout exactly (same code-version hash).
 
 ## 11. Limitations and next steps
 
@@ -372,5 +377,7 @@ python -m pytest forecasting/tests                          # 61 tests, offline,
    - cost-adjusted capability;
    - GDELT news as a candidate leading feature, kept only if the ablation shows a gain.
 6. **Scenario engine:** connecting capability regimes to adoption and skill demand needs a tested link between them. None is estimated yet, so no scenarios are produced.
-7. **API/UI:** serve each target's `latest_forecast.csv` and evaluation through `/forecast` and show freshness. The current app endpoints are untouched.
-8. **Merge gate:** do not merge to `main` until the tests pass on a fresh clone, and a second run on newer data has been promoted or rejected by the rules above.
+7. **UI:** the `/outlook` API is in place; no frontend page uses it yet. The old adoption pages on `feat/ai-adoption-mc` show discarded outputs and were not ported.
+8. **Merge gate:** do not merge to `main` until both of these hold:
+   - the tests pass on a fresh clone — **done** 24 Oct 2026;
+   - a second run on newer data has been promoted or rejected by the rules above — **pending**. The sources next publish in early November 2026: BTOS around 5 Nov, Indeed's AI share in the first half of the month.

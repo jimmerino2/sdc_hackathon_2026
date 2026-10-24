@@ -107,3 +107,7 @@ METR's own repo (METR/eval-analysis-public) only has raw runs + 24 commits: not 
   data/README.md, forecasting/README.md.
   NEXT (not started): serve latest_forecast.csv via /forecast + UI; merge gate (fresh-clone test + second run);
   shorter/weighted training window for long horizons; ECI once ~12 vintages exist; GDELT as candidate feature.
+- 2026-10-24: /outlook API (app/outlook/: list, per-target forecasts, evaluation), warnings joined with " | ".
+  Merge gate part 1 done: fresh clone -> 65 tests pass, full run reproduces all 69,388 backtest predictions exactly.
+  Part 2 pending: second run on newer data (sources publish again early Nov 2026).
+  OPEN QUESTIONS FOR USER: frontend page for /outlook? FRED_API_KEY for RPS vintages? merge timing.

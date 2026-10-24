@@ -39,6 +39,16 @@ These are in `output/<target>/`; every column is described in `data/documentatio
 - `forecast_log.csv`: append-only record of every forecast issued.
 - `runs/<run_id>/`: the full backtest, `evaluation.json` and that run's forecast.
 
+## API
+
+These are served by the backend (`app/outlook/`), read-only, and new runs appear without a restart:
+
+- `GET /outlook`: the targets with promoted horizons, status and source health;
+- `GET /outlook/{target}?unit=&h=`: the promoted forecasts, each with `status`, range and `warnings`;
+- `GET /outlook/{target}/evaluation`: the newest run's evaluation.
+
+The older `/forecast` endpoints (sector LightGBM) are unchanged.
+
 ## Schedule
 
 Run `python -m forecasting.run` weekly. The sources publish at different rates:
