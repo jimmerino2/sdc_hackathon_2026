@@ -132,7 +132,21 @@ Four external datasets, one per question the app has to answer, plus one Malaysi
 
 ## Not used in models
 
-- **Adzuna job-ads API:** the account is on the free tier (25 calls a day), so stored snapshots will never reach a history long enough to train or backtest on. It is context only (decision of 24 Oct 2026).
+- **Adzuna job-ads API:** the account is on the free tier (25 calls a day), so stored snapshots will never reach a history long enough to train or backtest on. It is context only (decision of 24 Oct 2026). The occupational forecasting page shows its dated snapshots as a cross-check, never as model input.
+
+## Occupational forecasting (separate domain)
+
+These feed only `src/backend/occupational/` and are stored in `data/occupational_forecasting/` (see its README):
+
+- **Hacker News "Ask HN: Who is hiring?"** (https://hn.algolia.com/api)
+  - **What:** one thread a month, one post per hiring company, full ad text.
+  - **Coverage:** Jan 2014 to now. Tech companies, mostly US startups.
+  - **Used for:** skill-demand series per country × occupation, and emerging-skill discovery.
+- **Stack Overflow Developer Survey microdata 2023–2025** (https://survey.stackoverflow.co, ODbL)
+  - **What:** share of employed respondents, per developer type and country, who use AI tools in their work.
+  - **Caveat:** respondents are self-selected.
+- **O\*NET 31.0 software skills** (CC BY 4.0)
+  - **Used for:** checking whether a skill is in O\*NET's technology list.
 
 ---
 

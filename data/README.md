@@ -10,6 +10,7 @@ The data behind our model, which forecasts job demand 12 months ahead and how AI
 | `processed/`     | Clean tables used by the model and the app, plus `manifest.json` (as-of dates and row counts) |
 | `raw/`           | Source downloads (gitignored, can be large). Filled by `pipeline/refresh.py` or by hand, see `pipeline/README.md` |
 | `pending/`       | Candidate sources not yet processed or documented. Planned additions |
+| `occupational_forecasting/` | The separate occupational forecasting domain (skill demand, emerging skills, AI adoption per country x occupation). See its README |
 
 ## Tables in `processed/`
 

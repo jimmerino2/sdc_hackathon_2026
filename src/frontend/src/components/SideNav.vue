@@ -15,12 +15,14 @@ function logout() {
 
 /** The app layout after onboarding. It stays mounted while the learner switches tabs; only the content slot changes. */
 const route = useRoute();
-const tabFor: Record<string, 'learn' | 'roles' | 'outlook' | 'profile'> = { pathway: 'learn', suggested: 'roles', role: 'roles', outlook: 'outlook', profile: 'profile' };
+type TabId = 'learn' | 'roles' | 'outlook' | 'occupations' | 'profile';
+const tabFor: Record<string, TabId> = { pathway: 'learn', suggested: 'roles', role: 'roles', outlook: 'outlook', occupations: 'occupations', profile: 'profile' };
 const active = computed(() => tabFor[route.name as string]);
-const items: { id: 'learn' | 'roles' | 'outlook' | 'profile'; label: string; icon: string; to: Step }[] = [
+const items: { id: TabId; label: string; icon: string; to: Step }[] = [
   { id: 'learn', label: 'Learn', icon: 'route', to: 'pathway' },
   { id: 'roles', label: 'Roles', icon: 'tup', to: 'suggested' },
   { id: 'outlook', label: 'AI outlook', icon: 'sparkles', to: 'outlook' },
+  { id: 'occupations', label: 'Occupations', icon: 'chart-bar', to: 'occupations' },
   { id: 'profile', label: 'Profile', icon: 'user', to: 'profile' },
 ];
 /** Position of the active item; the highlight pill springs to it. */
