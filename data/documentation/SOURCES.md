@@ -83,6 +83,41 @@ Four external datasets, one per question the app has to answer, plus one Malaysi
 - **Why this one:** the only official source of Malaysian demand found. Counts are not comparable across time (coverage jumps in 2021-Q3 and 2025-Q3) and there are only 9 occupation groups, so we show it as context and never train on it.
 - **Limits:** DOSM states it does not represent all vacancies in Malaysia.
 
+## 6. Census Business Trends and Outlook Survey (BTOS) — forecast rebuild only
+
+- **URL:** https://www.census.gov/hfp/btos/data_downloads
+- **Publisher:** U.S. Census Bureau
+- **License:** public domain (U.S. government work)
+- **What it contains:** fortnightly survey of US businesses. Two AI questions are used:
+  - Q7: used AI in the last two weeks;
+  - Q24: expects to within six months.
+
+  Both come with standard errors, nationally and for 19 NAICS sectors.
+- **Coverage:** two question wordings, which must not be joined:
+  - old: Sep 2023 – Oct 2025 (54 fortnights);
+  - new: Nov 2025 onwards (24 fortnights so far).
+
+  Three fortnights in between were not asked. The level jumps from 10.0% to 17.3% at the change.
+- **Update frequency:** fortnightly, with a published schedule
+- **As of:** fortnight 202621 (reference period ending 4 Oct 2026), published 22 Oct 2026
+- **Files used:** `Sector.xlsx`, `National.xlsx`, `AI Core Questions.xlsx`
+- **Used for:** the **business-adoption** target only (`btos_ai_use_rate`, see `FORECAST_REBUILD.md` §8a). It measures firms, so the forecast contracts refuse it as an occupation-adoption label and as a skill-demand input.
+
+## 7. Real-Time Population Survey: Generative AI adoption (via FRED) — forecast rebuild only
+
+- **URL:** https://sites.google.com/view/covid-rps/data (series `RPSGENAIUSAGESHAREOCC1`–`22` and `RPSGENAIUSAGESHAREWORK` on FRED)
+- **Publisher:** Bick, Blandin & Deming; distributed by the Federal Reserve Bank of St. Louis (FRED)
+- **What it contains:** quarterly % of employed US adults (18–64) who use generative AI for their job, for 22 SOC major groups and all workers.
+- **Coverage:** 2024-Q3 – 2026-Q3 (9 quarters)
+- **Update frequency:** quarterly
+- **As of:** 2026-Q3, on FRED by 22 Oct 2026
+- **Used for:** the **occupation-adoption** target only (`worker_genai_use_rate`, see `FORECAST_REBUILD.md` §8b). It is the only direct, worker-level evidence on occupational AI use.
+- **Point in time:** past vintages need a free `FRED_API_KEY` (ALFRED). Without one, availability dates are assumed and labelled.
+
+## Not used in models
+
+- **Adzuna job-ads API:** the account is on the free tier (25 calls a day), so stored snapshots will never reach a history long enough to train or backtest on. It is context only (decision of 24 Oct 2026).
+
 ---
 
 ## Plus two files we built

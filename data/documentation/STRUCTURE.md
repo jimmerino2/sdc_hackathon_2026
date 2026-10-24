@@ -205,28 +205,86 @@ Caveats:
 - **Revisions are large.** The same AI-share country-month differs by 0.39 pp on average (1.58 pp at most) between the first and latest vintage.
 - **No vintage before 29 Apr 2024.** Earlier backtest origins are reconstructed (see `FORECAST_REBUILD.md` §4).
 
-### Forecast outputs (`src/backend/forecasting/output/`)
+---
 
-| File                            | One row per                                          | What it is                                                                                     |
-| ------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `runs/<run_id>/backtest.csv.gz` | origin × horizon × candidate × feature set × country | Every out-of-sample prediction with `actual`, `error` (pp), `role` (`selection` / `holdout` / `purged`) and `vintage_kind` |
-| `runs/<run_id>/evaluation.json` | run                                                  | Split, selection table, holdout scores, interval coverage, ablations, source contributions and health |
-| `runs/<run_id>/forecast.csv`    | country × horizon                                    | That run's forecast                                                                            |
-| `forecast_log.csv`              | country × horizon × run                              | Every forecast ever issued (append only)                                                       |
-| `latest_forecast.csv`           | country × horizon                                    | The forecast of the promoted run per horizon: what the app should show                         |
-| `model_registry.json`           | horizon                                              | The promoted model per horizon, and every attempt with its acceptance verdict                  |
+## 10. `forecasting/btos_ai_observations.csv` and `forecasting/btos_calendar.csv`
+
+Census BTOS answers to the two AI questions, one row per **measure × wording × unit × fortnight**: 3,240 rows, of which 2,679 are estimates. Built by `src/backend/forecasting/btos.py` from `Sector.xlsx`, `National.xlsx` (current wording) and `AI Core Questions.xlsx` (old wording). The calendar has one row per fortnight in Census's schedule: 99 rows (202319 to 202713), including scheduled future fortnights and the three that were not asked.
+
+| Column           | Source | Type      | Derived from                                                                                                   |
+| ---------------- | ------ | --------- | -------------------------------------------------------------------------------------------------------------- |
+| `measure`        | Ours   | text      | `current_use` (question 7: used AI in the last two weeks) or `expected_use` (question 24: expects to within six months). Never mixed |
+| `question_id`    | BTOS   | int       | 7 or 24                                                                                                        |
+| `wording`        | Ours   | text      | `old` ("AI in producing goods or services", 202319–202520) or `new` ("SI/AI in any of its business functions", from 202524). A structural break: never joined |
+| `question`       | BTOS   | text      | Full question text as published                                                                                |
+| `unit`           | BTOS   | text      | NAICS sector code (19 sectors; `XX` multi-sector companies left out) or `US` for all businesses               |
+| `smpdt`          | BTOS   | text      | Census sample date: ISO year + fortnight number                                                                |
+| `period`         | Ours   | int       | Position of `smpdt` in the calendar (0 = 202319). Fortnights not asked keep their numbers, so the gap stays a gap |
+| `ref_start`, `ref_end` | BTOS | date   | The two weeks the answer refers to                                                                             |
+| `published_at`   | BTOS   | date      | Census publication date. The forecast treats an estimate as available from the end of that day (+1 day in UTC) |
+| `estimate_pct`   | BTOS   | number    | % of businesses answering Yes. Blank unless `status` is `ok`                                                   |
+| `se_pct`         | BTOS   | number    | Its standard error, in percentage points                                                                       |
+| `status`         | Ours   | text      | `ok`, `suppressed` (Census "S"), `not_asked` (Census ".", e.g. 202521–202523) or `missing`. None of these is ever stored as 0 |
+| `source_file`, `file_sha256` | Ours | text | Workbook read and its SHA-256, so each value can be traced to one download                                   |
+
+Caveats:
+
+- **The break is large:** 10.0% (202520, old wording) → 17.3% (202524, new wording) nationally.
+- **Assumed unrevised:** BTOS estimates are taken as final once published. Each download is also kept under `data/raw/btos/snapshots/<date>/`, so a revision would show up when files are compared.
+- **Sector estimates are noisy:** the mean SE is 1.9 pp under the new wording, against 0.3 pp nationally.
+
+---
+
+## 11. `forecasting/rps_observations.csv`
+
+Real-Time Population Survey (via FRED): one row per **SOC major group × quarter × vintage**. 207 rows: 23 series × 9 quarters (2024-Q3 to 2026-Q3), one vintage each until ALFRED vintages are read. Built by `src/backend/forecasting/rps.py`.
+
+| Column               | Source | Type      | Derived from                                                                                           |
+| -------------------- | ------ | --------- | ------------------------------------------------------------------------------------------------------ |
+| `series_id`          | FRED   | text      | `RPSGENAIUSAGESHAREOCC1`…`OCC22`, `RPSGENAIUSAGESHAREWORK`                                             |
+| `unit`               | Ours   | text      | 2018 SOC major group code (`00` = all workers). The series → code mapping is from the FRED release order, checked on `feat/ai-adoption-mc` |
+| `unit_name`          | Ours   | text      | SOC major group name                                                                                   |
+| `quarter`            | FRED   | `YYYYQn`  | Quarter of the observation (`observation_date` is the quarter's first day)                             |
+| `value_pct`          | FRED   | number    | % of employed adults aged 18–64 in the group who use generative AI for their job                       |
+| `available_at`       | Ours   | timestamp | `alfred`: the vintage's `realtime_start`. `assumed`: quarter end + 21 days, capped at the fetch time    |
+| `availability_basis` | Ours   | text      | `alfred` (real vintage, needs `FRED_API_KEY`) or `assumed`                                              |
+| `fetched_at`         | Ours   | timestamp | When the file was downloaded                                                                           |
+| `source_file`        | Ours   | text      | File read                                                                                              |
+
+Caveats:
+
+- **No respondent counts.** FRED publishes none, so none are stored. The old branch's estimated count (pooled respondents ÷ waves) was dropped.
+- **Noisy group readings:** e.g. Management moves 55.9 → 48.1 → 51.9 → 49.6 → 61.4 over five quarters.
+
+---
+
+## Forecast outputs (`src/backend/forecasting/output/<target>/`)
+
+There is one folder per target: `ai_mention_share`, `btos_ai_use_rate` and `worker_genai_use_rate`.
+
+| File                            | One row per                                       | What it is                                                                                     |
+| ------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `runs/<run_id>/backtest.csv.gz` | origin × horizon × candidate × feature set × unit | Every out-of-sample prediction with `actual`, `error` (pp), `role` (`selection` / `holdout` / `purged`), `vintage_kind` and `segment` |
+| `runs/<run_id>/evaluation.json` | run                                               | Split, selection table, holdout scores, interval coverage, ablations, breakdown by role / vintage kind / segment, and source health |
+| `runs/<run_id>/forecast.csv`    | unit × horizon                                    | That run's forecast                                                                            |
+| `forecast_log.csv`              | unit × horizon × run                              | Every forecast ever issued (append only)                                                       |
+| `latest_forecast.csv`           | unit × horizon                                    | The forecast of the promoted run per horizon: what the app should show. A horizon with no promoted model is absent |
+| `model_registry.json`           | horizon                                           | The promoted model per horizon, and every attempt with its acceptance verdict                  |
 
 Forecast columns:
 
 - `run_id`, `made_at`: the run and when it ran (UTC).
-- `geo`, `h`, `target_month`.
-- `last_observed_month`, `last_observed_pct`.
+- `target`, `unit_kind`, `unit`, `segment`: e.g. `country` / `US`; `NAICS sector (or US) x wording` / `54|new` / `new wording`; `SOC major group` / `15`.
+- `last_observed_period`, `last_observed_pct`.
+- `h`, `period_unit` (`month` / `fortnight` / `quarter`), `target_period`. BTOS periods are written as `smpdt (ref <end date>)`.
 - `model`: the chosen candidate.
 - `forecast_pct`, `low_pct`, `high_pct`: the forecast and its 10–90% empirical range.
-- `status`: `validated`, `baseline` or `not_demonstrably_better`.
+- `status`: `validated` (holdout MAE at least 5% below naive), `baseline` or `not_demonstrably_better`.
 - `holdout_mae_pp`, `naive_holdout_mae_pp`.
-- `ai_vintage`, `data_as_of`: the vintage used and when it was published.
-- `warnings`.
+- `vintage`, `data_as_of`: the data the forecast was cut from, and when it was available.
+- `warnings`: e.g. short history, stale data, or point-in-time basis `current_only`.
+
+The `ai_mention_share` rows issued before the engine refactor were converted to these column names (`geo` → `unit`, `ai_vintage` → `vintage`, `*_month` → `*_period`).
 
 ---
 

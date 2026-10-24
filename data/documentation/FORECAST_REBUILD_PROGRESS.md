@@ -59,7 +59,7 @@ occupation adoption (RPS), on a generic engine shared with skill demand.
 | 11 | BTOS ingestion with publication dates, wording segments, SE, `.` vs `S` codes (`forecasting/btos.py`) | done |
 | 12 | RPS ingestion with fetch-time snapshots, optional FRED_API_KEY vintages (`forecasting/rps.py`) | done |
 | 13 | Business- and occupation-adoption targets, run, tests | done |
-| 14 | Docs update (FORECAST_REBUILD.md, STRUCTURE.md) | todo |
+| 14 | Docs update (FORECAST_REBUILD.md, STRUCTURE.md) | done |
 
 Facts: BTOS Q7/Q24 old wording 202319-202520 (54 fortnights), not asked 202521-202523 ("."), new wording
 202524-202621 (24 fortnights; 10.0% -> 17.3% jump). Dates sheet has Publication Date per smpdt (also future
@@ -71,3 +71,8 @@ historical vintages (FRED csv ignores vintage_date).
   needs holdout MASE <= 0.95 (an RPS 0.03% "gain" had been labelled validated). 50 tests pass.
   Results: BTOS h6 naive (baseline), h13 ridge validated (MASE 0.89); RPS h1 pooled_mean not_demonstrably_better,
   h2 not promoted (insufficient history). NEXT: step 14 docs.
+- 2026-10-24: step 14 docs done: FORECAST_REBUILD.md (status, reuse table, §8a BTOS, §8b RPS, validated margin,
+  running, limitations), STRUCTURE.md §10 BTOS, §11 RPS, per-target forecast outputs; SOURCES.md §6 BTOS, §7 RPS,
+  Adzuna not used; data/README.md; forecasting/README.md. Fixed SOC "00" -> 0 in latest_forecast. 50 tests pass.
+  NEXT (not started): AI capability target (benchmark source, e.g. Epoch AI / METR); local-linear-trend candidate
+  for long horizons; serve latest_forecast.csv via /forecast + UI; merge gate (fresh-clone test + second run).

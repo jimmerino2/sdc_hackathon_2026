@@ -25,9 +25,12 @@ The data behind our model, which forecasts job demand 12 months ahead and how AI
 | `onet_to_my_group.csv` | Maps the 46 jobs to Malaysian occupation groups      |
 | `forecasting/ai_share_vintages.csv` | Every published vintage of Indeed's AI share, by country and month |
 | `forecasting/postings_vintages.csv` | Monthly vintages of Indeed's postings index, by country and month |
+| `forecasting/btos_ai_observations.csv` | Census BTOS: % of firms using / expecting to use AI, by sector, wording and fortnight, with publication dates |
+| `forecasting/btos_calendar.csv` | BTOS fortnight calendar (numbering, reference dates, publication dates) |
+| `forecasting/rps_observations.csv` | RPS: % of workers using GenAI, by SOC major group and quarter |
 
 ## Refreshing
 
 Tables are rebuilt with `python pipeline/refresh.py`. The scripts live in `pipeline/` at the repo root; how to run them, and which inputs you must download by hand, is in `pipeline/README.md`.
 
-The `forecasting/` vintage tables belong to the rebuilt forecast and are rebuilt with `python -m forecasting.vintages` from `src/backend` (see `src/backend/forecasting/README.md` and `documentation/FORECAST_REBUILD.md`).
+The `forecasting/` tables belong to the rebuilt forecast. From `src/backend` they are rebuilt with `python -m forecasting.vintages` (Indeed), `python -m forecasting.btos` and `python -m forecasting.rps`, or all at once with `python -m forecasting.run` (see `src/backend/forecasting/README.md` and `documentation/FORECAST_REBUILD.md`).

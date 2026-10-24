@@ -2,7 +2,15 @@
 
 Branch `feat/ai-prediction`. This replaces the AI-adoption forecasting on `feat/ai-adoption-mc` (left unchanged, reference only) with a pipeline that is point-in-time, source-separated and tested out of time. The brief is `AI_PREDICTION_ADOPTION.md`; progress is logged in `FORECAST_REBUILD_PROGRESS.md`.
 
-**Status (24 Oct 2026):** one complete workflow, **skill demand** (share of job ads mentioning AI, 9 countries, 1/3/6 months ahead), runs end to end: ingest real vintages → features → train → rolling-origin backtest → locked holdout → ablations → timestamped forecast → promotion. AI capability progress and occupational adoption are defined as contracts and blocked from misusing sources, but have **no model yet**.
+**Status (24 Oct 2026):** three separate targets run end to end on one shared engine. Each goes: ingest point-in-time data → features → train → rolling-origin backtest → locked holdout → ablations → timestamped forecast → promotion.
+
+| Target | Domain | Data | Horizons |
+| --- | --- | --- | --- |
+| `ai_mention_share` | skill demand | Indeed, 9 countries, monthly | 1, 3, 6 months |
+| `btos_ai_use_rate` | business adoption | Census BTOS, US + 19 sectors, per wording, fortnightly | 6, 13 fortnights |
+| `worker_genai_use_rate` | occupation adoption | RPS worker survey, 22 SOC groups + all workers, quarterly | 1, 2 quarters |
+
+None feeds another. **AI capability progress** is still only a contract (no benchmark data yet), and there is **no scenario engine**. Adzuna is context only: the account is on the free tier, so its snapshots will stay too thin to train on (decision of 24 Oct 2026).
 
 ---
 
@@ -45,9 +53,9 @@ Branch `feat/ai-prediction`. This replaces the AI-adoption forecasting on `feat/
 | `build_signals.py` monthly-mean and partial-month logic | **Reused (reimplemented)** in `forecasting/vintages.monthly` | Verified behaviour. The original stays for the existing app |
 | Existing app (`signals.csv`, `train_lgbm.py`, `job_forecast.py`, `/forecast` API, frontend) | **Kept unchanged, not used** | Still serves the app. Not validated: its own README shows it loses to baselines |
 | Python stack (pandas, scikit-learn, LightGBM, pytest in `src/backend/venv`) | **Reused** | No new dependencies |
-| `build_btos_ai.py` (old branch) | **Reuse later, for `business_adoption` only** | It keeps wordings apart, keeps the SE and leaves suppressed cells blank. To be ported with a vintage store and used only as a business-adoption label |
-| `build_ai_adoption.py` (RPS) | **Reuse later, after a fix** | Correct source for `occupation_adoption`. Its `respondents_per_quarter` is pooled ÷ waves, an invented count that must be dropped or labelled |
-| `collect_adzuna.py`, `ad_skills.py` | **Reuse later** | Sound design: call budget, raw snapshots, matcher with 89% hand-checked precision. Only weeks of history, so not trainable yet. Port it soon so snapshots build up |
+| `build_btos_ai.py` (old branch) | **Reused (design), reimplemented** as `forecasting/btos.py` | Its good parts were kept: wordings apart, SE kept, suppressed cells blank. Added: Census publication dates (availability), `.` (not asked) kept apart from `S` (suppressed), the full fortnight calendar including the three unasked fortnights, and dated raw copies. Used **only** as the business-adoption label and features |
+| `build_ai_adoption.py` (RPS) | **Partly reused** in `forecasting/rps.py` | Only the verified FRED series → SOC mapping was kept. The invented `respondents_per_quarter` (pooled ÷ waves) is **dropped**. Availability dates come from ALFRED with a key; without one they are assumed and labelled |
+| `collect_adzuna.py`, `ad_skills.py` | **Not used for models** | Sound design, but the account stays on the free tier (25 calls/day), so snapshots will not reach a trainable history. Registered as context only |
 | `collect_news.py`, `build_news_feed.py` | **Reuse later as context** | GDELT article lists are useful context. A feature needs the timeline mode and must pass the ablation test before use |
 | `ai_adoption_mc.py` | **Discarded** | Hand-set scenario drifts; DEFF tuned on the backtest |
 | `ai_adoption_forecast.py` | **Discarded** | BTOS-as-everything design (section 1) |
@@ -61,11 +69,15 @@ Branch `feat/ai-prediction`. This replaces the AI-adoption forecasting on `feat/
 | Target | Domain | Label source | Status |
 | --- | --- | --- | --- |
 | `ai_mention_share`: monthly % of new Indeed postings mentioning AI terms, per country | skill demand | Indeed AI Tracker | **implemented** |
-| `btos_ai_use_rate`: % of US firms using AI, within one wording | business adoption | Census BTOS | planned |
-| `worker_genai_use_rate`: % of workers in a SOC group using GenAI | occupation adoption | RPS | planned |
+| `btos_ai_use_rate`: % of US firms using AI, within one wording | business adoption | Census BTOS | **implemented** |
+| `worker_genai_use_rate`: % of workers in a SOC group using GenAI | occupation adoption | RPS | **implemented** |
 | `frontier_capability_index` (definition pending) | AI capability | benchmarks (Epoch / METR) | planned |
 
 Refused by contract (each one tested): BTOS as a skill-demand feature; BTOS or task exposure (Anthropic EI) as an occupation-adoption label; AI skill demand as adoption; posting volume as skill demand; news volume as capability.
+
+The three implemented models use only their own source: skill demand uses Indeed, business adoption uses BTOS, and occupation adoption uses RPS. A test checks this for every target.
+
+**Engine:** each target is a module in `forecasting/targets/` exposing a `TargetSpec`. The spec says how to load the data, cut a snapshot at an origin, build features, label periods, and how much history to require. Feature code (`features.py`), models (`models.py`), evaluation (`evaluation.py`) and promotion (`run.py`) are shared. After the refactor, the skill-demand backtest reproduced all 26,040 earlier predictions exactly.
 
 ## 4. Data: point-in-time vintages
 
@@ -122,11 +134,14 @@ What the history showed:
 
   A rejected run is kept in `runs/` and the log, and the previous model stays in service (tested).
 - **Status label:**
-  - `validated`: the chosen model beats naive on the holdout;
+  - `validated`: the chosen model's holdout error is at least 5% below naive's (MASE ≤ 0.95);
   - `baseline`: naive was chosen;
-  - `not_demonstrably_better`: the chosen model loses to naive on the holdout.
+  - `not_demonstrably_better`: anything else.
 
-## 7. Results (promoted run `20261023T173012Z-c8a73a`)
+  The 5% margin was added after an RPS run labelled a 0.03% "gain" on three noisy origins as `validated`. It changes labels only, never which model is chosen.
+- **Per target:** the minimum holdout and selection sizes are set in each `TargetSpec`. Skill demand and BTOS require 6 holdout and 12 selection origins. RPS has only 9 quarters, so it requires 2 and 3, and every RPS forecast carries a short-history warning.
+
+## 7. Results: skill demand (promoted run `20261023T180055Z-bd0071`, same numbers as the first run)
 
 MAE in percentage points. Selection covers 42–47 origins; the holdout covers 12–17 real-vintage origins with 9 countries each.
 
@@ -158,14 +173,80 @@ What the results mean:
   - sudden regime changes, such as the 2026 jump (CA 5.6% → 18.4% within a year);
   - keyword-definition changes at Indeed;
   - revisions of up to 1.6 pp.
-- **Promotion status:** see `src/backend/forecasting/output/model_registry.json`.
+- **Promotion status:** see `src/backend/forecasting/output/ai_mention_share/model_registry.json`.
+
+## 8a. Business adoption (`btos_ai_use_rate`)
+
+**Data** (`forecasting/btos.py` → `data/processed/forecasting/btos_ai_observations.csv`, `btos_calendar.csv`):
+
+- Q7 (used AI in the last two weeks) and Q24 (expects to within six months), for the US and 19 NAICS sectors, with standard errors.
+- **Old wording** ("AI in producing goods or services"): fortnights 202319–202520 (54).
+- **Not asked:** 202521–202523, published as `.`.
+- **New wording** ("SI/AI in any business function"): 202524–202621 (24). The national level jumps from 10.0% to 17.3% at the change.
+- Each wording is its own series, so no feature, label or lag crosses the break (tested). A fortnight is available from the end of its Census publication day.
+- Estimates are assumed unrevised once published. Every download is kept with its date, so this can be checked from now on.
+
+**Features:**
+
+- `level`
+- `own_trend`: d1, d3, d6, d13 fortnights
+- `cross_sector`: mean change over all units
+- `expectation`: logit(% expecting) − logit(% using), same unit and fortnight
+
+All of these come from BTOS. Here BTOS is the label, so using it is legitimate.
+
+**Split:** selection is entirely old-wording data (41 origins at h=6, 27 at h=13). The holdout (from 26 Sep 2025) is entirely new-wording data (18 and 11 origins). It therefore tests whether a choice made on one wording holds on the other.
+
+| h (fortnights) | Chosen | Selection MAE (naive) | Holdout MAE (naive) | Holdout MASE | 80% coverage | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| 6 (~3 months) | naive | 1.11 (1.11) | 2.34 (2.34) | 1.00 | 0.91 | baseline |
+| 13 (~6 months) | ridge | 1.47 (2.15) | 3.76 (4.21) | 0.89 | 0.80 | validated |
+
+What it means:
+
+- **Sampling noise is a large part of the error.** Under the new wording the mean sector standard error is 1.9 pp, against 0.3 pp nationally. That puts a floor under any sector forecast.
+- **Every model under-forecast the new wording** (naive bias −1.6 pp at h6, −4.0 pp at h13): national adoption rose from 17.3% to 24.6% in under a year. pooled_mean would have done best on the holdout (MASE 0.85 / 0.68), but it was not chosen on the selection data, and the rule was kept.
+- **Ablations:** dropping the expectation gap makes ridge worse (+0.065 pp at h6). Firms' own expectations carry signal for firm adoption. Dropping cross-sector averages helps (−0.09 pp at h6).
+- **Model card:**
+  - Intended use: US firm-level AI use, by sector, about 3 and 6 months ahead, in the new wording only.
+  - Not a measure of worker or occupation adoption, and not transferable to other countries.
+  - Supported claim: h13 ridge beat persistence by 11% on the post-break holdout. For h6 there is no claim beyond the baseline.
+
+## 8b. Occupation adoption (`worker_genai_use_rate`)
+
+**Data** (`forecasting/rps.py` → `rps_observations.csv`): the Real-Time Population Survey, the % of employed US adults using GenAI for their job. It covers 22 SOC major groups plus all workers ("00"), quarterly from 2024-Q3, 9 readings per group. It is worker-level evidence, so **no BTOS or task-exposure input is used**.
+
+**Availability:**
+
+- There is no FRED key, so FRED's past vintages (ALFRED) can't be read. Values are today's, each assumed available 21 days after its quarter ends; the 2026-Q3 value was already online on 22 Oct.
+- Origins are labelled `current_only` and every forecast says so.
+- Setting a free `FRED_API_KEY` makes `rps.py` read real vintages, with no code change.
+
+**Features:** `level`, `own_trend` (d1, d2, d4 quarters) and `all_workers` (mean change over groups).
+
+**Evaluation:** 7 origins (2025-Q1 → 2026-Q3): 3 for selection and 4 holdout.
+
+| h (quarters) | Chosen | Selection MAE (naive) | Holdout MAE (naive) | Holdout MASE | 80% coverage | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | pooled_mean | 6.99 (7.27) | 6.56 (6.57) | 1.00 | 0.71 | not_demonstrably_better (promoted, with warnings) |
+| 2 | pooled_mean | 7.89 (8.51) | 8.67 (6.62) | 1.31 | 0.76 | **not promoted**: insufficient history (2 selection origins) |
+
+What it means:
+
+- Errors of 6–9 pp come mostly from survey noise in small groups. For example, Management reads 55.9 → 48.1 → 51.9 → 49.6 → 61.4 over five quarters.
+- With 2–3 scored origins, nothing can be shown to beat "no change". The served 1-quarter forecast is effectively the current level plus the recent average change, with a wide range (e.g. computer and mathematical occupations: 68.8% now, 57–79%).
+- **Model card:**
+  - Intended use: a cautious near-term view of US worker GenAI use, by broad occupation group.
+  - Supported claims: none beyond "indicative".
+  - Will improve as quarters accumulate and if ALFRED vintages are enabled.
 
 ## 9. How this answers the BTOS problem
 
 | Old weakness | Now |
 | --- | --- |
 | BTOS as label + main feature + scenario definition | BTOS is registered only as a `business_adoption` label. Contracts refuse it for skill demand and as an occupation label, even if the registry is edited |
-| Occupation adoption derived from firm data | Targets are separate. Occupation adoption will be modelled on worker-level evidence (RPS) and labelled as such |
+| Occupation adoption derived from firm data | Targets are separate. Occupation adoption is now modelled on worker-level evidence (RPS) only, and BTOS is a business-adoption model of its own. Nothing maps firms to occupations; the old hand-made sector→SOC weights are gone |
+| BTOS wording break handled inside one model (`new_wording` flag) | Each wording is its own series and no feature crosses the break. Selection uses the old wording and the holdout tests on the new |
 | Backtests on revised data | Every origin sees only the vintage published by then. Reconstructed origins are flagged and kept out of the holdout |
 | Ranges tuned until the backtest looked right | Ranges come from residuals in the selection period, and holdout coverage is reported as measured (including the 57%) |
 | Assumptions served as forecasts | No hand-set scenarios or odds. A scenario engine will come only after the capability model exists and is tested |
@@ -177,20 +258,32 @@ What the results mean:
 From `src/backend` with the backend venv:
 
 ```
-python -m forecasting.vintages            # fetch new commits and rebuild both vintage tables
-python -m forecasting.run --no-pull       # backtest + forecast from the local clones (~2 min)
-python -m forecasting.run                 # fetch first, then everything
-python -m pytest forecasting/tests        # 38 tests, offline, no credentials
+python -m forecasting.run                                   # all three targets, fetching new data first (~3 min)
+python -m forecasting.run --no-pull                         # from local data only
+python -m forecasting.run --target btos_ai_use_rate --skip-ingest   # one target, tables as they are
+python -m forecasting.vintages | forecasting.btos | forecasting.rps  # rebuild one source's tables
+python -m pytest forecasting/tests                          # 50 tests, offline, no credentials
 ```
 
-- **Scheduling:** run `python -m forecasting.run` weekly; Indeed publishes the AI share monthly and postings weekly. A failed fetch keeps the local history. A failed build leaves the previous tables in place. A failed acceptance keeps the previous promoted model.
+- **Optional:** set `FRED_API_KEY` (free) to give RPS real vintages.
+- **Scheduling:** run `python -m forecasting.run` weekly. The sources publish at different rates:
+  - Indeed: AI share monthly, postings weekly;
+  - BTOS: fortnightly;
+  - RPS: quarterly.
+
+  A failed fetch keeps the local history. A failed build leaves the previous tables in place. A failed acceptance keeps the previous promoted model. Each target's outputs are in `src/backend/forecasting/output/<target>/`.
 - **Freshness:** `registry.health()` marks a source stale after 2× its cadence. A stale target blocks promotion and is written into the forecast `warnings`.
 
 ## 11. Limitations and next steps
 
-1. **The 6-month horizon is unreliable** in the current regime. Candidates worth testing next, under the same procedure: a local-linear-trend state-space model, and a shorter or weighted training window.
-2. **Data:** origins before Apr 2024 are reconstructed, and the truth is the latest vintage, which may itself be revised.
-3. **Domains:** port the Adzuna collector now so a skill-level panel starts building up. Then add business adoption (BTOS, by wording, with its SE), occupation adoption (RPS, with the counts it actually publishes) and AI capability (benchmarks).
-4. **Scenarios** only after each model is tested.
-5. **API/UI:** serve `latest_forecast.csv` and the evaluation through `/forecast` and show freshness. The current app endpoints are untouched.
-6. **Merge gate:** do not merge to `main` until the tests pass on a fresh clone, and a second run on newer data has been promoted or rejected by the rules above.
+1. **Long horizons under-forecast fast growth** in all three domains (skill demand h6, BTOS h13, RPS). Candidates worth testing next, under the same procedure: a local-linear-trend state-space model, and a shorter or weighted training window.
+2. **Data:**
+   - skill-demand origins before Apr 2024 are reconstructed;
+   - BTOS is assumed unrevised;
+   - RPS availability dates are assumed until a FRED key is set;
+   - in every case the truth is the latest data, which may itself be revised.
+3. **RPS is too short** (9 quarters) for any supported claim. Group-level noise is 6–9 pp.
+4. **Skill-level demand** (named skills, not just "AI") has no source with history. Adzuna's free tier can't build one.
+5. **AI capability** (benchmarks such as Epoch AI or METR) is not started. Scenarios come only after it exists and is tested.
+6. **API/UI:** serve each target's `latest_forecast.csv` and evaluation through `/forecast` and show freshness. The current app endpoints are untouched.
+7. **Merge gate:** do not merge to `main` until the tests pass on a fresh clone, and a second run on newer data has been promoted or rejected by the rules above.
