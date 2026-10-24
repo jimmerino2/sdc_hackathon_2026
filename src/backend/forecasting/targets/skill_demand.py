@@ -104,4 +104,4 @@ def ingest(pull: bool) -> None:
 SPEC = TargetSpec(
     id="ai_mention_share", horizons=(1, 3, 6), period_unit="month", unit_kind="country", trend_steps=12,
     feature_groups=FEATURE_GROUPS, group_source=GROUP_SOURCE, load=load, origins=origins, truth=truth,
-    panel=panel, health=health, ingest=ingest)
+    panel=panel, health=health, ingest=ingest, regimes=True)

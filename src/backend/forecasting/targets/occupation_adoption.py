@@ -95,4 +95,4 @@ SPEC = TargetSpec(
     id="worker_genai_use_rate", horizons=(1, 2), period_unit="quarter", unit_kind="SOC major group (00 = all)",
     trend_steps=4, feature_groups=FEATURE_GROUPS, group_source=GROUP_SOURCE, load=load, origins=origins,
     truth=truth, panel=panel, health=health, ingest=rps.ingest, label=lambda q: str(q),
-    min_selection_origins=3, min_holdout=2, history_warning=HISTORY_WARNING)
+    min_selection_origins=3, min_holdout=2, history_warning=HISTORY_WARNING, regimes=True)

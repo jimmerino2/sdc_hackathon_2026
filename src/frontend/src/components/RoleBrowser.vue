@@ -8,6 +8,7 @@ import { backendScenario } from '../api/forecast';
 import type { ContextRole, JobMatch } from '../api/jobs';
 import type { RoadmapSummary } from '../api/roadmap';
 import { useFlow } from '../state';
+import { useScenarioProbabilities } from '../composables/useScenarioProbabilities';
 
 /** Suggested roles as a compact list ("cards") or the demand-vs-AI chart. Shared by the onboarding roles page and the sidebar one. */
 const props = defineProps<{
@@ -28,6 +29,9 @@ const props = defineProps<{
 const emit = defineEmits<{ select: [code: string] }>();
 
 const { state, scenario } = useFlow();
+const { metrics, metricTarget, pct, ranked, rankColor } = useScenarioProbabilities();
+/** The 3 AI-future scenarios, most likely first. */
+const rankedScenarios = computed(() => ranked.value.map((k) => scenarios.find((s) => s.key === k)!));
 const view = computed(() => (props.cardsOnly ? 'cards' : state.value.rolesView));
 const sIcon = { accelerates: 'tup', steady: 'arrow', slows: 'tdown' } as const;
 
@@ -50,8 +54,15 @@ const heading = computed(() => {
   <div>
     <div class="bar">
       <div v-if="view === 'chart'" class="tabs">
-        <button v-for="s in scenarios" :key="s.key" :class="{ on: state.scenario === s.key }" @click="state.scenario = s.key">
+        <button
+          v-for="s in rankedScenarios"
+          :key="s.key"
+          :class="{ on: state.scenario === s.key }"
+          :style="{ '--rc': rankColor(s.key) ?? 'var(--yellow)' }"
+          @click="state.scenario = s.key"
+        >
           <Icon :name="sIcon[s.key]" :size="18" /> {{ s.label }}
+          <small v-if="pct(s.key) != null" class="tab-pct">{{ pct(s.key) }}%</small>
         </button>
       </div>
       <div v-if="!cardsOnly" class="view" role="group" aria-label="Layout">
@@ -61,6 +72,13 @@ const heading = computed(() => {
     </div>
     <template v-if="view === 'chart'">
       <h1>{{ heading }}</h1>
+      <p class="chart-source">
+        Chances of each future, from
+        <select v-model="metricTarget" aria-label="Metric the chances are based on">
+          <option v-for="m in metrics" :key="m.target" :value="m.target">{{ m.label }}</option>
+        </select>
+        forecasts, nearest-term.
+      </p>
       <div class="card chart-card">
         <h2 class="chart-title">Demand vs AI automation exposure</h2>
         <PositionChart :jobs="jobs" :context="context" :scenario="backendScenario[state.scenario]" :selected="selected" @select="emit('select', $event)" />
@@ -90,9 +108,12 @@ const heading = computed(() => {
 .tabs button { display: flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 14px; border: 2px solid var(--line-strong); background: #fff; box-shadow: 0 4px 0 rgba(30,30,30,.1); font-weight: 900; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
 .tabs button { transition: transform .08s, box-shadow .08s; }
 .tabs button:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(30,30,30,.1); translate: none; scale: 1; }
-.tabs button.on:active { box-shadow: 0 1px 0 var(--orange); }
-.tabs button.on { background: var(--yellow); border-color: var(--yellow); box-shadow: 0 4px 0 var(--orange); }
-h1 { font-size: 30px; font-weight: 900; margin-bottom: 22px; }
+.tabs button.on:active { box-shadow: 0 1px 0 var(--rc); }
+.tabs button.on { background: var(--rc); border-color: var(--rc); color: #fff; box-shadow: 0 4px 0 var(--rc); }
+.tab-pct { font-weight: 900; opacity: .85; }
+h1 { font-size: 30px; font-weight: 900; margin-bottom: 10px; }
+.chart-source { margin: 0 0 22px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.chart-source select { font: inherit; font-weight: 800; color: var(--ink); background: none; border: none; border-bottom: 2px solid var(--line-strong); padding: 0 2px 1px; cursor: pointer; }
 .note { margin-top: 22px; font-size: 12px; font-weight: 600; color: var(--muted); line-height: 1.5; max-width: 760px; }
 .list-wrap { max-width: 760px; }
 .list-wrap.center { margin: 0 auto; }

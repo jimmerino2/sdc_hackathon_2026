@@ -6,6 +6,7 @@ import Icon from './Icon.vue';
 import { scenarios, type ScenarioKey } from '../data/flows';
 import { skillLabel } from '../data/skills';
 import { useFlow } from '../state';
+import { useScenarioProbabilities } from '../composables/useScenarioProbabilities';
 import { personaCopy } from '../data/personaCopy';
 import { backendScenario, fetchJobForecasts, type JobForecast } from '../api/forecast';
 import { fetchInterestReasons, type InterestReason, type JobMatch } from '../api/jobs';
@@ -20,6 +21,9 @@ const props = defineProps<{
 }>();
 
 const { state, key } = useFlow();
+const { metrics, metricTarget, pct, ranked, rankColor } = useScenarioProbabilities();
+/** The 3 AI-future scenarios, most likely first. */
+const rankedScenarios = computed(() => ranked.value.map((k) => scenarios.find((s) => s.key === k)!));
 const base = import.meta.env.BASE_URL;
 /** The role's SDGs that one of the learner's interests points at, and the ones that come from the role itself. */
 const fromInterests = computed(() => props.job?.sdg_reasons?.filter((r) => r.interests.length) ?? []);
@@ -159,10 +163,27 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
       </section>
       <section class="right">
         <ChartWatcher v-if="!compact" class="bub">Nobody knows the future for sure, so I plan for all three.</ChartWatcher>
-        <button v-for="s in scenarios" :key="s.key" class="option sc" :class="{ selected: state.scenario === s.key }" @click="state.scenario = s.key">
+        <div class="metric-wrap">
+          <span class="seg-label">Chances from</span>
+          <div class="metric-seg" role="radiogroup" aria-label="Metric the chances are based on">
+            <button
+              v-for="m in metrics"
+              :key="m.target"
+              type="button"
+              role="radio"
+              :aria-checked="metricTarget === m.target"
+              :class="{ on: metricTarget === m.target }"
+              @click="metricTarget = m.target"
+            >{{ m.label }}</button>
+          </div>
+        </div>
+        <button v-for="s in rankedScenarios" :key="s.key" class="option sc" :class="{ selected: state.scenario === s.key }" @click="state.scenario = s.key">
           <span class="ic" :class="trendOf(s.key).cls"><Icon :name="trendOf(s.key).icon" :size="22" :stroke="2.6" /></span>
           <span>
-            <em class="pill" :class="{ 'pill-yellow': state.scenario === s.key }">{{ outcome(s.key) }}</em>
+            <span class="pills">
+              <em v-if="pct(s.key) != null" class="pill pill-chance" :style="{ '--rc': rankColor(s.key) ?? 'var(--line-strong)' }">{{ pct(s.key) }}% chance</em>
+              <em class="pill" :class="{ 'pill-yellow': state.scenario === s.key }">{{ outcome(s.key) }}</em>
+            </span>
             <h3>{{ s.title }}</h3><p>{{ s.blurb }}</p>
           </span>
           <span v-if="state.scenario === s.key" class="tick"><Icon name="check" :size="14" :stroke="3" /></span>
@@ -253,6 +274,14 @@ h1 { font-size: 30px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .right { display: flex; flex-direction: column; gap: 14px; }
 .bub { margin-bottom: 8px; flex-direction: row-reverse; }
 .sc { align-items: center; } .sc h3 { margin-top: 4px; font-size: 17px; }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill-chance { background: none; box-shadow: inset 0 0 0 1.5px var(--rc, var(--line-strong)); color: var(--rc, var(--muted)); }
+.metric-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.seg-label { font-size: 13px; font-weight: 900; color: var(--muted); }
+.metric-seg { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); padding: 4px; border-radius: 14px; background: var(--line); }
+.metric-seg button { padding: 7px 4px; border-radius: 10px; font-weight: 900; font-size: 11px; color: var(--muted); text-align: center; line-height: 1.2; transition: background .15s, color .15s; }
+.metric-seg button:hover { color: var(--ink); }
+.metric-seg button.on { background: #fff; color: var(--ink); box-shadow: 0 2px 0 rgba(30, 30, 30, .1); }
 .sc .tick { align-self: center; }
 .sc p { font-size: 13px; line-height: 1.35; }
 .hint { font-size: 12px; font-weight: 700; color: var(--muted); }

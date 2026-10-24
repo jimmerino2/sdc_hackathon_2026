@@ -2,12 +2,12 @@
   "target": "worker_genai_use_rate",
   "promoted": {
     "1": {
-      "run_id": "20261024T055908Z-4dcc4c",
-      "made_at": "2026-10-24T05:59:08Z",
+      "run_id": "20261024T170559Z-6e7083",
+      "made_at": "2026-10-24T17:05:59Z",
       "h": 1,
       "model": "naive",
       "chosen_model": "pooled_mean",
-      "model_version": "4dcc4c11c5e9",
+      "model_version": "6e7083d6f82d",
       "status": "baseline_retained",
       "selection_mae": 6.980416246299658,
       "holdout_mae": 6.709347633688554,
@@ -240,6 +240,36 @@
       "model": "naive",
       "chosen_model": "pooled_mean",
       "model_version": "4dcc4c11c5e9",
+      "status": "baseline_retained",
+      "selection_mae": 7.883629435671077,
+      "holdout_mae": 9.079089359880937,
+      "holdout_mase_vs_naive": 1.3265388446295865,
+      "accepted": false,
+      "rejected_because": [
+        "insufficient history for selection"
+      ]
+    },
+    {
+      "run_id": "20261024T170559Z-6e7083",
+      "made_at": "2026-10-24T17:05:59Z",
+      "h": 1,
+      "model": "naive",
+      "chosen_model": "pooled_mean",
+      "model_version": "6e7083d6f82d",
+      "status": "baseline_retained",
+      "selection_mae": 6.980416246299658,
+      "holdout_mae": 6.709347633688554,
+      "holdout_mase_vs_naive": 1.0248024826202577,
+      "accepted": true,
+      "rejected_because": []
+    },
+    {
+      "run_id": "20261024T170559Z-6e7083",
+      "made_at": "2026-10-24T17:05:59Z",
+      "h": 2,
+      "model": "naive",
+      "chosen_model": "pooled_mean",
+      "model_version": "6e7083d6f82d",
       "status": "baseline_retained",
       "selection_mae": 7.883629435671077,
       "holdout_mae": 9.079089359880937,

@@ -95,4 +95,4 @@ def ingest(pull: bool) -> None:
 SPEC = TargetSpec(
     id="btos_ai_use_rate", horizons=(6, 13), period_unit="fortnight", unit_kind="NAICS sector (or US) x wording",
     trend_steps=13, feature_groups=FEATURE_GROUPS, group_source=GROUP_SOURCE, load=load, origins=origins,
-    truth=truth, panel=panel, health=health, ingest=ingest, label=label, segment=segment)
+    truth=truth, panel=panel, health=health, ingest=ingest, label=label, segment=segment, regimes=True)

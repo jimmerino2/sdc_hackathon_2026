@@ -1,5 +1,6 @@
 import { computed, reactive } from 'vue';
 import { personas, scenarios, type PersonaKey, type Role, type ScenarioKey } from './data/flows';
+import { DEFAULT_SCENARIO_METRIC } from './data/outlookScenarios';
 import { DEFAULT_SKILLS, LEVEL_SCORES, levelFromScore, mergeSkills, SKILL_CHECK_SIZE } from './data/skills';
 import type { SkillScore } from './api/resume';
 import { fetchRecommendations, JobsError, type Recommendations } from './api/jobs';
@@ -15,6 +16,8 @@ interface FlowState {
   /** Skill check answers: O*NET skill name -> level index (see LEVEL_SCORES). */
   levels: Record<string, number>;
   scenario: ScenarioKey;
+  /** Which /outlook metric the scenario picker's percentages are read from (data/outlookScenarios.ts target id). */
+  scenarioMetric: string;
   /** Roles page layout: role cards, or the demand-vs-AI chart. */
   rolesView: 'cards' | 'chart';
   chosenRoleId: string | null;
@@ -44,6 +47,7 @@ function init(k: PersonaKey): FlowState {
     interests: [],
     levels: {},
     scenario: 'accelerates',
+    scenarioMetric: DEFAULT_SCENARIO_METRIC,
     rolesView: 'cards',
     chosenRoleId: null,
     profileId: null,
