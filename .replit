@@ -1,4 +1,4 @@
-modules = ["python-3.12", "vue-node-20", "nodejs-20", "web"]
+modules = ["python-3.12", "web", "nodejs-22"]
 
 [nix]
 channel = "stable-25_05"
@@ -6,6 +6,11 @@ packages = ["glibcLocales", "ocl-icd", "opencl-headers"]
 
 [agent]
 expertMode = true
+
+[deployment]
+deploymentTarget = "autoscale"
+build = ["sh", "-c", "npm --prefix src/frontend ci && VITE_API_URL=/api npm --prefix src/frontend run build"]
+run = ["sh", "-c", "SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt python -m uvicorn app.serve:asgi --app-dir src/backend --host 0.0.0.0 --port 5000"]
 
 [workflows]
 runButton = "Project"
