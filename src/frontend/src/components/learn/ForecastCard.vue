@@ -2,13 +2,13 @@
 import { computed, ref, watch } from 'vue';
 import Icon from '../Icon.vue';
 import { fetchSkill, type SkillDetail, type SkillRow } from '../../api/occupational';
-import { pct, pp } from '../../occupational/format';
+import { pct } from '../../occupational/format';
 import { ROADMAP_FORECAST_H } from '../../occupational/forecastMatch';
 
 const props = defineProps<{ name: string; row: SkillRow; occupation: string; country: string }>();
 
 const DIR_ICON = { rising: 'tup', falling: 'tdown' } as const;
-const DIR_LABEL = { rising: 'Rising demand', falling: 'Falling demand', flat: 'Steady demand' } as const;
+const DIR_LABEL = { rising: 'Rising demand', falling: 'Falling demand' } as const;
 const EVIDENCE_LABEL = { high: 'Strong evidence', medium: 'Some evidence', low: 'Early signal' } as const;
 
 const collapsed = ref(false);
@@ -64,9 +64,10 @@ const spark = computed(() => {
       </button>
     </div>
     <h3 class="jb-card__title">{{ name }}</h3>
-    <p class="jb-forecast__dir">
+    <!-- Flat gets no label: at the 6-month horizon the served model is the 12-month average, so every skill is flat. -->
+    <p v-if="noData || row.direction !== 'flat'" class="jb-forecast__dir">
       <Icon v-if="!noData && row.direction !== 'flat'" :name="DIR_ICON[row.direction]" :size="16" />
-      {{ noData ? 'Not enough data yet' : DIR_LABEL[row.direction] }}
+      {{ noData ? 'Not enough data yet' : DIR_LABEL[row.direction as 'rising' | 'falling'] }}
     </p>
 
     <div v-show="!collapsed">
@@ -75,10 +76,12 @@ const spark = computed(() => {
       </template>
       <template v-else>
         <div class="jb-forecast__stat">
-          <span class="jb-forecast__value">{{ pct(row.forecast) }}</span>
-          <span v-if="row.change_pp_recent_vs_base != null" class="jb-forecast__delta">{{ pp(row.change_pp_recent_vs_base) }}</span>
+          <span class="jb-forecast__value">{{ pct(row.last_share_3m ?? row.forecast) }}</span>
+          <span v-if="row.last_share_3m != null" class="jb-forecast__delta">→ {{ pct(row.forecast) }} in {{ ROADMAP_FORECAST_H }} mo</span>
         </div>
-        <p class="jb-forecast__hint">of job ads for this role, forecast {{ ROADMAP_FORECAST_H }} months out</p>
+        <p class="jb-forecast__hint">
+          {{ row.last_share_3m != null ? 'of job ads ask for this skill now' : `of job ads ask for this skill, forecast ${ROADMAP_FORECAST_H} months out` }}
+        </p>
 
         <svg v-if="spark" class="jb-forecast__spark" viewBox="0 0 100 40" preserveAspectRatio="none" role="img" aria-label="Recent trend, leading into the forecast">
           <path :d="spark.histPath" class="jb-forecast__sparkline" vector-effect="non-scaling-stroke" />
@@ -90,7 +93,6 @@ const spark = computed(() => {
       </template>
 
       <span class="jb-forecast__evidence">{{ EVIDENCE_LABEL[row.evidence] }}</span>
-      <p class="jb-forecast__note">From live job postings, rechecked monthly.</p>
     </div>
   </section>
 </template>

@@ -11,7 +11,7 @@ import {
   fetchAccuracy, fetchEngine, fetchOutlook, fetchRegime, fetchTargets, type EngineDetail, type RegimeExplained, type MethodScore, type OutlookRow,
   type TargetSummary, type UnitAccuracy,
 } from '../api/outlook';
-import { COUNTRIES, OCCUPATIONS, SECTORS } from '../data/outlookNames';
+import { OCCUPATIONS, SECTORS } from '../data/outlookNames';
 
 /** One card per forecast target. They measure different things and are never combined. */
 interface Card {
@@ -37,12 +37,6 @@ const cards: Card[] = [
     blurb: 'Task size is measured in human work: how long a skilled person needs for the task. The headline number is the biggest task the best measured AI model completes successfully half the time (not how long the AI takes). Mostly software tasks. Source: METR, via Epoch AI.',
     names: { 'v1.0': 'the best measured models (METR suite v1.0)', 'v1.1': 'the best measured models (METR suite v1.1)' },
     defaultUnit: 'v1.1', minutes: true,
-  },
-  {
-    target: 'ai_mention_share', eyebrow: 'Skill demand', title: 'How many job ads ask for AI?',
-    blurb: 'Share of new job ads that mention AI. Source: Indeed Hiring Lab.',
-    names: COUNTRIES, defaultUnit: 'US', pickerLabel: 'Country', plural: 'countries',
-    series: (n) => `the share of job ads in ${n} that mention AI, month by month`,
   },
   {
     target: 'btos_ai_use_rate', eyebrow: 'Business adoption', title: 'How many US businesses use AI?',
@@ -250,11 +244,11 @@ const pct = (v: number | null) => `${Math.round((v ?? 0) * 100)}%`;
       <p class="eyebrow">AI outlook</p>
       <h1>Where AI and jobs look to be heading</h1>
       <Bubble :size="56" class="intro">
-        These are trend outlooks from public data, not promises. Under each forecast you can see how every method did on past months it hadn’t seen, for the exact country, sector or group you pick.
+        These are trend outlooks from public data, not promises. Under each forecast you can see how every method did on past months it hadn’t seen, for the exact sector or group you pick.
       </Bubble>
 
       <div v-if="status === 'loading'" class="grid" aria-busy="true" aria-label="Loading the outlook">
-        <span v-for="n in 4" :key="n" class="skel card card-skel" />
+        <span v-for="n in 3" :key="n" class="skel card card-skel" />
       </div>
 
       <div v-else-if="status === 'error'" class="state">
