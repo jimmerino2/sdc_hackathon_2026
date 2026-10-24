@@ -61,3 +61,10 @@ See `pipeline/README.md` for refresh commands and manual O*NET/Economic Index
 inputs. Raw data is gitignored and can be large; choose durable asset storage
 before downloading it. Forecasting routes are available under `/forecast`;
 the included outputs are in `src/backend/ml/output/`.
+
+## Production deployment (Replit Autoscale)
+
+Migrated from Vercel. The deployment builds the frontend with `VITE_API_URL=/api` and runs
+`app.serve:asgi`, one process that serves `src/frontend/dist` and mounts the API at `/api`
+(same origin, no CORS needed). `api/index.py` and `vercel.json` are kept only for the Vercel
+deployment. Set the secrets listed above in the Replit deployment before publishing.
