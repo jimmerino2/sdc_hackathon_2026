@@ -4,6 +4,7 @@ import FlowShell from '../components/FlowShell.vue';
 import Icon from '../components/Icon.vue';
 import { getProfile, markLoggedIn, readProfileId, sendSyncCode, SyncError, verifySyncCode } from '../api/profile';
 import { useFlow } from '../state';
+import { go } from '../router';
 
 const { state } = useFlow();
 const step = ref<'email' | 'code' | 'done'>(state.value.email ? 'done' : 'email');
@@ -107,6 +108,12 @@ onMounted(async () => {
       <input id="email" v-model="email" class="field" type="email" placeholder="you@example.com" autocomplete="email" autofocus />
       <button class="btn btn-primary" type="submit" :disabled="!emailOk || busy">{{ busy ? 'Sending…' : 'Send me a code' }}</button>
       <small>One-time code, no password.</small>
+
+      <div class="existing">
+        <div class="divider" role="separator" aria-label="or"><span aria-hidden="true">or</span></div>
+        <RouterLink :to="go('login')" class="btn btn-secondary existing-btn" aria-describedby="sync-login-warning">I already have an account</RouterLink>
+        <span id="sync-login-warning" class="warning-note">Onboarding progress will be lost</span>
+      </div>
     </form>
 
     <form v-else-if="step === 'code'" class="card block" @submit.prevent="verify">
@@ -146,4 +153,9 @@ small { font-size: 12px; font-weight: 600; color: var(--muted); }
 .ok { width: 36px; height: 36px; border-radius: 50%; background: var(--ink); color: var(--yellow); display: grid; place-items: center; flex: none; }
 .txt { display: flex; flex-direction: column; flex: 1; min-width: 0; } .txt strong { font-weight: 900; } .txt small { overflow-wrap: anywhere; }
 .error { margin-top: 14px; padding: 12px 16px; border-radius: 14px; background: #fdecea; color: #b3261e; font-weight: 800; font-size: 14px; line-height: 1.4; }
+.existing { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 4px; padding-bottom: 4px; }
+.existing .existing-btn { width: 100%; padding: 14px 16px; font-size: 14px; letter-spacing: .05em; white-space: normal; text-align: center; }
+.divider { display: flex; align-items: center; width: 100%; gap: 12px; margin: 4px 0; color: var(--muted); font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.warning-note { font-size: 12px; font-weight: 700; line-height: 1.4; color: var(--amber-ink); text-align: center; }
 </style>
