@@ -1,4 +1,5 @@
 import { API_URL } from './config';
+import { takeSseEvents } from './resume';
 
 /** One place to learn a skill. */
 export interface RoadmapSource {
@@ -133,22 +134,72 @@ export async function getRoadmap(profileId: string, onetCode?: string): Promise<
   return res.json();
 }
 
-/** This profile's roadmap for the role, built by the AI model first if it doesn't exist yet (that takes a little while). */
-export async function ensureRoadmap(profileId: string, onetCode: string): Promise<Roadmap> {
+/** What the server reports while it builds a roadmap (POST /roadmap/stream), plus `building`, sent once it is known there is none yet. */
+export type RoadmapEvent =
+  | { type: 'building' }
+  | { type: 'role'; title: string; onet_code: string }
+  | { type: 'plan'; reused: boolean }
+  /** The roadmap as stored, before the challenges (the slow part, for tech roles) are written. */
+  | { type: 'roadmap'; roadmap: Roadmap };
+
+const BUILD_FAILED = 'Jobee couldn’t build your roadmap just now. Try again in a moment.';
+
+/** Reads the stream of a build; returns the finished roadmap, or null if the server says another tab built it first. */
+async function readBuild(res: Response, onEvent?: (event: RoadmapEvent) => void): Promise<Roadmap | null> {
+  if (!res.body) throw new RoadmapError(BUILD_FAILED);
+  const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+  let buffer = '';
+  let result: Roadmap | null = null;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const taken = takeSseEvents(buffer + value);
+      buffer = taken.rest;
+      for (const event of taken.events) {
+        if (event.type === 'result') result = event as unknown as Roadmap;
+        else if (event.type === 'failed') {
+          if (event.status === 409) return null;
+          throw new RoadmapError(BUILD_FAILED);
+        } else onEvent?.(event as unknown as RoadmapEvent);
+      }
+    }
+  } catch (e) {
+    if (e instanceof RoadmapError) throw e;
+    throw new RoadmapError(BUILD_FAILED);
+  }
+  if (!result) throw new RoadmapError(BUILD_FAILED);
+  return result;
+}
+
+/**
+ * This profile's roadmap for the role, built by the AI model first if it doesn't exist yet (that takes a little while).
+ * onEvent hears the build's progress, and `building` first when there is something to build; with a roadmap already
+ * there it never fires. A server that can't stream (an older one) gets the plain request instead.
+ */
+export async function ensureRoadmap(profileId: string, onetCode: string, onEvent?: (event: RoadmapEvent) => void): Promise<Roadmap> {
   const existing = await getRoadmap(profileId, onetCode);
   if (existing) return existing;
-  const res = await call('', {
+  onEvent?.({ type: 'building' });
+  const init: RequestInit = {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ profile_id: profileId, onet_code: onetCode }),
-  });
+  };
+  let res = await call('/stream', init);
+  if (res.status === 404 || res.status === 405) res = await call('', init);
+  else if (res.ok) {
+    const built = (await readBuild(res, onEvent)) ?? (await getRoadmap(profileId, onetCode)); // null: built by another tab
+    if (built) return built;
+    throw new RoadmapError(BUILD_FAILED);
+  }
   if (res.ok) return res.json();
   if (res.status === 409) {
     // Built by another tab in the meantime.
     const built = await getRoadmap(profileId, onetCode);
     if (built) return built;
   }
-  throw new RoadmapError('Jobee couldn’t build your roadmap just now. Try again in a moment.');
+  throw new RoadmapError(BUILD_FAILED);
 }
 
 export async function completeNode(profileId: string, roadmapDetailId: string): Promise<Roadmap> {

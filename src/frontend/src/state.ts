@@ -4,7 +4,7 @@ import { DEFAULT_SCENARIO_METRIC } from './data/outlookScenarios';
 import { DEFAULT_SKILLS, LEVEL_SCORES, levelFromScore, mergeSkills, SKILL_CHECK_SIZE } from './data/skills';
 import type { SkillScore } from './api/resume';
 import { fetchRecommendations, JobsError, type Recommendations } from './api/jobs';
-import { ensureRoadmap, getRoadmap, RoadmapError, type Roadmap } from './api/roadmap';
+import { ensureRoadmap, getRoadmap, RoadmapError, type Roadmap, type RoadmapEvent } from './api/roadmap';
 import { clearOnboarded, clearSession, markLoggedIn, markOnboarded, readProfileId, saveProfileId, stageForWho, type Profile } from './api/profile';
 import { bee, BEES, type BeeName } from './bee';
 
@@ -106,8 +106,8 @@ export async function loadJobs(s: FlowState) {
   }
 }
 
-/** Load the chosen role's roadmap into state.roadmap, building it first if needed. Never throws. */
-export async function loadRoadmap(s: FlowState) {
+/** Load the chosen role's roadmap into state.roadmap, building it first if needed (onEvent hears the build). Never throws. */
+export async function loadRoadmap(s: FlowState, onEvent?: (event: RoadmapEvent) => void) {
   s.profileId ??= readProfileId();
   if (!s.profileId) {
     s.roadmap = { status: 'error', data: null, error: 'Your profile wasn’t saved. Go back and finish the questions again.' };
@@ -128,7 +128,7 @@ export async function loadRoadmap(s: FlowState) {
       markOnboarded();
       return;
     }
-    s.roadmap = { status: 'done', data: await ensureRoadmap(s.profileId, s.chosenRoleId), error: null };
+    s.roadmap = { status: 'done', data: await ensureRoadmap(s.profileId, s.chosenRoleId, onEvent), error: null };
     markOnboarded();
   } catch (e) {
     console.error(e);

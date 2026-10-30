@@ -1,6 +1,10 @@
+import json
+import queue
+import threading
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi.responses import StreamingResponse
 from supabase import Client
 
 from app.deps import get_supabase_admin
@@ -8,6 +12,8 @@ from app.roadmap import service
 from app.roadmap.schemas import LearnedSkill, Roadmap, RoadmapCreate, RoadmapSummary
 
 router = APIRouter(prefix="/roadmap", tags=["roadmap"])
+
+KEEPALIVE_SECONDS = 10
 
 
 @router.get("/summary", response_model=list[RoadmapSummary])
@@ -54,6 +60,42 @@ def create_roadmap(body: RoadmapCreate, db: Client = Depends(get_supabase_admin)
     does not exist, and 409 if it already has a roadmap for the role unless replace=true.
     """
     return service.create_roadmap(db, str(body.profile_id), body.onet_code, body.replace)
+
+
+@router.post("/stream")
+def create_roadmap_stream(body: RoadmapCreate, db: Client = Depends(get_supabase_admin)):
+    """Same as POST /roadmap, but answers as server-sent events so a page can show progress during the build.
+
+    Each event is a line `data: {json}` with a `type`: `role` (title, onet_code), `plan` (reused: true when the plan
+    was copied instead of asked of the model), `roadmap` (the stored roadmap, before the Bonus Quests are written,
+    which is the slow part for tech roles) and finally `result` (the same roadmap with its challenges; same fields as
+    the POST /roadmap response) or `failed` (status, message; the codes POST /roadmap would have answered with).
+    """
+    events: queue.Queue = queue.Queue()
+    done = object()
+
+    def work():
+        try:
+            events.put({"type": "result", **service.create_roadmap(db, str(body.profile_id), body.onet_code, body.replace, on_event=events.put).model_dump(mode="json")})
+        except HTTPException as e:
+            events.put({"type": "failed", "status": e.status_code, "message": str(e.detail)})
+        except Exception as e:  # keeps the stream from hanging
+            events.put({"type": "failed", "status": 500, "message": type(e).__name__})
+        events.put(done)
+
+    def stream():
+        threading.Thread(target=work, daemon=True).start()
+        while True:
+            try:
+                item = events.get(timeout=KEEPALIVE_SECONDS)
+            except queue.Empty:
+                yield ": keepalive\n\n"
+                continue
+            if item is done:
+                return
+            yield f"data: {json.dumps(item)}\n\n"
+
+    return StreamingResponse(stream(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 @router.post("/complete/{roadmap_detail_id}", response_model=Roadmap)

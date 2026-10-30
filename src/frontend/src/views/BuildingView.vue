@@ -8,6 +8,7 @@ import { loadRoadmap, useFlow } from '../state';
 import { go } from '../router';
 import { formatElapsed, progressAt, useAnalysisClock } from '../composables/useAnalysisClock';
 import { pathwayFacts, roleStep, type PathwayStep } from '../data/pathwayFacts';
+import type { Roadmap, RoadmapEvent } from '../api/roadmap';
 
 const EXPECTED_MS = 10_000;
 /** When each of the six steps starts, as a fraction of the expected time. */
@@ -22,20 +23,29 @@ const clock = useAnalysisClock(EXPECTED_MS);
 
 const cur = ref(0);
 const finished = ref(false);
+/** True once the server says it is building one (a roadmap that already exists comes back at once and skips the show). */
+const building = ref(false);
+/** The roadmap as soon as it is stored, which is before its first project is written. */
+const early = ref<Roadmap | null>(null);
 let lastStep = 0;
 let leave: number | undefined;
 const items = ref<HTMLElement[]>([]);
 
 const failed = computed(() => state.value.roadmap.status === 'error');
+/** The finished roadmap, with its first project. */
 const roadmap = computed(() => (state.value.roadmap.status === 'done' ? state.value.roadmap.data : null));
+/** Enough to show steps 2 to 5. */
+const data = computed(() => roadmap.value ?? early.value);
 const roleTitle = computed(() => state.value.jobs.data?.jobs.find((j) => j.onet_code === state.value.chosenRoleId)?.title ?? 'your role');
 
 /** Real once the roadmap is in; until then only the role is known. */
 const steps = computed<PathwayStep[]>(() => {
-  if (roadmap.value) return pathwayFacts(roadmap.value);
+  if (data.value) return pathwayFacts(data.value);
   return [roleStep(roleTitle.value, state.value.chosenRoleId ?? ''), ...TITLES.slice(1).map((title) => ({ title, what: '', why: '', found: [], summary: '' }))];
 });
-const known = (i: number) => i === 0 || !!roadmap.value;
+const known = (i: number) => i === 0 || !!data.value;
+/** Step 6 shows what it found only once the project is written. */
+const settled = (i: number) => i < steps.value.length - 1 || !!roadmap.value;
 
 const timeStep = computed(() => STEP_STARTS.reduce((s, start, i) => (clock.f.value >= start ? i : s), 0));
 const stateOf = (i: number) => (finished.value || i < cur.value ? 'done' : i === cur.value ? 'active' : 'pending');
@@ -43,20 +53,30 @@ const pct = computed(() => Math.round((finished.value ? 1 : progressAt(clock.f.v
 const late = computed(() => clock.slow.value && !finished.value && !failed.value);
 
 // Steps follow the clock, but past the first one they wait for the roadmap, since they show what is in it.
-watch([clock.elapsed, roadmap], () => {
+watch([clock.elapsed, data, roadmap], () => {
   if (finished.value || failed.value) return;
-  const target = roadmap.value ? timeStep.value : 0;
+  if (roadmap.value && !building.value) return finish(400); // it was already built: no need to play it out
+  const target = data.value ? timeStep.value : 0;
   const now = Date.now();
   if (cur.value < target && now - lastStep >= MIN_STEP_MS) {
     cur.value++;
     lastStep = now;
     nextTick(() => items.value[cur.value]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
   } else if (roadmap.value && cur.value >= steps.value.length - 1 && now - lastStep >= MIN_STEP_MS) {
-    finished.value = true;
-    clock.stop();
-    leave = window.setTimeout(() => router.push(go('pathway')), 900);
+    finish(900);
   }
 });
+
+function finish(delay: number) {
+  finished.value = true;
+  clock.stop();
+  leave = window.setTimeout(() => router.push(go('pathway')), delay);
+}
+
+function onEvent(e: RoadmapEvent) {
+  if (e.type === 'building') building.value = true;
+  else if (e.type === 'roadmap') early.value = e.roadmap;
+}
 watch(failed, (bad) => bad && clock.stop());
 
 /** Builds the roadmap if it isn't there yet; the steps then play out from what comes back. */
@@ -64,9 +84,11 @@ function start() {
   clearTimeout(leave);
   cur.value = 0;
   finished.value = false;
+  building.value = false;
+  early.value = null;
   lastStep = Date.now();
   clock.start();
-  loadRoadmap(state.value);
+  loadRoadmap(state.value, onEvent);
 }
 
 onMounted(start);
@@ -95,7 +117,8 @@ onBeforeUnmount(() => clearTimeout(leave));
             <div v-else-if="stateOf(i) === 'active' && known(i)" class="det">
               <p>{{ step.what }}</p>
               <p class="why">{{ step.why }}</p>
-              <ul>
+              <p v-if="!settled(i)" class="wait">Writing it just for you…</p>
+              <ul v-else>
                 <li v-for="(f, k) in step.found.slice(0, 3)" :key="f" :style="{ '--i': k }">{{ f }}</li>
               </ul>
             </div>
@@ -135,7 +158,7 @@ h3 { margin: 0; font-size: 17px; line-height: 26px; font-weight: 900; }
 .sum { margin: 2px 0 0; font-size: 13px; line-height: 19px; font-weight: 700; color: var(--muted); animation: swap .4s ease-out both; }
 .det { animation: swap .45s ease-out both; }
 .det p { margin: 4px 0 0; font-size: 14px; line-height: 21px; font-weight: 600; }
-.det .why { color: var(--muted); }
+.det .why, .det .wait { color: var(--muted); }
 .det ul { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 7px; }
 .det li { display: flex; gap: 9px; font-size: 13px; line-height: 19px; font-weight: 800; opacity: 0; animation: swap .45s ease-out forwards; animation-delay: calc(var(--i) * 700ms + 500ms); }
 .det li::before { content: ''; flex: none; width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: var(--yellow); }
@@ -144,6 +167,21 @@ h3 { margin: 0; font-size: 17px; line-height: 26px; font-weight: 900; }
 .btn { gap: 8px; }
 .back { font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .back:hover { color: var(--ink); }
+
+/* On a phone the meadow gives way to the steps: shorter, and the steps tighter. Short windows do the same. */
+@media (max-width: 560px), (max-height: 720px) {
+  .page { padding-top: 16px; padding-bottom: 32px; }
+  .stack :deep(.fpv) { height: 150px; margin-bottom: 10px; border-radius: 22px; }
+  .meta { margin-bottom: 12px; }
+  .steps { gap: 8px; }
+  .step { grid-template-columns: 24px minmax(0, 1fr); gap: 10px; padding: 10px 12px; }
+  h3 { font-size: 15px; line-height: 24px; }
+  .det p { font-size: 13px; line-height: 19px; }
+  .det ul { margin-top: 8px; gap: 5px; }
+  .det li { font-size: 12.5px; line-height: 18px; }
+  .meta .bad { font-size: 11px; }
+}
+@media (max-width: 380px) { .stack :deep(.fpv) { height: 120px; } .stack :deep(.hud) { display: none; } }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes pop { 0% { transform: scale(.4); } 60% { transform: scale(1.12); } }

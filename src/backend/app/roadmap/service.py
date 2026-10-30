@@ -1,4 +1,5 @@
 import uuid
+from collections.abc import Callable
 from datetime import datetime, timezone
 
 from fastapi import HTTPException
@@ -278,19 +279,24 @@ def detail_rows(plan: Plan, roadmap_id: str, onet_code: str) -> list[dict]:
     return details
 
 
-def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool) -> Roadmap:
+def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool, on_event: Callable[[dict], None] | None = None) -> Roadmap:
     """Store a roadmap for this profile and return it.
 
     The plan (sections, units, prerequisites) is copied from the newest roadmap anyone has for the role, since it
     doesn't depend on the learner; if there is none, or replace is set, the model plans it. Either way the new
     roadmap starts with nothing completed. A tech role's roadmap then gets its Bonus Quests, written for this learner
     (they depend on their interests, so they are never copied).
+
+    on_event hears the progress for a page to show: `role` (title, onet_code), `plan` (reused: the plan was copied, not
+    asked of the model) and `roadmap` (the stored roadmap, before the Bonus Quests are written).
     """
+    emit = on_event or (lambda _event: None)
     try:
         profiles.get_profile(db, profile_id)
     except profiles.ProfileError as e:
         raise HTTPException(e.status_code, e.message) from e
     role = _role(db, onet_code)
+    emit({"type": "role", "title": role["title"], "onet_code": onet_code})
 
     def mine(query):
         """Limit a query to this profile's roadmap for the role."""
@@ -301,12 +307,14 @@ def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool) -
 
     # A role's plan doesn't depend on the learner, so reuse one that exists unless a rebuild was asked for.
     plan = None if replace else _existing_plan(db, onet_code)
+    reused = plan is not None
     if plan is None:
         skills = db.table("onet_role_skills").select("skill_id,skill_name,skill_type,importance,level,forecast_demand").eq("onet_code", onet_code).execute().data
         relevant = planner.candidates(skills)
         if not relevant:
             raise HTTPException(status_code=422, detail=f"no skills above importance {planner.MIN_IMPORTANCE} for {onet_code}")
         plan = planner.build_plan(role["title"], role["description"], relevant)
+    emit({"type": "plan", "reused": reused})
 
     # One roadmap row per role; its section/unit are the current step, starting at the first unit.
     roadmap_id = str(uuid.uuid4())
@@ -323,6 +331,7 @@ def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool) -
         mine(db.table("roadmap").delete()).execute()
         raise HTTPException(status_code=502, detail=f"could not store roadmap: {e}")
     built = get_roadmap(db, profile_id, onet_code)
+    emit({"type": "roadmap", "roadmap": built.model_dump(mode="json")})
     challenges.generate_for_roadmap(db, profile_id, built)
     built.challenges = challenges.for_roadmap(db, built)
     return built
