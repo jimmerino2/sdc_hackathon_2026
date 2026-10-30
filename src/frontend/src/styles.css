@@ -11,7 +11,8 @@
   --amber-ink: #9a5200; /* amber darkened for legible small text */
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body, #app { min-height: 100%; }
+html { min-height: 100%; scrollbar-gutter: stable; }
+body, #app { min-height: 100%; }
 body {
   font-family: 'Nunito', system-ui, sans-serif;
   background: var(--bg);
@@ -103,3 +104,5 @@ h1, h2, h3, p { font-weight: inherit; }
   .btn:hover, .option:hover { transform: none; }
   .skel { animation: none; }
 }
+
+

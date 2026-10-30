@@ -87,14 +87,13 @@ onMounted(load);
           <p class="eyebrow">Your roles</p>
           <p v-if="updated && status === 'done'" class="when">Last updated {{ updated }}</p>
         </div>
-        <button v-if="status === 'done'" type="button" class="btn btn-secondary regen" :disabled="regenerating" @click="regenerate">
-          <Icon name="refresh" :size="18" :class="{ spin: regenerating }" /> {{ regenerating ? 'Regenerating…' : 'Regenerate roles' }}
-        </button>
       </div>
 
-      <div v-if="status === 'done'" class="switch" role="group" aria-label="View">
-        <RouterLink :to="{ ...go('suggested'), query: {} }" :class="{ on: !simulating }" :aria-current="!simulating ? 'page' : undefined">Your matches</RouterLink>
-        <RouterLink :to="{ ...go('suggested'), query: { view: 'simulate' } }" :class="{ on: simulating }" :aria-current="simulating ? 'page' : undefined"><Icon name="sparkles" :size="15" /> What-if simulator</RouterLink>
+      <div v-if="status === 'done'" class="nav-bar">
+        <div class="switch" role="group" aria-label="View">
+          <RouterLink :to="{ ...go('suggested'), query: {} }" :class="{ on: !simulating }" :aria-current="!simulating ? 'page' : undefined">Your matches</RouterLink>
+          <RouterLink :to="{ ...go('suggested'), query: { view: 'simulate' } }" :class="{ on: simulating }" :aria-current="simulating ? 'page' : undefined"><Icon name="lightbulb" :size="15" /> What-if simulator</RouterLink>
+        </div>
       </div>
 
       <div v-if="regenerating" class="banner" role="status">
@@ -133,25 +132,48 @@ onMounted(load);
         :selected="state.chosenRoleId"
         chart-hint="Tap one to open it."
         @select="openRole"
-      />
+      >
+        <template #sidebar-footer>
+          <button
+            type="button"
+            class="btn btn-secondary regen-sidebar"
+            :disabled="regenerating"
+            @click="regenerate"
+          >
+            <Icon name="refresh" :size="16" :class="{ spin: regenerating }" />
+            {{ regenerating ? 'Regenerating…' : 'Regenerate roles' }}
+          </button>
+        </template>
+      </RoleBrowser>
     </div>
   </div>
 </template>
 
 <style scoped>
 .page { max-width: 1100px; }
-.head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
 .eyebrow { font-size: 11px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--orange); }
 .when { margin-top: 4px; font-size: 12px; font-weight: 700; color: var(--muted); }
-.switch { display: inline-flex; padding: 4px; border-radius: 14px; background: var(--line); margin-bottom: 16px; max-width: 100%; }
-.switch a { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 10px; font-weight: 900; font-size: 13px; color: var(--muted); }
+.nav-bar { display: flex; align-items: center; margin-bottom: 20px; min-height: 44px; }
+.switch { display: inline-flex; padding: 4px; border-radius: 14px; background: var(--line); max-width: 100%; }
+.switch a { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 10px; font-weight: 900; font-size: 13px; color: var(--muted); transition: background .15s ease, color .15s ease, box-shadow .15s ease; }
 .switch a.on { background: #fff; color: var(--ink); box-shadow: 0 2px 0 rgba(30, 30, 30, .1); }
-.regen { display: inline-flex; align-items: center; gap: 8px; }
+.regen-sidebar {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 900;
+  background: #fff;
+}
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .banner { margin-bottom: 18px; }
 .error { margin-bottom: 18px; padding: 12px 16px; border-radius: 14px; background: #fdecea; color: #b3261e; font-weight: 800; font-size: 14px; line-height: 1.4; }
-.note { margin-top: 12px; font-size: 12px; font-weight: 600; color: var(--muted); line-height: 1.5; }
 .dim { opacity: .55; pointer-events: none; transition: opacity .2s; }
 .state { max-width: 560px; margin: 40px 0; display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
 .state .btn { display: inline-flex; align-items: center; gap: 8px; }
