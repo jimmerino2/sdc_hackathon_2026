@@ -16,6 +16,7 @@ import {
   submitChallenge,
   type RoadmapChallenge,
 } from "../api/roadmap";
+import { fetchHive, type Hive } from "../api/hive";
 import { readProfileId } from "../api/profile";
 import { prefersReducedMotion } from "../composables/useCountUp";
 import { useFlow } from "../state";
@@ -26,7 +27,10 @@ const route = useRoute();
 const profileId = () => state.value.profileId ?? readProfileId();
 
 const challenges = ref<RoadmapChallenge[] | null>(null);
+/** Earned stingers not yet spent on Robbee. */
 const stingers = ref(0);
+/** The learner's fight, for the boss card: Robbee's HP and how many stings have landed. */
+const fight = ref<Hive["fight"] | null>(null);
 const loadError = ref<string | null>(null);
 /** The challenge opened from the Learn page's banner (?open=<id>), or by the learner. */
 const openId = ref<string | null>(typeof route.query.open === "string" ? route.query.open : null);
@@ -45,8 +49,8 @@ function added(c: RoadmapChallenge) {
   }
   reveal(c.challenge_id);
 }
-const MAX_PIPS = 10;
-const pips = computed(() => Math.min(stingers.value, MAX_PIPS));
+const slots = computed(() => fight.value?.stings_to_kill ?? 5);
+const dealt = computed(() => fight.value?.stings_dealt ?? 0);
 
 async function load() {
   const id = profileId();
@@ -55,12 +59,14 @@ async function load() {
   try {
     const list = await fetchChallenges(id);
     challenges.value = list.challenges;
-    stingers.value = list.stingers;
+    stingers.value = list.stingers_available;
     if (openId.value) reveal(openId.value);
   } catch (e) {
     loadError.value =
       e instanceof RoadmapError ? e.message : "Jobee couldn’t load your challenges. Try again in a moment.";
   }
+  // The boss card is a nicety: the list stands without it.
+  fetchHive(id).then((h) => (fight.value = h.fight)).catch(() => undefined);
 }
 
 /** Put a changed challenge in the list, and in the Learn page's roadmap if it is the one on screen there. */
@@ -92,7 +98,7 @@ async function submit(c: RoadmapChallenge, repoUrl: string) {
   try {
     const res = await submitChallenge(id, c.challenge_id, repoUrl);
     replace(res.challenge);
-    stingers.value = res.stingers;
+    stingers.value = res.stingers_available;
     awarded.value = res.stinger_awarded;
     if (res.passed && res.challenge.stage === 1) attack(res.challenge);
     else if (res.passed) show("patched", res.challenge);
@@ -177,11 +183,13 @@ onMounted(load);
         </p>
         <br />
         <p>Please don't tell him to "just put the fries in the bag", that raises his cortisol levels real bad...</p>
-        <div class="boss__pips" :aria-label="`${stingers} stingers earned`">
-          <span v-for="i in Math.max(pips, 5)" :key="i" class="boss__pip" :class="{ on: i <= pips }"
+        <div class="boss__pips" :aria-label="`${dealt} of ${slots} stings landed on Robbee, ${stingers} stingers ready`">
+          <span v-for="i in slots" :key="i" class="boss__pip" :class="{ on: i <= dealt }"
             ><Stinger :size="20"
           /></span>
-          <span class="boss__count">{{ stingers }} {{ stingers === 1 ? "stinger" : "stingers" }}</span>
+          <span class="boss__count">
+            <template v-if="fight">HP {{ fight.hp }}% · </template>{{ stingers }} {{ stingers === 1 ? "stinger" : "stingers" }} ready
+          </span>
         </div>
       </div>
       <div class="boss__side">

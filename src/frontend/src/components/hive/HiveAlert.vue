@@ -1,18 +1,36 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import Mascot from '../Mascot.vue';
+import type { BeeName } from '../../bee';
 import Robbee from './Robbee.vue';
 import Stinger from './Stinger.vue';
 
 /**
  * The full-screen moments of a challenge, on a tilted hazard-taped band:
  * warning (Robbee attacks after a stage 1 pass) -> assessing (stage 2 is being written) -> rewritten (the new brief),
- * and patched (stage 2 passed).
+ * patched (stage 2 passed), and defeated (the party killed Robbee: one bee per party member, 1 to 4).
  */
-export type HivePhase = 'warning' | 'assessing' | 'rewritten' | 'patched';
+export type HivePhase = 'warning' | 'assessing' | 'rewritten' | 'patched' | 'defeated';
 
 /** awarded: this pass paid a stinger (false for a resubmitted, already-complete challenge). */
-const props = defineProps<{ phase: HivePhase; title: string; twist?: string | null; stingers: number; awarded?: boolean; error?: string | null }>();
+const props = defineProps<{
+  phase: HivePhase; title: string; twist?: string | null; stingers: number; awarded?: boolean; error?: string | null;
+  /** defeated: the party's bees, and the kill pollen the learner is paid (0 if they didn't sting). */
+  party?: { name: string; bee: string }[]; reward?: number;
+}>();
+
+/** Where each bee of a party of 1 to 4 flies, as percentages of the crew box. */
+const SPOTS: Record<number, [number, number][]> = {
+  1: [[50, 24]],
+  2: [[30, 24], [72, 34]],
+  3: [[18, 34], [50, 14], [82, 34]],
+  4: [[14, 38], [38, 14], [62, 14], [86, 38]],
+};
+const crew = computed(() => {
+  const members = (props.party ?? []).slice(0, 4);
+  const spots = SPOTS[members.length] ?? [];
+  return members.map((m, i) => ({ ...m, x: spots[i][0], y: spots[i][1], delay: i * 0.18 }));
+});
 const emit = defineEmits<{ close: []; start: []; retry: [] }>();
 
 const DAMAGE = ['Robbee is reading your repo…', 'Counting the dents in the hive…', 'Calling the client…', 'Rewriting your brief…'];
@@ -39,11 +57,14 @@ const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') emit('close'); };
 onMounted(() => { window.addEventListener('keydown', onKey); nextTick(() => primary.value?.focus()); });
 onBeforeUnmount(() => { window.removeEventListener('keydown', onKey); clearInterval(timer); });
 
+const nf = new Intl.NumberFormat('en');
+
 const label = computed(() => ({
   warning: 'Warning: a boss has entered the hive',
   assessing: 'Assessing the damage',
   rewritten: `Project rewritten: ${props.title}`,
   patched: `Hive patched: ${props.title}`,
+  defeated: 'Hive protected: Robbee was defeated',
 })[props.phase]);
 </script>
 
@@ -99,6 +120,26 @@ const label = computed(() => ({
             <span class="hive__title">{{ title }}</span>
             <span v-if="twist" class="hive__twist">“{{ twist }}”</span>
             <button ref="primary" type="button" class="jb-btn jb-btn--primary hive__btn" @click="emit('start')">Start stage 2</button>
+          </div>
+        </div>
+
+        <!-- Robbee was killed: the whole party celebrates -->
+        <div v-else-if="phase === 'defeated'" class="hive__pair hive__pair--crew">
+          <div class="hive__crew" aria-hidden="true">
+            <span v-for="(m, i) in crew" :key="i" class="hive__cb" :style="{ left: m.x + '%', top: m.y + '%', animationDelay: m.delay + 's' }">
+              <i class="hive__trail" />
+              <Mascot :size="82" mood="celebrate" :bee="m.bee as BeeName" wings :look="false" />
+            </span>
+            <span class="hive__fall"><Robbee :size="130" pose="defeated" :bob="false" /></span>
+          </div>
+          <div class="hive__copy">
+            <span class="hive__tag hive__tag--green">Boss defeated</span>
+            <span class="hive__title">Hive Protected!</span>
+            <span class="hive__lead">Robbee is now unemployed, hooray!</span>
+            <button ref="primary" type="button" class="jb-btn jb-btn--primary hive__btn" @click="emit('close')">
+              {{ reward ? `Collect ${nf.format(reward)} pollen` : 'Nice teamwork' }}
+            </button>
+            <span v-if="!reward" class="hive__note">Sting Robbee next round to share the pollen.</span>
           </div>
         </div>
 
@@ -164,6 +205,12 @@ const label = computed(() => ({
 .hive__twist { max-width: 640px; color: #a85800; font-size: clamp(15px, 1.6vw, 20px); font-weight: 800; }
 .hive__earn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: #1e1e1e; color: #ffc107; font-size: 16px; font-weight: 900; }
 .hive__btn { margin-top: 8px; padding: 14px 28px; font-size: 16px; letter-spacing: .08em; text-transform: uppercase; }
+.hive__note { color: #6b665a; font-size: 14px; font-weight: 700; }
+.hive__pair--crew { gap: clamp(8px, 2vw, 32px); }
+.hive__crew { position: relative; flex: none; width: min(440px, 44vw); height: 330px; }
+.hive__cb { position: absolute; transform: translate(-50%, 0); animation: hive-cheer 1.6s ease-in-out infinite; }
+.hive__trail { position: absolute; left: 50%; top: 70%; width: 12px; height: 150px; margin-left: -6px; transform-origin: 50% 0; transform: rotate(32deg); background: radial-gradient(circle, #ffb90f 0 3.5px, transparent 4px) 0 0 / 12px 24px repeat-y; opacity: .75; z-index: -1; }
+.hive__fall { position: absolute; left: 50%; bottom: -6px; margin-left: -70px; }
 .hive__acts { display: flex; align-items: center; gap: 14px; }
 .hive__ghost { border: 0; background: none; color: #f3e3c0; font: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; }
 .hive__dots { display: flex; gap: 8px; }
@@ -171,6 +218,7 @@ const label = computed(() => ({
 .hive__dots i:nth-child(2) { animation-delay: .15s; } .hive__dots i:nth-child(3) { animation-delay: .3s; }
 
 @keyframes hive-fade { from { opacity: 0; } }
+@keyframes hive-cheer { 0%, 100% { transform: translate(-50%, 0) rotate(-4deg); } 50% { transform: translate(-50%, -14px) rotate(4deg); } }
 @keyframes hive-slam { from { opacity: 0; transform: rotate(-8deg) translateX(-30%) scaleX(.6); } }
 @keyframes hive-pop { from { opacity: 0; transform: scale(1.6); } }
 @keyframes hive-flash { 50% { filter: brightness(1.5) drop-shadow(0 0 12px #ff5252); } }

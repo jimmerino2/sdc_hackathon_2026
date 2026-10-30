@@ -17,7 +17,7 @@ from app.jobs.service import TECH_ROLES
 from app.profile import service as profiles
 from app.roadmap import planner
 from app.roadmap.schemas import Roadmap
-from app.social import service as social
+from app.hive import service as hive
 
 STALE_BUSY = timedelta(minutes=5)  # a judgement or rewrite this old was lost (e.g. a restart), so it may start again
 CHALLENGE_COLUMNS = (
@@ -180,8 +180,10 @@ def for_roadmap(db: Client, roadmap: Roadmap) -> list[Challenge]:
     return [_out(r, names) for r in rows]
 
 
-def stingers(db: Client, profile_id: str) -> int:
-    return db.table("stinger_award").select("challenge_id", count="exact").eq("profile_id", profile_id).execute().count or 0
+def stingers(db: Client, profile_id: str, unspent: bool = False) -> int:
+    """Stingers earned, or only the ones not yet spent on Robbee (unspent)."""
+    query = db.table("stinger_award").select("challenge_id", count="exact").eq("profile_id", profile_id)
+    return (query.is_("spent_at", "null") if unspent else query).execute().count or 0
 
 
 def list_for_profile(db: Client, profile_id: str) -> Challenges:
@@ -189,7 +191,7 @@ def list_for_profile(db: Client, profile_id: str) -> Challenges:
     rows = (db.table("roadmap_challenge").select(CHALLENGE_COLUMNS).eq("profile_id", profile_id)
             .order("created_at", desc=True).execute().data)
     names = _interest_names(db, rows)
-    return Challenges(challenges=[_out(r, names) for r in rows], stingers=stingers(db, profile_id))
+    return Challenges(challenges=[_out(r, names) for r in rows], stingers=stingers(db, profile_id), stingers_available=stingers(db, profile_id, unspent=True))
 
 
 def roles(db: Client, profile_id: str) -> list[ChallengeRole]:
@@ -287,9 +289,7 @@ def submit(db: Client, profile_id: str, challenge_id: str, repo_url: str) -> Sub
             {"challenge_id": challenge_id, "stage": row["stage"], "profile_id": profile_id, "score": score},
             on_conflict="challenge_id,stage", ignore_duplicates=True,
         ).execute().data)
-        if awarded:  # a stinger is worth pollen, which ranks the leaderboard
-            social.add_pollen(db, profile_id, social.POLLEN_PER_STINGER)
-    return SubmitResult(challenge=_row_out(db, _owned(db, profile_id, challenge_id)), passed=passed, stinger_awarded=awarded, stingers=stingers(db, profile_id))
+    return SubmitResult(challenge=_row_out(db, _owned(db, profile_id, challenge_id)), passed=passed, stinger_awarded=awarded, stingers=stingers(db, profile_id), stingers_available=stingers(db, profile_id, unspent=True))
 
 
 def advance(db: Client, profile_id: str, challenge_id: str) -> Challenge:
@@ -337,4 +337,5 @@ def advance(db: Client, profile_id: str, challenge_id: str) -> Challenge:
         "result": None, "score": None, "summary": None, "files_read": [], "attempts": 0, "judged_at": None,
         "model": get_settings().openrouter_model,
     }).eq("challenge_id", challenge_id).eq("status", "advancing").execute()
+    hive.log_twist(db, profile_id, challenge_id)
     return _row_out(db, _owned(db, profile_id, challenge_id))

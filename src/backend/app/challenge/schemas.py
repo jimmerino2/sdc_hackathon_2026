@@ -73,6 +73,7 @@ class Challenge(BaseModel):
 class Challenges(BaseModel):
     challenges: list[Challenge] = Field(description="All the profile's challenges, newest first")
     stingers: int = Field(description="Stingers earned: one per passed stage")
+    stingers_available: int = Field(description="Earned stingers not yet spent on Robbee")
 
 
 class SubmitResult(BaseModel):
@@ -80,6 +81,7 @@ class SubmitResult(BaseModel):
     passed: bool = Field(description="This submission passed the stage")
     stinger_awarded: bool
     stingers: int = Field(description="The learner's stinger total after this submission")
+    stingers_available: int = Field(description="Earned stingers not yet spent on Robbee")
 
 
 class ChallengeRole(BaseModel):

@@ -160,7 +160,10 @@ export async function completeNode(profileId: string, roadmapDetailId: string): 
 /** Every challenge across the profile's roadmaps, newest first, and the stingers earned. */
 export interface ChallengeList {
   challenges: RoadmapChallenge[];
+  /** Stingers earned. */
   stingers: number;
+  /** Earned stingers not yet spent on Robbee. */
+  stingers_available: number;
 }
 
 export async function fetchChallenges(profileId: string): Promise<ChallengeList> {
@@ -205,6 +208,8 @@ export interface SubmitResult {
   stinger_awarded: boolean;
   /** The learner's stinger total after this submission. */
   stingers: number;
+  /** Earned stingers not yet spent on Robbee. */
+  stingers_available: number;
 }
 
 /** The backend's message for a failed challenge request, if it is one written for the learner. */
