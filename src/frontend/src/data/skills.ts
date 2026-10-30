@@ -16,9 +16,10 @@ export const SKILL_CHECK_SIZE = 8;
 /** Skill check level (New, Basic, Good, Strong) -> the 0-1 score stored on the profile. New means "don't have it". */
 export const LEVEL_SCORES = [0, 0.33, 0.67, 1] as const;
 
-/** Starting level for a skill the resume showed, from how strongly it showed it. */
+/** Starting level for a skill the resume showed, from how strongly it showed it: a clear, specific
+ * mention (score 0.8+) starts at Strong; anything vaguer starts at Good. */
 export function levelFromScore(score: number): number {
-  return score >= 0.8 ? 2 : 1;
+  return score >= 0.9 ? 3 : 2;
 }
 
 /** Shorter names for O*NET skills whose official names read badly on a chip. */

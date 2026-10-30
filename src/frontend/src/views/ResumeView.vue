@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, reactive, ref, shallowRef } from 'vue';
 import { useRouter } from 'vue-router';
 import FlowShell from '../components/FlowShell.vue';
 import Icon from '../components/Icon.vue';
+import FlowerBeeSpinner from '../components/FlowerBeeSpinner.vue';
 import PollenGame from '../components/PollenGame.vue';
 import ResumeDoc from '../components/ResumeDoc.vue';
 import ResumeProgress from '../components/ResumeProgress.vue';
@@ -118,6 +119,7 @@ async function upload(file: File | undefined) {
   if (error.value) return;
 
   const mine = ++attempt;
+  const started = Date.now();
   reading.value = true;
   finished.value = false;
   doc.value = null;
@@ -160,6 +162,9 @@ async function upload(file: File | undefined) {
       finished.value = false;
     }
     if (input.value) input.value.value = ''; // let the same file be picked again
+    const left = MIN_SPIN_MS - (Date.now() - started);
+    if (left > 0) await wait(left);
+    if (mine === attempt) reading.value = false;
   }
 }
 

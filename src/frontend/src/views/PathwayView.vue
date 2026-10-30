@@ -10,8 +10,8 @@ import NextUpCard, { type NextUpSkill } from '../components/learn/NextUpCard.vue
 import ProgressCard from '../components/learn/ProgressCard.vue';
 import ForecastCard from '../components/learn/ForecastCard.vue';
 import BeeGuide from '../components/learn/BeeGuide.vue';
-import ChallengeCard from '../components/learn/ChallengeCard.vue';
-import { completeNode, deleteRoadmap, fetchRoadmapSummaries, RoadmapError, submitChallenge, type RoadmapChallenge, type RoadmapNode, type RoadmapSource, type RoadmapSummary } from '../api/roadmap';
+import ChallengeBanner from '../components/learn/ChallengeBanner.vue';
+import { completeNode, deleteRoadmap, fetchRoadmapSummaries, RoadmapError, type RoadmapNode, type RoadmapSource, type RoadmapSummary } from '../api/roadmap';
 import { readProfileId } from '../api/profile';
 import { skillLabel } from '../data/skills';
 import { allNodes, completeLocally, learningLinks, progress, resolveNodes, resolveUnits, sectionCleared, type ResolvedSkill } from '../learn/skillState';
@@ -140,29 +140,11 @@ async function markDone() {
   }
 }
 
-/* ---------- Bonus quests: optional projects between sections (tech roles only) ---------- */
-const questsAfter = (section: number) => (roadmap.value?.challenges ?? []).filter((c) => c.after_section === section);
-const questBusy = ref<string | null>(null);
-const questErrors = ref<Record<string, string>>({});
-
-/** Have the repo judged, then show the scored challenge in place. */
-async function submitQuest(c: RoadmapChallenge, repoUrl: string) {
-  const id = profileId();
-  if (!id || questBusy.value) return;
-  questBusy.value = c.challenge_id;
-  questErrors.value = { ...questErrors.value, [c.challenge_id]: '' };
-  try {
-    const saved = await submitChallenge(id, c.challenge_id, repoUrl);
-    const current = state.value.roadmap.data;
-    if (current?.challenges) {
-      state.value.roadmap.data = { ...current, challenges: current.challenges.map((x) => (x.challenge_id === saved.challenge_id ? saved : x)) };
-    }
-  } catch (e) {
-    questErrors.value = { ...questErrors.value, [c.challenge_id]: e instanceof RoadmapError ? e.message : 'Jobee couldn’t judge that just now. Try again in a moment.' };
-  } finally {
-    questBusy.value = null;
-  }
-}
+/** The roadmap's challenge in progress (tech roles only), shown above the path; it is worked on from the Challenges page. */
+const challenge = computed(() => {
+  const all = roadmap.value?.challenges ?? [];
+  return all.find((c) => !c.completed_at) ?? all[0] ?? null;
+});
 
 /* ---------- the profile's roadmaps: switch between them, or delete the one on screen ---------- */
 const summaries = ref<RoadmapSummary[]>([]);
@@ -271,6 +253,7 @@ onMounted(async () => {
     <div v-else class="jb learn">
       <div class="learn__main">
         <SkillChips v-if="have.length" :skills="have" :owned="job?.skills_owned" :total="job?.skills_total" :more="job ? haveMore : 0" />
+        <ChallengeBanner v-if="challenge" :challenge="challenge" />
 
         <template v-for="sec in sections" :key="sec.section">
           <SectionBanner
@@ -290,14 +273,6 @@ onMounted(async () => {
               @select="select"
             />
           </div>
-          <ChallengeCard
-            v-for="c in questsAfter(sec.section)"
-            :key="c.challenge_id"
-            :challenge="c"
-            :busy="questBusy === c.challenge_id"
-            :error="questErrors[c.challenge_id] || null"
-            @submit="(url) => submitQuest(c, url)"
-          />
         </template>
 
         <RouterLink v-if="isRoleReady" :to="go('suggested')" class="jb-end jb-end--reached" aria-label="Role-ready! Explore your next pathway">
