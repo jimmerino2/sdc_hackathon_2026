@@ -48,7 +48,7 @@ function clickForecast(e: MouseEvent) {
       </button>
       <span v-if="burstKey > 0" :key="burstKey" class="jb-burst" aria-hidden="true"><i v-for="(p, i) in particles" :key="i" :style="p" /></span>
     </div>
-    <div class="jb-node__label">
+    <div class="jb-node__label" @click="click">
       <strong class="jb-node__name">{{ name }}</strong>
       <span v-if="kind" class="jb-node__kind">{{ kind }}</span>
       <span v-if="resources" class="jb-node__res">{{ resources }} {{ resources === 1 ? 'resource' : 'resources' }}</span>

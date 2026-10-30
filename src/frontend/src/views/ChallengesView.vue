@@ -125,7 +125,7 @@ async function submit(c: RoadmapChallenge, repoUrl: string) {
       } else {
         // Stage 2 passed: challenge is complete
         shown.value = res.challenge;
-        phase.value = "done";
+        phase.value = "patched";
         awarded.value = res.stinger_awarded;
       }
     }
@@ -170,7 +170,7 @@ async function attack(c: RoadmapChallenge, retry = false) {
   } else {
     await writing;
   }
-  if (!alertError.value) phase.value = "report";
+  if (!alertError.value) phase.value = "rewritten";
 }
 
 function startStage2() {

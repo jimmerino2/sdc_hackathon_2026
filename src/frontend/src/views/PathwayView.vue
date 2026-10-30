@@ -72,6 +72,7 @@ const forecastSelected = computed(() => {
 
 watch(() => roadmap.value?.onet_code, async (code) => {
   roleForecast.value = null;
+  selectedId.value = null;
   if (code) roleForecast.value = await loadRoleForecast(code);
 }, { immediate: true });
 
@@ -111,27 +112,6 @@ const mood = computed(() => {
   return done === 0 ? 'wave' : done < total ? 'happy' : 'celebrate';
 });
 
-/* ---------- completed state helpers: celebration message, skills built chips, and next move ---------- */
-const completedSkills = computed(() => {
-  const seen = new Set<string>();
-  const list: string[] = [];
-  for (const n of nodes.value) {
-    if (n.status === 'completed') {
-      const lbl = skillLabel(n.skill_name);
-      if (!seen.has(lbl)) {
-        seen.add(lbl);
-        list.push(lbl);
-      }
-    }
-  }
-  return list;
-});
-
-const completedMessage = computed(() => {
-  const count = counts.value.total;
-  const copy = personaCopy[key.value];
-  return copy?.completed ? copy.completed(count) : `${count} skills down — every skill on your roadmap is complete!`;
-});
 
 const otherIncompleteRoadmap = computed(() => {
   const other = summaries.value.find((s) => s.onet_code !== activeCode.value && s.completed < s.total);
@@ -153,6 +133,10 @@ const activeChallengeId = computed(() => {
 });
 
 function select(s: ResolvedSkill) {
+  if (selectedId.value === s.id) {
+    selectedId.value = null;
+    return;
+  }
   selectedId.value = s.id;
   error.value = null;
   // With the side column stacked under the path, bring the card into view.
@@ -330,27 +314,52 @@ onMounted(async () => {
       <aside class="learn__side">
         <!-- IN-PROGRESS STATE: when roadmap is being worked on -->
         <template v-if="!isRoleReady">
-        <div ref="sideCard" class="learn__sidecards">
-          <ProgressCard :done="counts.done" :total="counts.total" :role="roadmap.title" />
-          <NextUpCard :skill="nextUp" :selected="!!selected" :busy="!!busyId" :error="error" @complete="markDone" />
-          <ForecastCard
-            v-if="forecastSelected && roleForecast"
-            :name="forecastSelected.name"
-            :row="forecastSelected.row"
-            :occupation="roleForecast.occupation"
-            :country="roleForecast.country"
-          />
-        </div>
+          <div ref="sideCard" class="learn__sidecards">
+            <ProgressCard :done="counts.done" :total="counts.total" :role="roadmap.title" />
+            <NextUpCard
+              :skill="nextUp"
+              :selected="!!selected"
+              :closable="!!selected"
+              :busy="!!busyId"
+              :error="error"
+              @complete="markDone"
+              @close="selectedId = null"
+            />
+            <ForecastCard
+              v-if="forecastSelected && roleForecast"
+              :name="forecastSelected.name"
+              :row="forecastSelected.row"
+              :occupation="roleForecast.occupation"
+              :country="roleForecast.country"
+            />
+          </div>
         </template>
 
         <!-- COMPLETED STATE: celebration, skills learned chips, next move -->
         <template v-else>
-          <NextMoveCard
-            :other-roadmap="otherIncompleteRoadmap"
-            :has-challenge="hasActiveChallenge"
-            :challenge-id="activeChallengeId"
-            @switch-roadmap="switchTo"
-        />
+          <div ref="sideCard" class="learn__sidecards">
+            <NextUpCard
+              v-if="selected"
+              :skill="nextUp"
+              :selected="true"
+              closable
+              eyebrow="Skill materials"
+              @close="selectedId = null"
+            />
+            <ForecastCard
+              v-if="selected && forecastSelected && roleForecast"
+              :name="forecastSelected.name"
+              :row="forecastSelected.row"
+              :occupation="roleForecast.occupation"
+              :country="roleForecast.country"
+            />
+            <NextMoveCard
+              :other-roadmap="otherIncompleteRoadmap"
+              :has-challenge="hasActiveChallenge"
+              :challenge-id="activeChallengeId"
+              @switch-roadmap="switchTo"
+            />
+          </div>
         </template>
       </aside>
     </div>
