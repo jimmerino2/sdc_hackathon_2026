@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     resume_prefilter: bool = True  # both engines: consider only tools named in the resume (plus the general skills); false = all ~260
     openjev_threshold: float = 0.5  # a skill counts as present at or above this probability
     resume_model: str = ""  # model for resume skill extraction; empty = use openrouter_model
+    resume_thinking: bool = True  # false turns the model's hidden reasoning off: ~5 s instead of ~30 s, same skills on the resumes tried
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:5173"]
 
 
