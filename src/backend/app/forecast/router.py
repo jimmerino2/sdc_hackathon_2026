@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
 
 from app.forecast import service
-from app.forecast.schemas import ForecastRow, JobForecast
+from app.forecast.schemas import DataSource, ForecastRow, JobForecast
 
 router = APIRouter(prefix="/forecast", tags=["forecast"])
 
@@ -31,3 +31,9 @@ def list_jobs(
 def list_sectors():
     """Sector names that appear in GET /forecast."""
     return service.sectors()
+
+
+@router.get("/sources", response_model=list[DataSource])
+def list_sources():
+    """The datasets behind the role trends: name, publisher, link, and the date each was last published."""
+    return service.sources()

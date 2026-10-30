@@ -24,6 +24,12 @@ export interface JobHorizon {
   reliability: { status: 'indicative' | 'validated'; note: string };
 }
 
+export interface HistoryPoint {
+  month: string;
+  /** Postings that month vs the latest month, in percent. 0 at the latest month. */
+  change_pct: number;
+}
+
 export interface JobForecast {
   onet_code: string;
   title: string;
@@ -34,6 +40,8 @@ export interface JobForecast {
   forecast_from: string;
   ai_exposure: number | null;
   data_as_of: string | null;
+  /** Past months, oldest first, ending at forecast_from. */
+  history: HistoryPoint[];
   outlook: JobHorizon[];
 }
 
@@ -41,4 +49,34 @@ export async function fetchJobForecasts(onetCode: string): Promise<JobForecast[]
   const res = await fetch(`${API_URL}/forecast/jobs?onet_code=${encodeURIComponent(onetCode)}`);
   if (!res.ok) throw new Error(`Forecast request failed (${res.status})`);
   return res.json();
+}
+
+export interface DataSource {
+  id: string;
+  name: string;
+  publisher: string;
+  url: string;
+  license: string;
+  used_for: string;
+  /** Date the data was last published, YYYY-MM-DD. */
+  as_of: string | null;
+  /** Latest month the forecast uses, YYYY-MM. */
+  latest_month: string | null;
+  is_proxy_for_malaysia: boolean;
+}
+
+let sourcesCache: Promise<DataSource[]> | undefined;
+
+/** The datasets behind the role trends. Fetched once per page load; a failure is not cached so the next caller retries. */
+export function fetchForecastSources(): Promise<DataSource[]> {
+  sourcesCache ??= fetch(`${API_URL}/forecast/sources`)
+    .then((res) => {
+      if (!res.ok) throw new Error(`Sources request failed (${res.status})`);
+      return res.json() as Promise<DataSource[]>;
+    })
+    .catch((e) => {
+      sourcesCache = undefined;
+      throw e;
+    });
+  return sourcesCache;
 }

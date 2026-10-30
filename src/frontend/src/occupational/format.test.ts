@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addMonths, growth, linear, month, monthsBetween, pct, pp, scenarioShare, ticks, trendOf } from './format';
+import { addMonths, day, growth, linear, month, monthsBetween, pct, pp, scenarioShare, ticks, trendOf } from './format';
 
 describe('occupational format helpers', () => {
   it('formats log growth as a percentage change and keeps scenarios bounded', () => {
@@ -23,6 +23,11 @@ describe('occupational format helpers', () => {
   it('formats months', () => {
     expect(month('2026-09')).toBe('Sep 2026');
     expect(month(null)).toBe('–');
+  });
+
+  it('formats dates', () => {
+    expect(day('2026-10-09')).toBe('9 Oct 2026');
+    expect(day(null)).toBe('–');
   });
 
   it('calls a trend only when the band excludes zero', () => {

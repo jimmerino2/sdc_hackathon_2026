@@ -3,11 +3,13 @@ import { computed, onMounted, ref, watch } from 'vue';
 import Bubble from './Bubble.vue';
 import ChartWatcher from './ChartWatcher.vue';
 import Icon from './Icon.vue';
+import SourceStamp from './SourceStamp.vue';
 import { scenarios, type ScenarioKey } from '../data/flows';
 import { skillLabel } from '../data/skills';
 import { useFlow } from '../state';
 import { useScenarioProbabilities } from '../composables/useScenarioProbabilities';
 import { personaCopy } from '../data/personaCopy';
+import { month } from '../occupational/format';
 import { backendScenario, fetchJobForecasts, type JobForecast } from '../api/forecast';
 import { fetchInterestReasons, type InterestReason, type JobMatch } from '../api/jobs';
 import { readProfileId } from '../api/profile';
@@ -81,21 +83,30 @@ function series(k: ScenarioKey): { m: number; v: number }[] {
   return [{ m: 0, v: 0 }, ...f.outlook.map((o) => ({ m: o.horizon_months, v: o.change_pct }))];
 }
 
-// Chart geometry: x = months ahead, y = % change in postings.
+/** The past months (m = -n..0, 0 = today), same for every scenario since they only differ in the future. */
+const history = computed(() => {
+  const h = byScenario.value[active.value]?.history ?? forecasts.value[0]?.history ?? [];
+  return h.map((p, i) => ({ m: i - (h.length - 1), v: p.change_pct, month: p.month }));
+});
+/** Months of history on the chart; fixed so the chart keeps its shape even if a role has less. */
+const PAST = 12;
+
+// Chart geometry: x = months from today (negative = past), y = % change in postings vs today.
 const X0 = 34, X1 = 420, Y0 = 8, Y1 = 172;
 const band = computed(() => byScenario.value[active.value]?.outlook ?? []);
 const yRange = computed(() => {
-  const vals = [0, ...scenarios.flatMap((s) => series(s.key).map((p) => p.v))];
+  const vals = [0, ...history.value.map((p) => p.v), ...scenarios.flatMap((s) => series(s.key).map((p) => p.v))];
   for (const o of band.value) vals.push(o.range.low, o.range.high);
   return { lo: Math.floor(Math.min(...vals) / 10) * 10, hi: Math.ceil(Math.max(...vals) / 10) * 10 };
 });
-const sx = (m: number) => X0 + (m / 12) * (X1 - X0);
+const sx = (m: number) => X0 + ((m + PAST) / (PAST + 12)) * (X1 - X0);
 const sy = (v: number) => Y1 - ((v - yRange.value.lo) / (yRange.value.hi - yRange.value.lo)) * (Y1 - Y0);
 const ticks = computed(() => {
   const out: number[] = [];
   for (let t = yRange.value.lo; t <= yRange.value.hi; t += 10) out.push(t);
   return out;
 });
+const histPts = computed(() => history.value.map((p) => `${sx(p.m)},${sy(p.v)}`).join(' '));
 const pts = (k: ScenarioKey) => series(k).map((p) => `${sx(p.m)},${sy(p.v)}`).join(' ');
 const rangePoly = computed(() => {
   const o = band.value;
@@ -109,9 +120,19 @@ const endLabel = computed(() => {
   const last = s[s.length - 1];
   return last ? `${last.v > 0 ? '+' : ''}${last.v}%` : '';
 });
+/** Month labels under the chart: one year back, six months back, today, and the forecast's halfway and end points. */
 const axis = computed(() => {
   const f = forecasts.value[0];
-  return f ? [`${f.forecast_from} · today`, ...f.outlook.map((o) => o.forecast_for)] : [];
+  if (!f) return [];
+  const at = (h: number) => f.outlook.find((o) => o.horizon_months === h)?.forecast_for;
+  const past = (m: number) => history.value.find((p) => p.m === m)?.month;
+  return [
+    { m: -PAST, label: past(-PAST) },
+    { m: -6, label: past(-6) },
+    { m: 0, label: f.forecast_from },
+    { m: 6, label: at(6) },
+    { m: 12, label: at(12) },
+  ].filter((a) => a.label).map((a) => ({ x: sx(a.m), label: month(a.label), today: a.m === 0 }));
 });
 const meta = computed(() => forecasts.value[0]);
 /** This role's 12-month postings change under one scenario, e.g. "−3.2% by Sep 2027". */
@@ -148,16 +169,18 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
               <g stroke="#eceae5"><line v-for="t in ticks" :key="t" :x1="X0" :x2="X1" :y1="sy(t)" :y2="sy(t)" :stroke="t === 0 ? '#c2bfba' : '#eceae5'" /></g>
               <text v-for="t in ticks" :key="'l' + t" :x="X0 - 6" :y="sy(t) + 3" font-size="9" font-weight="800" text-anchor="end" fill="#8a8782">{{ t > 0 ? '+' : '' }}{{ t }}%</text>
               <polygon :points="rangePoly" fill="#fff3cc" opacity=".7" />
+              <polyline v-if="histPts" :points="histPts" fill="none" stroke="#1e1e1e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+              <line :x1="sx(0)" :x2="sx(0)" :y1="Y0" :y2="Y1" stroke="#1e1e1e" stroke-width="2" stroke-dasharray="1 5" stroke-linecap="round" />
+              <text :x="sx(0) - 5" :y="Y0 + 8" font-size="9" font-weight="900" text-anchor="end" fill="#8a8782">PAST</text>
+              <text :x="sx(0) + 5" :y="Y0 + 8" font-size="9" font-weight="900" text-anchor="start" fill="#8a8782">FORECAST</text>
               <polyline v-for="s in scenarios.filter((x) => x.key !== active)" :key="s.key" :points="pts(s.key)" fill="none" stroke="#c2bfba" stroke-width="3" stroke-dasharray="2 5" stroke-linecap="round" />
               <polyline :points="pts(active)" fill="none" stroke="#ff9800" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
               <circle v-for="p in series(active)" :key="p.m" :cx="sx(p.m)" :cy="sy(p.v)" r="4" fill="#1e1e1e" />
               <text :x="X1" :y="sy(series(active).at(-1)?.v ?? 0) - 10" font-size="11" font-weight="900" text-anchor="end" fill="#1e1e1e">{{ endLabel }}</text>
             </svg>
-            <div class="axis"><span v-for="a in axis" :key="a">{{ a }}</span></div>
-            <p class="note">
-              Change in {{ title }} job postings vs today: the sector’s recent pace, shifted by how AI-exposed this role is under each scenario. Shaded band is the likely range for the selected future.
-              {{ meta?.is_proxy_for_malaysia ? 'Uses US postings data as a stand-in for Malaysia. ' : '' }}Indicative, not a prediction.
-            </p>
+            <svg class="axis" viewBox="0 0 440 16" aria-hidden="true">
+              <text v-for="a in axis" :key="a.x" :x="a.x" y="11" font-size="9" font-weight="900" text-anchor="middle" :fill="a.today ? '#1e1e1e' : '#8a8782'">{{ a.today ? `TODAY · ${a.label}` : a.label }}</text>
+            </svg>
           </template>
         </div>
       </section>
@@ -190,6 +213,8 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
         </button>
         <p v-if="!compact" class="hint">Tap a future to see how {{ title }} fares in it.</p>
       </section>
+
+      <SourceStamp cards :ids="['indeed_postings', 'indeed_ai_tracker']" />
 
       <section v-if="job?.sdg_reasons?.length" class="sdg-row">
         <p class="eyebrow">Why it was suggested</p>
@@ -269,7 +294,7 @@ h1 { font-size: 30px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .chart h2 { font-weight: 900; font-size: 20px; margin: 6px 0 14px; }
 .chart > svg { width: 100%; overflow: visible; margin-top: 16px; }
 .state { margin: 18px 0 6px; font-size: 13px; font-weight: 700; color: var(--muted); }
-.axis { display: flex; justify-content: space-between; font-size: 10px; font-weight: 900; color: var(--muted); letter-spacing: .05em; text-transform: uppercase; margin-top: 8px; }
+.chart > svg.axis { margin-top: 4px; }
 .note { margin-top: 14px; font-size: 11px; color: var(--muted); font-weight: 600; line-height: 1.4; }
 .right { display: flex; flex-direction: column; gap: 14px; }
 .bub { margin-bottom: 8px; flex-direction: row-reverse; }
@@ -285,7 +310,7 @@ h1 { font-size: 30px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .sc .tick { align-self: center; }
 .sc p { font-size: 13px; line-height: 1.35; }
 .hint { font-size: 12px; font-weight: 700; color: var(--muted); }
-.sdg-row { grid-column: 1 / -1; margin-top: 12px; }
+.sdg-row, .src-section { grid-column: 1 / -1; margin-top: 12px; }
 .sdg-group { margin-top: 6px; }
 .sdg-group + .sdg-group { margin-top: 26px; }
 .sdg-title { font-size: 20px; font-weight: 900; margin: 4px 0 14px; line-height: 1.2; }

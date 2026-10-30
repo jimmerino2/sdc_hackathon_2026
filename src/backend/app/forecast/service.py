@@ -5,9 +5,12 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from app.forecast.schemas import ForecastRow, HorizonOutlook, JobForecast, JobHorizon, Projection, Range, Reliability
+from app.forecast.schemas import DataSource, ForecastRow, HistoryPoint, HorizonOutlook, JobForecast, JobHorizon, Projection, Range, Reliability
 
 OUTPUT_DIR = Path(__file__).resolve().parents[2] / "ml" / "output"
+PROCESSED_DIR = Path(__file__).resolve().parents[4] / "data" / "processed"
+HISTORY_MONTHS = 12  # how far back the role chart looks
+MANIFEST = Path(__file__).resolve().parents[4] / "data" / "processed" / "manifest.json"
 FLAT_BAND_PCT = 2.0  # changes within +-2% count as "stable"
 
 NOTES = {
@@ -36,8 +39,76 @@ def _jobs() -> pd.DataFrame:
     return pd.read_csv(OUTPUT_DIR / "job_forecast.csv")
 
 
+@lru_cache
+def _sector_index() -> pd.DataFrame:
+    """Monthly postings index per sector (rows = month, columns = sector), from the model table."""
+    t = pd.read_csv(PROCESSED_DIR / "model_table_US.csv", usecols=["sector", "month", "index"])
+    return t.pivot(index="month", columns="sector", values="index").sort_index()
+
+
+@lru_cache
+def _crosswalk() -> pd.DataFrame:
+    return pd.read_csv(PROCESSED_DIR / "crosswalk.csv", usecols=["onet_code", "indeed_sector", "weight"])
+
+
+def _history(onet_code: str, forecast_from: str) -> list[HistoryPoint]:
+    """The job's past months as a percent change vs `forecast_from`, blended over its sectors like the forecast is."""
+    cw = _crosswalk()
+    cw = cw[cw["onet_code"] == onet_code]
+    idx = _sector_index()
+    idx = idx[idx.index <= forecast_from]
+    if cw.empty or idx.empty or forecast_from not in idx.index:
+        return []
+    change = pd.Series(0.0, index=idx.index)
+    for _, r in cw.iterrows():
+        col = idx[r["indeed_sector"]]
+        change += r["weight"] * (col / col.loc[forecast_from] - 1)
+    change = (change * 100).round(1).dropna().tail(HISTORY_MONTHS + 1)
+    return [HistoryPoint(month=m, change_pct=float(v)) for m, v in change.items()]
+
+
 JOB_NOTE = ("A job has no postings history of its own: its number is its sector's trend (blended if it spans "
             "two sectors). Jobs in the same sector differ only under the Slow and Rapid AI scenarios.")
+
+
+def _manifest() -> dict:
+    """data/processed/manifest.json (written by pipeline/refresh.py). Read on each call so a refresh shows without a restart."""
+    try:
+        return json.loads(MANIFEST.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def sources() -> list[DataSource]:
+    """The datasets behind the trends, with the date each was last published.
+
+    Names and links are fixed (see data/documentation/SOURCES.md); dates and months come from the data files.
+    """
+    t = _table().iloc[0]
+    asof = _manifest().get("signals_as_of", {})
+    return [
+        DataSource(
+            id="indeed_postings",
+            name="Indeed Job Postings Index",
+            publisher="Indeed Hiring Lab",
+            url="https://github.com/hiring-lab/job_postings_tracker",
+            license="CC-BY-4.0",
+            used_for="Rising and declining roles",
+            as_of=asof.get("job_postings_index") or str(t["as_of_date"]),
+            latest_month=str(t["origin_month"]),
+            is_proxy_for_malaysia=bool(t["is_proxy_geo"]),
+        ),
+        DataSource(
+            id="indeed_ai_tracker",
+            name="Indeed AI Tracker",
+            publisher="Indeed Hiring Lab",
+            url="https://github.com/hiring-lab/ai-tracker",
+            license="CC-BY-4.0",
+            used_for="Slow, Baseline and Rapid AI scenarios",
+            as_of=asof.get("ai_postings_share"),
+            is_proxy_for_malaysia=bool(t["is_proxy_geo"]),
+        ),
+    ]
 
 
 def sectors() -> list[str]:
@@ -156,6 +227,7 @@ def list_jobs(
             ai_exposure_low_sample=bool(first["ai_exposure_low_sample"]),
             note=JOB_NOTE,
             data_as_of=first["as_of_date"],
+            history=_history(code, first["forecast_from"]),
             outlook=outlook,
         ))
     return out

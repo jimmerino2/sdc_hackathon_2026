@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import Icon from './Icon.vue';
+import SourceStamp from './SourceStamp.vue';
 import { backendScenario } from '../api/forecast';
 import { matchPercent, type JobMatch } from '../api/jobs';
 import type { RoadmapSummary } from '../api/roadmap';
@@ -98,6 +99,7 @@ const demandTooltip = 'Forecasted hiring demand: (+) means job openings are grow
       </button>
     </div>
     <p class="note">Percentages are the forecast change in job postings {{ by }}. Indicative, not a prediction.</p>
+    <SourceStamp />
   </div>
 </template>
 

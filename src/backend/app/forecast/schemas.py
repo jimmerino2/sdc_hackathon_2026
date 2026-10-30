@@ -69,6 +69,13 @@ class JobHorizon(BaseModel):
     reliability: Reliability
 
 
+class HistoryPoint(BaseModel):
+    """What actually happened to a job's postings in one past month, as a percent change relative to the latest month."""
+
+    month: str = Field(description="YYYY-MM")
+    change_pct: float = Field(description="Postings then vs the latest month, in percent (0 at the latest month, so a past dip is negative)")
+
+
 class JobForecast(BaseModel):
     """A job's outlook, inherited from its sector(s), under one AI scenario."""
 
@@ -85,4 +92,19 @@ class JobForecast(BaseModel):
     ai_exposure_low_sample: bool = Field(description="True if the exposure figure rests on little data")
     note: str = Field(description="How to read this number")
     data_as_of: str | None = None
+    history: list[HistoryPoint] = Field(description="The job's sector postings over the past year, oldest first, ending at forecast_from")
     outlook: list[JobHorizon] = Field(description="One entry per horizon, shortest first")
+
+
+class DataSource(BaseModel):
+    """Where a trend number comes from, and how fresh it is."""
+
+    id: str
+    name: str = Field(description="Dataset name, e.g. 'Indeed Job Postings Index'")
+    publisher: str
+    url: str
+    license: str
+    used_for: str = Field(description="What on screen this source drives")
+    as_of: str | None = Field(None, description="Date the data was last published, YYYY-MM-DD (from the data, not hard-coded)")
+    latest_month: str | None = Field(None, description="Latest month of data the forecast uses, YYYY-MM")
+    is_proxy_for_malaysia: bool = Field(False, description="True when the data is for another country standing in for Malaysia")

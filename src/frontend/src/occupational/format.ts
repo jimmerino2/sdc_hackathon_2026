@@ -13,6 +13,12 @@ export function month(m: string | null | undefined): string {
   return d.toLocaleDateString('en', { month: 'short', year: 'numeric', timeZone: 'UTC' });
 }
 
+/** '2026-10-09' -> '9 Oct 2026'. */
+export function day(d: string | null | undefined): string {
+  if (!d || !/^\d{4}-\d{2}-\d{2}/.test(d)) return d ?? '–';
+  return new Date(`${d.slice(0, 10)}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+}
+
 export const METHOD_NAMES: Record<string, string> = {
   persistence: '“No change” (last 3 months)',
   mean12: 'Last 12 months’ average',

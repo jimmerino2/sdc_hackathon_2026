@@ -11,7 +11,7 @@ import {
   type AdoptionResponse, type AsOfRow, type EmergingResponse, type OccEvaluation, type OccMeta, type SignalRow,
   type SignalsResponse, type SkillDetail, type SkillRow, type SkillsResponse,
 } from '../api/occupational';
-import { METHOD_NAMES, STATUS_TEXT, TAXONOMY_TEXT, growth, methodName, month, pct, pp, scenarioShare, trendOf } from '../occupational/format';
+import { METHOD_NAMES, STATUS_TEXT, TAXONOMY_TEXT, day, growth, methodName, month, pct, pp, scenarioShare, trendOf } from '../occupational/format';
 
 /** Occupational forecasting: skill demand, emerging skills and AI adoption per country x occupation.
  *  Separate from the AI outlook tab: its own pipeline (src/backend/occupational), data and models. */
@@ -234,6 +234,8 @@ const evidenceLabel = (e: string) => ({ high: 'Strong evidence', medium: 'Some e
 const confLabel = (c: string) => ({ high: 'High', medium: 'Medium', low: 'Low' }[c] ?? c);
 const dirIcon = (d: string) => (d === 'rising' ? 'tup' : d === 'falling' ? 'tdown' : 'tflat');
 const dirClass = (d: string) => (d === 'rising' ? 'trend-up' : d === 'falling' ? 'trend-down' : 'trend-flat');
+/** Visible on every tab: where the skill trends come from and how fresh they are. */
+const adzunaUsed = computed(() => meta.value?.source_health?.adzuna?.status === 'ok');
 const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
 </script>
 
@@ -293,6 +295,10 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
             <Icon :name="t.icon" :size="16" /> {{ t.label }}
           </button>
         </nav>
+        <p class="src-stamp">
+          Source: <a href="https://news.ycombinator.com/submitted?id=whoishiring" target="_blank" rel="noopener">Hacker News “Who is hiring?” job ads</a><template v-if="adzunaUsed"> (cross-check: Adzuna job ads)</template>
+          · data as of <b>{{ month(meta.last_complete_month) }}</b> · forecast made <b>{{ day(meta.made_at) }}</b>
+        </p>
 
         <!-- ================= SKILL DEMAND ================= -->
         <section v-if="tab === 'demand'" class="stack-col">
@@ -814,6 +820,9 @@ h3 { font-size: 13.5px; margin: 12px 0 6px; }
 select, input[type='search'] { font: inherit; font-size: 13.5px; font-weight: 700; color: var(--ink); padding: 7px 9px; border: 2px solid var(--line-strong); border-radius: 12px; background: #fff; min-width: 0; }
 .seg { display: flex; gap: 6px; flex-wrap: wrap; margin: 16px 0; }
 .seg button { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13px; font-weight: 800; padding: 8px 14px; border-radius: 999px; border: 2px solid var(--line-strong); background: #fff; cursor: pointer; color: var(--ink); }
+.src-stamp { margin: -6px 0 14px; font-size: 12px; font-weight: 700; color: var(--muted); }
+.src-stamp b { color: var(--ink); font-weight: 900; }
+.src-stamp a { color: inherit; text-decoration: underline; }
 .seg button.on { background: var(--yellow); border-color: var(--orange); }
 .stack-col { display: flex; flex-direction: column; gap: 16px; }
 .summary { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; }
