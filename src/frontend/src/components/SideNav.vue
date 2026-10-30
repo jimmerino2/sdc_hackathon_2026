@@ -15,12 +15,14 @@ function logout() {
 
 /** The app layout after onboarding. It stays mounted while the learner switches tabs; only the content slot changes. */
 const route = useRoute();
-type TabId = 'learn' | 'roles' | 'outlook' | 'occupations' | 'benchmark' | 'profile';
-const tabFor: Record<string, TabId> = { pathway: 'learn', suggested: 'roles', role: 'roles', outlook: 'outlook', occupations: 'occupations', benchmark: 'benchmark', profile: 'profile' };
+type TabId = 'learn' | 'challenges' | 'social' | 'roles' | 'outlook' | 'occupations' | 'benchmark' | 'profile';
+const tabFor: Record<string, TabId> = { pathway: 'learn', challenges: 'challenges', hive: 'challenges', social: 'social', suggested: 'roles', role: 'roles', outlook: 'outlook', occupations: 'occupations', benchmark: 'benchmark', profile: 'profile' };
 const active = computed(() => tabFor[route.name as string]);
 type Item = { id: TabId; label: string; icon: string; to: Step };
 const items: Item[] = [
   { id: 'learn', label: 'Learn', icon: 'route', to: 'pathway' },
+  { id: 'challenges', label: 'Challenges', icon: 'trophy', to: 'challenges' },
+  { id: 'social', label: 'Social', icon: 'users', to: 'social' },
   { id: 'roles', label: 'Roles', icon: 'tup', to: 'suggested' },
   { id: 'profile', label: 'Profile', icon: 'user', to: 'profile' },
 ];

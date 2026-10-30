@@ -1,5 +1,5 @@
 """Scores a submitted repo against a challenge's rubric with an LLM: a score, the reason and what to improve for each
-criterion. There is no pass or fail; the weighted total is worked out here, not taken from the model."""
+criterion. The weighted total is worked out here, not taken from the model; PASS_SCORE or more passes the stage."""
 import json
 
 from app.challenge.model import ask
@@ -9,6 +9,11 @@ from app.roadmap.planner import _extract_json
 
 MAX_OUTPUT_TOKENS = 6000
 MAX_REASON = 700
+PASS_SCORE = 85  # a weighted total this high passes the stage and earns a stinger
+
+STAGE2_NOTE = """
+
+This is STAGE 2: a harder rewrite of a project the learner already passed. Judge it more strictly than a first project: the new stack must be used properly and every added feature must be there and working. A repo that is just the simpler stage 1 project scores 50 or less on the stack and feature criteria."""
 
 SYSTEM_PROMPT = """You review portfolio projects built by people learning to code, against a rubric. You are fair, specific and encouraging, the way a kind mentor reviews a beginner's first projects, and you return JSON only.
 
@@ -69,10 +74,13 @@ def judge(challenge: dict, snap: Snapshot) -> tuple[list[dict], str, float]:
         "tech_stack": challenge["tech_stack"],
         "rubric": rubric,
     }
+    if challenge.get("twist"):
+        brief["what_changed"] = challenge["twist"]
     shown = "\n".join(snap.tree) + (f"\n… and {snap.tree_total - len(snap.tree)} more files" if snap.tree_total > len(snap.tree) else "")
     files = "\n\n".join(f"===== FILE: {path} =====\n{text}" for path, text in snap.files)
     user = f"CHALLENGE:\n{json.dumps(brief)}\n\nREPOSITORY {snap.url}\n\nFILE TREE:\n{shown}\n\nFILES:\n{files}"
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user}]
+    system = SYSTEM_PROMPT + (STAGE2_NOTE if challenge.get("stage") == 2 else "")
+    messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
 
     error = None
     for _ in range(2):  # one retry on an unusable verdict

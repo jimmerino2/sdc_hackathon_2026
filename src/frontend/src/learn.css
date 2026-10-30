@@ -256,7 +256,10 @@
 .jb-node[data-grouped][data-state="done"] .jb-node__disc { color: var(--g); }
 .jb-node__lock { position: absolute; right: -4px; bottom: -2px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--locked-edge); color: var(--surface-raised); box-shadow: 0 0 0 3px var(--bg); pointer-events: none; }
 
-/* Bonus quest: an optional project between sections (ChallengeCard) */
+/* Challenge: the banner on the Learn page (ChallengeBanner) and the brief on the Challenges page (ChallengeDetail) */
+.jb-quest--link { display: block; color: inherit; text-decoration: none; }
+.jb-quest--link:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.jb-quest--link:hover .jb-quest__chev { transform: translateX(4px); }
 .jb-quest { overflow: hidden; border: 2px solid var(--banner-ink); border-radius: var(--radius-lg); background: var(--surface-raised); box-shadow: 0 6px 0 var(--banner-ink); animation: jb-rise var(--dur-slow) var(--ease-out) both; }
 .jb-quest[data-state="locked"] { border-color: var(--locked-edge); box-shadow: 0 6px 0 var(--locked-edge); }
 .jb-quest__head { display: flex; align-items: center; gap: 16px; width: 100%; padding: 18px 22px; border: 0; background: var(--banner-ink); color: var(--on-banner); text-align: left; cursor: pointer; }

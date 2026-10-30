@@ -47,15 +47,35 @@ export interface CriterionResult {
   improve: string;
 }
 
-/** A Bonus Quest: an optional project built from the skills of a couple of sections (tech roles only). */
+/** How an earlier stage of a challenge ended. */
+export interface StageResult {
+  stage: number;
+  title: string;
+  repo_url: string | null;
+  score: number | null;
+  summary: string | null;
+  judged_at: string | null;
+}
+
+/**
+ * A challenge for a tech role, in two stages, optionally tied to the role's roadmap; a learner may have several per
+ * role. Stage 1 is built from foundational skills; passing it lets Robbee rewrite it into a harder stage 2. The brief
+ * and result fields describe the current stage.
+ */
 export interface RoadmapChallenge {
   challenge_id: string;
+  onet_code: string;
+  role_title: string;
+  /** The roadmap it is tied to, if any. */
+  roadmap_id: string | null;
+  stage: 1 | 2;
+  /** The roadmap sections the current stage draws on; empty without a roadmap. */
   sections: number[];
-  /** Shown after this section. */
-  after_section: number;
   title: string;
   /** The brief; may hold "- " feature lines. */
   description: string;
+  /** Stage 2: what Robbee changed, one line. */
+  twist: string | null;
   sdg: number;
   sdg_name: string;
   /** The learner's interests it is themed on. */
@@ -63,9 +83,13 @@ export interface RoadmapChallenge {
   /** Skills by area, as O*NET names (pass them through skillLabel). */
   tech_stack: { area: string; skills: string[] }[];
   rubric: RubricCriterion[];
-  /** True until every skill in its sections is done. */
-  locked: boolean;
-  status: 'open' | 'judging' | 'judged';
+  /** passed: the current stage scored pass_score+ (at stage 1, Robbee's rewrite is due); advancing: it is being written. */
+  status: 'open' | 'judging' | 'passed' | 'advancing';
+  pass_score: number;
+  /** Earlier stages, oldest first. */
+  history: StageResult[];
+  completed_at: string | null;
+  created_at: string;
   repo_url: string | null;
   result: CriterionResult[] | null;
   /** Weighted total of the latest judgement, 0-100. */
@@ -85,7 +109,7 @@ export interface Roadmap {
   status: 'locked' | 'available' | 'in_progress' | 'completed' | null;
   current: { section: number; unit: number } | null;
   sections: { section: number; /** What this section covers, e.g. "Web Fundamentals"; null on a roadmap built before this was tracked. */ title: string | null; units: { unit: number; nodes: RoadmapNode[] }[] }[];
-  /** Bonus Quests; empty (or missing, on an older backend) for non-tech roles. */
+  /** The challenges tied to this roadmap, oldest first; empty (or missing, on an older backend) for non-tech roles. */
   challenges?: RoadmapChallenge[];
 }
 
@@ -133,17 +157,88 @@ export async function completeNode(profileId: string, roadmapDetailId: string): 
   return res.json();
 }
 
-/** Have a public GitHub repo judged against a Bonus Quest; takes up to a minute. Returns the challenge with its score. */
-export async function submitChallenge(profileId: string, challengeId: string, repoUrl: string): Promise<RoadmapChallenge> {
+/** Every challenge across the profile's roadmaps, newest first, and the stingers earned. */
+export interface ChallengeList {
+  challenges: RoadmapChallenge[];
+  /** Stingers earned. */
+  stingers: number;
+  /** Earned stingers not yet spent on Robbee. */
+  stingers_available: number;
+}
+
+export async function fetchChallenges(profileId: string): Promise<ChallengeList> {
+  const res = await call(`/challenges?profile_id=${encodeURIComponent(profileId)}`);
+  if (!res.ok) throw new RoadmapError('Jobee couldn’t load your challenges. Try again in a moment.');
+  return res.json();
+}
+
+/** A tech role a challenge can be started for. */
+export interface ChallengeRole {
+  onet_code: string;
+  title: string;
+  icon: string | null;
+  /** One of the roles last suggested to the learner. */
+  suggested: boolean;
+  /** How many challenges the learner already has for it. */
+  challenges: number;
+}
+
+/** The tech roles to start a challenge for, the learner's suggested roles first. */
+export async function fetchChallengeRoles(profileId: string): Promise<ChallengeRole[]> {
+  const res = await call(`/challenges/roles?profile_id=${encodeURIComponent(profileId)}`);
+  if (!res.ok) throw new RoadmapError('Jobee couldn’t load the roles. Try again in a moment.');
+  return res.json();
+}
+
+/** Start a new challenge for a tech role; the AI model writes it, which takes 20-40 seconds. */
+export async function createChallenge(profileId: string, onetCode: string): Promise<RoadmapChallenge> {
+  const res = await call('/challenges', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ profile_id: profileId, onet_code: onetCode }),
+  });
+  if (res.ok) return res.json();
+  throw await failure(res, 'Jobee couldn’t write a challenge just now. Try again in a moment.');
+}
+
+/** A judged submission: the challenge with its score, and whether it passed the stage. */
+export interface SubmitResult {
+  challenge: RoadmapChallenge;
+  passed: boolean;
+  stinger_awarded: boolean;
+  /** The learner's stinger total after this submission. */
+  stingers: number;
+  /** Earned stingers not yet spent on Robbee. */
+  stingers_available: number;
+}
+
+/** The backend's message for a failed challenge request, if it is one written for the learner. */
+async function failure(res: Response, fallback: string): Promise<RoadmapError> {
+  // Its messages for a bad link, a locked or busy challenge, or GitHub limits are written for the learner.
+  const detail = await res.json().then((b) => (typeof b?.detail === 'string' ? b.detail : null)).catch(() => null);
+  return new RoadmapError(res.status < 500 || res.status === 503 ? detail ?? 'That didn’t work. Check the link and try again.' : fallback);
+}
+
+/** Have a public GitHub repo judged against the challenge's current stage; takes up to a minute. */
+export async function submitChallenge(profileId: string, challengeId: string, repoUrl: string): Promise<SubmitResult> {
   const res = await call(`/challenge/${encodeURIComponent(challengeId)}/submit`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ profile_id: profileId, repo_url: repoUrl }),
   });
   if (res.ok) return res.json();
-  // The backend's messages for a bad link, a locked or busy challenge, or GitHub limits are written for the learner.
-  const detail = await res.json().then((b) => (typeof b?.detail === 'string' ? b.detail : null)).catch(() => null);
-  throw new RoadmapError(res.status < 500 || res.status === 503 ? detail ?? 'That didn’t work. Check the link and try again.' : 'Jobee couldn’t judge that just now. Try again in a moment.');
+  throw await failure(res, 'Jobee couldn’t judge that just now. Try again in a moment.');
+}
+
+/** Robbee rewrites a passed stage 1 into the harder stage 2; takes 20-40 seconds. */
+export async function advanceChallenge(profileId: string, challengeId: string): Promise<RoadmapChallenge> {
+  const res = await call(`/challenge/${encodeURIComponent(challengeId)}/advance`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ profile_id: profileId }),
+  });
+  if (res.ok) return res.json();
+  throw await failure(res, 'Robbee couldn’t rewrite the brief just now. Try again in a moment.');
 }
 
 /** Delete the profile's roadmap for a role, with its progress. Already gone counts as deleted. */
