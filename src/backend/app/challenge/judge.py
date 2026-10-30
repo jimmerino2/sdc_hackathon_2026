@@ -1,15 +1,20 @@
 """Scores a submitted repo against a challenge's rubric with an LLM: a score, the reason and what to improve for each
-criterion. The weighted total is worked out here, not taken from the model; PASS_SCORE or more passes the stage."""
+criterion. The weighted total is worked out here, not taken from the model; pass_score() or more passes the stage."""
 import json
 
 from app.challenge.model import ask
 from app.challenge.repo import Snapshot
+from app.config import get_settings
 from app.interests.sdg import SDG_NAMES
 from app.roadmap.planner import _extract_json
 
 MAX_OUTPUT_TOKENS = 6000
 MAX_REASON = 700
-PASS_SCORE = 85  # a weighted total this high passes the stage and earns a stinger
+
+
+def pass_score() -> int:
+    """The weighted total a stage needs to pass and earn a stinger: CHALLENGE_PASS_SCORE, 85 if unset."""
+    return get_settings().challenge_pass_score
 
 STAGE2_NOTE = """
 

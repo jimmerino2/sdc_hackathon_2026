@@ -39,7 +39,7 @@ def submit_challenge(challenge_id: UUID, body: ChallengeSubmit, db: Client = Dep
 
     The repo's tree and its most telling files (README, manifests, then code that shows the stack) are read and the
     AI model scores each rubric criterion 0-100 with the reason and what to improve; the total is the weighted average.
-    A total of 85+ passes the stage and awards a stinger; after a stage 1 pass, call /advance for Robbee's rewrite.
+    A total of CHALLENGE_PASS_SCORE (85 by default) or more passes the stage and awards a stinger; after a stage 1 pass, call /advance for Robbee's rewrite.
     A completed stage 2 can be resubmitted to improve the score; it stays complete and pays no more stingers.
     Open at any time, whatever the roadmap progress. Takes 15-60 seconds. 404 if the challenge isn't on this profile's
     roadmap, 409 if stage 1 is already passed or it is being judged, 422 for a link that isn't a public GitHub repo with code in it.
