@@ -138,7 +138,7 @@ export async function getRoadmap(profileId: string, onetCode?: string): Promise<
 export type RoadmapEvent =
   | { type: 'building' }
   | { type: 'role'; title: string; onet_code: string }
-  | { type: 'plan'; reused: boolean }
+  | { type: 'plan'; reused: boolean; already_known?: number }
   /** The roadmap as stored, before the challenges (the slow part, for tech roles) are written. */
   | { type: 'roadmap'; roadmap: Roadmap };
 

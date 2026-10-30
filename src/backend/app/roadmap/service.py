@@ -6,6 +6,8 @@ from fastapi import HTTPException
 from supabase import Client
 
 from app.challenge import service as challenges
+from app.jobs import scoring
+from app.jobs.service import _expand
 from app.profile import service as profiles
 from app.roadmap import planner
 from app.roadmap.planner import Plan, PlanNode, PlanSection
@@ -256,43 +258,65 @@ def _existing_plan(db: Client, onet_code: str) -> Plan | None:
         return None
 
 
-def detail_rows(plan: Plan, roadmap_id: str, onet_code: str) -> list[dict]:
-    """roadmap_detail rows for a new roadmap: nothing completed; the first unit's skills with no required
-    prerequisite are open and everything else starts locked."""
+def learner_levels(profile) -> dict[str, float]:
+    """The learner's proficiency per skill name (lower case), steps 0.33 / 0.67 / 1, with close equivalents counted
+    (Git covers GitHub, and so on) the same way the role matching counts them."""
+    graded: dict[str, float] = {}
+    for s in profile.skills:
+        graded[s.name.lower()] = max(graded.get(s.name.lower(), 0.0), scoring.proficiency(s.score))
+    return _expand(graded)
+
+
+def detail_rows(plan: Plan, roadmap_id: str, onet_code: str, done: dict[str, str] | None = None) -> list[dict]:
+    """roadmap_detail rows for a new roadmap, plus the current step and roadmap status.
+
+    `done` maps skill ids already finished (skills the learner has, progress carried over) to when. Those start
+    completed; the rest follow the same rule complete_node uses: open nodes up to the first unit that still has
+    any, whose required prerequisites are done, are available and everything else is locked.
+    """
+    done = done or {}
+    flat = [(si, ui, n) for si, section in enumerate(plan, start=1) for ui, nodes in enumerate(section.units, start=1) for n in nodes]
+    finished = {n.skill_id for _, _, n in flat if n.skill_id in done}
+    current = min(((si, ui) for si, ui, n in flat if n.skill_id not in finished), default=None)
     details = []
-    for si, section in enumerate(plan, start=1):
-        for ui, nodes in enumerate(section.units, start=1):
-            for n in nodes:
-                open_now = si == 1 and ui == 1 and not (n.previous_nodes and n.previous_nodes_required)
-                details.append(
-                    {
-                        "roadmap_id": roadmap_id,
-                        "onet_code": onet_code,
-                        "skill_id": n.skill_id,
-                        "section": si,
-                        "unit": ui,
-                        "status": "available" if open_now else "locked",
-                        "previous_nodes": n.previous_nodes,
-                        "previous_nodes_required": n.previous_nodes_required,
-                    }
-                )
+    for si, ui, n in flat:
+        if n.skill_id in finished:
+            status = "completed"
+        elif (si, ui) <= current and (not n.previous_nodes or not n.previous_nodes_required or set(n.previous_nodes) <= finished):
+            status = "available"
+        else:
+            status = "locked"
+        details.append(
+            {
+                "roadmap_id": roadmap_id,
+                "onet_code": onet_code,
+                "skill_id": n.skill_id,
+                "section": si,
+                "unit": ui,
+                "status": status,
+                "completed_at": done[n.skill_id] if n.skill_id in finished else None,
+                "previous_nodes": n.previous_nodes,
+                "previous_nodes_required": n.previous_nodes_required,
+            }
+        )
     return details
 
 
 def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool, on_event: Callable[[dict], None] | None = None) -> Roadmap:
     """Store a roadmap for this profile and return it.
 
-    The plan (sections, units, prerequisites) is copied from the newest roadmap anyone has for the role, since it
-    doesn't depend on the learner; if there is none, or replace is set, the model plans it. Either way the new
-    roadmap starts with nothing completed. A tech role's roadmap then gets its Bonus Quests, written for this learner
-    (they depend on their interests, so they are never copied).
+    The model plans it for this learner: it sees their skills and stage, so it spends the plan on their gaps. Skills
+    they already know well start completed (decided here from their profile, not left to the model), and a rebuild
+    keeps the progress they had made. If the model can't be reached, the newest roadmap anyone has for the role is
+    copied instead, so the page still works. A tech role's roadmap then gets its Bonus Quests, written for this learner.
 
     on_event hears the progress for a page to show: `role` (title, onet_code), `plan` (reused: the plan was copied, not
-    asked of the model) and `roadmap` (the stored roadmap, before the Bonus Quests are written).
+    planned for this learner; already_known: how many skills start completed) and `roadmap` (the stored roadmap, before the
+    Bonus Quests are written).
     """
     emit = on_event or (lambda _event: None)
     try:
-        profiles.get_profile(db, profile_id)
+        profile = profiles.get_profile(db, profile_id)
     except profiles.ProfileError as e:
         raise HTTPException(e.status_code, e.message) from e
     role = _role(db, onet_code)
@@ -305,22 +329,41 @@ def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool, o
     if mine(db.table("roadmap").select("roadmap_id")).limit(1).execute().data and not replace:
         raise HTTPException(status_code=409, detail="this profile already has a roadmap for that role; send replace=true to rebuild it")
 
-    # A role's plan doesn't depend on the learner, so reuse one that exists unless a rebuild was asked for.
-    plan = None if replace else _existing_plan(db, onet_code)
-    reused = plan is not None
-    if plan is None:
-        skills = db.table("onet_role_skills").select("skill_id,skill_name,skill_type,importance,level,forecast_demand").eq("onet_code", onet_code).execute().data
-        relevant = planner.candidates(skills)
-        if not relevant:
-            raise HTTPException(status_code=422, detail=f"no skills above importance {planner.MIN_IMPORTANCE} for {onet_code}")
-        plan = planner.build_plan(role["title"], role["description"], relevant)
-    emit({"type": "plan", "reused": reused})
+    skills = db.table("onet_role_skills").select("skill_id,skill_name,skill_type,importance,level,forecast_demand").eq("onet_code", onet_code).execute().data
+    relevant = planner.candidates(skills)
+    if not relevant:
+        raise HTTPException(status_code=422, detail=f"no skills above importance {planner.MIN_IMPORTANCE} for {onet_code}")
+    levels = learner_levels(profile)
+    have = {s["skill_id"]: levels[s["skill_name"].lower()] for s in relevant if levels.get(s["skill_name"].lower())}
+    learner = {"stage": profile.stage, "have": have}
+    try:
+        plan, reused = planner.build_plan(role["title"], role["description"], relevant, learner), False
+    except HTTPException as e:
+        # The model is down or gave nothing usable: fall back to a copy of someone's plan rather than no roadmap.
+        plan = _existing_plan(db, onet_code)
+        if plan is None:
+            raise e
+        reused = True
+
+    # Already done: what the learner knows well, plus what they had completed if this is a rebuild.
+    now = datetime.now(timezone.utc).isoformat()
+    done = {sid: now for sid, level in have.items() if level >= planner.OWNED_LEVEL}
+    if replace:
+        old_road = mine(db.table("roadmap").select("roadmap_id")).limit(1).execute().data
+        old = (db.table("roadmap_detail").select("skill_id,completed_at,status").eq("roadmap_id", old_road[0]["roadmap_id"]).execute().data
+               if old_road else [])
+        done.update({r["skill_id"]: r["completed_at"] for r in old if r["status"] == "completed" and r["completed_at"]})
+    in_plan = {n.skill_id for sec in plan for unit in sec.units for n in unit}
+    known = sum(1 for sid in done if sid in in_plan)
+    emit({"type": "plan", "reused": reused, "already_known": known})
 
     # One roadmap row per role; its section/unit are the current step, starting at the first unit.
     roadmap_id = str(uuid.uuid4())
-    roadmap = {"roadmap_id": roadmap_id, "profile_id": profile_id, "onet_code": onet_code, "section": 1, "unit": 1,
-               "status": "available", "section_titles": [s.title for s in plan]}
-    details = detail_rows(plan, roadmap_id, onet_code)
+    details = detail_rows(plan, roadmap_id, onet_code, done)
+    open_units = [(d["section"], d["unit"]) for d in details if d["status"] != "completed"]
+    section, unit = min(open_units) if open_units else (len(plan), len(plan[-1].units))
+    roadmap = {"roadmap_id": roadmap_id, "profile_id": profile_id, "onet_code": onet_code, "section": section, "unit": unit,
+               "status": "available" if open_units else "completed", "section_titles": [s.title for s in plan]}
 
     # No transaction support in the client: if a write fails, remove the partial roadmap.
     mine(db.table("roadmap").delete()).execute()  # details go with it (on delete cascade)

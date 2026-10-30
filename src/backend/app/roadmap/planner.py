@@ -27,6 +27,17 @@ Reply with JSON only, no prose and no code fences, in exactly this shape:
 Use only ids from the candidate list. Each skill may appear at most once. Hard limit: {MAX_SKILLS} skills in total."""
 
 
+LEARNER_PROMPT = """
+
+The learner this roadmap is for is described in the user message. Personalise the plan to them:
+- `have` on a candidate is how well they already know it (0.33 basic, 0.67 good, 1 strong); no `have` means they don't know it yet.
+- Skills with `have` of 0.67 or more are already theirs and will be shown as done. Keep one only when it is a foundation the unfinished skills build on (so it can be a prerequisite); otherwise leave it out and use the room for skills they lack.
+- Spend the plan on their gaps: prefer skills they lack or know only at a basic level, and place their gaps in the earliest sections so they start learning something new straight away.
+- Pitch it at their stage: for a beginner (under = undergraduate, fresh = fresh graduate, working = working beginner) start from the fundamentals of whatever they lack."""
+
+OWNED_LEVEL = 0.67  # a skill known at this level (Good) or above counts as already done
+
+
 @dataclass
 class PlanNode:
     skill_id: str
@@ -111,28 +122,32 @@ def _complete(messages: list[dict]) -> str:
     client = OpenAI(base_url=settings.openrouter_base_url, api_key=settings.openrouter_api_key)
     extra = _thinking_options(settings.roadmap_reasoning, settings.openrouter_base_url)
     res = client.chat.completions.create(
-        model=settings.openrouter_model, messages=messages, max_tokens=MAX_OUTPUT_TOKENS, extra_body=extra
+        model=settings.openrouter_model, messages=messages, max_tokens=MAX_OUTPUT_TOKENS, extra_body=extra,
+        temperature=0,  # the same learner and role should give the same plan
     )
     return res.choices[0].message.content
 
 
-def build_plan(role_title: str, role_description: str | None, skills: list[dict]) -> Plan:
+def build_plan(role_title: str, role_description: str | None, skills: list[dict], learner: dict | None = None) -> Plan:
+    """Plan the role's roadmap. `learner` ({"stage": ..., "have": {skill_id: proficiency}}) tailors it to one person."""
     if get_settings().ai_model_mode == "OPENROUTER":
-        return _plan_with_openrouter(role_title, role_description, skills)
+        return _plan_with_openrouter(role_title, role_description, skills, learner)
     raise HTTPException(status_code=503, detail=f"unsupported AI_MODEL_MODE {get_settings().ai_model_mode!r}")
 
 
-def _plan_with_openrouter(role_title: str, role_description: str | None, skills: list[dict]) -> Plan:
+def _plan_with_openrouter(role_title: str, role_description: str | None, skills: list[dict], learner: dict | None = None) -> Plan:
     if not get_settings().openrouter_api_key:
         raise HTTPException(status_code=503, detail="OPENROUTER_API_KEY is not set")
+    have = (learner or {}).get("have", {})
     listing = [
         {"id": s["skill_id"], "name": s["skill_name"], "type": s["skill_type"], "importance": s["importance"], "level": s["level"],
-         "forecast_demand": s.get("forecast_demand")}
+         "forecast_demand": s.get("forecast_demand"), **({"have": have[s["skill_id"]]} if have.get(s["skill_id"]) else {})}
         for s in skills
     ]
+    who = f"\nLearner stage: {learner['stage']}" if learner else ""
     messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": f"Role: {role_title}\n{role_description or ''}\n\nCandidate skills:\n{json.dumps(listing)}"},
+        {"role": "system", "content": SYSTEM_PROMPT + (LEARNER_PROMPT if learner else "")},
+        {"role": "user", "content": f"Role: {role_title}\n{role_description or ''}{who}\n\nCandidate skills:\n{json.dumps(listing)}"},
     ]
     valid_ids = {s["skill_id"] for s in skills}
     error = None
