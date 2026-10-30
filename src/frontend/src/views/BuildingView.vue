@@ -10,7 +10,7 @@ import { formatElapsed, progressAt, useAnalysisClock } from '../composables/useA
 import { pathwayFacts, roleStep, type PathwayStep } from '../data/pathwayFacts';
 import type { Roadmap, RoadmapEvent } from '../api/roadmap';
 
-const EXPECTED_MS = 10_000;
+const EXPECTED_MS = 25_000;
 /** When each of the six steps starts, as a fraction of the expected time. */
 const STEP_STARTS = [0, 0.08, 0.26, 0.46, 0.64, 0.82];
 /** The least time a step stays up once it is active, so a late response doesn't flash through the findings. */
@@ -105,7 +105,7 @@ onBeforeUnmount(() => clearTimeout(leave));
       <div class="meta">
         <span>{{ formatElapsed(clock.elapsed.value) }}</span>
         <span v-if="failed" class="bad" role="alert">{{ state.roadmap.error }}</span>
-        <span v-else>{{ finished ? 'Done' : late ? 'Taking a little longer than usual…' : 'Usually about 10 seconds' }}</span>
+        <span v-else>{{ finished ? 'Done' : late ? 'Taking a little longer than usual…' : `Usually about ${EXPECTED_MS / 1000} seconds` }}</span>
       </div>
 
       <ol class="steps" aria-live="polite">
