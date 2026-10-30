@@ -8,7 +8,7 @@ import SideNav from './components/SideNav.vue';
       <!-- Tabs share one sidebar layout, keyed once, so switching tabs only animates the content. -->
       <SideNav v-if="route.meta.tabs" key="tabs">
         <Transition name="tab" mode="out-in">
-          <component :is="Component" :key="route.fullPath" />
+          <component :is="Component" :key="route.name === 'role' ? route.fullPath : route.path" />
         </Transition>
       </SideNav>
       <component :is="Component" v-else :key="route.fullPath" />

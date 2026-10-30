@@ -16,9 +16,9 @@ const route = useRoute();
 /** The roles, or the What-If simulator on them; in the address so it can be linked to and survives a refresh. */
 const simulating = computed(() => route.query.view === 'simulate');
 const { state } = useFlow();
-const status = ref<'loading' | 'done' | 'empty' | 'error'>('loading');
+const suggested = ref<Recommendations | null>(state.value.suggested ?? null);
+const status = ref<'loading' | 'done' | 'empty' | 'error'>(suggested.value ? 'done' : 'loading');
 const error = ref('');
-const suggested = ref<Recommendations | null>(null);
 /** The profile's roadmaps by role, for the status on each card. Stays undefined if they can't be fetched, so cards show no status rather than a wrong "No roadmap yet". */
 const roadmaps = ref<Record<string, RoadmapSummary>>();
 /** Working out a fresh set. The current roles stay on screen until the new ones are ready. */
@@ -40,7 +40,9 @@ async function load() {
     error.value = 'Jobee couldn’t find your profile. Log in again to see your roles.';
     return;
   }
-  status.value = 'loading';
+  if (!suggested.value) {
+    status.value = 'loading';
+  }
   try {
     const [saved, built] = await Promise.all([fetchSuggested(id), listRoadmaps(id).catch(() => null)]);
     suggested.value = saved;
@@ -48,8 +50,10 @@ async function load() {
     if (built) roadmaps.value = built;
     status.value = saved ? 'done' : 'empty';
   } catch (e) {
-    status.value = 'error';
-    error.value = e instanceof JobsError ? e.message : 'Jobee couldn’t load your suggested roles. Try again in a moment.';
+    if (!suggested.value) {
+      status.value = 'error';
+      error.value = e instanceof JobsError ? e.message : 'Jobee couldn’t load your suggested roles. Try again in a moment.';
+    }
   }
 }
 
@@ -85,11 +89,11 @@ onMounted(load);
       <div class="head">
         <div>
           <p class="eyebrow">Your roles</p>
-          <p v-if="updated && status === 'done'" class="when">Last updated {{ updated }}</p>
+          <p v-if="updated" class="when">Last updated {{ updated }}</p>
         </div>
       </div>
 
-      <div v-if="status === 'done'" class="nav-bar">
+      <div class="nav-bar">
         <div class="switch" role="group" aria-label="View">
           <RouterLink :to="{ ...go('suggested'), query: {} }" :class="{ on: !simulating }" :aria-current="!simulating ? 'page' : undefined">Your matches</RouterLink>
           <RouterLink :to="{ ...go('suggested'), query: { view: 'simulate' } }" :class="{ on: simulating }" :aria-current="simulating ? 'page' : undefined"><Icon name="lightbulb" :size="15" /> What-if simulator</RouterLink>
@@ -102,7 +106,6 @@ onMounted(load);
       <p v-else-if="regenError" class="error" role="alert">{{ regenError }}</p>
 
       <div v-if="status === 'loading'" class="skel-wrap" aria-busy="true" aria-label="Loading your roles">
-        <span class="skel tab-skel" />
         <div class="skel-cards"><span v-for="n in 4" :key="n" class="skel card card-skel" /></div>
       </div>
 
@@ -177,7 +180,6 @@ onMounted(load);
 .dim { opacity: .55; pointer-events: none; transition: opacity .2s; }
 .state { max-width: 560px; margin: 40px 0; display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
 .state .btn { display: inline-flex; align-items: center; gap: 8px; }
-.tab-skel { display: block; height: 44px; margin-bottom: 16px; }
 .skel-cards { display: flex; flex-direction: column; gap: 12px; }
 .card-skel { height: 76px; border-radius: 16px; }
 </style>
