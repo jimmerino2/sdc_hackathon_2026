@@ -11,6 +11,7 @@ import ProgressCard from '../components/learn/ProgressCard.vue';
 import ForecastCard from '../components/learn/ForecastCard.vue';
 import BeeGuide from '../components/learn/BeeGuide.vue';
 import ChallengeBanner from '../components/learn/ChallengeBanner.vue';
+import NextMoveCard from '../components/learn/NextMoveCard.vue';
 import { completeNode, deleteRoadmap, fetchRoadmapSummaries, RoadmapError, type RoadmapNode, type RoadmapSource, type RoadmapSummary } from '../api/roadmap';
 import { readProfileId } from '../api/profile';
 import { skillLabel } from '../data/skills';
@@ -21,7 +22,7 @@ import type { SkillRow } from '../api/occupational';
 import { loadRoadmap, openRoadmap, useFlow } from '../state';
 import { go } from '../router';
 
-const { state, profileSkills } = useFlow();
+const { state, profileSkills, key } = useFlow();
 
 const typeLabel = { tech: 'Tool', skill: 'Ability', knowledge: 'Knowledge' } as const;
 const sourceLabel: Record<RoadmapSource['source_type'] | 'link', string> = {
@@ -108,6 +109,47 @@ const message = computed(() => {
 const mood = computed(() => {
   const { done, total } = counts.value;
   return done === 0 ? 'wave' : done < total ? 'happy' : 'celebrate';
+});
+
+/* ---------- completed state helpers: celebration message, skills built chips, and next move ---------- */
+const completedSkills = computed(() => {
+  const seen = new Set<string>();
+  const list: string[] = [];
+  for (const n of nodes.value) {
+    if (n.status === 'completed') {
+      const lbl = skillLabel(n.skill_name);
+      if (!seen.has(lbl)) {
+        seen.add(lbl);
+        list.push(lbl);
+      }
+    }
+  }
+  return list;
+});
+
+const completedMessage = computed(() => {
+  const count = counts.value.total;
+  const copy = personaCopy[key.value];
+  return copy?.completed ? copy.completed(count) : `${count} skills down — every skill on your roadmap is complete!`;
+});
+
+const otherIncompleteRoadmap = computed(() => {
+  const other = summaries.value.find((s) => s.onet_code !== activeCode.value && s.completed < s.total);
+  if (!other) return null;
+  return {
+    onet_code: other.onet_code,
+    title: other.title,
+    completed: other.completed,
+    total: other.total,
+  };
+});
+
+const hasActiveChallenge = computed(() => {
+  return !!challenge.value && !challenge.value.completed_at;
+});
+
+const activeChallengeId = computed(() => {
+  return challenge.value?.challenge_id ?? null;
 });
 
 function select(s: ResolvedSkill) {
@@ -252,8 +294,8 @@ onMounted(async () => {
 
     <div v-else class="jb learn">
       <div class="learn__main">
-        <SkillChips v-if="have.length" :skills="have" :owned="job?.skills_owned" :total="job?.skills_total" :more="job ? haveMore : 0" />
-        <ChallengeBanner v-if="challenge" :challenge="challenge" />
+        <SkillChips v-if="have.length && !isRoleReady" :skills="have" :owned="job?.skills_owned" :total="job?.skills_total" :more="job ? haveMore : 0" />
+        <ChallengeBanner v-if="challenge && !isRoleReady" :challenge="challenge" />
 
         <template v-for="sec in sections" :key="sec.section">
           <SectionBanner
@@ -286,7 +328,10 @@ onMounted(async () => {
       </div>
 
       <aside class="learn__side">
+        <!-- IN-PROGRESS STATE: when roadmap is being worked on -->
+        <template v-if="!isRoleReady">
         <div ref="sideCard" class="learn__sidecards">
+          <ProgressCard :done="counts.done" :total="counts.total" :role="roadmap.title" />
           <NextUpCard :skill="nextUp" :selected="!!selected" :busy="!!busyId" :error="error" @complete="markDone" />
           <ForecastCard
             v-if="forecastSelected && roleForecast"
@@ -296,13 +341,17 @@ onMounted(async () => {
             :country="roleForecast.country"
           />
         </div>
-        <ProgressCard :done="counts.done" :total="counts.total" :role="roadmap.title" />
-        <BeeGuide
-          :message="message"
-          :mood="mood"
-          :to="isRoleReady ? go('suggested') : undefined"
-          :action-text="isRoleReady ? 'Pick your next pathway →' : undefined"
+        </template>
+
+        <!-- COMPLETED STATE: celebration, skills learned chips, next move -->
+        <template v-else>
+          <NextMoveCard
+            :other-roadmap="otherIncompleteRoadmap"
+            :has-challenge="hasActiveChallenge"
+            :challenge-id="activeChallengeId"
+            @switch-roadmap="switchTo"
         />
+        </template>
       </aside>
     </div>
   </div>
