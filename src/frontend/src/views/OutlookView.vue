@@ -4,6 +4,7 @@ import Bubble from '../components/Bubble.vue';
 import CapabilityChart from '../components/CapabilityChart.vue';
 import CapabilityMethod from '../components/CapabilityMethod.vue';
 import CapabilityTrend from '../components/CapabilityTrend.vue';
+import LlmTriedCard from '../components/LlmTriedCard.vue';
 import Icon from '../components/Icon.vue';
 import InfoDialog from '../components/InfoDialog.vue';
 import RegimeExplainer from '../components/RegimeExplainer.vue';
@@ -78,7 +79,7 @@ const picked = reactive<Record<string, string>>(Object.fromEntries(cards.map((c)
 async function load() {
   status.value = 'loading';
   try {
-    const list = await fetchTargets();
+    const list = (await fetchTargets()).filter((t) => cards.some((c) => c.target === t.target));
     summaries.value = Object.fromEntries(list.map((t) => [t.target, t]));
     const got = await Promise.all(list.map((t) => fetchOutlook(t.target)));
     rows.value = Object.fromEntries(list.map((t, i) => [t.target, got[i]]));
@@ -281,7 +282,7 @@ function accLine(a: UnitAccuracy): string {
       </Bubble>
 
       <div v-if="status === 'loading'" class="grid" aria-busy="true" aria-label="Loading the outlook">
-        <span v-for="n in 3" :key="n" class="skel card card-skel" />
+        <span v-for="n in cards.length" :key="n" class="skel card card-skel" />
       </div>
 
       <div v-else-if="status === 'error'" class="state">
@@ -459,6 +460,7 @@ function accLine(a: UnitAccuracy): string {
               <CapabilityTrend v-if="engine && selectedUnit(c)" :detail="engine" :unit="selectedUnit(c)!" />
               <SuccessCurves />
               <CapabilityMethod v-if="engine && selectedUnit(c)" :detail="engine" :unit="selectedUnit(c)!" />
+              <LlmTriedCard benchmark="capability" class="llm-tried" />
             </div>
 
             <details v-if="warnings(rs).length" class="notes">
@@ -545,4 +547,5 @@ tr.shown td { font-weight: 800; background: #fffaf0; }
   .row-main { grid-template-columns: minmax(0, 1fr) auto; }
   .row-main .track { grid-column: 1 / -1; grid-row: 2; }
 }
+.llm-tried { margin-top: 16px; border-width: 1.5px; }
 </style>

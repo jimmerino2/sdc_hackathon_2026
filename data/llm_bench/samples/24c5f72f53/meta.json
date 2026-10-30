@@ -1,0 +1,31 @@
+{
+  "sample_id": "24c5f72f53",
+  "benchmark": "capability",
+  "params": {
+    "horizons": [
+      3,
+      6,
+      12
+    ],
+    "roles": [
+      "holdout"
+    ],
+    "max_origins": 0,
+    "seed": 20261029,
+    "few_shot_k": 4,
+    "case_version": 1
+  },
+  "n_cases": 36,
+  "built_at": "2026-10-29T13:46:11.187224+00:00",
+  "target": "frontier METR 50% time horizon (minutes), per METR suite version, at last complete month + h",
+  "served_run": "20261024T165353Z-56a2b9",
+  "served": {
+    "3": "ensemble",
+    "6": "ensemble",
+    "12": "ensemble"
+  },
+  "roles": [
+    "holdout"
+  ],
+  "units": "minutes; errors on log2 scale (doublings) and in minutes"
+}

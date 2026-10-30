@@ -74,7 +74,7 @@ import pandas as pd
 
 from . import capability, capability_eval as V, capability_record as RC, capability_signals as SG
 from . import capability_trend as TR, evaluation as E, features as F
-from .models import PHIS
+from .models import CANDIDATES as GENERIC, PHIS
 from .targets import capability_metr as CM
 
 LOG2_60 = float(np.log2(60))  # log2 minutes = log2 hours + this
@@ -126,6 +126,8 @@ class Config:
     # an external signal is kept only if its selection-period log loss beats the same model without it in >= 90%
     # of block-bootstrap resamples
     signal_keep_share: float = 0.9
+    # a generic candidate gets a predictive distribution (generic_paths) only from this many earlier errors
+    min_generic_errors: int = 10
 
 
 CFG = Config()
@@ -962,6 +964,76 @@ def scores(comp: pd.DataFrame, ens: pd.DataFrame, gen: pd.DataFrame, rec: pd.Dat
     return out
 
 
+# ---------------------------------------------------------------------------- generic candidates, scored like the engine
+#
+# The generic models (models.py) forecast one number per horizon, so they were compared with the engine on the median
+# only. Here each also gets a predictive distribution, built the way the adoption targets build their ranges: its
+# forecast plus each of its own earlier out-of-sample errors at the same horizon (outcome known by the origin, every
+# unit). Two spreads: "as_missed" adds the errors as they were (a one-sided past shifts the range), "size_only" adds
+# each error both ways (centred on the forecast, as the damped trend's noise is). A frontier never falls, so a draw
+# below the current frontier is set to it. The 80% range and the faster / same / slower chances then follow the
+# engine's definitions, and every method is scored on the cases all of them forecast. Backtest only: nothing here
+# changes the served forecast.
+SPREADS = ("as_missed", "size_only")
+
+
+def generic_paths(gen: pd.DataFrame, comp: pd.DataFrame, cfg: Config = CFG) -> pd.DataFrame:
+    """Per generic candidate, spread and engine case: q10-q90 (q50 = the model's own forecast) and pace chances."""
+    cols = ["origin", "unit", "h", "role", "last_ord", "target_ord", "y_now", "y_actual", "hist_pace",
+            "realised_class", "clim_faster", "clim_same", "clim_slower"]
+    cases = comp.drop_duplicates(["origin", "unit", "h"])[cols]
+    g = gen[(gen["feature_set"] == "all") & gen["candidate"].isin(list(GENERIC))][["origin", "unit", "h", "candidate", "pred"]]
+    g = g.dropna(subset=["pred"]).merge(cases, on=["origin", "unit", "h"])
+    g = g.assign(y_pred=np.log2(g["pred"].astype(float)) - LOG2_60)
+    g["err"] = g["y_actual"] - g["y_pred"]
+    rows = []
+    for (c, h), d in g.groupby(["candidate", "h"]):
+        known = d.dropna(subset=["err"])
+        for r in d.itertuples(index=False):
+            e = known.loc[known["target_ord"] <= r.last_ord, "err"].to_numpy()
+            if len(e) < cfg.min_generic_errors:
+                continue
+            tol = max(cfg.pace_tol_abs, cfg.pace_tol_rel * abs(r.hist_pace))
+            for spread, es in zip(SPREADS, (e, np.concatenate([e, -e]))):
+                y = np.maximum(r.y_pred + es, r.y_now)
+                fut = 12 / h * (y - r.y_now)
+                faster, slower = float((fut > r.hist_pace + tol).mean()), float((fut < r.hist_pace - tol).mean())
+                rows.append({**{k: getattr(r, k) for k in cols}, "candidate": c, "spread": spread, "n_errors": len(e),
+                             **{f"q{int(x * 100)}": v for x, v in zip(QS, np.quantile(y, QS))}, "q50": r.y_pred,
+                             "p_faster": faster, "p_same": 1 - faster - slower, "p_slower": slower})
+    return pd.DataFrame(rows)
+
+
+def compare_scores(gp: pd.DataFrame, comp: pd.DataFrame, ens: pd.DataFrame, sc: dict, cfg: Config = CFG) -> dict:
+    """Engine components, the ensemble and the generic candidates on the cases every one of them forecast: median
+    miss, 80% range (coverage, interval score) and pace chances (Brier; the ensemble's as served)."""
+    allm = pd.concat([comp, ens, gp], ignore_index=True).dropna(subset=["y_actual"])
+    allm["spread"] = allm["spread"].fillna("simulated") if "spread" in allm else "simulated"
+    rows = []
+    for h in cfg.horizons:
+        d = allm[allm["h"] == h]
+        per_case = d.groupby(["origin", "unit"])["candidate"].nunique()
+        shared = per_case[per_case == d["candidate"].nunique()].index
+        d = d[pd.MultiIndex.from_frame(d[["origin", "unit"]]).isin(shared)]
+        sh = sc["shrink"][h]
+        for role in ("selection", "holdout"):
+            for (c, spread), gc in d[d["role"] == role].groupby(["candidate", "spread"]):
+                gc = gc.dropna(axis=1, how="all")
+                pt = point_scores(gc)
+                ps = pace_scores(gc, sh["method"], sh["shrink"]) if c == ENSEMBLE else pace_scores(gc)
+                rows.append({"h": h, "role": role, "candidate": c, "spread": spread, "generic": c in GENERIC,
+                             **{k: pt.get(k) for k in ("n", "n_origins", "mae", "typical_factor", "coverage_80",
+                                                       "width_80", "interval_score_80")},
+                             "brier": ps.get("brier_served" if c == ENSEMBLE else "brier_model"),
+                             "log_loss": ps.get("log_loss_served" if c == ENSEMBLE else "log_loss_model"),
+                             "brier_uniform": ps.get("brier_uniform"), "brier_climatology": ps.get("brier_climatology")})
+    return {"rows": rows,
+            "rule": "generic candidates: forecast plus each of the same model's earlier out-of-sample errors at that "
+                    f"horizon (outcome known by the origin, at least {cfg.min_generic_errors}), as they were "
+                    "(as_missed) or each both ways (size_only), floored at the current frontier; every method scored "
+                    "on the cases all of them forecast; backtest only"}
+
+
 # ------------------------------------------------------------------------------------------------ final forecast
 
 def vintage_events(data: dict) -> list[dict]:
@@ -1161,6 +1233,7 @@ def page_data(spec, s: F.Snapshot, data: dict, detail: dict, sc: dict, comp: pd.
                      "shrink": sc["shrink"], "record_choice": sc["record_choice"],
                      "non_overlapping": clean(sc["non_overlapping"]),
                      "bootstrap": sc["bootstrap"], "record": clean(sc["record"]), "trend": clean(sc["trend"]),
+                     "compare": {**sc["compare"], "rows": clean(sc["compare"]["rows"])} if "compare" in sc else None,
                      "n_origins": int(comp["origin"].nunique()),
                      "origins_by_kind": comp.drop_duplicates("origin")["vintage_kind"].value_counts().to_dict(),
                      "brier_definition": "sum over classes of (probability - outcome)^2, averaged: 0 perfect, 2 worst; "
@@ -1225,6 +1298,7 @@ def run(spec, data: dict, snaps: list[F.Snapshot], y_true: pd.Series, split, gen
     ens = pass_two(comp, store, snaps, members, cfg)
     del store
     sc = scores(comp, ens, gen_bt, rec, trend, cfg)
+    sc["compare"] = compare_scores(generic_paths(gen_bt, comp, cfg), comp, ens, sc, cfg)
     decisions = {"components": inc, "members": members, "external_signals": sig, "hazard": signal or "constant",
                  "external_inventory": sig_info}
     detail = final(snaps[-1], comp, ens, sc, members, signal, cfg, signals, rec)
