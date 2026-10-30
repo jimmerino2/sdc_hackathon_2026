@@ -24,6 +24,7 @@ export const steps = [
   'profile',
   'outlook',
   'occupations',
+  'benchmark',
 ] as const;
 export type Step = (typeof steps)[number];
 
@@ -50,10 +51,11 @@ export const stepLabels: Record<Step, string> = {
   profile: '15 Profile',
   outlook: '16 AI outlook',
   occupations: '17 Occupational forecasting',
+  benchmark: '18 LLM forecast benchmark',
 };
 
 /** Pages that live inside the sidebar layout. */
-const tabSteps: readonly Step[] = ['pathway', 'suggested', 'role', 'outlook', 'occupations', 'profile'];
+const tabSteps: readonly Step[] = ['pathway', 'suggested', 'role', 'outlook', 'occupations', 'benchmark', 'profile'];
 
 const views = import.meta.glob('./views/*.vue');
 const viewFor = (s: Step) => {

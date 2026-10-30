@@ -1,0 +1,16 @@
+{
+  "state": "completed",
+  "done": 28,
+  "total": 28,
+  "spent_usd": 0.019323095999999998,
+  "budget_usd": 2.0,
+  "updated_at": "2026-10-29T14:04:48.902772+00:00",
+  "remaining_usd": 1.980676904,
+  "stop_reason": null,
+  "started_at": "2026-10-29T14:01:46.684009+00:00",
+  "last_request_status": "ok",
+  "concurrency": 8,
+  "requests_not_completed": 0,
+  "cases_not_completed": 0,
+  "finished_at": "2026-10-29T14:04:48.898043+00:00"
+}

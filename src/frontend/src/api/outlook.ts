@@ -284,6 +284,15 @@ export interface BootstrapResult {
 }
 
 /** The capability engine's detail for the served run (GET /outlook/{target}/engine). */
+export interface CompareScore {
+  h: number; role: string; candidate: string; generic: boolean; n: number; n_origins: number;
+  /** simulated (engine) | as_missed (generic: earlier errors as they were) | size_only (generic: each error both ways) */
+  spread: 'simulated' | 'as_missed' | 'size_only';
+  mae: number | null; typical_factor: number | null; coverage_80: number | null; width_80: number | null;
+  interval_score_80: number | null; brier: number | null; log_loss: number | null;
+  brier_uniform: number | null; brier_climatology: number | null;
+}
+
 export interface EngineDetail {
   config: Record<string, unknown> & { n_sims: number; pace_tol_abs: number; pace_tol_rel: number; saturation_hours: number };
   units: Record<string, EngineUnit>;
@@ -297,6 +306,8 @@ export interface EngineDetail {
     bootstrap: BootstrapResult[];
     record: RecordScore[];
     trend: TrendScore[];
+    /** Every method (engine and generic) on shared cases, generic ones given ranges and chances from their own errors. */
+    compare?: { rule: string; rows: CompareScore[] } | null;
     brier_definition: string;
     n_origins: number;
     origins_by_kind: Record<string, number>;

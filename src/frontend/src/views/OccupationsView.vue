@@ -5,6 +5,7 @@ import ChartHover, { type HoverPoint } from '../components/ChartHover.vue';
 import Icon from '../components/Icon.vue';
 import InfoDialog from '../components/InfoDialog.vue';
 import ShareChart from '../components/occ/ShareChart.vue';
+import LlmTriedCard from '../components/LlmTriedCard.vue';
 import {
   fetchAdoption, fetchEmerging, fetchOccEvaluation, fetchOccMeta, fetchSignals, fetchSkill, fetchSkills,
   type AdoptionResponse, type AsOfRow, type EmergingResponse, type OccEvaluation, type OccMeta, type SignalRow,
@@ -775,6 +776,7 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
               <p class="muted small">* Among forecasts where the share really moved ≥ {{ evaluation.rules.material_change_pp }} pp from its last-3-months share, by more than sampling noise: did the forecast land on the same side of that share? “No change” scores 0% by construction.</p>
             </template>
           </div>
+          <LlmTriedCard benchmark="skills" />
           <div class="card pad">
             <h2>Sources</h2>
             <ul class="ex">

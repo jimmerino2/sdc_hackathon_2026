@@ -1,0 +1,100 @@
+{
+  "run_id": "20261029T141519Z-e5bdb2",
+  "made_at": "2026-10-29T14:15:19.953679+00:00",
+  "config": {
+    "benchmark": "capability",
+    "horizons": [
+      3,
+      6,
+      12
+    ],
+    "n_series": 100,
+    "n_origins": 4,
+    "cap_roles": [
+      "holdout"
+    ],
+    "cap_max_origins": 0,
+    "modes": [
+      "zero",
+      "few"
+    ],
+    "model": "qwen/qwen3.7-max",
+    "batch_size": 10,
+    "max_output_tokens": 2048,
+    "max_spend_usd": 2.0,
+    "few_shot_k": 4,
+    "max_examples": 10,
+    "seed": 20261029,
+    "dry_run": false,
+    "max_requests": 0,
+    "reasoning": "off",
+    "concurrency": 8
+  },
+  "settings": {
+    "base_url": "https://llm.grafilab.ai/v1",
+    "max_spend_usd": 2.0,
+    "batch_size": 10,
+    "max_output_tokens": 2048,
+    "timeout_s": 300.0,
+    "max_retries": 2,
+    "min_interval_s": 1.0,
+    "reasoning": "off",
+    "myr_per_usd": 4.0,
+    "price_margin": 1.5,
+    "gateway": "grafilab"
+  },
+  "model": {
+    "id": "qwen/qwen3.7-max",
+    "prompt": 2.2125e-06,
+    "completion": 6.6375e-06,
+    "request": 0.0,
+    "supported": [
+      "response_format",
+      "temperature",
+      "seed"
+    ],
+    "context_length": 983616,
+    "listed": true,
+    "gateway": "grafilab",
+    "price_source": "openrouter_reference",
+    "free": false
+  },
+  "prompt_version": "2026-10-29.1",
+  "sample_id": "24c5f72f53",
+  "sample_meta": {
+    "sample_id": "24c5f72f53",
+    "benchmark": "capability",
+    "params": {
+      "horizons": [
+        3,
+        6,
+        12
+      ],
+      "roles": [
+        "holdout"
+      ],
+      "max_origins": 0,
+      "seed": 20261029,
+      "few_shot_k": 4,
+      "case_version": 1
+    },
+    "n_cases": 36,
+    "built_at": "2026-10-29T13:46:11.187224+00:00",
+    "target": "frontier METR 50% time horizon (minutes), per METR suite version, at last complete month + h",
+    "served_run": "20261024T165353Z-56a2b9",
+    "served": {
+      "3": "ensemble",
+      "6": "ensemble",
+      "12": "ensemble"
+    },
+    "roles": [
+      "holdout"
+    ],
+    "units": "minutes; errors on log2 scale (doublings) and in minutes"
+  },
+  "primary_modes": [
+    "zero",
+    "few"
+  ],
+  "exploratory_modes": []
+}

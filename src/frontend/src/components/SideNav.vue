@@ -15,8 +15,8 @@ function logout() {
 
 /** The app layout after onboarding. It stays mounted while the learner switches tabs; only the content slot changes. */
 const route = useRoute();
-type TabId = 'learn' | 'roles' | 'outlook' | 'occupations' | 'profile';
-const tabFor: Record<string, TabId> = { pathway: 'learn', suggested: 'roles', role: 'roles', outlook: 'outlook', occupations: 'occupations', profile: 'profile' };
+type TabId = 'learn' | 'roles' | 'outlook' | 'occupations' | 'benchmark' | 'profile';
+const tabFor: Record<string, TabId> = { pathway: 'learn', suggested: 'roles', role: 'roles', outlook: 'outlook', occupations: 'occupations', benchmark: 'benchmark', profile: 'profile' };
 const active = computed(() => tabFor[route.name as string]);
 type Item = { id: TabId; label: string; icon: string; to: Step };
 const items: Item[] = [
@@ -28,6 +28,7 @@ const items: Item[] = [
 const insights: Item[] = [
   { id: 'outlook', label: 'AI outlook', icon: 'sparkles', to: 'outlook' },
   { id: 'occupations', label: 'Occupations', icon: 'chart-bar', to: 'occupations' },
+  { id: 'benchmark', label: 'LLM benchmark', icon: 'brain', to: 'benchmark' },
 ];
 const groups = [items, insights];
 /** Active tab; the highlight pill springs to it within its group. */
