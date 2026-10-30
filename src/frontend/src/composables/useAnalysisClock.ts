@@ -8,8 +8,8 @@ export const STAGE_STARTS = [0, 0.12, 0.42, 0.78];
 export const SCAN_END = 0.66;
 
 /** Never reaches 100% until the response arrives; holds at 94% if it's late. */
-export function progressAt(f: number): number {
-  return Math.min(0.94, 1 - Math.exp(-3 * f));
+export function progressAt(f: number, rate = 3): number {
+  return Math.min(0.94, 1 - Math.exp(-rate * f));
 }
 
 export function stageAt(f: number): number {
