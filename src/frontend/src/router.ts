@@ -20,6 +20,7 @@ export const steps = [
   'pathway',
   'challenges',
   'hive',
+  'social',
   'suggested',
   'role',
   'generating',
@@ -48,6 +49,7 @@ export const stepLabels: Record<Step, string> = {
   pathway: '11 Reskill pathway',
   challenges: '11a Challenges',
   hive: '11b Protect the Hive',
+  social: '11c Social',
   suggested: '12 My roles',
   role: '13 Role details',
   generating: '14 Generating a roadmap',
@@ -57,7 +59,7 @@ export const stepLabels: Record<Step, string> = {
 };
 
 /** Pages that live inside the sidebar layout. */
-const tabSteps: readonly Step[] = ['pathway', 'challenges', 'hive', 'suggested', 'role', 'outlook', 'occupations', 'profile'];
+const tabSteps: readonly Step[] = ['pathway', 'challenges', 'hive', 'social', 'suggested', 'role', 'outlook', 'occupations', 'profile'];
 
 const views = import.meta.glob('./views/*.vue');
 const viewFor = (s: Step) => {

@@ -17,6 +17,7 @@ from app.jobs.service import TECH_ROLES
 from app.profile import service as profiles
 from app.roadmap import planner
 from app.roadmap.schemas import Roadmap
+from app.social import service as social
 
 STALE_BUSY = timedelta(minutes=5)  # a judgement or rewrite this old was lost (e.g. a restart), so it may start again
 CHALLENGE_COLUMNS = (
@@ -286,6 +287,8 @@ def submit(db: Client, profile_id: str, challenge_id: str, repo_url: str) -> Sub
             {"challenge_id": challenge_id, "stage": row["stage"], "profile_id": profile_id, "score": score},
             on_conflict="challenge_id,stage", ignore_duplicates=True,
         ).execute().data)
+        if awarded:  # a stinger is worth pollen, which ranks the leaderboard
+            social.add_pollen(db, profile_id, social.POLLEN_PER_STINGER)
     return SubmitResult(challenge=_row_out(db, _owned(db, profile_id, challenge_id)), passed=passed, stinger_awarded=awarded, stingers=stingers(db, profile_id))
 
 
