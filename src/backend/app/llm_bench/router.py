@@ -1,8 +1,9 @@
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
+from app.config import get_settings
 from app.llm_bench import service
 from llm_bench import openrouter as OR, runner as R
 
@@ -35,6 +36,12 @@ class BenchRequest(BaseModel):
                            max_requests=self.max_requests, reasoning=self.reasoning or "", concurrency=self.concurrency)
 
 
+def _runs_enabled():
+    """Use on any route that controls a run, so a public deployment can't spend the benchmark's budget."""
+    if not get_settings().llm_bench_runs_enabled:
+        raise HTTPException(status_code=403, detail="Benchmark runs are turned off. Set LLM_BENCH_RUNS_ENABLED=true to allow them.")
+
+
 def _guard(fn, *args):
     try:
         return fn(*args)
@@ -58,7 +65,7 @@ def post_estimate(body: BenchRequest):
     return _guard(service.estimate, body.run_config())
 
 
-@router.post("/runs")
+@router.post("/runs", dependencies=[Depends(_runs_enabled)])
 def post_run(body: BenchRequest):
     """Start a run in the background. Live runs need confirm=true and OPENROUTER_BENCH_API_KEY."""
     return _guard(service.start, body.run_config(), body.confirm)
@@ -88,11 +95,11 @@ def get_cases(run_id: str, mode: str | None = Query(None), status: str | None = 
     return _guard(service.cases, run_id, mode, status, limit)
 
 
-@router.post("/runs/{run_id}/stop")
+@router.post("/runs/{run_id}/stop", dependencies=[Depends(_runs_enabled)])
 def post_stop(run_id: str):
     return service.stop(run_id)
 
 
-@router.post("/runs/{run_id}/resume")
+@router.post("/runs/{run_id}/resume", dependencies=[Depends(_runs_enabled)])
 def post_resume(run_id: str, confirm: bool = Query(False)):
     return _guard(service.resume, run_id, confirm)

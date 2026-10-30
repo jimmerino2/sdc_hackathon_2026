@@ -30,7 +30,8 @@ const items: Item[] = [
 const insights: Item[] = [
   { id: 'outlook', label: 'AI outlook', icon: 'sparkles', to: 'outlook' },
   { id: 'occupations', label: 'Occupations', icon: 'chart-bar', to: 'occupations' },
-  { id: 'benchmark', label: 'LLM benchmark', icon: 'brain', to: 'benchmark' },
+  // A dev tool, so it stays out of the deployed app's nav.
+  ...(import.meta.env.DEV ? [{ id: 'benchmark', label: 'LLM benchmark', icon: 'brain', to: 'benchmark' } as Item] : []),
 ];
 const groups = [items, insights];
 /** Active tab; the highlight pill springs to it within its group. */

@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     # The weighted score (0-100) a challenge stage must reach to pass and earn a stinger
     challenge_pass_score: int = Field(85, ge=1, le=100)
     openrouter_model: str = "qwen/qwen3.7-flash"
+    llm_bench_runs_enabled: bool = False  # starting, stopping or resuming benchmark runs spends money; results stay public
     github_token: str = ""  # optional; reading a submitted repo without it is limited to 60 GitHub API calls an hour
     openjev_url: str = ""
     openjev_token: str = ""
