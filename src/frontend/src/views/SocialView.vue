@@ -86,8 +86,8 @@ onMounted(load);
   <div class="tab jb soc">
     <header class="soc__head">
       <div>
-        <h1>Leaderboard</h1>
-        <p>See how you and your friends stack up. Pollen comes from stingers and boss kills.</p>
+        <p class="eyebrow">Social</p>
+        <p class="soc__sub">See how you and your friends stack up. Pollen comes from stingers and boss kills.</p>
       </div>
       <div class="soc__pollen" aria-label="Your pollen">
         <span>Your pollen</span>
@@ -185,8 +185,8 @@ onMounted(load);
 <style scoped>
 .soc { display: flex; flex-direction: column; gap: 24px; max-width: 1600px; }
 .soc__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.soc__head h1 { margin: 0; font-size: 40px; line-height: 48px; font-weight: 900; }
-.soc__head p { margin: 4px 0 0; color: var(--text-muted); font-size: 16px; font-weight: 600; }
+.eyebrow { font-size: 11px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--orange); }
+.soc__sub { margin: 4px 0 0; color: var(--text-muted); font-size: 13px; line-height: 18px; font-weight: 600; }
 .dot { display: inline-block; flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--honey); }
 .soc__pollen { display: inline-flex; align-items: center; gap: 10px; padding: 10px 20px; border: 2px solid var(--honey); border-radius: var(--radius-lg); background: var(--honey-tint); font-weight: 700; color: var(--text-muted); }
 .soc__pollen b { font-size: 26px; line-height: 32px; font-weight: 900; color: var(--text); font-variant-numeric: tabular-nums; }
@@ -266,7 +266,7 @@ onMounted(load);
   .soc__grid { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 560px) {
-  .soc__head h1 { font-size: 32px; line-height: 40px; }
+
   .podium { padding: 28px 8px 0; }
   .podium__slot { width: 33%; }
   .row { gap: 10px; padding: 10px 14px; }

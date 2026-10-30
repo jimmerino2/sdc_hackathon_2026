@@ -192,8 +192,8 @@ onMounted(() => {
   <div class="tab jb chal">
     <header class="chal__head">
       <div>
-        <h1>Challenges</h1>
-        <p>Real-world projects for your tech roles. Score 85+ to land a stinger on Robbee.</p>
+        <p class="eyebrow">Challenges</p>
+        <p class="chal__sub">Real-world projects for your tech roles. Score 85+ to land a stinger on Robbee.</p>
       </div>
       <HiveSwitch current="challenges" />
     </header>
@@ -405,16 +405,17 @@ onMounted(() => {
   gap: 16px;
   flex-wrap: wrap;
 }
-.chal__head h1 {
-  margin: 0 0 6px;
-  font-size: 38px;
-  line-height: 44px;
+.eyebrow {
+  font-size: 11px;
   font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--orange);
 }
-.chal__head p {
-  margin: 0;
-  font-size: 15px;
-  line-height: 22px;
+.chal__sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 18px;
   color: var(--text-muted);
   font-weight: 600;
 }
@@ -692,10 +693,6 @@ onMounted(() => {
   }
 }
 @media (max-width: 640px) {
-  .chal__head h1 {
-    font-size: 32px;
-    line-height: 40px;
-  }
   .boss {
     grid-template-columns: 1fr;
     padding: 20px;
