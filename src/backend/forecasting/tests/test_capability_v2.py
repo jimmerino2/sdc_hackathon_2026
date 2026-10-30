@@ -165,3 +165,20 @@ def test_small_backtest_weights_and_temperature_only_use_outcomes_known_at_each_
         used = comp[(comp["target_ord"] <= r["last_ord"]) & comp["y_actual"].notna()]
         assert (used["target_ord"] <= r["last_ord"]).all()
     assert np.allclose(ens[["p_faster", "p_same", "p_slower"]].sum(axis=1), 1)
+
+
+def test_generic_ranges_use_only_errors_known_at_the_origin_and_never_fall_below_the_frontier():
+    cases, gen = [], []
+    for i in range(16):  # one case per month; the outcome of case i is known from month i + 3
+        cases.append({"origin": i, "unit": "u", "h": 3, "role": "selection", "last_ord": i, "target_ord": i + 3,
+                      "y_now": 0.0, "y_actual": 1.0, "hist_pace": 2.0, "realised_class": "faster",
+                      "clim_faster": 1 / 3, "clim_same": 1 / 3, "clim_slower": 1 / 3, "candidate": "damped_trend"})
+        gen.append({"origin": i, "unit": "u", "h": 3, "candidate": "naive", "pred": 60.0, "feature_set": "all"})  # 1 h
+    gp = CE.generic_paths(pd.DataFrame(gen), pd.DataFrame(cases), CE.CFG)
+    known = [sum(j + 3 <= i for j in range(16)) for i in range(16)]
+    missed, size = gp[gp["spread"] == "as_missed"], gp[gp["spread"] == "size_only"]
+    assert list(missed["n_errors"]) == [k for k in known if k >= CE.CFG.min_generic_errors]
+    assert (gp["q10"] >= 0.0).all() and np.allclose(gp["q50"], 0.0)  # floored at the frontier; point unchanged
+    assert np.allclose(gp[["p_faster", "p_same", "p_slower"]].sum(axis=1), 1)
+    assert np.allclose(missed["p_faster"], 1.0)  # every past error was +1 doubling in 3 months: 4 / year > 2 + 0.4
+    assert np.allclose(size["p_faster"], 0.5) and np.allclose(size["q90"], 1.0)  # the same errors both ways: centred

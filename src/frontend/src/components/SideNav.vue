@@ -15,8 +15,8 @@ function logout() {
 
 /** The app layout after onboarding. It stays mounted while the learner switches tabs; only the content slot changes. */
 const route = useRoute();
-type TabId = 'learn' | 'challenges' | 'social' | 'roles' | 'outlook' | 'occupations' | 'profile';
-const tabFor: Record<string, TabId> = { pathway: 'learn', challenges: 'challenges', hive: 'challenges', social: 'social', suggested: 'roles', role: 'roles', outlook: 'outlook', occupations: 'occupations', profile: 'profile' };
+type TabId = 'learn' | 'challenges' | 'social' | 'roles' | 'outlook' | 'occupations' | 'benchmark' | 'profile';
+const tabFor: Record<string, TabId> = { pathway: 'learn', challenges: 'challenges', hive: 'challenges', social: 'social', suggested: 'roles', role: 'roles', outlook: 'outlook', occupations: 'occupations', benchmark: 'benchmark', profile: 'profile' };
 const active = computed(() => tabFor[route.name as string]);
 type Item = { id: TabId; label: string; icon: string; to: Step };
 const items: Item[] = [
@@ -30,6 +30,8 @@ const items: Item[] = [
 const insights: Item[] = [
   { id: 'outlook', label: 'AI outlook', icon: 'sparkles', to: 'outlook' },
   { id: 'occupations', label: 'Occupations', icon: 'chart-bar', to: 'occupations' },
+  // A dev tool, so it stays out of the deployed app's nav.
+  ...(import.meta.env.DEV ? [{ id: 'benchmark', label: 'LLM benchmark', icon: 'brain', to: 'benchmark' } as Item] : []),
 ];
 const groups = [items, insights];
 /** Active tab; the highlight pill springs to it within its group. */

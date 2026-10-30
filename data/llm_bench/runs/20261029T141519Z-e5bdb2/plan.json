@@ -1,0 +1,439 @@
+{
+  "requests": [
+    {
+      "key": "586c7b5140e6113e",
+      "mode": "zero",
+      "batch_key": "2025-03-15T00:00:00+00:00",
+      "case_ids": [
+        "cap|v1.1|2025-03-15|h3",
+        "cap|v1.1|2025-03-15|h12",
+        "cap|v1.0|2025-03-15|h6",
+        "cap|v1.0|2025-03-15|h3",
+        "cap|v1.1|2025-03-15|h6"
+      ],
+      "n_cases": 5,
+      "prompt_chars": 4537,
+      "est_prompt_tokens": 2540,
+      "max_cost_usd": 0.01921335,
+      "expected_cost_usd": 0.006814499999999999
+    },
+    {
+      "key": "8a69ebd9856f8d46",
+      "mode": "zero",
+      "batch_key": "2025-04-15T00:00:00+00:00",
+      "case_ids": [
+        "cap|v1.1|2025-04-15|h3",
+        "cap|v1.1|2025-04-15|h12",
+        "cap|v1.0|2025-04-15|h6",
+        "cap|v1.1|2025-04-15|h6",
+        "cap|v1.0|2025-04-15|h3"
+      ],
+      "n_cases": 5,
+      "prompt_chars": 4576,
+      "est_prompt_tokens": 2562,
+      "max_cost_usd": 0.019262025000000002,
+      "expected_cost_usd": 0.006863175000000001
+    },
+    {
+      "key": "57c2e1a23590a9f7",
+      "mode": "zero",
+      "batch_key": "2025-05-15T00:00:00+00:00",
+      "case_ids": [
+        "cap|v1.1|2025-05-15|h12",
+        "cap|v1.1|2025-05-15|h6",
+        "cap|v1.1|2025-05-15|h3"
+      ],
+      "n_cases": 3,
+      "prompt_chars": 2751,
+      "est_prompt_tokens": 1548,
+      "max_cost_usd": 0.01701855,
+      "expected_cost_usd": 0.00422145
+    },
+    {
+      "key": "a8d5119a49488c39",
+      "mode": "zero",
+      "batch_key": "2025-06-15T00:00:00+00:00",
+      "case_ids": [
+        "cap|v1.1|2025-06-15|h12",
+        "cap|v1.1|2025-06-15|h3",
+        "cap|v1.1|2025-06-15|h6"
+      ],
+      "n_cases": 3,
+      "prompt_chars": 2997,
+      "est_prompt_tokens": 1685,
+      "max_cost_usd": 0.0173216625,
+      "expected_cost_usd": 0.0045245625
+    },
+    {
+      "key": "f2060b0f17c9df99",
+      "mode": "zero",
+      "batch_key": "2025-07-15T00:00:00+00:00",
+      "case_ids": [
+        "cap|v1.1|2025-07-15|h6",
+        "cap|v1.1|2025-07-15|h12",
+        "cap|v1.1|2025-07-15|h3"
+      ],
+      "n_cases": 3,
+      "prompt_chars": 3006,
+      "est_prompt_tokens": 1690,
+      "max_cost_usd": 0.017332725,
+      "expected_cost_usd": 0.004535625
+    },
+    {
+      "key": "ae908e8c9a2a3f1c",
+      "mode": "zero",
+      "batch_key": "2025-08-15T00:00:00+00:00",
+      "case_ids": [
+        "cap|v1.1|2025-08-15|h6",
+        "cap|v1.1|2025-08-15|h3",
+        "cap|v1.1|2025-08-15|h12"
+      ],
+      "n_cases": 3,
+      "prompt_chars": 3006,
+      "est_prompt_tokens": 1690,
+      "max_cost_usd": 0.017332725,
+      "expected_cost_usd": 0.004535625
+    },
+    {
+      "key": "35565c07b6e0e5b4",
+      "mode": "zero",
+      "batch_key": "2025-09-15T00:00:00+00:00",
+      "case_ids": [
+        "cap|v1.1|2025-09-15|h3",
+        "cap|v1.1|2025-09-15|h6"
+      ],
+      "n_cases": 2,
+      "prompt_chars": 2619,
+      "est_prompt_tokens": 1475,
+      "max_cost_usd": 0.0168570375,
+      "expected_cost_usd": 0.0038608124999999997
+    },
+    {
+      "key": "4577bda5ea18251a",
+      "mode": "zero",
+      "batch_key": "2025-10-15T00:00:00+00:00",
+      "case_ids": [
+        "cap|v1.1|2025-10-15|h6",
+        "cap|v1.1|2025-10-15|h3"
+      ],
+      "n_cases": 2,
+      "prompt_chars": 2649,
+      "est_prompt_tokens": 1491,
+      "max_cost_usd": 0.0168924375,
+      "expected_cost_usd": 0.0038962125
+    },
+    {
+      "key": "afa4f31309b962cd",
+      "mode": "zero",
+      "batch_key": "2025-11-15T00:00:00+00:00",
+      "case_ids": [
+        "cap|v1.1|2025-11-15|h3",
+        "cap|v1.1|2025-11-15|h6"
+      ],
+      "n_cases": 2,
+      "prompt_chars": 2649,
+      "est_prompt_tokens": 1491,
+      "max_cost_usd": 0.0168924375,
+      "expected_cost_usd": 0.0038962125
+    },
+    {
+      "key": "3f3900d83e82b860",
+      "mode": "zero",
+      "batch_key": "2025-12-15T00:00:00+00:00",
+      "case_ids": [
+        "cap|v1.1|2025-12-15|h6",
+        "cap|v1.1|2025-12-15|h3"
+      ],
+      "n_cases": 2,
+      "prompt_chars": 2925,
+      "est_prompt_tokens": 1645,
+      "max_cost_usd": 0.0172331625,
+      "expected_cost_usd": 0.0042369375
+    },
+    {
+      "key": "b9bacfdf2a5c15ce",
+      "mode": "zero",
+      "batch_key": "2026-03-20T17:18:09+00:00",
+      "case_ids": [
+        "cap|v1.1|2026-03-20|h6",
+        "cap|v1.1|2026-03-20|h3"
+      ],
+      "n_cases": 2,
+      "prompt_chars": 3097,
+      "est_prompt_tokens": 1740,
+      "max_cost_usd": 0.01744335,
+      "expected_cost_usd": 0.004447125
+    },
+    {
+      "key": "a248fed19c73ecfd",
+      "mode": "zero",
+      "batch_key": "2026-04-27T18:53:18+00:00",
+      "case_ids": [
+        "cap|v1.1|2026-04-27|h6",
+        "cap|v1.1|2026-04-27|h3"
+      ],
+      "n_cases": 2,
+      "prompt_chars": 3125,
+      "est_prompt_tokens": 1756,
+      "max_cost_usd": 0.01747875,
+      "expected_cost_usd": 0.004482525
+    },
+    {
+      "key": "2083fc39ba776130",
+      "mode": "zero",
+      "batch_key": "2026-06-10T16:50:52+00:00",
+      "case_ids": [
+        "cap|v1.1|2026-06-10|h3"
+      ],
+      "n_cases": 1,
+      "prompt_chars": 2369,
+      "est_prompt_tokens": 1336,
+      "max_cost_usd": 0.0165495,
+      "expected_cost_usd": 0.00335415
+    },
+    {
+      "key": "c73c5b829cd66ab4",
+      "mode": "zero",
+      "batch_key": "2026-07-22T18:28:15+00:00",
+      "case_ids": [
+        "cap|v1.1|2026-07-22|h3"
+      ],
+      "n_cases": 1,
+      "prompt_chars": 2509,
+      "est_prompt_tokens": 1413,
+      "max_cost_usd": 0.016719862500000002,
+      "expected_cost_usd": 0.0035245125
+    },
+    {
+      "key": "ef9894008f113a4d",
+      "mode": "few",
+      "batch_key": "2025-03-15T00:00:00+00:00",
+      "case_ids": [
+        "cap|v1.1|2025-03-15|h3",
+        "cap|v1.1|2025-03-15|h12",
+        "cap|v1.0|2025-03-15|h6",
+        "cap|v1.0|2025-03-15|h3",
+        "cap|v1.1|2025-03-15|h6"
+      ],
+      "n_cases": 5,
+      "prompt_chars": 10357,
+      "est_prompt_tokens": 5773,
+      "max_cost_usd": 0.0263663625,
+      "expected_cost_usd": 0.0139675125
+    },
+    {
+      "key": "0cbf11266894197e",
+      "mode": "few",
+      "batch_key": "2025-04-15T00:00:00+00:00",
+      "case_ids": [
+        "cap|v1.1|2025-04-15|h3",
+        "cap|v1.1|2025-04-15|h12",
+        "cap|v1.0|2025-04-15|h6",
+        "cap|v1.1|2025-04-15|h6",
+        "cap|v1.0|2025-04-15|h3"
+      ],
+      "n_cases": 5,
+      "prompt_chars": 10493,
+      "est_prompt_tokens": 5849,
+      "max_cost_usd": 0.026534512500000003,
+      "expected_cost_usd": 0.0141356625
+    },
+    {
+      "key": "dac60f7ed9d58a07",
+      "mode": "few",
+      "batch_key": "2025-05-15T00:00:00+00:00",
+      "case_ids": [
+        "cap|v1.1|2025-05-15|h12",
+        "cap|v1.1|2025-05-15|h6",
+        "cap|v1.1|2025-05-15|h3"
+      ],
+      "n_cases": 3,
+      "prompt_chars": 7694,
+      "est_prompt_tokens": 4294,
+      "max_cost_usd": 0.023094075,
+      "expected_cost_usd": 0.010296975
+    },
+    {
+      "key": "aafc8e94c3f46229",
+      "mode": "few",
+      "batch_key": "2025-06-15T00:00:00+00:00",
+      "case_ids": [
+        "cap|v1.1|2025-06-15|h12",
+        "cap|v1.1|2025-06-15|h3",
+        "cap|v1.1|2025-06-15|h6"
+      ],
+      "n_cases": 3,
+      "prompt_chars": 8027,
+      "est_prompt_tokens": 4479,
+      "max_cost_usd": 0.0235033875,
+      "expected_cost_usd": 0.0107062875
+    },
+    {
+      "key": "03235beed1a9f931",
+      "mode": "few",
+      "batch_key": "2025-07-15T00:00:00+00:00",
+      "case_ids": [
+        "cap|v1.1|2025-07-15|h6",
+        "cap|v1.1|2025-07-15|h12",
+        "cap|v1.1|2025-07-15|h3"
+      ],
+      "n_cases": 3,
+      "prompt_chars": 8200,
+      "est_prompt_tokens": 4575,
+      "max_cost_usd": 0.023715787500000002,
+      "expected_cost_usd": 0.0109186875
+    },
+    {
+      "key": "294603db2bdba5d2",
+      "mode": "few",
+      "batch_key": "2025-08-15T00:00:00+00:00",
+      "case_ids": [
+        "cap|v1.1|2025-08-15|h6",
+        "cap|v1.1|2025-08-15|h3",
+        "cap|v1.1|2025-08-15|h12"
+      ],
+      "n_cases": 3,
+      "prompt_chars": 8351,
+      "est_prompt_tokens": 4659,
+      "max_cost_usd": 0.023901637500000003,
+      "expected_cost_usd": 0.0111045375
+    },
+    {
+      "key": "d8b65c9d911155aa",
+      "mode": "few",
+      "batch_key": "2025-09-15T00:00:00+00:00",
+      "case_ids": [
+        "cap|v1.1|2025-09-15|h3",
+        "cap|v1.1|2025-09-15|h6"
+      ],
+      "n_cases": 2,
+      "prompt_chars": 7460,
+      "est_prompt_tokens": 4164,
+      "max_cost_usd": 0.02280645,
+      "expected_cost_usd": 0.009810225
+    },
+    {
+      "key": "9fa51aec720cb7bf",
+      "mode": "few",
+      "batch_key": "2025-10-15T00:00:00+00:00",
+      "case_ids": [
+        "cap|v1.1|2025-10-15|h6",
+        "cap|v1.1|2025-10-15|h3"
+      ],
+      "n_cases": 2,
+      "prompt_chars": 7674,
+      "est_prompt_tokens": 4283,
+      "max_cost_usd": 0.0230697375,
+      "expected_cost_usd": 0.010073512500000001
+    },
+    {
+      "key": "654d2e07e4642456",
+      "mode": "few",
+      "batch_key": "2025-11-15T00:00:00+00:00",
+      "case_ids": [
+        "cap|v1.1|2025-11-15|h3",
+        "cap|v1.1|2025-11-15|h6"
+      ],
+      "n_cases": 2,
+      "prompt_chars": 7914,
+      "est_prompt_tokens": 4416,
+      "max_cost_usd": 0.023364000000000003,
+      "expected_cost_usd": 0.010367775000000001
+    },
+    {
+      "key": "606a5761fcec6c15",
+      "mode": "few",
+      "batch_key": "2025-12-15T00:00:00+00:00",
+      "case_ids": [
+        "cap|v1.1|2025-12-15|h6",
+        "cap|v1.1|2025-12-15|h3"
+      ],
+      "n_cases": 2,
+      "prompt_chars": 8580,
+      "est_prompt_tokens": 4786,
+      "max_cost_usd": 0.024182625,
+      "expected_cost_usd": 0.0111864
+    },
+    {
+      "key": "762bf9fc212c9db8",
+      "mode": "few",
+      "batch_key": "2026-03-20T17:18:09+00:00",
+      "case_ids": [
+        "cap|v1.1|2026-03-20|h6",
+        "cap|v1.1|2026-03-20|h3"
+      ],
+      "n_cases": 2,
+      "prompt_chars": 8946,
+      "est_prompt_tokens": 4990,
+      "max_cost_usd": 0.024633975000000002,
+      "expected_cost_usd": 0.01163775
+    },
+    {
+      "key": "03ad18a76266f53e",
+      "mode": "few",
+      "batch_key": "2026-04-27T18:53:18+00:00",
+      "case_ids": [
+        "cap|v1.1|2026-04-27|h6",
+        "cap|v1.1|2026-04-27|h3"
+      ],
+      "n_cases": 2,
+      "prompt_chars": 9216,
+      "est_prompt_tokens": 5140,
+      "max_cost_usd": 0.02496585,
+      "expected_cost_usd": 0.011969625000000001
+    },
+    {
+      "key": "990ea1cbe721c296",
+      "mode": "few",
+      "batch_key": "2026-06-10T16:50:52+00:00",
+      "case_ids": [
+        "cap|v1.1|2026-06-10|h3"
+      ],
+      "n_cases": 1,
+      "prompt_chars": 6069,
+      "est_prompt_tokens": 3391,
+      "max_cost_usd": 0.021096187500000002,
+      "expected_cost_usd": 0.0079008375
+    },
+    {
+      "key": "15a338e76859ba98",
+      "mode": "few",
+      "batch_key": "2026-07-22T18:28:15+00:00",
+      "case_ids": [
+        "cap|v1.1|2026-07-22|h3"
+      ],
+      "n_cases": 1,
+      "prompt_chars": 6381,
+      "est_prompt_tokens": 3565,
+      "max_cost_usd": 0.0214811625,
+      "expected_cost_usd": 0.0082858125
+    }
+  ],
+  "n_requests": 28,
+  "n_cases": 36,
+  "modes": [
+    "zero",
+    "few"
+  ],
+  "est_prompt_tokens": 88426,
+  "max_output_tokens_total": 57344,
+  "max_cost_usd": 0.576263325,
+  "expected_cost_usd": 0.215555025,
+  "within_budget": true,
+  "model": {
+    "id": "qwen/qwen3.7-max",
+    "prompt": 2.2125e-06,
+    "completion": 6.6375e-06,
+    "request": 0.0,
+    "supported": [
+      "response_format",
+      "temperature",
+      "seed"
+    ],
+    "context_length": 983616,
+    "listed": true,
+    "gateway": "grafilab",
+    "price_source": "openrouter_reference",
+    "free": false
+  }
+}

@@ -2,6 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,7 +19,10 @@ class Settings(BaseSettings):
     roadmap_reasoning: Literal["off", "low", "default"] = "off"
     # Model reasoning for writing and judging Bonus Quests (same options as roadmap_reasoning)
     challenge_reasoning: Literal["off", "low", "default"] = "off"
+    # The weighted score (0-100) a challenge stage must reach to pass and earn a stinger
+    challenge_pass_score: int = Field(85, ge=1, le=100)
     openrouter_model: str = "qwen/qwen3.7-flash"
+    llm_bench_runs_enabled: bool = False  # starting, stopping or resuming benchmark runs spends money; results stay public
     github_token: str = ""  # optional; reading a submitted repo without it is limited to 60 GitHub API calls an hour
     openjev_url: str = ""
     openjev_token: str = ""

@@ -55,7 +55,7 @@ class Challenge(BaseModel):
     tech_stack: list[TechArea]
     rubric: list[RubricCriterion]
     status: Literal["open", "judging", "passed", "advancing"] = Field(
-        description="passed: the current stage scored PASS_SCORE+ (at stage 1 Robbee's rewrite is due); advancing: it is being written"
+        description="passed: the current stage scored at least pass_score (at stage 1 Robbee's rewrite is due); advancing: it is being written"
     )
     pass_score: int = Field(description="The score that passes a stage")
     history: list[StageResult] = Field(default_factory=list, description="Earlier stages, oldest first")

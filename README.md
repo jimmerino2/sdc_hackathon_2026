@@ -39,10 +39,13 @@ Jobee takes a short onboarding conversation (where you are in your journey, your
 
 ### Key Features
 
-- **Role matching** — Ranks tech roles by skills, interests, career stage and outlook, with each part of the score shown. See [docs/JOB_MATCH.md](docs/JOB_MATCH.md) for the arithmetic.
+- **Role matching** — Ranks tech roles by skills, interests, career stage and outlook, using plain arithmetic. See [docs/JOB_MATCH.md](docs/JOB_MATCH.md) for how it works.
 - **AI-future outlook** — Forecasts for job postings and AI use under different AI futures, with the model's error range shown.
 - **Resume reading** — Extracts skills from an uploaded resume, using OpenJev, with an OpenRouter fallback if the OpenJev endpoint is unreachable.
-- **Learning pathway** — Generates a roadmap for a chosen role, with challenges to earn each step.
+- **Learning pathway** — Generates a roadmap for a chosen role.
+- **Challenges** — Two-stage projects built in a GitHub repo and scored by an LLM against a rubric. Passing a stage earns a stinger.
+- **Hive and Social** — A co-op boss fight for up to four friends, paid for with stingers, plus pollen points and a friends leaderboard.
+- **Occupation insights** — Skill-demand forecasts and emerging-skill signals by job type.
 - **Companion bees** — Four guide characters the learner can pick, each with its own look.
 
 ### Tech Stack
@@ -201,7 +204,7 @@ If the endpoint is unreachable or the call fails, the backend automatically fall
 
 ## Future Improvements
 
-- [ ] Widen the role set beyond the 46 hand-picked O\*NET roles, which include only about 10 tech roles
+- [ ] Widen matching beyond the 8 tech roles scored today
 - [ ] Include different verification methods for roles that are non-tech related
 - [ ] Have additional ways to maintain user retention, preventing them from leaving after finding a job
 - [ ] Use Malaysian demand data and local occupation standards (MASCO, NOSS) in place of the US proxy
@@ -222,7 +225,7 @@ If the endpoint is unreachable or the call fails, the backend automatically fall
 
 - [x] Team name, domain (Domain 1 / Domain 2) and SDG track filled in
 - [x] Slide deck link added
-- [ ] Demo video link added
+- [x] Demo video link added
 - [x] Replit used, with proof of use in `submission/`
 - [x] RunPod used, with proof of use in `submission/`
 - [x] Preliminary submission completed (`SDC2026_TeamName_Preliminary.pdf`)

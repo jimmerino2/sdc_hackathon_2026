@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import type { EngineDetail } from '../api/outlook';
 
 /** Compact methodology and diagnostics for the AI capability forecast: data, method, backtest, pace skill, limits. */
@@ -17,6 +17,8 @@ const f2 = (v: number | null | undefined) => (v == null ? '–' : v.toFixed(2));
 const NAMES: Record<string, string> = {
   ensemble: 'Ensemble (shown)', damped_trend: 'Damped trend', robust_local_trend: 'Robust local trend',
   jump_process: 'Jump model', record_jump: 'Two-stage record model', drift: 'Continue last year’s trend', naive: '“No change”',
+  damped_drift: 'Trend, slowing down', pooled_mean: 'Average recent change', local_trend: 'Local trend model',
+  ridge: 'Ridge regression', lightgbm: 'LightGBM',
 };
 const ROWS = ['ensemble', 'damped_trend', 'robust_local_trend', 'jump_process', 'record_jump', 'drift', 'naive'];
 const SIGNALS: Record<string, string> = {
@@ -40,6 +42,14 @@ const doubling = computed(() => {
   return j?.doubling_time_months ?? null;
 });
 const metrDoubling = computed(() => props.detail.data.metr_published_doubling_days?.from_2023_on ?? null);
+
+/** Every method on the same cases, general ones given ranges and chances from their own past errors. */
+const cmpH = ref(3);
+const cmpRole = ref<'holdout' | 'selection'>('holdout');
+const cmpSpread = ref<'size_only' | 'as_missed'>('size_only');
+const cmp = computed(() => (bt.value.compare?.rows ?? [])
+  .filter((r) => r.h === cmpH.value && r.role === cmpRole.value && (!r.generic || r.spread === cmpSpread.value))
+  .sort((a, b) => (a.interval_score_80 ?? Infinity) - (b.interval_score_80 ?? Infinity)));
 </script>
 
 <template>
@@ -110,6 +120,39 @@ const metrDoubling = computed(() => props.detail.data.metr_published_doubling_da
     </div>
     <p class="small">The 80% range is not proven calibrated: it held the actual value more often than 80% in the recent tests and less often in the
       earlier ones, when growth outran every method.</p>
+
+    <template v-if="bt.compare?.rows.length">
+      <h4>Every method on the same footing</h4>
+      <p class="small">The general methods give one number, so here each also gets an 80% range and faster / same / slower chances,
+        built from its own earlier misses, and every method is scored on the same tests. Two versions: <b>size only</b> uses each past miss
+        both up and down, so the range stays centred on the forecast (as the damped trend’s does); <b>as missed</b> adds the past misses as they
+        happened (the way the adoption cards build their ranges), so a method that was usually too low gets a range shifted upwards.
+        Range score: the range’s width plus a penalty when the actual value fell outside it (lower is better). Chances: Brier score, ⅓ guess = 0.67.
+        Worked out after the recent results were known, so it is used to compare, not to choose.</p>
+      <div class="pick" role="group" aria-label="Horizon and test period">
+        <button v-for="h in hs" :key="h" type="button" :class="{ on: cmpH === h }" @click="cmpH = h">{{ h }} mo</button>
+        <button v-for="r in (['holdout', 'selection'] as const)" :key="r" type="button" :class="{ on: cmpRole === r }"
+                @click="cmpRole = r">{{ r === 'holdout' ? 'recent tests' : 'earlier tests' }}</button>
+        <button v-for="s in (['size_only', 'as_missed'] as const)" :key="s" type="button" :class="{ on: cmpSpread === s }"
+                @click="cmpSpread = s">general ranges: {{ s === 'size_only' ? 'size only' : 'as missed' }}</button>
+      </div>
+      <p v-if="!cmp.length" class="small">No tests that every method forecast here.</p>
+      <div v-else class="scroll">
+        <table>
+          <thead><tr><th scope="col">Method</th><th scope="col">Miss</th><th scope="col">In 80%</th><th scope="col">Range score</th><th scope="col">Chances</th></tr></thead>
+          <tbody>
+            <tr v-for="r in cmp" :key="r.candidate" :class="{ shown: r.candidate === 'ensemble', base: r.generic }">
+              <td>{{ NAMES[r.candidate] ?? r.candidate }}<span v-if="r.generic" class="gen">general</span></td>
+              <td>{{ x(r.typical_factor) }}</td>
+              <td>{{ pct(r.coverage_80) }}</td>
+              <td>{{ f2(r.interval_score_80) }}</td>
+              <td>{{ f2(r.brier) }}</td>
+            </tr>
+            <tr class="n"><td colspan="5">{{ cmp[0].n }} tests from {{ cmp[0].n_origins }} forecast dates; base rate of earlier outcomes scores {{ f2(cmp[0].brier_climatology) }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </template>
 
     <h4>Have the faster / same / slower chances shown skill?</h4>
     <p class="small">Brier score: the sum over the outcomes of (chance − what happened)², averaged; 0 = perfect, 2 = worst, a ⅓-each guess scores 0.67.
@@ -209,4 +252,8 @@ tr.n td { color: var(--muted); font-size: 11px; }
 .okc { color: #1e5e30; }
 .badc { color: #a12a22; }
 .bad { color: #a12a22; font-weight: 800; }
+.pick { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 6px; }
+.pick button { border: 2px solid var(--line-strong); background: #fff; border-radius: 999px; padding: 3px 10px; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.pick button.on { background: var(--cream); border-color: var(--yellow); }
+.gen { margin-left: 6px; font-size: 10px; font-weight: 800; color: var(--muted); }
 </style>

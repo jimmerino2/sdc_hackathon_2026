@@ -1,0 +1,15 @@
+{
+  "state": "paused_request_limit",
+  "done": 2,
+  "total": 28,
+  "spent_usd": 0.001367458,
+  "budget_usd": 2.0,
+  "updated_at": "2026-10-29T13:58:45.678612+00:00",
+  "remaining_usd": 1.998632542,
+  "stop_reason": "max_requests=2 reached; resume to continue",
+  "started_at": "2026-10-29T13:57:11.184188+00:00",
+  "last_request_status": "ok",
+  "requests_not_completed": 26,
+  "cases_not_completed": 62,
+  "finished_at": "2026-10-29T13:58:45.674402+00:00"
+}

@@ -149,7 +149,7 @@ def _out(row: dict, interest_names: dict[int, str]) -> Challenge:
         interests=[interest_names[i] for i in row["interest_ids"] if i in interest_names],
         files_read=row["files_read"] or [],
         history=row["history"] or [],
-        pass_score=judge.PASS_SCORE,
+        pass_score=judge.pass_score(),
     )
 
 
@@ -226,7 +226,7 @@ def _stale(now: datetime) -> str:
 # ---------- judging and Robbee's rewrite ----------
 
 def submit(db: Client, profile_id: str, challenge_id: str, repo_url: str) -> SubmitResult:
-    """Judge a repo against the current stage and keep the result (only the latest is kept). A score of PASS_SCORE+
+    """Judge a repo against the current stage and keep the result (only the latest is kept). A score of pass_score() or more
     passes the stage and awards a stinger; at stage 2 it also completes the challenge. A completed challenge may be
     resubmitted to improve its score: it stays complete and pays no more stingers.
 
@@ -268,7 +268,7 @@ def submit(db: Client, profile_id: str, challenge_id: str, repo_url: str) -> Sub
         print(f"Challenge {challenge_id} not judged ({type(e).__name__}: {e})")
         raise HTTPException(status_code=502, detail="Jobee couldn’t judge that just now. Try again in a moment.") from e
 
-    passed = score >= judge.PASS_SCORE
+    passed = score >= judge.pass_score()
     judged_at = datetime.now(timezone.utc).isoformat()
     db.table("roadmap_challenge").update({
         "status": "passed" if passed or complete else "open",
