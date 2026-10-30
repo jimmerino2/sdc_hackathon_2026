@@ -34,6 +34,10 @@ const emit = defineEmits<{ select: [code: string] }>();
 
 const { state, scenario } = useFlow();
 const { metrics, metricTarget, pct, ranked, rankColor } = useScenarioProbabilities();
+const activeMetricLabel = computed(() => metrics.find((m) => m.target === metricTarget.value)?.label ?? 'selected indicator');
+const scenarioTooltip = computed(
+  () => `Statistical likelihood of this AI scenario occurring, based on ${activeMetricLabel.value.toLowerCase()} forecasts. Does not reflect your job match.`
+);
 /** The 3 AI-future scenarios, most likely first. */
 const rankedScenarios = computed(() => ranked.value.map((k) => scenarios.find((s) => s.key === k)!));
 const view = computed(() => (props.cardsOnly ? 'cards' : state.value.rolesView));
@@ -69,7 +73,12 @@ const heading = computed(() => {
           @click="state.scenario = s.key"
         >
           <Icon :name="sIcon[s.key]" :size="18" /> {{ s.label }}
-          <small v-if="pct(s.key) != null" class="tab-pct">{{ pct(s.key) }}%</small>
+          <small
+            v-if="pct(s.key) != null"
+            class="tab-pct"
+            :title="scenarioTooltip"
+            :aria-label="scenarioTooltip"
+          >{{ pct(s.key) }}%</small>
         </button>
         <InfoDialog v-if="assumptions" title="What the three AI futures mean">
           <p>{{ assumptions.summary }}</p>
@@ -165,7 +174,12 @@ const heading = computed(() => {
             <span class="scenario-bar" />
             <Icon :name="sIcon[s.key]" :size="16" class="scenario-icon" />
             <span class="scenario-label">{{ s.label }}</span>
-            <span v-if="pct(s.key) != null" class="scenario-pct">{{ pct(s.key) }}%</span>
+            <span
+              v-if="pct(s.key) != null"
+              class="scenario-pct"
+              :title="scenarioTooltip"
+              :aria-label="scenarioTooltip"
+            >{{ pct(s.key) }}%</span>
           </button>
         </div>
 

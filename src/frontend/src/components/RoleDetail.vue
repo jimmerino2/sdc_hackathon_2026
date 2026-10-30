@@ -24,6 +24,10 @@ const props = defineProps<{
 
 const { state, key } = useFlow();
 const { metrics, metricTarget, pct, ranked, rankColor } = useScenarioProbabilities();
+const activeMetricLabel = computed(() => metrics.find((m) => m.target === metricTarget.value)?.label ?? 'selected indicator');
+const scenarioTooltip = computed(
+  () => `Statistical likelihood of this AI scenario occurring, based on ${activeMetricLabel.value.toLowerCase()} forecasts. Does not reflect your job match.`
+);
 /** The 3 AI-future scenarios, most likely first. */
 const rankedScenarios = computed(() => ranked.value.map((k) => scenarios.find((s) => s.key === k)!));
 const base = import.meta.env.BASE_URL;
@@ -210,7 +214,7 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
           <span class="ic" :class="trendOf(s.key).cls"><Icon :name="trendOf(s.key).icon" :size="22" :stroke="2.6" /></span>
           <span>
             <span class="pills">
-              <em v-if="pct(s.key) != null" class="pill pill-chance" :style="{ '--rc': rankColor(s.key) ?? 'var(--line-strong)' }">{{ pct(s.key) }}% chance</em>
+              <em v-if="pct(s.key) != null" class="pill pill-chance" :style="{ '--rc': rankColor(s.key) ?? 'var(--line-strong)' }" :title="scenarioTooltip" :aria-label="scenarioTooltip">{{ pct(s.key) }}% chance</em>
               <em class="pill" :class="{ 'pill-yellow': state.scenario === s.key }">{{ outcome(s.key) }}</em>
             </span>
             <h3>{{ s.title }}</h3><p>{{ s.blurb }}</p>
