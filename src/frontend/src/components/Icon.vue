@@ -6,12 +6,13 @@ import {
   Play, RefreshCw, Megaphone, Users, Boxes, ClipboardList, ChartPie, Calculator, ShieldCheck, Landmark, Monitor,
   Headset, Palette, Sigma, Brain, ChartBar, Zap, Leaf, Factory, Microscope, HandHeart, Scale, Baby, School, PenTool,
   Languages, Activity, Stethoscope, Pill, ClipboardPlus, HeartHandshake, ShieldAlert, ChefHat, ShoppingBag, Receipt,
-  Banknote, Headphones, Keyboard, Plug, Sun, Wrench, Wind, Truck, Package, Pencil, LogOut, Trash2, Sprout, Dumbbell, Music, PawPrint, Gamepad2, Shirt, Hammer, HeartPulse, Mountain, Coins, Minus, ChevronDown,
+  Banknote, Headphones, Keyboard, Plug, Sun, Wrench, Wind, Truck, Package, Pencil, LogOut, Trash2, Sprout, Dumbbell, Music, PawPrint, Gamepad2, Shirt, Hammer, HeartPulse, Mountain, Coins, Minus, ChevronDown, Mail, Crown,
 } from 'lucide-vue-next';
 
 const map = {
   briefcase: Briefcase, bug: Bug, check: Check, cloud: Cloud, code: Code2, cpu: Cpu, database: Database,
   grad: GraduationCap, layers: Layers, search: Search, shield: Shield, sparkles: Sparkles, target: Target,
+  mail: Mail, crown: Crown,
   tdown: TrendingDown, tup: TrendingUp, tflat: Minus, chevron: ChevronDown, arrow: ArrowRight, lock: Lock, star: Star, trophy: Trophy, book: BookOpen,
   user: User, route: Route, x: X, flame: Flame, upload: Upload, file: FileText, play: Play, refresh: RefreshCw,
   // Role icons (onet_roles.icon, migration 0006)

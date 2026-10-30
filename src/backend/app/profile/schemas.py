@@ -44,6 +44,7 @@ class ProfileUpdate(BaseModel):
 Bee = Literal["Libbee", "Phoebee", "Tobee", "Barnabee"]
 class ProfileOut(ProfileIn):
     bee: Bee = Field("Libbee", description="The learner's companion bee")
+    total_pollen: int = Field(0, description="Pollen earned from stingers and boss kills; ranks the leaderboard")
     profile_id: UUID
 
 
