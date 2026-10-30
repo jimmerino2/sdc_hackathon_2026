@@ -68,7 +68,6 @@ const demandTooltip = 'Forecasted hiring demand: (+) means job openings are grow
         <span v-if="picking" class="radio" aria-hidden="true"><Icon v-if="selected === j.onet_code" name="check" :size="14" :stroke="3.2" /></span>
         <span class="score" :class="{ best: idx === 0 }" :style="{ '--p': matchPercent(j, scenarioName) }">
           <b>{{ matchPercent(j, scenarioName) }}<small>%</small></b>
-          <span>match</span>
         </span>
         <span class="body">
           <span class="title-row">
