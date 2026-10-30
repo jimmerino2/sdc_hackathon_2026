@@ -11,6 +11,36 @@ export interface ScenarioOutlook {
   forecast_for: string;
   /** The role's overall match under this scenario. Missing on sets saved before scenario scores existed. */
   match_percent?: number | null;
+  /** The role's place under this scenario, 1 = best. */
+  rank?: number | null;
+  /** How match_percent was made up. Null on a saved set that doesn't reconcile with today's formula. */
+  breakdown?: MatchBreakdown | null;
+}
+
+/** One part of the match, as scored by the backend. */
+export interface ScoreComponent {
+  key: 'skills' | 'outlook' | 'interests' | 'education';
+  score: number;
+  /** Configured weight. These add up to 1.05, so show `share`. */
+  weight: number;
+  /** The share of the score it really carries; the shares add up to 1. */
+  share: number;
+  points: number;
+}
+
+export interface MatchBreakdown {
+  components: ScoreComponent[];
+  raw_score: number;
+  curve: number;
+  match_percent: number;
+}
+
+/** A key skill and how it counted. */
+export interface SkillFit {
+  name: string;
+  importance_share: number;
+  proficiency: number;
+  via: string | null;
 }
 
 /** How much AI already touches a job (Anthropic Economic Index); null when unknown. */
@@ -55,6 +85,8 @@ export interface JobMatch extends AiExposure {
   outlook: ScenarioOutlook[];
   /** For each SDG the role serves, why it fits the learner's interests. Missing on sets saved before this existed. */
   sdg_reasons?: SdgReason[];
+  /** Each key skill and how it counted. Missing on older saved sets. */
+  skill_fit?: SkillFit[];
 }
 
 export interface Recommendations {
@@ -67,6 +99,58 @@ export interface Recommendations {
   note: string;
   /** When the roles were worked out (ISO 8601). Missing on sets saved before this was recorded. */
   generated_at?: string | null;
+  /** The career stage behind the education part. */
+  stage?: string | null;
+}
+
+export interface ScenarioComparison {
+  scenario: ScenarioOutlook['scenario'];
+  tab: string;
+  current_percent: number;
+  simulated_percent: number;
+  change: number;
+  current_rank: number;
+  simulated_rank: number;
+  current: MatchBreakdown | null;
+  simulated: MatchBreakdown | null;
+  outlook: ScenarioOutlook | null;
+  explanation: string;
+}
+
+export interface RoleComparison {
+  onet_code: string;
+  title: string;
+  icon: string;
+  skills_owned_before: number;
+  skills_owned_after: number;
+  skills_total: number;
+  skills_gained: { name: string; before: number; after: number; via: string | null }[];
+  skills_replaced: string[];
+  skills_remaining: string[];
+  skill_fit: SkillFit[];
+  sdg_reasons: SdgReason[];
+  scenarios: ScenarioComparison[];
+}
+
+export interface SkillOption {
+  name: string;
+  current: number;
+  trial: number;
+  roles_listing: number;
+  gap_roles: string[];
+  gains: { scenario: ScenarioOutlook['scenario']; average_change: number; best_change: number; best_role: string }[];
+  demand: { occupation: string; direction: 'rising' | 'falling' | 'flat'; last_share: number | null; forecast: number; target_month: string; evidence: string } | null;
+  emerging: boolean;
+}
+
+export interface SimulateResult {
+  profile_id: string;
+  horizon_months: number;
+  coverage_before: number;
+  coverage_after: number;
+  summary: { scenario: ScenarioOutlook['scenario']; tab: string; current_top: string; simulated_top: string; current_top_percent: number; simulated_top_percent: number }[];
+  roles: RoleComparison[];
+  options: SkillOption[];
 }
 
 /** A failed request, with a message that can be shown to the user as is. */
@@ -83,6 +167,24 @@ export async function fetchRecommendations(profileId: string): Promise<Recommend
   if (res.status === 404) throw new JobsError('Jobee couldn’t find your profile. Go back and finish the questions again.');
   if (res.status === 409) throw new JobsError('Jobee needs at least one skill to match roles. Go back and rate a few skills.');
   throw new JobsError('Jobee couldn’t match roles just now. Try again in a moment.');
+}
+
+/** The matches now against the same profile with these skills added. Nothing is saved. */
+export async function simulateSkills(profileId: string, skills: { name: string; score: number }[]): Promise<SimulateResult> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/jobs/simulate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile_id: profileId, skills }),
+    });
+  } catch {
+    throw new JobsError('Couldn’t reach Jobee. Check your connection and try again.');
+  }
+  if (res.ok) return res.json();
+  if (res.status === 404) throw new JobsError('Jobee couldn’t find your profile. Log in again to try the simulator.');
+  if (res.status === 409) throw new JobsError('Jobee needs at least one skill on your profile to run a simulation.');
+  throw new JobsError('Jobee couldn’t run that simulation. Try again in a moment.');
 }
 
 /** Why a role fits one of the learner's interests, through one SDG they share. */

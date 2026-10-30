@@ -18,6 +18,8 @@ import { go } from '../router';
 const STAGE_LINES = ['Give me a sec, I’m reading it…', 'Picking out the skills worth checking…', 'Matching them against your resume…', 'Last step: ranking your strongest.'];
 /** After the response arrives, a beat for the bar to fill and Jobee to cheer before the results show. */
 const FINISH_MS = 750;
+const MIN_SPIN_MS = 1400; // a very fast upload would otherwise flash the spinner for a blink
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const UNDO_MS = 4000;
 
 const router = useRouter();

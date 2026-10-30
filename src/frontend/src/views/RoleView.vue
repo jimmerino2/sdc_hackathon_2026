@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import Bubble from '../components/Bubble.vue';
 import Icon from '../components/Icon.vue';
+import MatchWhy from '../components/MatchWhy.vue';
 import RoleDetail from '../components/RoleDetail.vue';
 import { fetchSuggested, matchPercent } from '../api/jobs';
 import { backendScenario } from '../api/forecast';
@@ -75,7 +76,8 @@ onMounted(async () => {
       </div>
 
       <template v-else>
-        <section class="card top">
+        <section class="head">
+          <div class="card top">
           <div class="who">
             <span v-if="job" class="ic"><Icon :name="job.icon" :size="26" /></span>
             <div class="txt">
@@ -98,6 +100,11 @@ onMounted(async () => {
             <small v-if="checkFailed">Couldn’t check your roadmaps.</small>
             <small v-else-if="!checking && !roadmap">Takes about 15 seconds.</small>
           </div>
+          </div>
+
+          <MatchWhy v-if="job" :job="job" :scenario="backendScenario[state.scenario]" :stage="state.suggested?.stage">
+            <RouterLink :to="{ ...go('suggested'), query: { view: 'simulate' } }" class="try"><Icon name="sparkles" :size="15" /> What if you learned a new skill?</RouterLink>
+          </MatchWhy>
         </section>
 
         <RoleDetail :onet-code="code" :job="job" />
@@ -110,7 +117,9 @@ onMounted(async () => {
 .page { max-width: 1100px; }
 .back { display: inline-block; margin-bottom: 14px; font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .back:hover { color: var(--ink); }
-.top { display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; padding: 20px 24px; margin-bottom: 28px; }
+.head { margin-bottom: 28px; }
+.top { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; padding: 20px 24px; }
+.try { margin-left: 10px; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; color: var(--amber-ink); text-decoration: underline; }
 .who { display: flex; align-items: center; gap: 16px; min-width: 0; flex: 1; }
 .ic { width: 52px; height: 52px; border-radius: 14px; background: var(--yellow); display: grid; place-items: center; flex: none; }
 .txt { min-width: 0; flex: 1; }

@@ -9,15 +9,17 @@ Questions about how Jobee works behind the scenes. Currently covers job matching
 By arithmetic. No AI model is involved in ranking any more. Each role gets four parts, each between 0 and 1, and the score is their weighted sum:
 
 ```
-score = 0.10 × education + 0.25 × interests + 0.35 × skills + 0.35 × outlook
+score = (0.10 × education + 0.25 × interests + 0.35 × skills + 0.35 × outlook) ÷ 1.05
 ```
 
-| Part | Weight | What it measures |
+The configured weights add up to 1.05, so the shares that really apply are below. The formula always divided by 1.05, so the 2026-10 change only corrected what was shown: the page and notes used to quote the configured 35/35/25/10 and now quote the real shares. Scores didn't change.
+
+| Part | Share | What it measures |
 | ---- | ------ | ---------------- |
-| Skills | 35% | How much of the role's key skills the learner has, at their proficiency |
-| Outlook | 35% | Whether job postings for the role are rising or dropping, for the chosen AI future |
-| Interests | 25% | How well the learner's interests point at the SDGs the role serves |
-| Education | 10% | The learner's career stage |
+| Skills | 33.3% | How much of the role's key skills the learner has, at their proficiency |
+| Outlook | 33.3% | Whether job postings for the role are rising or dropping, for the chosen AI future |
+| Interests | 23.8% | How well the learner's interests point at the SDGs the role serves |
+| Education | 9.5% | The learner's career stage |
 
 The weights add up to 1.05, so the sum is divided by 1.05 to keep it between 0 and 1. The displayed "% match" is then score<sup>0.7</sup> × 100. The curve lifts every match (0.40 shows as 53%, 0.66 as 75%) without changing the order between roles. The code is in `src/backend/app/jobs/scoring.py`, and `recommend()` in `src/backend/app/jobs/service.py` applies it to every tech role.
 
@@ -73,7 +75,19 @@ In `src/backend/app/jobs/scoring.py`: the four weights (`W_EDUCATION`, `W_INTERE
 
 ### Can I see how a score was made up?
 
-The API returns the three parts that don't depend on the AI future in `match_parts` (education, interests, skills), and each scenario's own match in `outlook[].match_percent`. The page doesn't show a breakdown yet.
+Yes. Each role card and the role page's title card have an expandable "Why 71%?" with a bar per part. The "How it's calculated" dialog has each part's score, share and points and the curve, from `outlook[].breakdown`. `scoring.breakdown()` is the only place that adds them up.
+
+### How does the What-If simulator work?
+
+`POST /jobs/simulate` runs `service.score_roles`, the same function behind `GET /jobs/recommend`, on the profile and on a temporary copy with the tried skills added. If a skill is already on the profile, the higher level is kept. Nothing is saved.
+
+Because O*NET rates many tools the same, a role's key skills favour tools the learner has among equally rated ones. So a tried skill can take the place of another key skill.
+
+### Which skills can the simulator try, and why do some change nothing?
+
+Every tool and ability O*NET lists for the matched roles (215), except ones the learner already has at Strong. Each is measured on its own through the matching engine.
+
+About 130 of them show no change. Only a role's 10 key skills count, and tools fill those slots by importance: 4.0 for O*NET "In Demand", 3.5 for "Hot Technology" only. Every role has at least 6 In Demand tools, so a Hot Technology tool such as MongoDB can't enter unless it counts through an equivalent. Giving these skills an effect means widening the key skills, which would change every learner's match.
 
 ### Is there an AI model anywhere in this?
 

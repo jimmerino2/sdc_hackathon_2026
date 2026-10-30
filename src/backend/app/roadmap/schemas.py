@@ -68,6 +68,7 @@ class RoadmapCreate(BaseModel):
     profile_id: UUID = Field(description="The profile_id returned from POST /profile")
     onet_code: str = Field(description="O*NET code, e.g. 15-2051.00")
     replace: bool = Field(False, description="Rebuild if a roadmap already exists (discards its progress)")
+    priority_skills: list[str] = Field(default_factory=list, max_length=30, description="Skill names to bring forward, e.g. from the What-If simulator; the plan's skills don't change, only the order of its sections and units")
 
 
 class RoadmapSummary(BaseModel):

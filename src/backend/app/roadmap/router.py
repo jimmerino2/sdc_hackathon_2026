@@ -57,9 +57,9 @@ def create_roadmap(body: RoadmapCreate, db: Client = Depends(get_supabase_admin)
     model (AI_MODEL_MODE) takes the role's skills with importance above 2, keeps the worthwhile ones, groups them
     into sections and units, and sets prerequisites; that takes about 10 seconds. For the tech roles the AI then writes the learner's Bonus
     Quests (one project per two sections, themed on their interests' SDGs), about 10 seconds more. Needs SUPABASE_SERVICE_KEY. Returns 404 if the profile
-    does not exist, and 409 if it already has a roadmap for the role unless replace=true.
+    does not exist, and 409 if it already has a roadmap for the role unless replace=true. With priority_skills, the sections and units holding those skills come first (needs migration 0023; ignored without it).
     """
-    return service.create_roadmap(db, str(body.profile_id), body.onet_code, body.replace)
+    return service.create_roadmap(db, str(body.profile_id), body.onet_code, body.replace, body.priority_skills)
 
 
 @router.post("/stream")
@@ -76,7 +76,7 @@ def create_roadmap_stream(body: RoadmapCreate, db: Client = Depends(get_supabase
 
     def work():
         try:
-            events.put({"type": "result", **service.create_roadmap(db, str(body.profile_id), body.onet_code, body.replace, on_event=events.put).model_dump(mode="json")})
+            events.put({"type": "result", **service.create_roadmap(db, str(body.profile_id), body.onet_code, body.replace, body.priority_skills, on_event=events.put).model_dump(mode="json")})
         except HTTPException as e:
             events.put({"type": "failed", "status": e.status_code, "message": str(e.detail)})
         except Exception as e:  # keeps the stream from hanging

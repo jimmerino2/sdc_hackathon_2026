@@ -10,7 +10,7 @@ from app.interests.schemas import Interest
 from app.interests.sdg import SDG_NAMES
 from app.interests.service import sdg_focus as focus_of
 from app.jobs import scoring
-from app.jobs.schemas import ContextRole, Engine, JobMatch, MatchParts, RecommendRequest, RecommendResponse, ScenarioOutlook, SdgReason
+from app.jobs.schemas import ContextRole, Engine, JobMatch, MatchBreakdown, MatchParts, RecommendRequest, RecommendResponse, ScenarioOutlook, SdgReason, SkillFit
 from app.supabase import get_client
 
 DATA_DIR = Path(__file__).resolve().parents[4] / "data" / "processed"
@@ -56,8 +56,8 @@ IMPLIES = {
 HORIZON = 12
 SCENARIOS = [("Rapid AI", "AI accelerates"), ("Baseline", "AI holds steady"), ("Slow", "AI slows down")]
 HEADLINE = "Rapid AI"  # the scenario behind JobMatch.match_percent and the order of the roles
-NOTE = ("Match combines your skills (35%), the role's outlook under the chosen AI future (35%), your interests (25%) and your "
-        "career stage (10%). Posting change is the sector trend carried over to the role (US data stands in for Malaysia) "
+NOTE = ("Match combines your skills (33%), the role's outlook under the chosen AI future (33%), your interests (24%) and your "
+        "career stage (10%). It helps you compare roles and doesn't predict your chances of being hired. Posting change is the sector trend carried over to the role (US data stands in for Malaysia) "
         "and is indicative, not a precise prediction.")
 
 
@@ -204,19 +204,40 @@ def _all_titles() -> list[dict]:
     return pd.read_csv(DATA_DIR / "onet_roles.csv")[["onet_code", "title"]].to_dict("records")
 
 
-def recommend(req: RecommendRequest, profile_id: str, stage: str = "under", horizon: int = HORIZON, interests: list[Interest] | None = None) -> RecommendResponse:
-    """Score every tech role for the candidate by formula (see scoring.py) and return the best TOP_JOBS, each with its
-    skills overlap, SDG links and the forecast and match under each AI scenario."""
-    picked = interests or []
-    start = time.perf_counter()
-    graded: dict[str, float] = {}
-    for s in [*req.skills, *req.top_skills]:
-        graded[s.name.lower()] = max(graded.get(s.name.lower(), 0.0), scoring.proficiency(s.score))
-    proficiency = _expand(graded)
-    have = {n for n, v in proficiency.items() if v > 0}
-    focus = focus_of(picked)
-    edu = scoring.education(stage)
+def graded(skills: list) -> dict[str, float]:
+    """The learner's own skills: name in lower case -> proficiency step, the best one if a skill is listed twice."""
+    out: dict[str, float] = {}
+    for s in skills:
+        out[s.name.lower()] = max(out.get(s.name.lower(), 0.0), scoring.proficiency(s.score))
+    return out
 
+
+def outlooks(horizon: int) -> dict[str, tuple[list[ScenarioOutlook], dict]]:
+    """Every matched role's forecasts, read once so a comparison can score the roles many times."""
+    return {code: _outlook(code, horizon) for code in TECH_ROLES}
+
+
+def _skill_fit(role: dict, own: dict[str, float], proficiency: dict[str, float]) -> list[SkillFit]:
+    """How each key skill counted, and through which of the learner's skills if not directly."""
+    total = sum(role["weights"].values()) or 1.0
+
+    def via(name: str) -> str | None:
+        key = name.lower()
+        if own.get(key) or not proficiency.get(key):
+            return None
+        linked = [*(n for f in FAMILIES if name in f for n in f if n != name), *(n for n, implied in IMPLIES.items() if name in implied)]
+        return next((n for n in linked if own.get(n.lower(), 0.0) == proficiency[key]), None)
+
+    return [SkillFit(name=n, importance_share=round(role["weights"][n] / total, 4), proficiency=proficiency.get(n.lower(), 0.0), via=via(n))
+            for n in role["key_skills"]]
+
+
+def score_roles(own: dict[str, float], stage: str, picked: list[Interest], forecasts: dict[str, tuple[list[ScenarioOutlook], dict]]) -> list[dict]:
+    """The one role-matching calculation: every tech role scored for these skills, best first. The cards, the saved
+    sets and the What-If simulator all come through here, so they can't disagree."""
+    proficiency = _expand(own)
+    have = {n for n, v in proficiency.items() if v > 0}
+    edu = scoring.education(stage)
     sdgs = _role_sdgs()
     roles = [{**_with_key_skills(r, have), "sdg": sdgs.get(r["onet_code"], [])} for r in _roles()]
     raw = {r["onet_code"]: scoring.interest_raw(picked, r["sdg"]) for r in roles}
@@ -225,27 +246,62 @@ def recommend(req: RecommendRequest, profile_id: str, stage: str = "under", hori
     for role in roles:
         skills = scoring.skills_fit(role["weights"], proficiency)
         interest = (raw[role["onet_code"]] / top_raw if top_raw else 0.0) if picked else None
-        outlook, exposure = _outlook(role["onet_code"], horizon)
-        outlook = [o.model_copy(update={"match_percent": round(100 * scoring.combine(edu, skills, scoring.outlook_score(o.change_pct), interest))}) for o in outlook]
+        outlook, exposure = forecasts[role["onet_code"]]
+        outlook = [o.model_copy(update={"match_percent": b["match_percent"], "breakdown": MatchBreakdown(**b)})
+                   for o in outlook for b in [scoring.breakdown(edu, skills, scoring.outlook_score(o.change_pct), interest)]]
         headline = next((o.match_percent for o in outlook if o.scenario == HEADLINE), None)
         if headline is None:  # no forecast for this role: a flat outlook (1x)
             headline = round(100 * scoring.combine(edu, skills, scoring.outlook_score(0), interest))
-        scored.append((headline, skills, interest, role, outlook, exposure))
+        scored.append({"headline": headline, "skills": skills, "interest": interest, "role": role, "outlook": outlook, "exposure": exposure,
+                       "owned": [n for n in role["key_skills"] if n.lower() in have], "missing": [n for n in role["key_skills"] if n.lower() not in have],
+                       "fit": _skill_fit(role, own, proficiency), "edu": edu})
+    scored.sort(key=lambda t: (-t["headline"], -t["skills"]))
+    for scenario, _ in SCENARIOS:
+        match = lambda t: next((o.match_percent for o in t["outlook"] if o.scenario == scenario), t["headline"])  # noqa: E731
+        for place, t in enumerate(sorted(scored, key=lambda t: -match(t)), start=1):  # stable: ties keep the headline order
+            t["outlook"] = [o.model_copy(update={"rank": place}) if o.scenario == scenario else o for o in t["outlook"]]
+    return scored
 
-    scored.sort(key=lambda t: (-t[0], -t[1]))
+
+def recommend(req: RecommendRequest, profile_id: str, stage: str = "under", horizon: int = HORIZON, interests: list[Interest] | None = None) -> RecommendResponse:
+    """Score every tech role for the candidate by formula (see scoring.py) and return the best TOP_JOBS, each with its
+    skills overlap, SDG links and the forecast and match under each AI scenario."""
+    picked = interests or []
+    start = time.perf_counter()
+    own = graded([*req.skills, *req.top_skills])
+    scored = score_roles(own, stage, picked, outlooks(horizon))
     icons = _role_icons()
     jobs = []
-    for rank, (headline, skills, interest, role, outlook, exposure) in enumerate(scored[:TOP_JOBS], start=1):
-        owned = [n for n in role["key_skills"] if n.lower() in have]
-        missing = [n for n in role["key_skills"] if n.lower() not in have]
+    for rank, t in enumerate(scored[:TOP_JOBS], start=1):
+        role, owned, missing, interest = t["role"], t["owned"], t["missing"], t["interest"]
         jobs.append(JobMatch(
-            rank=rank, onet_code=role["onet_code"], title=role["title"], icon=icons.get(role["onet_code"], DEFAULT_ICON), match_percent=headline,
-            match_parts=MatchParts(education=round(edu, 4), interests=None if interest is None else round(interest, 4), skills=round(skills, 4)),
+            rank=rank, onet_code=role["onet_code"], title=role["title"], icon=icons.get(role["onet_code"], DEFAULT_ICON), match_percent=t["headline"],
+            match_parts=MatchParts(education=round(t["edu"], 4), interests=None if interest is None else round(interest, 4), skills=round(t["skills"], 4)),
             skills_owned=len(owned), skills_total=len(role["key_skills"]), skills_you_have=owned,
             skills_to_learn=missing, description=_description(role, owned, missing),
-            outlook=outlook, sdg_reasons=_sdg_reasons(role, picked), **exposure,
+            outlook=t["outlook"], sdg_reasons=_sdg_reasons(role, picked), skill_fit=t["fit"], **t["exposure"],
         ))
     seconds = round(time.perf_counter() - start, 2)
-    return RecommendResponse(profile_id=profile_id, jobs=jobs, context=_context(horizon), horizon_months=horizon, sdg_focus=focus, note=NOTE,
-                             generated_at=datetime.now(timezone.utc).isoformat(),
-                             engine=Engine(source="formula", model="arithmetic", jobs_considered=len(roles), seconds=seconds))
+    return RecommendResponse(profile_id=profile_id, jobs=jobs, context=_context(horizon), horizon_months=horizon, sdg_focus=focus_of(picked), note=NOTE,
+                             generated_at=datetime.now(timezone.utc).isoformat(), stage=stage,
+                             engine=Engine(source="formula", model="arithmetic", jobs_considered=len(scored), seconds=seconds))
+
+
+def with_breakdowns(saved: RecommendResponse) -> RecommendResponse:
+    """Fill in what a set saved before the breakdown existed lacks, from the parts it kept. Saved scores are never
+    changed: a scenario whose breakdown doesn't come to its saved match (an older formula) is left without one."""
+    for job in saved.jobs:
+        parts = job.match_parts
+        for o in job.outlook:
+            if parts and o.breakdown is None:
+                b = scoring.breakdown(parts.education, parts.skills, scoring.outlook_score(o.change_pct), parts.interests)
+                if b["match_percent"] == o.match_percent:
+                    o.breakdown = MatchBreakdown(**b)
+    for scenario, _ in SCENARIOS:
+        match = lambda j: next((o.match_percent for o in j.outlook if o.scenario == scenario), None) or j.match_percent  # noqa: E731
+        for place, job in enumerate(sorted(saved.jobs, key=lambda j: (-match(j), j.rank)), start=1):
+            for o in job.outlook:
+                if o.scenario == scenario:
+                    o.rank = place
+    saved.note = NOTE
+    return saved

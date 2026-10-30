@@ -66,7 +66,7 @@ const hover = computed<HoverPoint[]>(() => {
     out.push({
       x: x(r.target_month), title: `${month(r.target_month)} · ${r.h}-month forecast`,
       rows: [{ label: 'Forecast', value: pct(r.forecast), color: 'var(--orange)' },
-        { label: 'Likely range (80%)', value: `${pct(r.low)}–${pct(r.high)}` },
+        { label: 'Historical error band', value: `${pct(r.low)}–${pct(r.high)}` },
         { label: 'Method', value: methodName(r.model), muted: true }],
       dots: [{ y: y(r.forecast), color: r.h === props.h ? 'var(--ink)' : 'var(--orange)' }],
     });
@@ -112,7 +112,7 @@ const nowX = computed(() => (lastObs.value ? x(addMonths(lastObs.value.month, 0)
         <line class="dash" :x1="x(lastObs.month)" :y1="y(lastObs.share_3m!)" :x2="x(r.target_month)" :y2="y(r.forecast)" />
         <line v-if="r.low != null && r.high != null" class="bar" :x1="x(r.target_month)" :x2="x(r.target_month)" :y1="y(r.low)" :y2="y(r.high)" />
         <circle :cx="x(r.target_month)" :cy="y(r.forecast)" :r="r.h === h ? 5.5 : 4" :class="{ on: r.h === h }">
-          <title>{{ month(r.target_month) }} ({{ r.h }} months ahead): {{ pct(r.forecast) }}, likely {{ pct(r.low) }} to {{ pct(r.high) }}</title>
+          <title>{{ month(r.target_month) }} ({{ r.h }} months ahead): {{ pct(r.forecast) }}, error band {{ pct(r.low) }} to {{ pct(r.high) }}</title>
         </circle>
       </g>
     </g>

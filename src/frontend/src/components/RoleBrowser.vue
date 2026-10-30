@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import Icon from './Icon.vue';
+import InfoDialog from './InfoDialog.vue';
 import PositionChart from './PositionChart.vue';
 import RoleList from './RoleList.vue';
 import { scenarios } from '../data/flows';
 import { backendScenario } from '../api/forecast';
+import { fetchMethodology, type Methodology } from '../api/methodology';
 import type { ContextRole, JobMatch } from '../api/jobs';
 import type { RoadmapSummary } from '../api/roadmap';
 import { useFlow } from '../state';
@@ -25,6 +27,8 @@ const props = defineProps<{
   roadmaps?: Record<string, RoadmapSummary>;
   /** Always the list: no Cards / Chart toggle. */
   cardsOnly?: boolean;
+  /** The career stage behind the education part of each match. */
+  stage?: string | null;
 }>();
 const emit = defineEmits<{ select: [code: string] }>();
 
@@ -33,6 +37,8 @@ const { metrics, metricTarget, pct, ranked, rankColor } = useScenarioProbabiliti
 /** The 3 AI-future scenarios, most likely first. */
 const rankedScenarios = computed(() => ranked.value.map((k) => scenarios.find((s) => s.key === k)!));
 const view = computed(() => (props.cardsOnly ? 'cards' : state.value.rolesView));
+const assumptions = ref<Methodology['scenarios'] | null>(null);
+onMounted(() => fetchMethodology().then((m) => { assumptions.value = m.scenarios; }).catch(() => {}));
 const sIcon = { accelerates: 'tup', steady: 'arrow', slows: 'tdown' } as const;
 
 function outlook(job: JobMatch) {
@@ -64,6 +70,11 @@ const heading = computed(() => {
           <Icon :name="sIcon[s.key]" :size="18" /> {{ s.label }}
           <small v-if="pct(s.key) != null" class="tab-pct">{{ pct(s.key) }}%</small>
         </button>
+        <InfoDialog v-if="assumptions" title="What the three AI futures mean">
+          <p>{{ assumptions.summary }}</p>
+          <ul><li v-for="f in assumptions.futures" :key="f.scenario"><b>{{ f.tab }}</b>: {{ f.effect_12m == null ? 'Not available' : `${f.effect_12m > 0 ? '+' : ''}${Math.round(f.effect_12m * 100)} pp` }} per unit of AI exposure over 12 months</li></ul>
+          <p class="muted">{{ assumptions.chances }}</p>
+        </InfoDialog>
       </div>
       <div v-if="!cardsOnly" class="view" role="group" aria-label="Layout">
         <button :class="{ on: state.rolesView === 'cards' }" :aria-pressed="state.rolesView === 'cards'" @click="state.rolesView = 'cards'">Cards</button>
@@ -112,7 +123,7 @@ const heading = computed(() => {
           >{{ m.label }}</button>
         </div>
       </div>
-      <RoleList :jobs="jobs" :selected="pick ? selected : undefined" :roadmaps="roadmaps" @select="emit('select', $event)" />
+      <RoleList :jobs="jobs" :selected="pick ? selected : undefined" :roadmaps="roadmaps" :stage="stage" @select="emit('select', $event)" />
     </div>
     <p v-if="note && view === 'chart'" class="note">{{ note }}</p>
   </div>
@@ -120,7 +131,7 @@ const heading = computed(() => {
 
 <style scoped>
 .bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
-.tabs { display: flex; gap: 10px; flex-wrap: wrap; }
+.tabs { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .view { margin-left: auto; display: flex; padding: 4px; border-radius: 14px; background: var(--line); }
 .view button { padding: 8px 16px; border-radius: 10px; font-weight: 900; font-size: 13px; color: var(--muted); }
 .view button.on { background: #fff; color: var(--ink); box-shadow: 0 2px 0 rgba(30,30,30,.1); }

@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import Bubble from '../components/Bubble.vue';
 import ChartHover, { type HoverPoint } from '../components/ChartHover.vue';
+import ForecastInfo from '../components/ForecastInfo.vue';
 import Icon from '../components/Icon.vue';
 import InfoDialog from '../components/InfoDialog.vue';
 import ShareChart from '../components/occ/ShareChart.vue';
@@ -11,6 +12,7 @@ import {
   type AdoptionResponse, type AsOfRow, type EmergingResponse, type OccEvaluation, type OccMeta, type SignalRow,
   type SignalsResponse, type SkillDetail, type SkillRow, type SkillsResponse,
 } from '../api/occupational';
+import { fetchMethodology, type Methodology } from '../api/methodology';
 import { METHOD_NAMES, STATUS_TEXT, TAXONOMY_TEXT, day, growth, methodName, month, pct, pp, scenarioShare, trendOf } from '../occupational/format';
 
 /** Occupational forecasting: skill demand, emerging skills and AI adoption per country x occupation.
@@ -61,6 +63,9 @@ async function loadMeta() {
 watch(occupation, () => {
   if (!countries.value.some((c) => c.country === country.value)) country.value = countries.value[0]?.country ?? 'US';
 });
+
+const emergingInfo = ref<Methodology['emerging']>(null);
+fetchMethodology().then((m) => { emergingInfo.value = m.emerging; }).catch(() => {});
 
 // ---- skill demand ----
 const skills = ref<SkillsResponse | null>(null);
@@ -322,7 +327,7 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
                   <InfoDialog :title="`How the ${h}-month forecast tested`">
                     <p>Before showing a forecast, each method forecast past months it hadn’t seen. Its average miss is compared with simply assuming <b>“no change”</b> from the last 3 months.</p>
                     <p v-if="cellServed && cellNaive">For {{ occName }} in {{ countryName(country) }} ({{ cellServed.n }} past forecasts): {{ methodName(cellServed.method) }} was off by <b>{{ cellServed.mae_pp.toFixed(2) }} pp</b> on average; “no change” by <b>{{ cellNaive.mae_pp.toFixed(2) }} pp</b>.</p>
-                    <p v-if="headline">Across all countries and occupations: {{ methodName(headline.served) }} was off by {{ headline.test_mae_pp?.toFixed(2) }} pp vs {{ headline.persistence_test_mae_pp?.toFixed(2) }} pp for “no change”. The 80% likely ranges held {{ pct(headline.coverage_80, 0) }} of actual values.</p>
+                    <p v-if="headline">Across all countries and occupations: {{ methodName(headline.served) }} was off by {{ headline.test_mae_pp?.toFixed(2) }} pp vs {{ headline.persistence_test_mae_pp?.toFixed(2) }} pp for “no change”. The 80% error bands held {{ pct(headline.coverage_80, 0) }} of actual values.</p>
                     <p class="muted">pp = percentage points: a share going from 10% to 12% is +2 pp.</p>
                   </InfoDialog>
                 </p>
@@ -392,15 +397,17 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
                   <div class="nums">
                     <div><span>Last 12 months</span><b>{{ pct(selRow.share_12m) }}</b><small>{{ selRow.count_12m }} of {{ selRow.ads_12m }} ads</small></div>
                     <div><span>Last 3 months</span><b>{{ pct(selRow.last_share_3m) }}</b><small>{{ selRow.last_count_3m }} of {{ selRow.last_ads_3m }}</small></div>
-                    <div><span>{{ month(selRow.target_month) }} forecast</span><b>{{ pct(selRow.forecast) }}</b><small>likely {{ pct(selRow.low) }}–{{ pct(selRow.high) }}</small></div>
+                    <div><span>{{ month(selRow.target_month) }} forecast</span><b>{{ pct(selRow.forecast) }}</b><small>error band {{ pct(selRow.low) }}–{{ pct(selRow.high) }}</small></div>
                   </div>
                 </div>
                 <ShareChart v-if="detail" :history="detail.history" :forecast="detail.forecast" :backtest="servedBacktest"
                             :from="from" :h="h" :label="`${selRow.skill_name}: share of ${occName} ads in ${countryName(country)}, history and forecast`" />
                 <div v-else class="skel chart-skel" />
-                <p class="key"><span class="k-line" /> share of ads, 3-month window <span class="k-dot" /> forecast <span class="k-bar" /> likely range (80%)
+                <p class="key"><span class="k-line" /> share of ads, 3-month window <span class="k-dot" /> forecast <span class="k-bar" /> historical error band (80%)
                   <span class="k-ring" /> earlier test forecasts at {{ h }} months <span class="k-vol" /> ads per month
                   <span class="hint">Hover the chart for values</span></p>
+                <p class="small muted">Share of sampled Hacker News job ads mentioning {{ selRow.skill_name }}, not the share of all jobs or of Malaysian vacancies. Based on {{ selRow.count_12m }} of {{ selRow.ads_12m }} ads in the last 12 months. Forecast issued {{ month(meta.made_at.slice(0, 7)) }} from data to {{ month(selRow.origin_month) }}.</p>
+                <ForecastInfo id="skill_demand" />
                 <p v-if="!selRow.backtested" class="warn small"><Icon name="shield-alert" :size="14" /> Found by the emerging-skill detector using today’s data, so it was not part of the backtest; its forecast uses the method chosen for all skills.</p>
                 <p class="small muted method-line">
                   <span class="tag" :class="selRow.evidence === 'high' ? 'ok' : selRow.evidence === 'low' ? 'new' : ''">{{ evidenceLabel(selRow.evidence) }}</span>
@@ -445,7 +452,7 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
                       <ul>
                         <li><b>12-month share</b>: share of ads naming the skill over the last year. <b>Ads</b> is how many.</li>
                         <li><b>Last 3 months</b>: the most recent share.</li>
-                        <li><b>Forecast</b>: the expected share for the 3 months ending {{ month(latestRows[0]?.target_month) }}, with an 80% <b>likely range</b>.</li>
+                        <li><b>Forecast</b>: the expected share for the 3 months ending {{ month(latestRows[0]?.target_month) }}, with an 80% <b>historical error band</b>.</li>
                         <li><b>Direction</b>: rising or falling when the forecast differs from the last 3 months by at least {{ meta?.rules.direction_label_pp ?? 1 }} pp, otherwise flat.</li>
                         <li><b>Evidence</b>: how many ads the numbers rest on (high, medium, low).</li>
                         <li><b>Not in O*NET tech</b>: not among O*NET’s listed technology skills (tools and software), which can hint at a newer skill.</li>
@@ -462,7 +469,7 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
                 <p class="small muted">{{ shownRows.length }} skills · click a row to open it above</p>
                 <div class="scroll tall">
                   <table class="tbl click">
-                    <thead><tr><th>Skill</th><th>12-month share</th><th>Ads</th><th>Last 3 months</th><th>Forecast, {{ h }} mo</th><th>Likely range</th><th>Direction</th><th>Evidence</th></tr></thead>
+                    <thead><tr><th>Skill</th><th>12-month share</th><th>Ads</th><th>Last 3 months</th><th>Forecast, {{ h }} mo</th><th>Error band</th><th>Direction</th><th>Evidence</th></tr></thead>
                     <tbody>
                       <tr v-for="r in shownRows" :key="r.skill_id" :class="{ on: r.skill_id === selected }" tabindex="0"
                           @click="selected = r.skill_id" @keydown.enter="selected = r.skill_id">
@@ -498,6 +505,11 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
                 </InfoDialog>
               </h2>
               <p class="small muted">Ranked by how much each skill has <b>at least</b> grown, so small noisy jumps don’t win. Click a row for example ads.</p>
+              <details v-if="emergingInfo" class="notes">
+                <summary>What counts as emerging</summary>
+                <p class="small"><b>{{ emergingInfo.kind }}.</b> {{ emergingInfo.rule }} Source: {{ emergingInfo.source }}.</p>
+                <ul class="lim small"><li>{{ emergingInfo.strong }}</li><li>{{ emergingInfo.weak }}</li><li>{{ emergingInfo.history }}</li></ul>
+              </details>
               <div class="chips">
                 <button v-for="f in ([['growing', 'Clearly growing'], ['not_onet', 'Not in O*NET for this occupation'], ['discovered', 'Found in ad text'], ['all', 'All']] as const)" :key="f[0]"
                         type="button" :class="{ on: emFilter === f[0] }" @click="emFilter = f[0]">{{ f[1] }}</button>
@@ -631,7 +643,7 @@ const healthOk = (s?: string) => s === 'ok' || s === 'cache_only';
                                 <span>{{ b.label }}</span><i :class="b.cls" :style="{ width: b.w + '%' }" /><b>{{ pct(b.v) }}</b>
                               </div>
                             </div>
-                            <p class="small muted">The pass-through is your assumption, not an estimate: historically this kind of evidence explained little of the next {{ signals.horizon }} months’ change. The job-ad forecast’s likely range is {{ pct(r.low) }}–{{ pct(r.high) }}.</p>
+                            <p class="small muted">The pass-through is your assumption, not an estimate: historically this kind of evidence explained little of the next {{ signals.horizon }} months’ change. The job-ad forecast’s error band is {{ pct(r.low) }}–{{ pct(r.high) }}.</p>
                           </div>
                         </div>
                       </td></tr>

@@ -2,8 +2,8 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import Bubble from './Bubble.vue';
 import ChartWatcher from './ChartWatcher.vue';
+import ForecastInfo from './ForecastInfo.vue';
 import Icon from './Icon.vue';
-import SourceStamp from './SourceStamp.vue';
 import { scenarios, type ScenarioKey } from '../data/flows';
 import { skillLabel } from '../data/skills';
 import { useFlow } from '../state';
@@ -181,6 +181,12 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
             <svg class="axis" viewBox="0 0 440 16" aria-hidden="true">
               <text v-for="a in axis" :key="a.x" :x="a.x" y="11" font-size="9" font-weight="900" text-anchor="middle" :fill="a.today ? '#1e1e1e' : '#8a8782'">{{ a.today ? `TODAY · ${a.label}` : a.label }}</text>
             </svg>
+            <p class="note">
+              Change in {{ title }} job postings vs today: the sector’s recent pace, shifted by how AI-exposed this role is under each scenario. Shaded band is the historical error band for the selected future: how far past forecasts missed, not a confidence interval.
+              {{ meta?.is_proxy_for_malaysia ? 'Uses US postings data as a stand-in for Malaysia. ' : '' }}Indicative, not a prediction.
+              <template v-if="meta"> Issued {{ meta.data_as_of ?? 'date not available' }}; last observation {{ meta.forecast_from }}.</template>
+            </p>
+            <ForecastInfo id="role_postings" class="fi-gap" />
           </template>
         </div>
       </section>
@@ -213,8 +219,6 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
         </button>
         <p v-if="!compact" class="hint">Tap a future to see how {{ title }} fares in it.</p>
       </section>
-
-      <SourceStamp cards :ids="['indeed_postings', 'indeed_ai_tracker']" />
 
       <section v-if="job?.sdg_reasons?.length" class="sdg-row">
         <p class="eyebrow">Why it was suggested</p>
@@ -296,6 +300,8 @@ h1 { font-size: 30px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .state { margin: 18px 0 6px; font-size: 13px; font-weight: 700; color: var(--muted); }
 .chart > svg.axis { margin-top: 4px; }
 .note { margin-top: 14px; font-size: 11px; color: var(--muted); font-weight: 600; line-height: 1.4; }
+.left, .chart { min-width: 0; }
+.fi-gap { margin-top: 12px; }
 .right { display: flex; flex-direction: column; gap: 14px; }
 .bub { margin-bottom: 8px; flex-direction: row-reverse; }
 .sc { align-items: center; } .sc h3 { margin-top: 4px; font-size: 17px; }
@@ -310,7 +316,7 @@ h1 { font-size: 30px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .sc .tick { align-self: center; }
 .sc p { font-size: 13px; line-height: 1.35; }
 .hint { font-size: 12px; font-weight: 700; color: var(--muted); }
-.sdg-row, .src-section { grid-column: 1 / -1; margin-top: 12px; }
+.sdg-row { grid-column: 1 / -1; margin-top: 12px; }
 .sdg-group { margin-top: 6px; }
 .sdg-group + .sdg-group { margin-top: 26px; }
 .sdg-title { font-size: 20px; font-weight: 900; margin: 4px 0 14px; line-height: 1.2; }

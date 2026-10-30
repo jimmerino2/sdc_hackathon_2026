@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import Bubble from '../components/Bubble.vue';
+import CareerSimulator from '../components/CareerSimulator.vue';
 import Icon from '../components/Icon.vue';
 import RoleBrowser from '../components/RoleBrowser.vue';
 import { fetchRecommendations, fetchSuggested, JobsError, type Recommendations } from '../api/jobs';
@@ -11,6 +12,9 @@ import { useFlow } from '../state';
 import { go } from '../router';
 
 const router = useRouter();
+const route = useRoute();
+/** The roles, or the What-If simulator on them; in the address so it can be linked to and survives a refresh. */
+const simulating = computed(() => route.query.view === 'simulate');
 const { state } = useFlow();
 const status = ref<'loading' | 'done' | 'empty' | 'error'>('loading');
 const error = ref('');
@@ -88,6 +92,11 @@ onMounted(load);
         </button>
       </div>
 
+      <div v-if="status === 'done'" class="switch" role="group" aria-label="View">
+        <RouterLink :to="{ ...go('suggested'), query: {} }" :class="{ on: !simulating }" :aria-current="!simulating ? 'page' : undefined">Your matches</RouterLink>
+        <RouterLink :to="{ ...go('suggested'), query: { view: 'simulate' } }" :class="{ on: simulating }" :aria-current="simulating ? 'page' : undefined"><Icon name="sparkles" :size="15" /> What-if simulator</RouterLink>
+      </div>
+
       <div v-if="regenerating" class="banner" role="status">
         <Bubble :size="48">Working out your roles again with today’s forecasts. This can take up to half a minute…</Bubble>
       </div>
@@ -111,6 +120,8 @@ onMounted(load);
         <RouterLink :to="go('pathway')" class="btn btn-secondary">Back to my roadmap</RouterLink>
       </div>
 
+      <CareerSimulator v-else-if="suggested && simulating" />
+
       <RoleBrowser
         v-else-if="suggested"
         :class="{ dim: regenerating }"
@@ -118,6 +129,7 @@ onMounted(load);
         :context="suggested.context"
         :note="suggested.note"
         :roadmaps="roadmaps"
+        :stage="suggested.stage"
         :selected="state.chosenRoleId"
         chart-hint="Tap one to open it."
         @select="openRole"
@@ -131,6 +143,9 @@ onMounted(load);
 .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
 .eyebrow { font-size: 11px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--orange); }
 .when { margin-top: 4px; font-size: 12px; font-weight: 700; color: var(--muted); }
+.switch { display: inline-flex; padding: 4px; border-radius: 14px; background: var(--line); margin-bottom: 16px; max-width: 100%; }
+.switch a { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 10px; font-weight: 900; font-size: 13px; color: var(--muted); }
+.switch a.on { background: #fff; color: var(--ink); box-shadow: 0 2px 0 rgba(30, 30, 30, .1); }
 .regen { display: inline-flex; align-items: center; gap: 8px; }
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }

@@ -31,6 +31,8 @@ interface FlowState {
   /** Skills already saved on the profile, when the user came back by logging in. */
   savedSkills: SkillScore[];
   roadmap: { status: 'idle' | 'loading' | 'done' | 'error'; data: Roadmap | null; error: string | null };
+  /** Skills from the What-If simulator to bring forward if the roadmap is built now. */
+  roadmapPriority: string[];
 }
 
 const store = reactive<Record<PersonaKey, FlowState>>({
@@ -57,6 +59,7 @@ function init(k: PersonaKey): FlowState {
     savedSkills: [],
     suggested: null,
     roadmap: { status: 'idle', data: null, error: null },
+    roadmapPriority: [],
   };
 }
 
@@ -65,8 +68,9 @@ export function resetPersona(k: PersonaKey) {
 }
 
 /** Point the pathway at one role's roadmap. It loads (or is built) the next time the pathway or the building screen opens. */
-export function openRoadmap(s: FlowState, onetCode: string) {
+export function openRoadmap(s: FlowState, onetCode: string, prioritySkills: string[] = []) {
   s.chosenRoleId = onetCode;
+  s.roadmapPriority = prioritySkills;
   s.roadmap = { status: 'idle', data: null, error: null };
 }
 
@@ -128,7 +132,7 @@ export async function loadRoadmap(s: FlowState, onEvent?: (event: RoadmapEvent) 
       markOnboarded();
       return;
     }
-    s.roadmap = { status: 'done', data: await ensureRoadmap(s.profileId, s.chosenRoleId, onEvent), error: null };
+    s.roadmap = { status: 'done', data: await ensureRoadmap(s.profileId, s.chosenRoleId, onEvent, s.roadmapPriority), error: null };
     markOnboarded();
   } catch (e) {
     console.error(e);

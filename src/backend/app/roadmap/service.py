@@ -242,12 +242,35 @@ def plan_from_rows(rows: list[dict], titles: list[str] | None = None) -> Plan:
     ]
 
 
-def _existing_plan(db: Client, onet_code: str) -> Plan | None:
-    """The plan of the newest roadmap anyone has built for this role, or None. A role's plan depends only on the
-    role, so it can be copied instead of asking the model again. Any read problem just means no copy."""
+def prioritised(plan: Plan, first: set[str]) -> Plan:
+    """The same plan with the units holding `first` (skill_ids) at the front of their section, and the sections holding
+    them at the front of the plan. Prerequisites stay inside a unit, so moving whole units can't break them."""
+    def has(unit: list[PlanNode]) -> bool:
+        return any(n.skill_id in first for n in unit)
+
+    moved = [PlanSection(title=s.title, units=sorted(s.units, key=lambda u: not has(u))) for s in plan]
+    return sorted(moved, key=lambda s: not any(has(u) for u in s.units))
+
+
+def _has_priority_column(db: Client) -> bool:
+    """Whether migration 0023 is in. Without it a roadmap can't be marked, so its order must not be changed."""
     try:
-        newest = (db.table("roadmap").select("roadmap_id,section_titles").eq("onet_code", onet_code)
-                  .order("created_at", desc=True).limit(1).execute().data)
+        db.table("roadmap").select("priority_skills").limit(1).execute()
+        return True
+    except Exception as e:
+        print(f"roadmap.priority_skills unavailable ({type(e).__name__}); priority skills ignored")
+        return False
+
+
+def _existing_plan(db: Client, onet_code: str, markable: bool = False) -> Plan | None:
+    """The plan of the newest roadmap anyone has built for this role, or None. A role's plan depends only on the
+    role, so it can be copied instead of asking the model again. Any read problem just means no copy. A roadmap
+    arranged around one learner's priority skills is skipped, so their order never reaches anyone else."""
+    try:
+        query = db.table("roadmap").select("roadmap_id,section_titles").eq("onet_code", onet_code)
+        if markable:
+            query = query.eq("priority_skills", "{}")
+        newest = query.order("created_at", desc=True).limit(1).execute().data
         if not newest:
             return None
         rows = (db.table("roadmap_detail").select("skill_id,section,unit,previous_nodes,previous_nodes_required")
@@ -302,13 +325,14 @@ def detail_rows(plan: Plan, roadmap_id: str, onet_code: str, done: dict[str, str
     return details
 
 
-def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool, on_event: Callable[[dict], None] | None = None) -> Roadmap:
+def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool, priority_skills: list[str] | None = None, on_event: Callable[[dict], None] | None = None) -> Roadmap:
     """Store a roadmap for this profile and return it.
 
     The model plans it for this learner: it sees their skills and stage, so it spends the plan on their gaps. Skills
     they already know well start completed (decided here from their profile, not left to the model), and a rebuild
     keeps the progress they had made. If the model can't be reached, the newest roadmap anyone has for the role is
     copied instead, so the page still works. A tech role's roadmap then gets its Bonus Quests, written for this learner.
+    priority_skills (names) only change the order.
 
     on_event hears the progress for a page to show: `role` (title, onet_code), `plan` (reused: the plan was copied, not
     planned for this learner; already_known: how many skills start completed) and `roadmap` (the stored roadmap, before the
@@ -336,11 +360,12 @@ def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool, o
     levels = learner_levels(profile)
     have = {s["skill_id"]: levels[s["skill_name"].lower()] for s in relevant if levels.get(s["skill_name"].lower())}
     learner = {"stage": profile.stage, "have": have}
+    markable = _has_priority_column(db)
     try:
         plan, reused = planner.build_plan(role["title"], role["description"], relevant, learner), False
     except HTTPException as e:
         # The model is down or gave nothing usable: fall back to a copy of someone's plan rather than no roadmap.
-        plan = _existing_plan(db, onet_code)
+        plan = _existing_plan(db, onet_code, markable)
         if plan is None:
             raise e
         reused = True
@@ -357,6 +382,11 @@ def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool, o
     known = sum(1 for sid in done if sid in in_plan)
     emit({"type": "plan", "reused": reused, "already_known": known})
 
+    priority = sorted(set(priority_skills or [])) if markable else []
+    if priority:
+        rows = db.table("onet_role_skills").select("skill_id").eq("onet_code", onet_code).in_("skill_name", priority).execute().data
+        plan = prioritised(plan, {r["skill_id"] for r in rows})
+
     # One roadmap row per role; its section/unit are the current step, starting at the first unit.
     roadmap_id = str(uuid.uuid4())
     details = detail_rows(plan, roadmap_id, onet_code, done)
@@ -364,6 +394,8 @@ def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool, o
     section, unit = min(open_units) if open_units else (len(plan), len(plan[-1].units))
     roadmap = {"roadmap_id": roadmap_id, "profile_id": profile_id, "onet_code": onet_code, "section": section, "unit": unit,
                "status": "available" if open_units else "completed", "section_titles": [s.title for s in plan]}
+    if priority:
+        roadmap["priority_skills"] = priority
 
     # No transaction support in the client: if a write fails, remove the partial roadmap.
     mine(db.table("roadmap").delete()).execute()  # details go with it (on delete cascade)

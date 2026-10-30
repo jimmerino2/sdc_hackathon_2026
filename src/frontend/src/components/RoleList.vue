@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import Icon from './Icon.vue';
 import SourceStamp from './SourceStamp.vue';
+import MatchWhy from './MatchWhy.vue';
 import { backendScenario } from '../api/forecast';
 import { matchPercent, type JobMatch } from '../api/jobs';
 import type { RoadmapSummary } from '../api/roadmap';
@@ -16,6 +17,8 @@ const props = defineProps<{
   selected?: string | null;
   /** The profile's roadmaps by role. When given, each row shows its role's roadmap status. */
   roadmaps?: Record<string, RoadmapSummary>;
+  /** The career stage behind the education part. */
+  stage?: string | null;
 }>();
 const emit = defineEmits<{ select: [code: string] }>();
 
@@ -53,9 +56,8 @@ const demandTooltip = 'Forecasted hiring demand: (+) means job openings are grow
 <template>
   <div>
     <div class="list" :role="picking ? 'radiogroup' : undefined" aria-label="Roles that fit you">
+      <div v-for="(j, idx) in ordered" :key="j.onet_code" class="item">
       <button
-        v-for="(j, idx) in ordered"
-        :key="j.onet_code"
         type="button"
         :role="picking ? 'radio' : undefined"
         class="option role"
@@ -97,14 +99,22 @@ const demandTooltip = 'Forecasted hiring demand: (+) means job openings are grow
         </span>
         <Icon v-if="!picking" name="arrow" :size="18" class="go" />
       </button>
+      <MatchWhy :job="j" :scenario="scenarioName" :stage="stage" />
+      </div>
     </div>
-    <p class="note">Percentages are the forecast change in job postings {{ by }}. Indicative, not a prediction.</p>
+    <p class="note">
+      The arrow shows forecast job ads {{ by }}.
+    </p>
     <SourceStamp />
   </div>
 </template>
 
 <style scoped>
 .list { display: flex; flex-direction: column; gap: 12px; }
+/* drop-shadow follows the outline of the row and its sub card together, so the shadow steps in around the sub card. */
+.item { display: flex; flex-direction: column; filter: drop-shadow(0 4px 0 var(--line-strong)); }
+.item:has(.selected) { filter: drop-shadow(0 4px 0 var(--orange)); }
+.item .role { z-index: 1; box-shadow: none; }
 .role { align-items: flex-start; padding: 16px 18px; }
 /* Match ring: the filled arc is the match %. */
 .score {

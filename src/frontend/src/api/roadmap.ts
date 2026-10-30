@@ -176,15 +176,16 @@ async function readBuild(res: Response, onEvent?: (event: RoadmapEvent) => void)
  * This profile's roadmap for the role, built by the AI model first if it doesn't exist yet (that takes a little while).
  * onEvent hears the build's progress, and `building` first when there is something to build; with a roadmap already
  * there it never fires. A server that can't stream (an older one) gets the plain request instead.
+ * prioritySkills only matter for a new roadmap: an existing one and its progress are left as they are.
  */
-export async function ensureRoadmap(profileId: string, onetCode: string, onEvent?: (event: RoadmapEvent) => void): Promise<Roadmap> {
+export async function ensureRoadmap(profileId: string, onetCode: string, onEvent?: (event: RoadmapEvent) => void, prioritySkills: string[] = []): Promise<Roadmap> {
   const existing = await getRoadmap(profileId, onetCode);
   if (existing) return existing;
   onEvent?.({ type: 'building' });
   const init: RequestInit = {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ profile_id: profileId, onet_code: onetCode }),
+    body: JSON.stringify({ profile_id: profileId, onet_code: onetCode, priority_skills: prioritySkills }),
   };
   let res = await call('/stream', init);
   if (res.status === 404 || res.status === 405) res = await call('', init);

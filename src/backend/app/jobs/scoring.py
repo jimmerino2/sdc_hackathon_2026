@@ -1,6 +1,9 @@
 """How well a role fits a learner, worked out with arithmetic only.
 
-    score = 0.10 * education + 0.25 * interests + 0.35 * skills + 0.35 * outlook      (each part 0-1)
+    score = (0.10 * education + 0.25 * interests + 0.35 * skills + 0.35 * outlook) / 1.05      (each part 0-1)
+
+The weights add up to 1.05, so the sum is divided by them: the shares that really apply are education 9.5%, interests
+23.8%, skills 33.3% and outlook 33.3%. Anything shown to a learner must use those shares (see `shares`).
 
 education  the learner's career stage: studying 1, fresh graduate 1.5, working 2.5, over the highest (2.5). The
            same for every role in the learner's job group (only tech roles are matched for now), so it lifts all of
@@ -70,9 +73,33 @@ def outlook_score(change_pct: float) -> float:
     return (outlook_multiplier(change_pct) - MULT_MIN) / (MULT_MAX - MULT_MIN)
 
 
+def _parts(education_: float, skills: float, outlook: float, interests: float | None) -> list[tuple[str, float, float]]:
+    """(part, its weight, its score). Without interests (None) that part is left out."""
+    parts = [("skills", W_SKILLS, skills), ("outlook", W_OUTLOOK, outlook)]
+    if interests is not None:
+        parts.append(("interests", W_INTERESTS, interests))
+    return [*parts, ("education", W_EDUCATION, education_)]
+
+
+def shares(has_interests: bool = True) -> dict[str, float]:
+    """The share of the score each part really carries: its weight over the sum of the weights in use. Adds up to 1."""
+    parts = _parts(0, 0, 0, 0 if has_interests else None)
+    total = sum(w for _, w, _ in parts)
+    return {name: w / total for name, w, _ in parts}
+
+
+def breakdown(education_: float, skills: float, outlook: float, interests: float | None) -> dict:
+    """How a score is made up. `points` are each part's contribution to `raw_score` (they add up to it), and
+    match_percent is what the page shows: raw_score ** CURVE as a whole percent, the same number as combine()."""
+    parts = _parts(education_, skills, outlook, interests)
+    total = sum(w for _, w, _ in parts)
+    components = [{"key": name, "score": round(v, 4), "weight": w, "share": round(w / total, 4), "points": round(w * v / total, 4)}
+                  for name, w, v in parts]
+    raw = sum(w * v for _, w, v in parts) / total
+    return {"components": components, "raw_score": round(raw, 4), "curve": CURVE, "match_percent": round(100 * raw ** CURVE)}
+
+
 def combine(education_: float, skills: float, outlook: float, interests: float | None) -> float:
     """The weighted score, curved up, 0-1. Without interests (None) the other parts share the whole 100%."""
-    parts = [(W_EDUCATION, education_), (W_SKILLS, skills), (W_OUTLOOK, outlook)]
-    if interests is not None:
-        parts.append((W_INTERESTS, interests))
-    return (sum(w * v for w, v in parts) / sum(w for w, _ in parts)) ** CURVE
+    parts = _parts(education_, skills, outlook, interests)
+    return (sum(w * v for _, w, v in parts) / sum(w for _, w, _ in parts)) ** CURVE

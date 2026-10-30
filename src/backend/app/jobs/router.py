@@ -6,8 +6,8 @@ from supabase import Client
 
 from app.deps import get_supabase_admin
 from app.interests import service as interests_service
-from app.jobs import reasons, service
-from app.jobs.schemas import InterestReason, RecommendRequest, RecommendResponse
+from app.jobs import reasons, service, simulator
+from app.jobs.schemas import InterestReason, RecommendRequest, RecommendResponse, SimulateRequest, SimulateResponse
 from app.profile import service as profiles
 from app.resume.vocab import TOP_N
 
@@ -70,4 +70,25 @@ def suggested(profile_id: UUID = Query(description="The profile_id returned from
         raise HTTPException(e.status_code, e.message)
     if not saved:
         raise HTTPException(404, "No roles have been suggested for this profile yet.")
-    return RecommendResponse(**saved)
+    return service.with_breakdowns(RecommendResponse(**saved))
+
+
+@router.post("/simulate", response_model=SimulateResponse)
+def simulate(body: SimulateRequest, db: Client = Depends(get_supabase_admin)):
+    """What if the learner had these skills? Runs the same matching as GET /jobs/recommend on the profile as it is and on a copy with the skills added, and returns both under every AI scenario, why each role moved, and which skills would help most. Nothing is saved: the profile and its suggested roles are left alone. 404 if there is no such profile; 409 if it has no skills; 422 if a skill isn't one the roles use."""
+    try:
+        profile = profiles.get_profile(db, body.profile_id)
+    except profiles.ProfileError as e:
+        raise HTTPException(e.status_code, e.message)
+    skills = [s for s in profile.skills if s.score > 0]
+    if not skills:
+        raise HTTPException(409, "That profile has no skills yet. Add some with PATCH /profile/{profile_id}.")
+    try:
+        picked = interests_service.by_ids(db, profile.interests)
+    except interests_service.InterestError as e:
+        print(f"Interests not used: {e}")
+        picked = []
+    try:
+        return simulator.simulate(str(body.profile_id), skills, profile.stage, picked, body.skills, body.horizon)
+    except simulator.UnknownSkill as e:
+        raise HTTPException(422, f"Not a skill the roles use: {e}")

@@ -4,6 +4,7 @@ import Bubble from '../components/Bubble.vue';
 import CapabilityChart from '../components/CapabilityChart.vue';
 import CapabilityMethod from '../components/CapabilityMethod.vue';
 import CapabilityTrend from '../components/CapabilityTrend.vue';
+import ForecastInfo from '../components/ForecastInfo.vue';
 import LlmTriedCard from '../components/LlmTriedCard.vue';
 import Icon from '../components/Icon.vue';
 import InfoDialog from '../components/InfoDialog.vue';
@@ -33,6 +34,8 @@ interface Card {
   /** What one series is, in words, for the selected unit's name. */
   series?: (name: string) => string;
   minutes?: boolean;
+  /** Units are country codes. */
+  countries?: boolean;
 }
 
 const cards: Card[] = [
@@ -42,6 +45,13 @@ const cards: Card[] = [
     blurb: 'Task size is measured in human work: how long a skilled person needs for the task. The headline number is the biggest task the best measured AI model completes successfully half the time (not how long the AI takes). Mostly software tasks. Source: METR, via Epoch AI.',
     names: { 'v1.0': 'the best measured models (METR suite v1.0)', 'v1.1': 'the best measured models (METR suite v1.1)' },
     defaultUnit: 'v1.1', minutes: true,
+  },
+  {
+    target: 'ai_mention_share', eyebrow: 'AI in job ads', title: 'How many job ads mention AI?',
+    short: 'Share of new Indeed job postings whose description mentions AI terms, by country.',
+    blurb: 'Share of new Indeed postings whose description mentions AI terms. It counts mentions, not hires. Source: Indeed Hiring Lab AI Tracker.',
+    defaultUnit: 'US', pickerLabel: 'Country', plural: 'countries', countries: true,
+    series: (n) => `the share of Indeed postings in ${n} mentioning AI, month by month`,
   },
   {
     target: 'btos_ai_use_rate', eyebrow: 'Business adoption', title: 'How many US businesses use AI?',
@@ -104,7 +114,7 @@ function units(c: Card): string[] {
   return [...new Set((rows.value[c.target] ?? []).map((r) => r.unit))];
 }
 function unitName(c: Card, u: string): string {
-  return c.names?.[c.key ? c.key(u) : u] ?? u;
+  return c.names?.[c.key ? c.key(u) : u] ?? (c.countries ? new Intl.DisplayNames(['en'], { type: 'region' }).of(u) ?? u : u);
 }
 function selectedUnit(c: Card): string | undefined {
   const all = rows.value[c.target] ?? [];
@@ -122,6 +132,8 @@ function fmt(c: Card, v: number | null): string {
   const h = v / 60;
   return `${h < 10 ? h.toFixed(1) : Math.round(h).toLocaleString('en')} hours`;
 }
+/** The capability range is simulated; the others come from past errors, so they aren't called intervals. */
+const bandName = (c: Card) => (c.minutes ? 'interval' : 'error band');
 function horizon(r: OutlookRow): string {
   if (r.period_unit === 'fortnight') return `in about ${Math.round((r.h * 14) / 30.4)} months`;
   if (r.period_unit === 'quarter') return r.h === 1 ? 'next quarter' : `in ${r.h} quarters`;
@@ -324,19 +336,19 @@ function accLine(a: UnitAccuracy): string {
 
             <div class="sec-head">
               <h3>Forecast</h3>
-              <p class="key"><span class="sw-dot" /> forecast <span class="sw-band" /> likely range (80%) <span class="sw-tick" /> latest</p>
+              <p class="key"><span class="sw-dot" /> forecast <span class="sw-band" /> {{ c.minutes ? '80% predictive interval' : 'historical error band (80%)' }} <span class="sw-tick" /> latest</p>
             </div>
             <ul class="rows">
               <li v-for="r in rs" :key="r.h" class="row">
                 <div class="row-main">
                   <span class="when">{{ horizon(r) }}<small>{{ period(r.target_period) }}</small></span>
                   <div v-for="s in [scale(c, rs)]" :key="'s'" class="track"
-                       :title="`${horizon(r)}: ${fmt(c, r.forecast)} (likely ${fmt(c, r.low)} to ${fmt(c, r.high)})`">
+                       :title="`${horizon(r)}: ${fmt(c, r.forecast)} (${bandName(c)} ${fmt(c, r.low)} to ${fmt(c, r.high)})`">
                     <span class="band" :style="{ left: `${s(r.low)}%`, width: `${Math.max(1, s(r.high) - s(r.low))}%` }" />
                     <span class="tick" :style="{ left: `${s(r.last_observed)}%` }" aria-hidden="true" />
                     <span class="dot" :style="{ left: `${s(r.forecast)}%` }" aria-hidden="true" />
                   </div>
-                  <span class="val">{{ fmt(c, r.forecast) }}<small>likely {{ fmt(c, r.low) }} – {{ fmt(c, r.high) }}</small></span>
+                  <span class="val">{{ fmt(c, r.forecast) }}<small>{{ bandName(c) }} {{ fmt(c, r.low) }} – {{ fmt(c, r.high) }}</small></span>
                 </div>
 
                 <div class="row-meta">
@@ -452,6 +464,8 @@ function accLine(a: UnitAccuracy): string {
               </li>
             </ul>
 
+            <ForecastInfo :id="c.target" />
+
             <button v-if="c.minutes && rs.some((r) => r.p_acceleration != null)" type="button" class="btn btn-secondary explain" @click="explain = true">
               <Icon name="search" :size="16" /> How are the faster / slower chances worked out?
             </button>
@@ -525,7 +539,7 @@ tr.shown td { font-weight: 800; background: #fffaf0; }
 .sub { font-size: 11px; font-weight: 700; color: var(--muted); margin-left: 6px; }
 .regime { display: flex; flex-direction: column; gap: 6px; background: #faf9f6; border-radius: 12px; padding: 10px 12px; }
 .regime-q { font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.explain { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; font-size: 12px; }
+.explain { align-self: flex-start; max-width: 100%; white-space: normal; text-align: left; display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; font-size: 12px; }
 .stack { display: flex; gap: 2px; height: 12px; }
 .seg { border-radius: 4px; min-width: 4px; }
 .legend { list-style: none; display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 0; margin: 0; font-size: 12px; font-weight: 700; color: var(--muted); }

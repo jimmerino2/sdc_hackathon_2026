@@ -11,6 +11,7 @@ from app.interests.router import router as interests_router
 from app.jobs.router import router as jobs_router
 from app.llm.router import router as llm_router
 from app.llm_bench.router import router as llm_bench_router
+from app.methodology.router import router as methodology_router
 from app.occupational.router import router as occupational_router
 from app.outlook.router import router as outlook_router
 from app.profile.router import router as profile_router
@@ -46,6 +47,7 @@ def create_app() -> FastAPI:
     app.include_router(jobs_router)
     app.include_router(llm_router)
     app.include_router(llm_bench_router)
+    app.include_router(methodology_router)
     app.include_router(occupational_router)
     app.include_router(outlook_router)
     app.include_router(profile_router)
