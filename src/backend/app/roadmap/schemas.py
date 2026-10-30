@@ -60,7 +60,7 @@ class Roadmap(BaseModel):
     current: CurrentStep | None = Field(None, description="The step the learner is on")
     sections: list[Section]
     challenges: list[Challenge] = Field(
-        default_factory=list, description="Bonus Quests, one per two sections; tech roles only, empty for the others"
+        default_factory=list, description="The challenges tied to this roadmap, oldest first; tech roles only, empty for the others"
     )
 
 

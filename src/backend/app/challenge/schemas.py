@@ -24,21 +24,43 @@ class CriterionResult(BaseModel):
     improve: str = Field(description="What to do to score higher")
 
 
+class StageResult(BaseModel):
+    """How an earlier stage ended."""
+
+    stage: int
+    title: str
+    repo_url: str | None = None
+    score: float | None = None
+    summary: str | None = None
+    judged_at: datetime | None = None
+
+
 class Challenge(BaseModel):
-    """A Bonus Quest: an optional project built from the skills of a couple of roadmap sections."""
+    """A project in two stages for a tech role, optionally tied to the role's roadmap. Stage 1 is built from the
+    foundational skills (the roadmap's sections 1-2, or the role's lower-level skills); passing it lets Robbee rewrite
+    it into a harder stage 2. The brief and result fields describe the current stage."""
 
     challenge_id: str
-    sections: list[int] = Field(description="The sections it covers")
-    after_section: int = Field(description="Shown after this section (the last one it covers)")
+    onet_code: str
+    role_title: str
+    roadmap_id: str | None = Field(None, description="The roadmap it is tied to, if any")
+    stage: Literal[1, 2]
+    sections: list[int] = Field(description="The roadmap sections the current stage draws on; empty without a roadmap")
     title: str
     description: str = Field(description="The brief: what to build and how it serves the goal; may hold '- ' bullet lines")
+    twist: str | None = Field(None, description="Stage 2: what Robbee changed, one line")
     sdg: int = Field(ge=1, le=17)
     sdg_name: str
     interests: list[str] = Field(description="Names of the learner's interests it is themed on")
     tech_stack: list[TechArea]
     rubric: list[RubricCriterion]
-    locked: bool = Field(description="true until every skill in its sections is completed")
-    status: Literal["open", "judging", "judged"]
+    status: Literal["open", "judging", "passed", "advancing"] = Field(
+        description="passed: the current stage scored PASS_SCORE+ (at stage 1 Robbee's rewrite is due); advancing: it is being written"
+    )
+    pass_score: int = Field(description="The score that passes a stage")
+    history: list[StageResult] = Field(default_factory=list, description="Earlier stages, oldest first")
+    completed_at: datetime | None = Field(None, description="When stage 2 was passed")
+    created_at: datetime
     repo_url: str | None = None
     result: list[CriterionResult] | None = Field(None, description="The latest judgement, one per rubric criterion")
     score: float | None = Field(None, description="Weighted total of the latest judgement, 0-100")
@@ -48,6 +70,36 @@ class Challenge(BaseModel):
     judged_at: datetime | None = None
 
 
+class Challenges(BaseModel):
+    challenges: list[Challenge] = Field(description="All the profile's challenges, newest first")
+    stingers: int = Field(description="Stingers earned: one per passed stage")
+
+
+class SubmitResult(BaseModel):
+    challenge: Challenge
+    passed: bool = Field(description="This submission passed the stage")
+    stinger_awarded: bool
+    stingers: int = Field(description="The learner's stinger total after this submission")
+
+
+class ChallengeRole(BaseModel):
+    """A tech role a challenge can be started for."""
+
+    onet_code: str
+    title: str
+    icon: str | None = None
+    suggested: bool = Field(description="One of the roles last suggested to the learner")
+    challenges: int = Field(description="How many challenges the learner already has for it")
+
+
+class ProfileRef(BaseModel):
+    profile_id: UUID = Field(description="The profile the challenge belongs to")
+
+
+class ChallengeCreate(ProfileRef):
+    onet_code: str = Field(description="A tech role's O*NET code, e.g. 15-1252.00")
+
+
 class ChallengeSubmit(BaseModel):
-    profile_id: UUID = Field(description="The profile the roadmap belongs to")
+    profile_id: UUID = Field(description="The profile the challenge belongs to")
     repo_url: str = Field(description="A public GitHub repository, e.g. https://github.com/octocat/hello-world")
