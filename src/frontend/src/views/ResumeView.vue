@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import FlowShell from '../components/FlowShell.vue';
 import Icon from '../components/Icon.vue';
+import FlowerBeeSpinner from '../components/FlowerBeeSpinner.vue';
 import PollenGame from '../components/PollenGame.vue';
 import { checkResumeFile, extractResume, ResumeUploadError } from '../api/resume';
 import { skillLabel } from '../data/skills';
@@ -19,6 +20,8 @@ const reading = ref(false);
 const dragging = ref(false);
 const error = ref<string | null>(null);
 let attempt = 0; // a newer upload wins over one still in flight
+const MIN_SPIN_MS = 1400; // a very fast upload would otherwise flash the spinner for a blink
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Jobee reads along while the resume is processed, cheers when it's done, and is startled by an error. */
 const mood = computed(() => (reading.value ? 'busy' : error.value ? 'surprised' : state.value.resume ? 'happy' : 'wave'));
@@ -35,6 +38,7 @@ async function upload(file: File | undefined) {
   if (error.value) return;
 
   const mine = ++attempt;
+  const started = Date.now();
   reading.value = true;
   try {
     const result = await extractResume(file);
@@ -55,8 +59,10 @@ async function upload(file: File | undefined) {
     if (mine !== attempt) return;
     error.value = e instanceof ResumeUploadError ? e.message : 'Something went wrong reading your resume. Try again in a moment.';
   } finally {
-    if (mine === attempt) reading.value = false;
     if (input.value) input.value.value = ''; // let the same file be picked again
+    const left = MIN_SPIN_MS - (Date.now() - started);
+    if (left > 0) await wait(left);
+    if (mine === attempt) reading.value = false;
   }
 }
 
@@ -80,7 +86,7 @@ function skip() {
       <template v-else-if="state.resume">Nice! Here’s what I found.</template>
       <template v-else>{{ personaCopy[key].resume }}</template>
     </template>
-    <PollenGame v-if="reading" :avoid="['.skip']" :bottom-reserve="90" />
+    <PollenGame v-if="reading" :avoid="['.skip', '.drop']" :bottom-reserve="90" />
     <button
       type="button"
       class="drop"
@@ -92,7 +98,14 @@ function skip() {
       @dragleave="dragging = false"
       @drop.prevent="onDrop"
     >
-      <span class="up" aria-hidden="true"><Icon name="upload" :size="22" :stroke="2.6" /></span>
+      <span class="stage" :class="{ on: reading }" aria-hidden="true">
+        <Transition name="pop">
+          <span v-if="!reading" class="up"><Icon name="upload" :size="22" :stroke="2.6" /></span>
+        </Transition>
+        <Transition name="bloom">
+          <span v-if="reading" class="slot"><FlowerBeeSpinner :size="170" /></span>
+        </Transition>
+      </span>
       <template v-if="reading">
         <strong>Reading your resume…</strong>
       </template>
@@ -133,9 +146,17 @@ function skip() {
 }
 .drop:hover, .drop.dragging { background: var(--cream); border-color: var(--orange); }
 .drop.busy { cursor: progress; }
-.drop.busy .up { animation: pulse 1.2s ease-in-out infinite; }
-@keyframes pulse { 50% { transform: scale(1.12); } }
-.up { width: 46px; height: 46px; border-radius: 50%; background: var(--yellow); box-shadow: 0 3px 0 var(--orange); display: grid; place-items: center; margin-bottom: 6px; }
+.stage { position: relative; width: 170px; height: 46px; margin-bottom: 6px; transition: height .4s cubic-bezier(.34, 1.3, .64, 1); }
+.stage.on { height: 170px; }
+.stage > .up, .stage > .slot { position: absolute; left: 50%; top: 50%; translate: -50% -50%; }
+.slot { display: block; width: 170px; height: 170px; }
+.pop-enter-active { transition: transform .35s cubic-bezier(.34, 1.56, .64, 1) .15s, opacity .25s .15s; }
+.pop-leave-active { transition: transform .2s ease-in, opacity .2s; }
+.pop-enter-from, .pop-leave-to { transform: scale(0) rotate(-90deg); opacity: 0; }
+.bloom-enter-active { transition: transform .4s cubic-bezier(.34, 1.56, .64, 1), opacity .25s; }
+.bloom-leave-active { transition: transform .3s ease-in, opacity .3s; }
+.bloom-enter-from, .bloom-leave-to { transform: scale(.2); opacity: 0; }
+.up { width: 46px; height: 46px; border-radius: 50%; background: var(--yellow); box-shadow: 0 3px 0 var(--orange); display: grid; place-items: center; }
 .drop strong { font-weight: 800; font-size: 16px; } small { font-size: 13px; color: var(--muted); font-weight: 700; }
 .error { margin-top: 14px; padding: 12px 16px; border-radius: 14px; background: #fdecea; color: #b3261e; font-weight: 800; font-size: 14px; line-height: 1.4; }
 .file { margin-top: 16px; display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 16px; }
@@ -144,5 +165,5 @@ h2 { margin: 20px 0 10px; font-weight: 900; font-size: 15px; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip { font-size: 13px; padding: 6px 12px; }
 .none { color: var(--muted); font-weight: 700; font-size: 14px; }
-@media (prefers-reduced-motion: reduce) { .drop.busy .up { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .stage, .pop-enter-active, .pop-leave-active, .bloom-enter-active, .bloom-leave-active { transition-duration: .01ms; transition-delay: 0s; } }
 </style>
