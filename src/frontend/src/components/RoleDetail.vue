@@ -361,14 +361,13 @@ const hasMasco = computed(() => !!mascoRoles[props.onetCode]?.minors?.length);
       </div>
 
       <section v-if="!compact" v-show="tab === 'sits'" id="panel-sits" role="tabpanel" aria-labelledby="tab-sits" class="gap-row">
-        <p class="eyebrow">About</p>
         <h1>Where {{ title }} sits</h1>
         <MascoMap v-if="hasMasco" :onet-code="onetCode" :title="job?.title ?? title" />
         <p v-else class="empty card no-data">No data found for this O*NET job on eMASCO.</p>
       </section>
 
       <section v-show="compact || tab === 'forecast'" id="panel-forecast" :role="compact ? undefined : 'tabpanel'" aria-labelledby="tab-forecast" class="left">
-        <template v-if="!compact"><p class="eyebrow">AI outlook</p><h1>Here’s the AI outlook for {{ title }}</h1></template>
+        <template v-if="!compact"><h1>Here’s the AI outlook for {{ title }}</h1></template>
         <div class="card chart">
           <small>{{ title }} · {{ useModel ? 'machine-learning forecast' : 'demand outlook' }}</small>
           <h2>Three possible futures, next 12 months</h2>
@@ -442,7 +441,6 @@ const hasMasco = computed(() => !!mascoRoles[props.onetCode]?.minors?.length);
       </section>
 
       <section v-if="goals.length" v-show="compact || tab === 'sdg'" id="panel-sdg" :role="compact ? undefined : 'tabpanel'" aria-labelledby="tab-sdg" class="sdg-row impact">
-        <p class="eyebrow">SDGs</p>
         <h1 id="impact-title">How {{ job?.title ?? title }} serves the SDGs</h1>
         <div class="impact-goals">
           <div class="impact-group">
@@ -511,7 +509,6 @@ const hasMasco = computed(() => !!mascoRoles[props.onetCode]?.minors?.length);
 <style scoped>
 .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 28px; }
 h1 { font-size: 34px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
-.eyebrow { margin: 0; }
 
 .compact { gap: 24px; }
 .chart-skel { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
