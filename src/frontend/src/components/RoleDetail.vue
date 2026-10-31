@@ -4,6 +4,7 @@ import ChartWatcher from './ChartWatcher.vue';
 import MascoMap from './MascoMap.vue';
 import ForecastInfo from './ForecastInfo.vue';
 import Icon from './Icon.vue';
+import InfoDialog from './InfoDialog.vue';
 import QuarterPicker from './QuarterPicker.vue';
 import ScenarioPanel from './ScenarioPanel.vue';
 import { scenarios, type ScenarioKey } from '../data/flows';
@@ -397,17 +398,21 @@ const hasMasco = computed(() => !!mascoRoles[props.onetCode]?.minors?.length);
               <li><i class="k-other" />Other futures</li>
               <li><i class="k-band" />How far past forecasts missed</li>
             </ul>
-            <p class="note">
-              <template v-if="useModel">
-                Change in {{ title }} demand vs today, forecast by a machine-learning model (LightGBM) trained on the sector’s monthly postings, then shifted by how AI-exposed this role is under each scenario. Shaded band is how far the model’s past forecasts missed, not a confidence interval. {{ modelCheck }}
-              </template>
-              <template v-else>
-                Change in {{ title }} demand vs today: the sector’s recent pace, shifted by how AI-exposed this role is under each scenario. Shaded band is the historical error band for the selected future: how far past forecasts missed, not a confidence interval.
-              </template>
+            <div v-if="useModel" class="fi-gap">
+              <InfoDialog title="How this forecast works" label="How this forecast works" icon="search">
+                <p>Change in {{ title }} demand vs today, forecast by a machine-learning model (LightGBM) trained on the sector’s monthly postings, then shifted by how AI-exposed this role is under each scenario.</p>
+                <p>Shaded band is how far the model’s past forecasts missed, not a confidence interval.</p>
+                <p>{{ modelCheck }}</p>
+                <p>{{ meta?.is_proxy_for_malaysia ? 'Uses US postings data as a stand-in for Malaysia. ' : '' }}Indicative, not a prediction.</p>
+                <p v-if="meta" class="muted">Issued {{ meta.data_as_of ?? 'date not available' }}; last observation {{ meta.forecast_from }}.</p>
+              </InfoDialog>
+            </div>
+            <p v-else class="note">
+              Change in {{ title }} demand vs today: the sector’s recent pace, shifted by how AI-exposed this role is under each scenario. Shaded band is the historical error band for the selected future: how far past forecasts missed, not a confidence interval.
               {{ meta?.is_proxy_for_malaysia ? 'Uses US postings data as a stand-in for Malaysia. ' : '' }}Indicative, not a prediction.
               <template v-if="meta"> Issued {{ meta.data_as_of ?? 'date not available' }}; last observation {{ meta.forecast_from }}.</template>
-              <template v-if="retrained"> Faint dotted line: {{ useModel ? 'the model’s forecast' : 'the forecast' }} with every quarter.</template>
             </p>
+            <p v-if="retrained" class="note">Faint dotted line: the model’s forecast with every quarter.</p>
             <!-- Its text says the sector's pace is what is shown, which isn't true while the model is. -->
             <ForecastInfo v-if="!useModel" id="role_postings" class="fi-gap" />
           </template>

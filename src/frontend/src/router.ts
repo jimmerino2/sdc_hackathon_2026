@@ -85,6 +85,8 @@ export const router = createRouter({
 const onboardingSteps: readonly string[] = steps.slice(0, steps.indexOf('pathway'));
 
 router.beforeEach((to) => {
+  // A dev tool with no links to it; deployed builds don't serve it. Open /benchmark directly in dev.
+  if (to.name === 'benchmark' && !import.meta.env.DEV) return { path: '/', replace: true };
   if (isOnboarded() && onboardingSteps.includes(to.name as string)) return { name: 'pathway', replace: true };
 });
 

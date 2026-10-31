@@ -64,7 +64,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.list { display: flex; flex-direction: column; gap: 12px; }
+.list { display: flex; flex-direction: column; gap: 24px; }
 .state { display: flex; justify-content: center; padding: 24px 0; }
 .retry { display: inline-flex; align-items: center; gap: 8px; }
 .seg-skel { height: 44px; margin-bottom: 4px; }

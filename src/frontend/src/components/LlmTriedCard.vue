@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import Icon from './Icon.vue';
-import { go } from '../router';
 import { fetchBenchSummary, type Benchmark, type BenchSummary } from '../api/llmBench';
 
 /** "We also tried LLMs": the LLM forecast benchmark's completed runs next to the served model, on the same past
@@ -31,7 +30,7 @@ const short = (m: string) => m.split('/').pop();
       We asked LLMs for the same past forecasts this model was tested on, with names hidden so they couldn’t recall what
       happened, and scored both against the actual outcomes.
       <b v-if="!s.any_better">None of the {{ s.rows.length }} LLM setups beat the model shown here</b>
-      <b v-else>Some LLM setups had lower error; see the benchmark for whether that is beyond noise</b>
+      <b v-else>Some LLM setups had lower error, which may be noise</b>
       <template v-if="benchmark === 'capability'">: they mostly forecast no further growth, while the record kept doubling.</template>
       <template v-else>: they mostly repeated the latest share.</template>
     </p>
@@ -51,7 +50,6 @@ const short = (m: string) => m.split('/').pop();
     <p class="muted small">
       {{ benchmark === 'capability' ? 'Errors in doublings: 1 means off by a factor of 2.' : 'Errors in percentage points of share, 3 months ahead.' }}
       Total LLM cost ${{ s.total_cost_usd.toFixed(2) }}.
-      <RouterLink :to="go('benchmark')">Full benchmark</RouterLink>
     </p>
   </div>
 </template>
@@ -61,7 +59,6 @@ const short = (m: string) => m.split('/').pop();
 .tried h2 { font-size: 20px; display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
 .small { font-size: 14px; line-height: 1.5; }
 .muted { color: var(--muted); }
-.muted a { color: var(--ink); font-weight: 800; }
 .scroll { overflow-x: auto; }
 .tbl { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; font-variant-numeric: tabular-nums; }
 .tbl th, .tbl td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
