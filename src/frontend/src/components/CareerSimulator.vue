@@ -254,11 +254,9 @@ function build() {
 
       <section v-if="ai" class="card pad picker aipanel">
         <div class="row-head"><h2>AI skills</h2></div>
-        <p class="muted">One for each section of your roadmap, to use AI to learn that section's skills. Each comes first in its section.</p>
         <ul class="aiskills">
           <li v-for="a in aiSkills" :key="a.name"><span class="aihead"><Icon name="sparkles" :size="24" :stroke="2.6" />{{ a.name }}</span></li>
         </ul>
-        <p v-if="aiRole" class="muted">Each counts double a top tool in {{ aiRole.title }}'s match, so only that role moves. The orange and green parts are the same as on the last page.</p>
       </section>
 
       <section v-else class="card pad picker">
