@@ -7,13 +7,13 @@ import {
   Headset, Palette, Sigma, Brain, ChartBar, Zap, Leaf, Factory, Microscope, HandHeart, Scale, Baby, School, PenTool,
   Languages, Activity, Stethoscope, Pill, ClipboardPlus, HeartHandshake, ShieldAlert, ChefHat, ShoppingBag, Receipt,
   Banknote, Headphones, Keyboard, Plug, Sun, Wrench, Wind, Truck, Package, Pencil, LogOut, Trash2, Sprout, Dumbbell, Music, PawPrint, Gamepad2, Shirt, Hammer, HeartPulse, Mountain, Coins, Minus, ChevronDown, Mail, Crown,
-  CircleHelp, BarChart3, Lightbulb,
+  CircleHelp, BarChart3, Lightbulb, Telescope, House,
 } from 'lucide-vue-next';
 
 const map = {
   briefcase: Briefcase, bug: Bug, check: Check, cloud: Cloud, code: Code2, cpu: Cpu, database: Database,
-  grad: GraduationCap, layers: Layers, search: Search, shield: Shield, sparkles: Sparkles, target: Target,
-  mail: Mail, crown: Crown,
+  grad: GraduationCap, layers: Layers, search: Search, shield: Shield, sparkles: Sparkles, target: Target, telescope: Telescope,
+  mail: Mail, crown: Crown, house: House, home: House,
   help: CircleHelp, question: CircleHelp, chart: BarChart3, lightbulb: Lightbulb,
   tdown: TrendingDown, tup: TrendingUp, tflat: Minus, chevron: ChevronDown, arrow: ArrowRight, lock: Lock, star: Star, trophy: Trophy, book: BookOpen,
   user: User, route: Route, x: X, flame: Flame, upload: Upload, file: FileText, play: Play, refresh: RefreshCw, external: ExternalLink, gift: Gift,
