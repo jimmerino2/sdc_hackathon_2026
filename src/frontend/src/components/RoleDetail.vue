@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import Bubble from './Bubble.vue';
 import ChartWatcher from './ChartWatcher.vue';
 import ForecastInfo from './ForecastInfo.vue';
@@ -33,9 +33,8 @@ const emit = defineEmits<{ 'update:skip': [skip: string | null] }>();
 
 const { state, key } = useFlow();
 const base = import.meta.env.BASE_URL;
-/** The role's SDGs that one of the learner's interests points at, and the ones that come from the role itself. */
+/** The role's SDGs that one of the learner's interests points at. */
 const fromInterests = computed(() => props.job?.sdg_reasons?.filter((r) => r.interests.length) ?? []);
-const fromJob = computed(() => props.job?.sdg_reasons?.filter((r) => !r.interests.length) ?? []);
 const active = computed(() => state.value.scenario);
 
 /** The LLM's sentence for each interest card, by "sdg:interest". Only fetched on the role page, not in onboarding. */
@@ -74,8 +73,40 @@ async function loadSdg() {
   }
 }
 watch(() => props.onetCode, loadSdg, { immediate: true });
-/** The role's targets under one goal, for the "Why it was suggested" cards. */
+/** The role's targets under one goal. */
 const targetsFor = (sdg: number): SdgTargetNote[] => roleSdg.value?.targets.filter((t) => t.sdg === sdg) ?? [];
+/**
+ * Every goal the role serves, main first, each with its targets and the learner's interests that point at it. From the
+ * SDG targets, or the match's goals if those didn't load. An interest can point at a goal of the match's weights that
+ * the targets don't list, so that goal is kept.
+ */
+const goals = computed(() => {
+  const r = roleSdg.value;
+  const list = r ? [r.main, ...r.relevant] : (props.job?.sdg_reasons ?? []).map((g) => ({ sdg: g.sdg, name: g.name }));
+  for (const g of fromInterests.value) if (!list.some((x) => x.sdg === g.sdg)) list.push({ sdg: g.sdg, name: g.name });
+  return list.map((g) => ({ ...g, targets: targetsFor(g.sdg), interests: props.job?.sdg_reasons?.find((x) => x.sdg === g.sdg)?.interests ?? [] }));
+});
+const goalGroups = computed(() => [
+  { label: 'Main SDG', goals: goals.value.slice(0, 1) },
+  { label: 'Relevant SDGs', goals: goals.value.slice(1) },
+].filter((g) => g.goals.length));
+
+/** The skill whose targets are showing (hover, focus or tap), and how far its card moves left to stay on screen. */
+const tip = ref<string | null>(null);
+const tipShift = ref(0);
+async function showTip(id: string) {
+  if (tip.value === id) return;
+  tip.value = id;
+  tipShift.value = 0;
+  await nextTick();
+  const r = document.getElementById(`tip-${id}`)?.getBoundingClientRect();
+  if (!r) return;
+  const over = r.right - (window.innerWidth - 16);
+  tipShift.value = over > 0 ? -Math.min(over, r.left - 16) : 0;
+}
+function hideTip(id: string) {
+  if (tip.value === id) tip.value = null;
+}
 const sdgTile = (sdg: number) => `${base}sdg/goal-${String(sdg).padStart(2, '0')}.jpg`;
 const sdgColor = (sdg: number) => SDG_GOALS[sdg]?.color ?? 'var(--ink)';
 /** The role's key skills (the gap cards' chips) with the goal and targets each serves; skills to build first. */
@@ -387,79 +418,62 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
         />
       </aside>
 
-      <section v-if="roleSdg && !compact" class="sdg-row impact" aria-labelledby="impact-title">
+      <section v-if="goals.length" class="sdg-row impact" aria-labelledby="impact-title">
         <p class="eyebrow">Global goals</p>
         <h2 id="impact-title" class="sdg-title">How {{ job?.title ?? title }} serves the SDGs</h2>
         <div class="impact-goals">
-          <div class="impact-main">
-            <span class="impact-label">Main SDG</span>
-            <img class="sdg-tile" :src="sdgTile(roleSdg.main.sdg)" :alt="`UN Sustainable Development Goal ${roleSdg.main.sdg}: ${roleSdg.main.name}`" width="148" height="148" loading="lazy" />
-          </div>
-          <div v-if="roleSdg.relevant.length" class="impact-rel">
-            <span class="impact-label">Relevant SDGs</span>
-            <ul>
-              <li v-for="g in roleSdg.relevant" :key="g.sdg">
-                <img class="sdg-tile" :src="sdgTile(g.sdg)" :alt="`UN Sustainable Development Goal ${g.sdg}: ${g.name}`" width="112" height="112" loading="lazy" />
+          <div v-for="grp in goalGroups" :key="grp.label" class="impact-group">
+            <span class="impact-label">{{ grp.label }}</span>
+            <ul class="sdg-list">
+              <li v-for="g in grp.goals" :key="g.sdg" class="sdg-card why">
+                <img class="sdg-tile" :src="sdgTile(g.sdg)" :alt="`UN Sustainable Development Goal ${g.sdg}: ${g.name}`" width="148" height="148" loading="lazy" />
+                <div class="sdg-from">
+                  <template v-for="i in g.interests" :key="i">
+                    <span class="chip chip-have"><Icon name="check" :size="13" :stroke="3" /> <span>{{ i }}</span></span>
+                    <p v-if="reasons[`${g.sdg}:${i}`]" class="sdg-why">{{ reasons[`${g.sdg}:${i}`] }}</p>
+                    <span v-else-if="reasonsStatus === 'loading'" class="skel sdg-why-skel" aria-hidden="true" />
+                  </template>
+                  <ul v-if="g.targets.length" class="sdg-targets" :aria-label="`SDG ${g.sdg} targets`">
+                    <li v-for="t in g.targets" :key="t.code"><b :style="{ color: sdgColor(t.sdg) }">{{ t.code }}</b> {{ t.text }}</li>
+                  </ul>
+                </div>
               </li>
             </ul>
           </div>
         </div>
-        <h3 class="impact-sub">Targets</h3>
-        <ul class="sdg-targets impact-targets">
-          <li v-for="t in roleSdg.targets" :key="t.code"><b :style="{ color: sdgColor(t.sdg) }">{{ t.code }}</b> {{ t.text }}</li>
-        </ul>
         <template v-if="skillSdgs.length">
           <h3 class="impact-sub">Your key skills and the goals they serve</h3>
+          <p class="impact-hint">Hover or tap a skill to see the targets it serves.</p>
           <ul class="skill-sdgs">
-            <li v-for="s in skillSdgs" :key="s.skill_id" class="skill-sdg">
-              <div class="skill-sdg-head">
-                <span class="chip" :class="s.have ? 'chip-have' : 'chip-gap'"><Icon :name="s.have ? 'check' : 'sparkles'" :size="13" :stroke="s.have ? 3 : 2" /> <span>{{ skillLabel(s.skill_name) }}</span></span>
-                <span class="skill-sdg-goals">
-                  <img v-for="g in [s.main, ...s.relevant]" :key="g.sdg" :src="sdgTile(g.sdg)" :alt="`SDG ${g.sdg}: ${g.name}`" :title="`SDG ${g.sdg}: ${g.name}`" width="30" height="30" loading="lazy" />
+            <li v-for="s in skillSdgs" :key="s.skill_id" class="skill-sdg" @mouseenter="showTip(s.skill_id)" @mouseleave="hideTip(s.skill_id)">
+              <button
+                type="button"
+                class="chip"
+                :class="s.have ? 'chip-have' : 'chip-gap'"
+                :aria-expanded="tip === s.skill_id"
+                :aria-describedby="tip === s.skill_id ? `tip-${s.skill_id}` : undefined"
+                @focus="showTip(s.skill_id)"
+                @blur="hideTip(s.skill_id)"
+                @click="showTip(s.skill_id)"
+                @keydown.esc="tip = null"
+              >
+                <Icon :name="s.have ? 'check' : 'sparkles'" :size="13" :stroke="s.have ? 3 : 2" />
+                <span>{{ skillLabel(s.skill_name) }}</span>
+                <span class="skill-sdg-goals" aria-hidden="true">
+                  <img v-for="g in [s.main, ...s.relevant]" :key="g.sdg" :src="sdgTile(g.sdg)" alt="" width="22" height="22" loading="lazy" />
                 </span>
+              </button>
+              <div v-if="tip === s.skill_id" :id="`tip-${s.skill_id}`" class="skill-tip" role="tooltip" :style="{ left: `${tipShift}px` }">
+                <p class="skill-tip-goals">
+                  <span v-for="g in [s.main, ...s.relevant]" :key="g.sdg" :style="{ color: sdgColor(g.sdg) }">SDG {{ g.sdg }}: {{ g.name }}</span>
+                </p>
+                <ul class="sdg-targets">
+                  <li v-for="t in s.targets" :key="t.code"><b :style="{ color: sdgColor(t.sdg) }">{{ t.code }}</b> {{ t.text }}</li>
+                </ul>
               </div>
-              <ul class="sdg-targets">
-                <li v-for="t in s.targets" :key="t.code"><b :style="{ color: sdgColor(t.sdg) }">{{ t.code }}</b> {{ t.text }}</li>
-              </ul>
             </li>
           </ul>
         </template>
-      </section>
-
-      <section v-if="job?.sdg_reasons?.length" class="sdg-row">
-        <p class="eyebrow">Why it was suggested</p>
-        <div v-if="fromInterests.length" class="sdg-group">
-          <h2 class="sdg-title">Your interests</h2>
-          <ul class="sdg-list">
-            <li v-for="r in fromInterests" :key="r.sdg" class="sdg-card" :class="{ why: !compact }">
-              <img class="sdg-tile" :src="`${base}sdg/goal-${String(r.sdg).padStart(2, '0')}.jpg`" :alt="`UN Sustainable Development Goal ${r.sdg}: ${r.name}`" width="132" height="132" loading="lazy" />
-              <div class="sdg-from">
-                <template v-for="i in r.interests" :key="i">
-                  <span class="chip chip-have"><Icon name="check" :size="13" :stroke="3" /> <span>{{ i }}</span></span>
-                  <p v-if="reasons[`${r.sdg}:${i}`]" class="sdg-why">{{ reasons[`${r.sdg}:${i}`] }}</p>
-                  <span v-else-if="reasonsStatus === 'loading'" class="skel sdg-why-skel" aria-hidden="true" />
-                </template>
-                <ul v-if="targetsFor(r.sdg).length" class="sdg-targets" :aria-label="`SDG ${r.sdg} targets`">
-                  <li v-for="t in targetsFor(r.sdg)" :key="t.code"><b :style="{ color: sdgColor(t.sdg) }">{{ t.code }}</b> {{ t.text }}</li>
-                </ul>
-              </div>
-            </li>
-          </ul>
-        </div>
-        <div v-if="fromJob.length" class="sdg-group">
-          <h2 class="sdg-title">Job features</h2>
-          <ul class="sdg-list">
-            <li v-for="r in fromJob" :key="r.sdg" class="sdg-card" :class="{ why: targetsFor(r.sdg).length }">
-              <img class="sdg-tile" :src="`${base}sdg/goal-${String(r.sdg).padStart(2, '0')}.jpg`" :alt="`UN Sustainable Development Goal ${r.sdg}: ${r.name}`" width="132" height="132" loading="lazy" />
-              <div class="sdg-from">
-                <span class="chip chip-gap"><Icon name="briefcase" :size="13" /> <span>{{ job.title }}</span></span>
-                <ul v-if="targetsFor(r.sdg).length" class="sdg-targets" :aria-label="`SDG ${r.sdg} targets`">
-                  <li v-for="t in targetsFor(r.sdg)" :key="t.code"><b :style="{ color: sdgColor(t.sdg) }">{{ t.code }}</b> {{ t.text }}</li>
-                </ul>
-              </div>
-            </li>
-          </ul>
-        </div>
         <p class="sdg-credit">SDG icons: United Nations. The UN has not approved this app.</p>
       </section>
     </div>
@@ -494,8 +508,6 @@ h1 { font-size: 34px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .right { display: flex; flex-direction: column; gap: 14px; }
 .bub { margin-bottom: 8px; flex-direction: row-reverse; }
 .sdg-row { grid-column: 1 / -1; margin-top: 12px; }
-.sdg-group { margin-top: 6px; }
-.sdg-group + .sdg-group { margin-top: 26px; }
 .sdg-title { font-size: 23px; font-weight: 900; margin: 4px 0 14px; line-height: 1.2; }
 .sdg-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 18px; }
 .sdg-card { width: 148px; display: flex; flex-direction: column; gap: 10px; }
@@ -510,21 +522,22 @@ h1 { font-size: 34px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .sdg-credit { margin-top: 14px; font-size: 13px; font-weight: 600; color: var(--muted); }
 .sdg-targets { list-style: none; margin: 0; padding: 0 0 0 4px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; font-weight: 600; line-height: 1.35; color: var(--muted); }
 .sdg-targets b { font-weight: 900; margin-right: 2px; }
-.impact-goals { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 28px; }
-.impact-main, .impact-rel { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
-.impact-main .sdg-tile { width: 148px; }
-.impact-rel ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 14px; }
-.impact-rel .sdg-tile { width: 112px; }
+.impact-goals { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 18px 28px; }
+.impact-group { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
 .impact-label { padding: 6px 14px; border-radius: 10px; background: var(--ink); color: #fff; font-size: 15px; font-weight: 900; }
-.impact-sub { font-size: 19px; font-weight: 900; margin: 22px 0 10px; }
-.impact-targets { font-size: 16px; padding-left: 0; gap: 6px; color: var(--ink); }
-.skill-sdgs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
-.skill-sdg { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: 16px; background: #fff; border: 2px solid var(--line-strong, #e6e2da); }
-.skill-sdg-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.skill-sdg-head .chip { min-width: 0; white-space: normal; line-height: 1.25; font-size: 15px; }
-.skill-sdg-goals { display: flex; flex: none; gap: 4px; }
-.skill-sdg-goals img { width: 30px; height: 30px; border-radius: 6px; }
-@media (max-width: 560px) { .impact-main .sdg-tile { width: 120px; } .impact-rel .sdg-tile { width: 84px; } }
+.impact-sub { font-size: 19px; font-weight: 900; margin: 26px 0 4px; }
+.impact-hint { font-size: 14px; font-weight: 600; color: var(--muted); margin: 0 0 12px; }
+.skill-sdgs { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+.skill-sdg { position: relative; }
+.skill-sdg .chip { cursor: help; font: inherit; font-size: 15px; font-weight: 700; line-height: 1.25; white-space: normal; text-align: left; }
+.skill-sdg .chip-have { border: 2px solid var(--ink); }
+.skill-sdg .chip:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+.skill-sdg-goals { display: inline-flex; flex: none; gap: 3px; margin-left: 2px; }
+.skill-sdg-goals img { width: 22px; height: 22px; border-radius: 4px; }
+.skill-tip { position: absolute; top: calc(100% + 8px); z-index: 20; width: min(340px, calc(100vw - 32px)); padding: 14px 16px; border-radius: 14px; background: #fff; border: 2px solid var(--line-strong, #e6e2da); box-shadow: 0 10px 24px rgba(30, 30, 30, .14); display: flex; flex-direction: column; gap: 8px; }
+.skill-tip-goals { display: flex; flex-direction: column; gap: 2px; margin: 0; font-size: 13px; font-weight: 900; line-height: 1.3; }
+.skill-tip .sdg-targets { padding-left: 0; }
+@media (max-width: 560px) { .sdg-card.why { width: 100%; } }
 .gap-row { grid-column: 1 / -1; margin-top: 12px; }
 .gap-row .b { margin-bottom: 18px; }
 .gap-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
