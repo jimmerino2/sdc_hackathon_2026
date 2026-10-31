@@ -2,7 +2,9 @@
 import { computed, ref } from 'vue';
 import Icon from '../Icon.vue';
 import JbButton from './JbButton.vue';
+import HrdCard from './HrdCard.vue';
 import { splitByCost } from '../../learn/cost';
+import type { Programme } from '../../api/hrd';
 
 export interface NextUpSkill {
   id: string;
@@ -21,6 +23,8 @@ export interface NextUpSkill {
 const props = defineProps<{
   skill: NextUpSkill | null;
   selected: boolean;
+  /** The skill's HRD Corp courses; null while loading. */
+  programmes?: Programme[] | null;
   busy?: boolean;
   error?: string | null;
   eyebrow?: string;
@@ -114,6 +118,7 @@ const eyebrowText = computed(() => {
             </section>
           </template>
           <p v-else class="jb-next__hint">We don’t have a recommended resource for this one yet.</p>
+          <HrdCard v-if="programmes !== undefined" :skill="skill.name" :programmes="programmes" />
           <div class="jb-next__cta">
             <JbButton v-if="skill.state === 'ready'" :disabled="busy" @click="$emit('complete')">{{ busy ? 'Saving…' : 'Mark as done' }}</JbButton>
             <p v-else-if="skill.state === 'done'" class="jb-next__note"><Icon name="check" :size="18" /> Marked as done</p>

@@ -7,7 +7,6 @@ import InfoDialog from '../components/InfoDialog.vue';
 import SectionBanner from '../components/learn/SectionBanner.vue';
 import SkillPath from '../components/learn/SkillPath.vue';
 import NextUpCard, { type NextUpSkill } from '../components/learn/NextUpCard.vue';
-import HrdCard from '../components/learn/HrdCard.vue';
 import { fetchProgrammes, type Programme } from '../api/hrd';
 import { formatMinutes } from '../learn/time';
 import ForecastCard from '../components/learn/ForecastCard.vue';
@@ -347,13 +346,13 @@ onMounted(async () => {
             <NextUpCard
               :skill="nextUp"
               :selected="!!selected"
+              :programmes="programmes"
               :closable="!!selected"
               :busy="!!busyId"
               :error="error"
               @complete="markDone"
               @close="selectedId = null"
             />
-            <HrdCard v-if="selected" :skill="nextUp?.name ?? ''" :programmes="programmes" />
             <ForecastCard
               v-if="forecastSelected && roleForecast"
               :name="forecastSelected.name"
@@ -372,11 +371,11 @@ onMounted(async () => {
               v-if="selected"
               :skill="nextUp"
               :selected="true"
+              :programmes="programmes"
               closable
               eyebrow="Skill materials"
               @close="selectedId = null"
             />
-            <HrdCard v-if="selected" :skill="nextUp?.name ?? ''" :programmes="programmes" />
             <ForecastCard
               v-if="selected && forecastSelected && roleForecast"
               :name="forecastSelected.name"

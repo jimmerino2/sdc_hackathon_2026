@@ -112,7 +112,8 @@
 .jb-node[data-layout="stack"] { flex-direction: column; gap: 8px; text-align: center; }
 /* the label hides the line that runs behind it, so a line never strikes through a name */
 .jb-node[data-layout="stack"] .jb-node__label { align-items: center; max-width: 100%; padding: 2px 4px; border-radius: 8px; background: var(--bg); }
-.jb-node[data-layout="stack"] .jb-node__tag { left: 50%; margin-left: -28px; }
+/* translate, not transform: the bob animation owns transform */
+.jb-node[data-layout="stack"] .jb-node__tag { left: 50%; translate: -50% 0; white-space: nowrap; }
 .jb-node[data-layout="stack"]:hover .jb-node__label { transform: translateY(2px); }
 
 /* ---------- section banner ---------- */
@@ -212,7 +213,8 @@
 .jb-end--reached:hover .jb-end__link { color: var(--honey-deep); }
 
 /* ---------- learn page layout ---------- */
-.learn { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 32px; max-width: 1280px; }
+/* The side column only takes room beyond the 1280px page, so the roadmap column never gets narrower than it was. */
+.learn { display: grid; grid-template-columns: minmax(0, 1fr) clamp(360px, calc(100% - 920px), 480px); gap: 32px; max-width: 1400px; }
 .learn__main { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 .learn__path { display: flex; justify-content: center; padding-top: 28px; }
 .learn__side { display: flex; flex-direction: column; gap: 14px; align-self: start; position: sticky; top: 24px; }
@@ -326,7 +328,7 @@
 }
 
 /* roadmap switcher above the Learn page */
-.rmbar { display: flex; align-items: center; gap: 12px; max-width: 1280px; margin-bottom: 18px; }
+.rmbar { display: flex; align-items: center; gap: 12px; max-width: 1400px; margin-bottom: 18px; }
 .rmbar__tabs { display: flex; gap: 8px; flex: 1; min-width: 0; overflow-x: auto; padding: 2px 2px 6px; }
 .rmbar__tab { display: inline-flex; align-items: center; gap: 10px; flex: none; max-width: 380px; padding: 9px 14px; border: 2px solid var(--line-strong); border-radius: var(--radius-pill); background: var(--surface-raised); color: var(--text-muted); font-size: 15px; line-height: 21px; font-weight: 800; cursor: pointer; transition: background var(--dur-base), color var(--dur-base), transform var(--dur-fast) var(--ease-bounce); }
 .rmbar__tab:hover { color: var(--text); transform: translateY(-1px); }
@@ -337,7 +339,7 @@
 .rmbar__n { flex: none; font-size: 13px; font-weight: 800; letter-spacing: .06em; color: var(--accent-text); }
 .rmbar__del { display: inline-flex; align-items: center; gap: 6px; flex: none; padding: 9px 12px; border: 0; border-radius: var(--radius-md); background: none; color: var(--text-muted); font-size: 14px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; transition: color var(--dur-base), background var(--dur-base); }
 .rmbar__del:hover:not(:disabled) { color: #b3261e; background: #fdecea; }
-.rmconfirm { max-width: 1280px; margin-bottom: 18px; padding: 14px 18px; border: 2px solid #f1b8b3; border-radius: var(--radius-md); background: #fdecea; color: var(--text); font-size: 16px; line-height: 23px; font-weight: 600; }
+.rmconfirm { max-width: 1400px; margin-bottom: 18px; padding: 14px 18px; border: 2px solid #f1b8b3; border-radius: var(--radius-md); background: #fdecea; color: var(--text); font-size: 16px; line-height: 23px; font-weight: 600; }
 .rmconfirm__act { display: flex; gap: 10px; margin-top: 12px; }
 .rmconfirm__go { padding: 10px 18px; border: 0; border-radius: var(--radius-pill); background: #b3261e; color: #fff; font-size: 15px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; box-shadow: 0 4px 0 #801b15; }
 .rmconfirm__go:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #801b15; }
@@ -349,7 +351,7 @@
 }
 
 
-/* ---------- free vs may-cost links: banded like the HRD card, green for free and amber for may-cost ---------- */
+/* ---------- free, may-cost and HRD Corp links: bands in the Next up card, green for free, amber for may-cost, blue for HRD Corp ---------- */
 .jb-res { --g: #17652f; --g-deep: #0f4a22; --g-tint: #eaf6ee; --g-line: #bfe0c9; margin-top: 14px; border-radius: var(--radius-md); border: 2px solid var(--g-line); background: var(--g-tint); overflow: hidden; }
 .jb-res--cost { --g: #a85800; --g-deep: #7d4000; --g-tint: var(--honey-tint); --g-line: #f0d28a; }
 .jb-res + .jb-res { margin-top: 12px; }
@@ -371,27 +373,15 @@
 .jb-res .jb-next__res li:hover { border-color: var(--g); }
 
 /* ---------- HRD Corp verified (paid): government blue, with a tick ---------- */
-.jb-hrd { --hrd: #0b3b91; --hrd-deep: #072a6b; --hrd-tint: #e9effc; --hrd-line: #bdcdf0; padding: 0; overflow: hidden; border-color: var(--hrd-line); }
-.jb-hrd__head { display: flex; align-items: center; gap: 12px; padding: 14px var(--space-5); background: var(--hrd); color: #fff; cursor: pointer; user-select: none; transition: background var(--dur-fast); }
-.jb-hrd__head:hover { background: var(--hrd-deep); }
-.jb-hrd__heading { flex: 1; min-width: 0; }
-.jb-hrd__count { flex: none; padding: 2px 10px; border-radius: var(--radius-pill); background: rgba(255, 255, 255, .18); color: #fff; font-size: 13px; line-height: 19px; font-weight: 800; }
-.jb-hrd__toggle { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; color: #fff; background: rgba(255, 255, 255, .14); }
-.jb-hrd__toggle:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
-.jb-hrd__toggle svg { transition: transform var(--dur-base) var(--ease-out); }
-.jb-hrd__toggle .jb-collapse__icon--up { transform: rotate(180deg); }
-.jb-hrd__seal { position: relative; flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #fff; color: var(--hrd); box-shadow: 0 0 0 3px rgba(255, 255, 255, .28); }
+.jb-hrd { --hrd: #0b3b91; --hrd-deep: #072a6b; --hrd-tint: #e9effc; --hrd-line: #bdcdf0; --g: var(--hrd); --g-deep: var(--hrd-deep); --g-tint: var(--hrd-tint); --g-line: var(--hrd-line); }
+.jb-hrd__seal { position: relative; }
 .jb-hrd__verified { position: absolute; right: -5px; bottom: -4px; display: grid; place-items: center; width: 17px; height: 17px; border-radius: 50%; background: #17884a; color: #fff; border: 2px solid var(--hrd); }
-.jb-hrd__eyebrow { margin: 0; font-size: 12px; line-height: 16px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #cfdcff; }
-.jb-hrd__title { margin: 2px 0 0; font-size: 20px; line-height: 26px; font-weight: 900; color: #fff; }
-.jb-hrd__lede, .jb-hrd__foot, .jb-hrd__none { margin: 0; padding: 12px var(--space-5) 0; font-size: 14px; line-height: 20px; font-weight: 600; color: var(--text-muted); }
-.jb-hrd__foot { padding-bottom: var(--space-4); font-size: 13px; line-height: 18px; }
-.jb-hrd__none { padding-bottom: var(--space-4); }
-.jb-hrd__lede a, .jb-hrd__foot a, .jb-hrd__none a { color: var(--hrd); font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
-.jb-hrd__skel { display: grid; gap: 8px; padding: var(--space-4) var(--space-5); }
+.jb-hrd__none { margin: 0; font-size: 14px; line-height: 20px; font-weight: 600; color: var(--text-muted); }
+.jb-hrd__none a { color: var(--hrd); font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
+.jb-hrd__skel { display: grid; gap: 8px; }
 .jb-hrd__skel .skel { height: 52px; }
-.jb-hrd__list { list-style: none; margin: 0; padding: 12px var(--space-5) 12px; display: flex; flex-direction: column; gap: 8px; }
-.jb-hrd__list li { border-radius: var(--radius-sm); background: var(--hrd-tint); border: 2px solid var(--hrd-line); transition: border-color var(--dur-fast), transform var(--dur-base) var(--ease-bounce); }
+.jb-hrd__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.jb-hrd__list li { border-radius: var(--radius-sm); background: #fff; border: 2px solid var(--hrd-line); transition: border-color var(--dur-fast), transform var(--dur-base) var(--ease-bounce); }
 .jb-hrd__list li:hover { border-color: var(--hrd); transform: translateX(3px); }
 .jb-hrd__list li a { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; color: inherit; text-decoration: none; }
 .jb-hrd__list li a:focus-visible { outline: 3px solid var(--hrd); outline-offset: 2px; border-radius: var(--radius-sm); }
