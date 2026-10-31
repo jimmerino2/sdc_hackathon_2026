@@ -118,7 +118,7 @@ const eyebrowText = computed(() => {
             </section>
           </template>
           <p v-else class="jb-next__hint">We don’t have a recommended resource for this one yet.</p>
-          <HrdCard v-if="programmes !== undefined" :skill="skill.name" :programmes="programmes" />
+          <HrdCard v-if="programmes" :programmes="programmes" />
           <div class="jb-next__cta">
             <JbButton v-if="skill.state === 'ready'" :disabled="busy" @click="$emit('complete')">{{ busy ? 'Saving…' : 'Mark as done' }}</JbButton>
             <p v-else-if="skill.state === 'done'" class="jb-next__note"><Icon name="check" :size="18" /> Marked as done</p>

@@ -375,19 +375,12 @@
 
 /* ---------- HRD Corp verified (paid): government blue, with a tick ---------- */
 .jb-hrd { --hrd: #0b3b91; --hrd-deep: #072a6b; --hrd-tint: #e9effc; --hrd-line: #bdcdf0; --g: var(--hrd); --g-deep: var(--hrd-deep); --g-tint: var(--hrd-tint); --g-line: var(--hrd-line); }
-.jb-hrd__seal { position: relative; }
-.jb-hrd__verified { position: absolute; right: -5px; bottom: -4px; display: grid; place-items: center; width: 17px; height: 17px; border-radius: 50%; background: #17884a; color: #fff; border: 2px solid var(--hrd); }
-.jb-hrd__none { margin: 0; font-size: 14px; line-height: 20px; font-weight: 600; color: var(--text-muted); }
-.jb-hrd__none a { color: var(--hrd); font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
-.jb-hrd__skel { display: grid; gap: 8px; }
-.jb-hrd__skel .skel { height: 52px; }
 .jb-hrd__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .jb-hrd__list li { border-radius: var(--radius-sm); background: #fff; border: 2px solid var(--hrd-line); transition: border-color var(--dur-fast), transform var(--dur-base) var(--ease-bounce); }
 .jb-hrd__list li:hover { border-color: var(--hrd); transform: translateX(3px); }
 .jb-hrd__list li a { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; color: inherit; text-decoration: none; }
 .jb-hrd__list li a:focus-visible { outline: 3px solid var(--hrd); outline-offset: 2px; border-radius: var(--radius-sm); }
 .jb-hrd__out { flex: none; margin-top: 3px; color: var(--hrd); opacity: .7; }
-.jb-hrd__tick { flex: none; display: grid; place-items: center; width: 20px; height: 20px; margin-top: 2px; border-radius: 50%; background: var(--hrd); color: #fff; }
 .jb-hrd__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .jb-hrd__main b { font-size: 15px; line-height: 20px; font-weight: 800; color: var(--hrd-deep); overflow-wrap: anywhere; }
 .jb-hrd__main small { font-size: 13px; line-height: 18px; font-weight: 700; color: var(--text-muted); }
@@ -395,9 +388,10 @@
 .jb-hrd__tag { display: inline-flex; align-items: center; gap: 4px; font-style: normal; white-space: nowrap; padding: 1px 9px; border-radius: var(--radius-pill); background: #fff; border: 1.5px solid var(--hrd-line); color: var(--hrd); font-size: 12px; line-height: 17px; font-weight: 800; }
 .jb-hrd__tag--cert { background: var(--hrd); border-color: var(--hrd); color: #fff; }
 .jb-hrd__tag svg { flex: none; }
-.jb-hrd__price { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 0; text-align: right; }
+.jb-hrd__price { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 6px; }
 .jb-hrd__price b { font-size: 16px; line-height: 21px; font-weight: 900; color: var(--hrd-deep); white-space: nowrap; }
 .jb-hrd__price s { font-size: 13px; line-height: 17px; font-weight: 700; color: var(--text-muted); white-space: nowrap; }
+.jb-hrd__off { background: #eaf6ee; border-color: #bfe0c9; color: #17652f; } /* savings read green */
 
 
 /* ---------- share on LinkedIn ---------- */
