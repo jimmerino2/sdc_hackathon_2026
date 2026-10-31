@@ -51,7 +51,7 @@ def _stream_answer(prompt: str, by_lower: dict[str, str], on_skill: Callable[[st
     """Run the model with streaming, calling on_skill(name, score) once per candidate skill as it is written."""
     settings = get_settings()
     answer, pos, sent = "", 0, set()
-    pieces = llm.complete_stream(prompt, system=SYSTEM, model=settings.resume_model or None, max_tokens=900,
+    pieces = llm.complete_stream(prompt, system=SYSTEM, max_tokens=900,
                                  thinking=settings.resume_thinking, on_reasoning=on_thinking)
     for piece in pieces:
         answer += piece
@@ -66,7 +66,7 @@ def _stream_answer(prompt: str, by_lower: dict[str, str], on_skill: Callable[[st
 
 def score_resume(text: str, vocab: list[str] | None = None, on_skill: Callable[[str, float], None] | None = None,
                  on_thinking: Callable[[int], None] | None = None) -> dict:
-    """Ask the gateway LLM the same question OpenJev answers: which candidate skills, and how strongly.
+    """Ask the gateway LLM which of the candidate skills the resume shows, and how strongly.
 
     The model gets the same candidate skill list in one prompt and answers with names from it plus a 0-1
     rating each. Returns {"candidates", "skills"} with skills as [{"name", "score"}] sorted strongest first.
@@ -84,7 +84,7 @@ def score_resume(text: str, vocab: list[str] | None = None, on_skill: Callable[[
     if on_skill:
         raw = _stream_answer(prompt, by_lower, on_skill, on_thinking)
     else:
-        raw = llm.complete(prompt, system=SYSTEM, model=settings.resume_model or None, max_tokens=900, thinking=settings.resume_thinking)
+        raw = llm.complete(prompt, system=SYSTEM, max_tokens=900, thinking=settings.resume_thinking)
     data = json.loads(raw[raw.index("{"): raw.rindex("}") + 1])
 
     found: dict[str, float] = {}

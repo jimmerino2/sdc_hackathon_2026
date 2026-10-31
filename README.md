@@ -21,7 +21,6 @@
 | ----------------- | ------------------------------------------------------------- |
 | GitHub Repository | https://github.com/jimmerino2/sdc_hackathon_2026              |
 | Live Demo         | https://jobee-sdchack.replit.app/                             |
-| RunPod            | Serverless endpoint hosting OpenJev (resume skill extraction) |
 | Slide Deck        | https://canva.link/9ogvetmkxddtzag                            |
 | Demo Video        | https://youtu.be/xLT6an0eAq4                                  |
 
@@ -41,7 +40,7 @@ Jobee takes a short onboarding conversation (where you are in your journey, your
 
 - **Role matching** — Ranks tech roles by skills, interests, career stage and outlook, using plain arithmetic. See [docs/JOB_MATCH.md](docs/JOB_MATCH.md) for how it works.
 - **AI-future outlook** — Forecasts for job postings and AI use under different AI futures, with the model's error range shown.
-- **Resume reading** — Extracts skills from an uploaded resume, using OpenJev, with an OpenRouter fallback if the OpenJev endpoint is unreachable.
+- **Resume reading** — Extracts skills from an uploaded resume with the LLM gateway.
 - **Learning pathway** — Generates a roadmap for a chosen role.
 - **Challenges** — Two-stage projects built in a GitHub repo and scored by an LLM against a rubric. Passing a stage earns a stinger.
 - **Hive and Social** — A co-op boss fight for up to four friends, paid for with stingers, plus pollen points and a friends leaderboard.
@@ -56,8 +55,7 @@ Jobee takes a short onboarding conversation (where you are in your journey, your
 | Backend         | Python 3.12, FastAPI, Pydantic                                                    |
 | Database / Auth | Supabase (Postgres + auth)                                                        |
 | Forecasting     | pandas, NumPy, scikit-learn, LightGBM                                             |
-| AI              | LLM gateway for roadmaps, quests and resume extraction; OpenJev for resume skills |
-| AI / Compute    | RunPod Serverless endpoint hosting OpenJev                                        |
+| AI              | LLM gateway for roadmaps, quests and resume extraction                            |
 | Hosting / Dev   | Replit Autoscale (live demo) and development; Vercel as an alternate deployment   |
 
 ---
@@ -97,8 +95,7 @@ Browser ──► Vue frontend
                 ▼
         FastAPI backend ──► Supabase (auth, profiles, roadmaps)
                 │
-                ├──► OpenRouter LLM gateway (roadmaps, quests, resume extraction fallback)
-                └──► OpenJev on a RunPod Serverless endpoint (resume skill extraction)
+                └──► LLM gateway (roadmaps, quests, resume skills)
 ```
 
 ---

@@ -6,7 +6,7 @@ from pypdf import PdfReader
 from pypdf.errors import PdfReadError
 
 from app.config import get_settings
-from app.resume import gateway, openjev
+from app.resume import gateway
 from app.resume.vocab import TOP_N, candidates_for
 
 MAX_BYTES = 10 * 1024 * 1024  # reject uploads over 10 MB
@@ -61,30 +61,26 @@ def extract_pdf_text(data: bytes) -> dict:
     }
 
 
-def extract_skills(text: str, source: str = "auto", on_event: Callable[[dict], None] | None = None) -> dict:
-    """Get the resume's top skills from OpenJev or the gateway LLM, and time it.
+def extract_skills(text: str, on_event: Callable[[dict], None] | None = None) -> dict:
+    """Get the resume's top skills from the gateway LLM (OPENROUTER_MODEL), and time it.
 
-    Both engines get the same candidate skill list and return the same shape.
-    source: "auto" uses OpenJev when OPENJEV_URL is set and it answers a quick availability check, and the LLM
-    otherwise (it also falls back to the LLM if a request to OpenJev fails);
-    "openjev" or "llm" use only that engine with no fallback, so a failure shows up as an error
-    (this is what makes the two comparable). Returns {"skills", "top_skills", "error", "engine": {...}}, where skills are
-    [{"name", "score"}] strongest first and top_skills is the first TOP_N of them. Never raises.
+    Returns {"skills", "top_skills", "error", "engine": {...}}, where skills are [{"name", "score"}] strongest first and
+    top_skills is the first TOP_N of them. Never raises.
 
     on_event, when given, hears what is happening as it happens: {"type": "candidates", "count"},
-    {"type": "engine", "source"}, {"type": "thinking", "words"} about once a second while the gateway model reasons,
+    {"type": "engine", "source"}, {"type": "thinking", "words"} about once a second while the model reasons,
     and {"type": "skill", "name", "score"} as it writes each skill of its answer.
     """
     start = time.perf_counter()
-    result = _extract(text, source, on_event or (lambda event: None))
+    result = _extract(text, on_event or (lambda event: None))
     result["engine"]["seconds"] = round(time.perf_counter() - start, 2)
     return result
 
 
-def _extract(text: str, source: str, emit: Callable[[dict], None]) -> dict:
-    """The work behind extract_skills: pick the engine, call it, label the result."""
+def _extract(text: str, emit: Callable[[dict], None]) -> dict:
+    """The work behind extract_skills: pick the candidate skills, ask the model, label the result."""
     settings = get_settings()
-    model = settings.resume_model or settings.openrouter_model
+    model = settings.openrouter_model
     none = {"source": None, "model": None, "candidates": None, "seconds": None}
 
     def failed(message: str) -> dict:
@@ -93,26 +89,8 @@ def _extract(text: str, source: str, emit: Callable[[dict], None]) -> dict:
     text = text[:MAX_TEXT_CHARS]
     if not text.strip():
         return failed("No text was found in the PDF (it may be a scan), so no skills were extracted.")
-    if source == "openjev" and not settings.openjev_url:
-        return failed("OPENJEV_URL is not set, so OpenJev can't be used.")
     vocab = candidates_for(text)
     emit({"type": "candidates", "count": len(vocab)})
-    use_openjev = source in ("auto", "openjev") and bool(settings.openjev_url)
-    if use_openjev and not openjev.is_available():
-        if source == "openjev":
-            return failed("OpenJev is not available right now (it may be off or still starting).")
-        print("OpenJev is not available; using the LLM")
-        use_openjev = False
-    if use_openjev:
-        emit({"type": "engine", "source": "openjev"})
-        try:
-            found = openjev.score_resume(text, vocab)
-            return {"skills": found["skills"], "top_skills": found["skills"][:TOP_N], "error": None,
-                    "engine": {**none, "source": "openjev", "model": "openjev", "candidates": found["candidates"]}}
-        except Exception as e:  # server down, bad token, timeout, unexpected reply
-            if source == "openjev":
-                return failed(f"OpenJev failed: {type(e).__name__}.")
-            print(f"OpenJev failed ({type(e).__name__}: {e}); falling back to the LLM")
     emit({"type": "engine", "source": "llm"})
     last_thinking = 0.0
 

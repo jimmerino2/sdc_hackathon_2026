@@ -21,14 +21,10 @@ class Settings(BaseSettings):
     challenge_reasoning: Literal["off", "low", "default"] = "off"
     # The weighted score (0-100) a challenge stage must reach to pass and earn a stinger
     challenge_pass_score: int = Field(85, ge=1, le=100)
-    openrouter_model: str = "qwen/qwen3.7-flash"
+    openrouter_model: str = "gemini/gemini-3.1-flash-lite-preview"  # every LLM call (roadmaps, quests, resume skills, chat) uses this
     llm_bench_runs_enabled: bool = False  # starting, stopping or resuming benchmark runs spends money; results stay public
     github_token: str = ""  # optional; reading a submitted repo without it is limited to 60 GitHub API calls an hour
-    openjev_url: str = ""
-    openjev_token: str = ""
-    resume_prefilter: bool = True  # both engines: consider only tools named in the resume (plus the general skills); false = all ~260
-    openjev_threshold: float = 0.5  # a skill counts as present at or above this probability
-    resume_model: str = ""  # model for resume skill extraction; empty = use openrouter_model
+    resume_prefilter: bool = True  # consider only tools named in the resume (plus the general skills); false = all ~260
     resume_thinking: bool = True  # false turns the model's hidden reasoning off: ~5 s instead of ~30 s, same skills on the resumes tried
     forecast_refresh_enabled: bool = False  # lets POST /forecast/refresh clear the forecast caches (a flood of them would force retrains)
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:5173"]

@@ -39,9 +39,6 @@ Secrets, not source files:
 - `SUPABASE_SERVICE_KEY`: server-only service-role key needed by profile,
   recommendation, and roadmap endpoints. Apply the existing SQL migrations
   to the intended Supabase project before using database-backed features.
-- `OPENJEV_URL` and `OPENJEV_TOKEN`: needed if using the OpenJev resume
-  extraction engine rather than the AI gateway. `OPENJEV_URL` is the RunPod
-  Serverless endpoint address.
 - `CORS_ORIGINS`: optional JSON list of allowed frontend origins if a separate
   frontend is connected.
 

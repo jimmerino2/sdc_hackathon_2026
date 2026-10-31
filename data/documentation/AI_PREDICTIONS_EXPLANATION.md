@@ -25,8 +25,8 @@ Jobee's current architecture:
 - Backend: Python, FastAPI
 - Database and authentication: Supabase
 - Forecasting: pandas, scikit-learn, LightGBM
-- Resume processing: OpenJev through RunPod Serverless, with OpenRouter fallback
-- Hosting: Replit Autoscale and RunPod
+- Resume processing: the LLM gateway (OPENROUTER_MODEL)
+- Hosting: Replit Autoscale
 
 The main application flow:
 
@@ -703,7 +703,7 @@ The simulator and match breakdowns must be deterministic.
 
 Forecast explanations should primarily use structured metadata and predefined descriptions.
 
-Do not add unnecessary OpenRouter, OpenJev or other LLM calls.
+Do not add unnecessary OpenRouter or other LLM calls.
 
 Keep API usage and computational overhead low.
 

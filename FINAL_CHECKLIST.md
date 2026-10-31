@@ -51,7 +51,7 @@ Checked against the Domain 1 Finalist Guide (must-haves in section 5, technical 
 ## Rules, pitch and submission (sections 9 to 13)
 | Goal | Achieved? | How we achieved it | Where we achieved it | Where to see it |
 |---|---|---|---|---|
-| Technical and Tools Declaration: every API, model, dataset and AI tool | 🟡 Datasets only | Datasets are listed with sources and dates. APIs, models (OpenJev, the OpenRouter model, LightGBM) and AI tools are not listed in one place. | [SOURCES.md](data/documentation/SOURCES.md) | Submission form |
+| Technical and Tools Declaration: every API, model, dataset and AI tool | 🟡 Datasets only | Datasets are listed with sources and dates. APIs, models (the LLM gateway model, LightGBM) and AI tools are not listed in one place. | [SOURCES.md](data/documentation/SOURCES.md) | Submission form |
 | Human-centred: AI supports the decision, never makes it | 🟡 Not checked | Scores are formula-based and explained, but the wording on screen hasn't been checked against this rule. | — | **Roles**, **Learn** copy |
 | Backup in case of connectivity problems (offline build or recording) | ❌ | — | Nothing found in the repo | Demo day |
 | First-time user gets from profile to ranked roles and a plan in minutes (Design & UX) | 🟡 Not timed | The onboarding flows straight into roles and then the roadmap build. | [BuildingView.vue](src/frontend/src/views/BuildingView.vue) | Run it once with a stopwatch |

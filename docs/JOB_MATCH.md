@@ -93,7 +93,7 @@ About 130 of them show no change. Only a role's 10 key skills count, and tools f
 
 ### Is there an AI model anywhere in this?
 
-Not in scoring. It used to be: a model or OpenJev rated each role from the learner's skills. That is removed, so scores are repeatable, instant and testable. The `source` option on `GET /jobs/recommend` is still accepted but ignored.
+Not in scoring. It used to be: a model rated each role from the learner's skills. That is removed, so scores are repeatable, instant and testable. The `source` option on `GET /jobs/recommend` is still accepted but ignored.
 
 The cost is that the old model could recognise related skills that aren't in a role's key list. Now only the equivalents listed in `service.py` count, so an unusual skill scores 0.
 

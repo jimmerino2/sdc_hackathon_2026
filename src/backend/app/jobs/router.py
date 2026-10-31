@@ -17,7 +17,7 @@ router = APIRouter(prefix="/jobs", tags=["jobs"])
 @router.get("/recommend", response_model=RecommendResponse)
 def recommend(
     profile_id: UUID = Query(description="The profile_id returned from POST /profile"),
-    source: Literal["auto", "openjev", "llm", "openai", "grafilab"] = Query(
+    source: Literal["auto", "llm", "openai", "grafilab"] = Query(
         "auto", description="Ignored: roles are scored by formula now, with no model involved. Kept so older callers still work."
     ),
     horizon: Literal[3, 6, 9, 12] = Query(12, description="Months ahead for the posting change"),

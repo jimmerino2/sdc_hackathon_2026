@@ -101,7 +101,7 @@ const stats = computed(() => {
 });
 
 // While the AI works, only skills it has confirmed are highlighted; once it is done, the skills in the result. Without
-// live skills (OpenJev answers in one go) the browser's keyword scan stands in until the result arrives.
+// live skills the browser's keyword scan stands in until the result arrives.
 const liveSkills = computed(() => live.engine === 'llm');
 const foundLabels = computed(() => live.found.map(displayName));
 const shownKeys = computed(() => {
