@@ -11,7 +11,6 @@ import ShareCard from '../components/learn/ShareCard.vue';
 import { fetchProgrammes, type Programme } from '../api/hrd';
 import { formatMinutes } from '../learn/time';
 import ForecastCard from '../components/learn/ForecastCard.vue';
-import AiSkillCard from '../components/learn/AiSkillCard.vue';
 import BeeGuide from '../components/learn/BeeGuide.vue';
 import ChallengeBanner from '../components/learn/ChallengeBanner.vue';
 import NextMoveCard from '../components/learn/NextMoveCard.vue';
@@ -417,7 +416,6 @@ watch([() => roadmapTabs.value, activeCode], () => nextTick(() => {
               :minutes="roadmap.minutes_total"
               :name="state.name"
             />
-            <AiSkillCard v-if="guideSelected" :name="guideSelected.name" />
             <ForecastCard
               v-if="forecastSelected && roleForecast"
               :name="forecastSelected.name"
@@ -441,7 +439,6 @@ watch([() => roadmapTabs.value, activeCode], () => nextTick(() => {
               eyebrow="Skill materials"
               @close="materialsClosed = true"
             />
-            <AiSkillCard v-if="guideSelected" :name="guideSelected.name" />
             <ForecastCard
               v-if="selected && forecastSelected && roleForecast"
               :name="forecastSelected.name"
