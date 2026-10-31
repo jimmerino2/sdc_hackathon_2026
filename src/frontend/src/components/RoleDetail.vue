@@ -472,7 +472,7 @@ const hasMasco = computed(() => !!mascoRoles[props.onetCode]?.minors?.length);
           </ul>
         </div>
 
-        <template v-if="skillSdgs.length">
+        <div v-if="skillSdgs.length" class="skills-block">
           <h3 class="impact-sub skills-sub">Your key skills and the goals they serve</h3>
           <ul class="skill-sdgs">
             <li v-for="s in skillSdgs" :key="s.skill_id" @mouseenter="showTip(s.skill_id, $event)" @mouseleave="hideTip(s.skill_id)">
@@ -497,7 +497,7 @@ const hasMasco = computed(() => !!mascoRoles[props.onetCode]?.minors?.length);
               </Teleport>
             </li>
           </ul>
-        </template>
+        </div>
         <p class="sdg-credit">SDG icons: United Nations. The UN has not approved this app.</p>
       </section>
     </div>
@@ -532,7 +532,7 @@ h1 { font-size: 34px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .fi-gap { margin-top: 12px; }
 .right { display: flex; flex-direction: column; gap: 14px; }
 .bub { margin-bottom: 8px; flex-direction: row-reverse; }
-.sdg-row { grid-column: 1 / -1; }
+.sdg-row { grid-column: 1 / -1; overflow-wrap: anywhere; }
 .sdg-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 14px; }
 .sdg-tile { display: block; width: 112px; height: auto; border-radius: 12px; box-shadow: 0 4px 0 rgba(30, 30, 30, .12); }
 .sdg-tile.main { width: 148px; }
@@ -541,7 +541,8 @@ h1 { font-size: 34px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .impact-group { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
 .impact-label { padding: 6px 14px; border-radius: 10px; background: var(--ink); color: #fff; font-size: 15px; font-weight: 900; }
 .impact-sub { font-size: 19px; font-weight: 900; line-height: 1.25; margin-bottom: 12px; }
-.fit, .targets-card { margin-top: 20px; padding: 20px 22px; max-width: 760px; }
+.fit, .targets-card { margin-top: 20px; padding: 20px 22px; }
+.skills-block { margin-top: 26px; }
 .fit { background: var(--cream); border-color: rgba(255, 152, 0, .35); }
 .fit-list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
 .fit-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
@@ -551,7 +552,7 @@ h1 { font-size: 34px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .fit-skel { display: block; height: 40px; border-radius: 10px; margin-top: 6px; }
 .sdg-targets { list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 16px; font-weight: 600; line-height: 1.4; }
 .sdg-targets b { font-weight: 900; margin-right: 4px; }
-.skills-sub { margin-top: 26px; }
+.skills-sub { margin-top: 0; }
 .skill-sdgs { list-style: none; display: flex; flex-wrap: wrap; gap: 10px; }
 .skill-chip { cursor: help; font-size: 15px; padding: 8px 14px; white-space: normal; text-align: left; line-height: 1.25; }
 .skill-chip.chip-have { border: 2px solid var(--ink); }
@@ -568,12 +569,12 @@ h1 { font-size: 34px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } .bub { display: none; } }
 
 /* The chart and the futures on the left, the data panel beside them; on a narrow screen the panel sits between the two. */
-.wrap.split { grid-template-columns: minmax(0, 1fr) 320px; grid-template-areas: 'left aside' 'right aside'; align-items: start; column-gap: 24px; }
+.wrap.split { grid-template-columns: minmax(0, 1fr) 320px; grid-template-areas: 'left aside' 'right aside' 'sdg aside'; align-items: start; column-gap: 24px; }
 .split .left { grid-area: left; }
 .split .right { grid-area: right; }
-.aside { grid-area: aside; position: sticky; top: 0; }
+.aside { grid-area: aside; }
+.split .sdg-row { grid-area: sdg; min-width: 0; }
 @media (max-width: 900px) {
-  .wrap.split { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'left' 'aside' 'right'; }
-  .aside { position: static; }
+  .wrap.split { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'left' 'aside' 'right' 'sdg'; }
 }
 </style>
