@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import FlowShell from '../components/FlowShell.vue';
 import Icon from '../components/Icon.vue';
 import InterestPicker from '../components/InterestPicker.vue';
+import InterestSdgPanel from '../components/InterestSdgPanel.vue';
 import { fetchInterests, InterestsError, MAX_INTERESTS, type Interest } from '../api/interests';
 import { useFlow } from '../state';
 import { personaCopy } from '../data/personaCopy';
@@ -11,6 +12,18 @@ const { state, key } = useFlow();
 const interests = ref<Interest[]>([]);
 const status = ref<'loading' | 'done' | 'error'>('loading');
 const error = ref('');
+const side = ref<HTMLElement | null>(null);
+
+/** The latest pick, whose goals are on show. */
+const latest = computed(() => interests.value.find((i) => i.id === state.value.interests.at(-1)) ?? null);
+
+// The panel sits under the tiles on small screens, so bring it into view on a new pick
+watch(() => state.value.interests.length, async (now, before) => {
+  if (now <= before) return;
+  await nextTick();
+  const motion = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+  side.value?.scrollIntoView({ block: 'nearest', behavior: motion });
+});
 
 async function load() {
   status.value = 'loading';
@@ -31,7 +44,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <FlowShell :progress="2" next="outcome" back="who" :mood="status === 'error' ? 'surprised' : 'thinking'" :next-disabled="!state.interests.length">
+  <FlowShell :progress="2" next="resume" back="who" wide :mood="status === 'error' ? 'surprised' : 'thinking'" :next-disabled="!state.interests.length">
     <template #bubble>{{ status === 'error' ? error : personaCopy[key].interests }}</template>
 
     <div v-if="status === 'loading'" class="grid" aria-hidden="true">
@@ -42,7 +55,10 @@ onMounted(() => {
       <button type="button" class="btn btn-secondary retry" @click="load"><Icon name="refresh" :size="18" /> Try again</button>
     </div>
 
-    <InterestPicker v-else v-model="state.interests" :interests="interests" hint-id="interests-hint" />
+    <div v-else class="layout">
+      <div class="picks"><InterestPicker v-model="state.interests" :interests="interests" hint-id="interests-hint" /></div>
+      <aside ref="side" class="side"><InterestSdgPanel :interest="latest" /></aside>
+    </div>
   </FlowShell>
 </template>
 
@@ -51,5 +67,11 @@ onMounted(() => {
 .tile-skel { height: 112px; border-radius: 16px; }
 .state { display: flex; justify-content: center; padding: 24px 0; }
 .retry { display: inline-flex; align-items: center; gap: 8px; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 520px); gap: 48px; align-items: start; }
+.side { position: sticky; top: 0; scroll-margin: 16px; }
+@media (max-width: 1040px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .side { position: static; }
+}
 @media (max-width: 420px) { .grid { grid-template-columns: repeat(2, 1fr); } }
 </style>

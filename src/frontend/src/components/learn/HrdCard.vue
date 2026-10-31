@@ -2,7 +2,6 @@
 import { computed, ref } from 'vue';
 import Icon from '../Icon.vue';
 import { HRD_LIST_URL, type Programme } from '../../api/hrd';
-import { day } from '../../occupational/format';
 
 const props = defineProps<{
   /** The skill's display name. */
@@ -11,34 +10,29 @@ const props = defineProps<{
   programmes: Programme[] | null;
 }>();
 
-/** Open by default; the header folds the card away. */
-const collapsed = ref(false);
+/** Closed by default; the free links come first and these cost money. */
+const open = ref(false);
 const count = computed(() => props.programmes?.length ?? 0);
 
 const money = (n: number) => `RM ${n.toLocaleString('en-MY', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
-/** The day the list was read; every course comes from the same read. */
-const readOn = computed(() => (props.programmes?.length ? day(props.programmes[0].fetched) : ''));
 </script>
 
 <template>
-  <section class="jb jb-card jb-hrd" aria-labelledby="hrd-title">
-    <div class="jb-hrd__head" @click="collapsed = !collapsed">
-      <span class="jb-hrd__seal" aria-hidden="true"><Icon name="landmark" :size="18" :stroke="2.3" /><i class="jb-hrd__verified"><Icon name="check" :size="10" :stroke="4" /></i></span>
-      <div class="jb-hrd__heading">
-        <p class="jb-hrd__eyebrow">Paid · employer claims the fee</p>
-        <h3 id="hrd-title" class="jb-hrd__title">HRD Corp Verified</h3>
-      </div>
-      <span v-if="count" class="jb-hrd__count">{{ count }} {{ count === 1 ? 'course' : 'courses' }}</span>
-      <button type="button" class="jb-hrd__toggle" :aria-expanded="!collapsed" aria-controls="hrd-body" :aria-label="collapsed ? 'Show HRD Corp courses' : 'Hide HRD Corp courses'">
-        <Icon name="chevron" :size="18" :class="{ 'jb-collapse__icon--up': !collapsed }" />
-      </button>
-    </div>
+  <section class="jb-res jb-hrd" aria-label="HRD Corp Verified courses">
+    <button type="button" class="jb-res__head" :aria-expanded="open" aria-controls="hrd-body" @click="open = !open">
+      <span class="jb-res__seal jb-hrd__seal" aria-hidden="true"><Icon name="landmark" :size="16" :stroke="2.3" /><i class="jb-hrd__verified"><Icon name="check" :size="10" :stroke="4" /></i></span>
+      <span class="jb-res__titles">
+        <span class="jb-res__eyebrow">Paid · employer claims the fee</span>
+        <span class="jb-res__title">HRD Corp Verified</span>
+      </span>
+      <span v-if="programmes" class="jb-res__count">{{ count }} {{ count === 1 ? 'course' : 'courses' }}</span>
+      <span class="jb-res__chev" aria-hidden="true"><Icon name="chevron" :size="16" :class="{ 'jb-collapse__icon--up': open }" /></span>
+    </button>
 
-    <div v-show="!collapsed" id="hrd-body">
+    <div v-show="open" id="hrd-body" class="jb-res__body">
       <div v-if="programmes === null" class="jb-hrd__skel" aria-hidden="true"><span class="skel" /><span class="skel" /></div>
 
       <template v-else-if="programmes.length">
-        <p class="jb-hrd__lede">Courses for {{ skill }} on HRD Corp’s claimable list. These cost money. A company registered with HRD Corp can claim the fee back, so ask your employer. You can’t claim it yourself.</p>
         <ul class="jb-hrd__list">
           <li v-for="p in programmes" :key="p.course_id">
             <a :href="p.source_url" target="_blank" rel="noopener noreferrer" :title="`Opens HRD Corp’s course list where ${p.course_name} is`">
@@ -60,7 +54,6 @@ const readOn = computed(() => (props.programmes?.length ? day(props.programmes[0
             </a>
           </li>
         </ul>
-        <p class="jb-hrd__foot">Fees are from <a :href="HRD_LIST_URL" target="_blank" rel="noopener noreferrer">HRD Corp’s public course list</a>, read on {{ readOn }}. A course opens that list on the page it was found, so look for its name there. Fees change, so confirm with the provider.</p>
       </template>
 
       <p v-else class="jb-hrd__none">No HRD Corp-claimable course for {{ skill }} turned up in HRD Corp’s <a :href="HRD_LIST_URL" target="_blank" rel="noopener noreferrer">public list</a>. We don’t guess.</p>
