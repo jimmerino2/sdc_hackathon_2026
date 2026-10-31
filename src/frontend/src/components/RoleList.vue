@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import Icon from './Icon.vue';
 import SourceStamp from './SourceStamp.vue';
+import MatchBreakdown from './MatchBreakdown.vue';
 import MatchWhy from './MatchWhy.vue';
 import { backendScenario } from '../api/forecast';
 import { matchPercent, type JobMatch } from '../api/jobs';
@@ -101,7 +102,10 @@ const matchTooltip = 'Compatibility match based on your skills, interests, caree
           </span>
         </span>
       </button>
-      <MatchWhy :job="j" :scenario="scenarioName" :stage="stage" />
+      <span v-if="outlook(j)?.breakdown" class="calc" :class="{ picking }">
+        <MatchBreakdown :job="j" :scenario="scenarioName" :stage="stage" />
+      </span>
+      <MatchWhy :job="j" />
       </div>
     </div>
     <p class="note">
@@ -114,7 +118,7 @@ const matchTooltip = 'Compatibility match based on your skills, interests, caree
 <style scoped>
 .list { display: flex; flex-direction: column; gap: 24px; }
 /* drop-shadow follows the outline of the row and its sub card together, so the shadow steps in around the sub card. */
-.item { display: flex; flex-direction: column; filter: drop-shadow(0 4px 0 var(--line-strong)); }
+.item { position: relative; display: flex; flex-direction: column; filter: drop-shadow(0 4px 0 var(--line-strong)); }
 .item:has(.selected) { filter: drop-shadow(0 4px 0 var(--orange)); }
 .item .role { z-index: 1; box-shadow: none; }
 .role { align-items: flex-start; padding: 16px 18px; }
@@ -128,6 +132,11 @@ const matchTooltip = 'Compatibility match based on your skills, interests, caree
 .score b { font-size: 20px; font-weight: 900; line-height: 1; color: var(--ink); }
 .score b small { font-size: 13px; font-weight: 900; }
 .score span { font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: 1px; }
+/* The "?" sits on the match ring's corner, beside the row (a button can't hold another button). */
+.item:hover, .item:focus-within { z-index: 3; }
+.calc { position: absolute; z-index: 2; top: 54px; left: 62px; }
+.calc.picking { left: 102px; }
+.calc :deep(.info) { width: 20px; height: 20px; background: #fff; border: 2px solid var(--line-strong); }
 .score.best span { color: var(--ink); }
 .role:not(.selected) { align-items: center; }
 .role:not(.selected) .trend, .role:not(.selected) .go, .role:not(.selected) .radio { margin-top: 0; }

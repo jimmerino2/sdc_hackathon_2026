@@ -30,7 +30,7 @@ const pieLabel = computed(() => `${breakdown.value?.match_percent}% match: ${sli
 
 <template>
   <p v-if="!breakdown" class="muted">Regenerate your roles to see why this role scored what it did.</p>
-  <InfoDialog v-else title="How your match is calculated" label="How it’s calculated">
+  <InfoDialog v-else title="How your match percentage is calculated">
     <div class="pie">
       <svg viewBox="0 0 100 100" role="img" :aria-label="pieLabel">
         <circle cx="50" cy="50" :r="R" class="track" />
