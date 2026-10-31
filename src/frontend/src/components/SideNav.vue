@@ -57,6 +57,7 @@ onMounted(async () => {
             <Icon :name="i.icon" :size="22" /><span>{{ i.label }}</span>
           </RouterLink>
         </div>
+        <RouterLink :to="go('privacy')" class="jb-nav__item jb-nav__privacy"><Icon name="shield-check" :size="22" /><span>Privacy Policy</span></RouterLink>
         <button type="button" class="jb-nav__item jb-nav__logout" @click="logout">
           <Icon name="logout" :size="22" /><span>Log out</span>
         </button>
@@ -76,10 +77,12 @@ aside { display: flex; }
 .jb-nav__insights { margin-top: auto; padding-top: 16px; border-top: 2px solid var(--line); }
 /* The pill is positioned from the padding edge, so it skips the divider's padding. */
 .jb-nav__insights .jb-nav__pill { top: 16px; }
-.jb-nav__logout { margin-top: 8px; width: 100%; }
+.jb-nav__privacy { margin-top: 8px; width: 100%; }
+.jb-nav__logout { margin-top: 2px; width: 100%; }
 @media (max-width: 860px) {
   .jb-nav__insights { margin-top: 0; padding-top: 0; border-top: 0; padding-left: 12px; border-left: 2px solid var(--line); }
-  .jb-nav__logout { margin-top: 0; margin-left: auto; width: auto; }
+  .jb-nav__privacy { margin-top: 0; margin-left: auto; width: auto; }
+  .jb-nav__logout { margin-top: 0; width: auto; }
   .layout { flex-direction: column; }
   aside { width: 100%; height: auto; position: static; border-right: 0; border-bottom: 2px solid var(--line); overflow-x: auto; }
   .jb-nav { flex-direction: row; align-items: center; gap: 12px; }

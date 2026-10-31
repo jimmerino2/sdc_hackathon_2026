@@ -4,6 +4,7 @@ import FlowShell from '../components/FlowShell.vue';
 import Icon from '../components/Icon.vue';
 import { getProfile, markLoggedIn, readProfileId, sendSyncCode, SyncError, verifySyncCode } from '../api/profile';
 import { useFlow } from '../state';
+import { go } from '../router';
 
 const { state } = useFlow();
 const step = ref<'email' | 'code' | 'done'>(state.value.email ? 'done' : 'email');
@@ -12,6 +13,8 @@ const code = ref('');
 const busy = ref(false);
 const error = ref<string | null>(null);
 const sentTo = ref('');
+/** Ticked before a code is sent: the PDPA wants consent first, and consent can't be implied. */
+const agreed = ref(false);
 
 const emailOk = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim()));
 const codeOk = computed(() => /^\d{6,8}$/.test(code.value.trim()));
@@ -54,7 +57,7 @@ function sendCode() {
     error.value = 'Your profile wasn’t saved. Go back and finish the questions again.';
     return;
   }
-  if (!emailOk.value || busy.value) return;
+  if (!emailOk.value || !agreed.value || busy.value) return;
   const to = email.value.trim();
   run(async () => {
     await sendSyncCode(id, to);
@@ -105,7 +108,11 @@ onMounted(async () => {
     <form v-if="step === 'email'" class="card block" @submit.prevent="sendCode">
       <label for="email">Email address</label>
       <input id="email" v-model="email" class="field" type="email" placeholder="you@example.com" autocomplete="email" autofocus />
-      <button class="btn btn-primary" type="submit" :disabled="!emailOk || busy">{{ busy ? 'Sending…' : 'Send me a code' }}</button>
+      <label class="consent">
+        <input v-model="agreed" type="checkbox" />
+        <span>I agree that Jobee may collect and use my profile, skills and email to build my roadmap, and share them with its AI and database providers. Read the <RouterLink :to="go('privacy')" target="_blank">Privacy Policy</RouterLink>.</span>
+      </label>
+      <button class="btn btn-primary" type="submit" :disabled="!emailOk || !agreed || busy">{{ busy ? 'Sending…' : 'Send me a code' }}</button>
       <small>One-time code, no password.</small>
     </form>
 
@@ -138,6 +145,9 @@ label { font-weight: 800; font-size: 16px; }
 }
 .field:focus { border-color: var(--orange); box-shadow: 0 0 0 4px rgba(255, 193, 7, .3); }
 .field.code { letter-spacing: .3em; font-size: 23px; }
+label.consent { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 21px; font-weight: 600; color: var(--muted); cursor: pointer; }
+.consent input { flex: none; width: 20px; height: 20px; margin-top: 1px; accent-color: var(--ink); cursor: pointer; }
+.consent a { color: var(--ink); font-weight: 800; text-decoration: underline; }
 small { font-size: 14px; font-weight: 600; color: var(--muted); }
 .links { display: flex; gap: 18px; }
 .links button, .change { font-size: 14px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }

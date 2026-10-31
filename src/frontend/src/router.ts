@@ -27,6 +27,7 @@ export const steps = [
   'outlook',
   'occupations',
   'benchmark',
+  'privacy',
 ] as const;
 export type Step = (typeof steps)[number];
 
@@ -56,6 +57,7 @@ export const stepLabels: Record<Step, string> = {
   outlook: '16 AI outlook',
   occupations: '17 Occupational forecasting',
   benchmark: '18 LLM forecast benchmark',
+  privacy: '19 Privacy policy',
 };
 
 /** Pages that live inside the sidebar layout. */
