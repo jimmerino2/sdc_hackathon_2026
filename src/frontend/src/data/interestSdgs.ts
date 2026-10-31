@@ -17,6 +17,8 @@ export const SDG_GOALS: Record<number, { title: string; color: string }> = {
   3: { title: 'Good Health and Well-being', color: '#3f852f' },
   4: { title: 'Quality Education', color: '#c5192d' },
   5: { title: 'Gender Equality', color: '#e0331d' },
+  6: { title: 'Clean Water and Sanitation', color: '#0a8bb0' },
+  7: { title: 'Affordable and Clean Energy', color: '#9a7200' },
   8: { title: 'Decent Work and Economic Growth', color: '#a21942' },
   9: { title: 'Industry, Innovation and Infrastructure', color: '#c7521d' },
   10: { title: 'Reduced Inequalities', color: '#dd1367' },
