@@ -7,6 +7,8 @@ import InfoDialog from '../components/InfoDialog.vue';
 import SectionBanner from '../components/learn/SectionBanner.vue';
 import SkillPath from '../components/learn/SkillPath.vue';
 import NextUpCard, { type NextUpSkill } from '../components/learn/NextUpCard.vue';
+import HrdCard from '../components/learn/HrdCard.vue';
+import { fetchProgrammes, type Programme } from '../api/hrd';
 import { formatMinutes } from '../learn/time';
 import ForecastCard from '../components/learn/ForecastCard.vue';
 import BeeGuide from '../components/learn/BeeGuide.vue';
@@ -26,7 +28,7 @@ const { state } = useFlow();
 
 const typeLabel = { tech: 'Tool', skill: 'Ability', knowledge: 'Knowledge' } as const;
 const sourceLabel: Record<RoadmapSource['source_type'] | 'link', string> = {
-  project: 'Build it', certificate: 'Get certified', video: 'Watch', activity: 'Practise', link: 'Open',
+  project: 'Build it', certificate: 'Get certified', video: 'Watch', activity: 'Practice', link: 'Open',
 };
 const CHEERS = ['Nice!', 'Sweet!', 'On a roll!'];
 
@@ -86,6 +88,7 @@ const nextUp = computed<NextUpSkill | null>(() => {
   return {
     id: s.id,
     name: skillLabel(s.node.skill_name),
+    skillName: s.node.skill_name,
     state: s.state,
     kind: kindOf(s),
     blurb: blurbOf(s.node),
@@ -96,6 +99,15 @@ const nextUp = computed<NextUpSkill | null>(() => {
       : null,
   };
 });
+
+/* ---------- HRD Corp courses for the selected skill (paid; the employer claims the fee) ---------- */
+const programmes = ref<Programme[] | null>(null);
+watch(() => selected.value?.node.skill_name, async (skill) => {
+  programmes.value = null;
+  if (!skill) return;
+  const found = await fetchProgrammes(skill);
+  if (selected.value?.node.skill_name === skill) programmes.value = found; // ignore an answer for a skill the learner already left
+}, { immediate: true });
 
 const message = computed(() => {
   const { done, total } = counts.value;
@@ -299,7 +311,7 @@ onMounted(async () => {
               <p>Each step shows how long it should take. Some come straight from the course or video page, which states its own length. The rest use our own formula, so they are estimates.</p>
               <ul>
                 <li><b>{{ roadmap.stated_steps ?? 0 }} {{ roadmap.stated_steps === 1 ? 'step' : 'steps' }}</b>: the length is stated by the first resource that gives one (at least an hour; a short clip doesn’t teach a skill).</li>
-                <li><b>{{ roadmap.estimated_steps ?? 0 }} {{ roadmap.estimated_steps === 1 ? 'step' : 'steps' }}</b>: our formula, a base time for the kind of resource (build a project, take a course, watch a video, practise) × how deep the skill is for the role.</li>
+                <li><b>{{ roadmap.estimated_steps ?? 0 }} {{ roadmap.estimated_steps === 1 ? 'step' : 'steps' }}</b>: our formula, a base time for the kind of resource (build a project, take a course, watch a video, practice) × how deep the skill is for the role.</li>
               </ul>
               <p class="muted">Skills you already have count as done, so they add no time.</p>
             </InfoDialog>
@@ -341,6 +353,7 @@ onMounted(async () => {
               @complete="markDone"
               @close="selectedId = null"
             />
+            <HrdCard v-if="selected" :skill="nextUp?.name ?? ''" :programmes="programmes" />
             <ForecastCard
               v-if="forecastSelected && roleForecast"
               :name="forecastSelected.name"
@@ -363,6 +376,7 @@ onMounted(async () => {
               eyebrow="Skill materials"
               @close="selectedId = null"
             />
+            <HrdCard v-if="selected" :skill="nextUp?.name ?? ''" :programmes="programmes" />
             <ForecastCard
               v-if="selected && forecastSelected && roleForecast"
               :name="forecastSelected.name"

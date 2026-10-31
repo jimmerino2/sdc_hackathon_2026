@@ -2,10 +2,13 @@
 import { computed, ref } from 'vue';
 import Icon from '../Icon.vue';
 import JbButton from './JbButton.vue';
+import { splitByCost } from '../../learn/cost';
 
 export interface NextUpSkill {
   id: string;
   name: string;
+  /** The O*NET skill name, which the HRD Corp courses are matched by. */
+  skillName: string;
   state: 'ready' | 'done' | 'locked';
   kind: string;
   blurb: string | null;
@@ -29,8 +32,13 @@ defineEmits<{
   close: [];
 }>();
 
+/** The links split into those that are free and those on sites that sell courses, so "Free" is never claimed for a paid course. */
+const groups = computed(() => splitByCost(props.skill?.links ?? []));
 const blockerText = computed(() => props.skill?.blockers.join(' and ') || 'the earlier skills');
 const collapsed = ref(false);
+/** Each group of links folds away on its own; both start open. */
+const freeOpen = ref(true);
+const costOpen = ref(true);
 
 const eyebrowText = computed(() => {
   if (props.eyebrow) return props.eyebrow;
@@ -66,11 +74,45 @@ const eyebrowText = computed(() => {
           <span class="jb-next__kind">{{ skill.kind }}</span>
           <p v-if="skill.time" class="jb-next__hint"><b>About {{ skill.time.text }}</b> · {{ skill.time.note }}</p>
           <p v-if="skill.blurb" class="jb-next__hint">{{ skill.blurb }}</p>
-          <ul v-if="skill.links.length" class="jb-next__res">
-            <li v-for="(l, i) in skill.links" :key="l.url" :style="{ '--i': i }">
-              <a :href="l.url" target="_blank" rel="noopener noreferrer"><span>{{ l.title }}</span><small>{{ l.kind }}</small></a>
-            </li>
-          </ul>
+          <template v-if="skill.links.length">
+            <section v-if="groups.free.length" class="jb-res jb-res--free" aria-label="Free resources">
+              <button type="button" class="jb-res__head" :aria-expanded="freeOpen" aria-controls="res-free" @click="freeOpen = !freeOpen">
+                <span class="jb-res__seal" aria-hidden="true"><Icon name="gift" :size="16" :stroke="2.6" /></span>
+                <span class="jb-res__titles">
+                  <span class="jb-res__eyebrow">Free</span>
+                  <span class="jb-res__title">Free resources</span>
+                </span>
+                <span class="jb-res__count">{{ groups.free.length }}</span>
+                <span class="jb-res__chev" aria-hidden="true"><Icon name="chevron" :size="16" :class="{ 'jb-collapse__icon--up': freeOpen }" /></span>
+              </button>
+              <div v-show="freeOpen" id="res-free" class="jb-res__body">
+                <ul class="jb-next__res">
+                  <li v-for="(l, i) in groups.free" :key="l.url" :style="{ '--i': i }">
+                    <a :href="l.url" target="_blank" rel="noopener noreferrer"><span>{{ l.title }}</span><small>{{ l.kind }}</small></a>
+                  </li>
+                </ul>
+              </div>
+            </section>
+            <section v-if="groups.mayCost.length" class="jb-res jb-res--cost" aria-label="Courses that may cost">
+              <button type="button" class="jb-res__head" :aria-expanded="costOpen" aria-controls="res-cost" @click="costOpen = !costOpen">
+                <span class="jb-res__seal" aria-hidden="true"><Icon name="coins" :size="16" :stroke="2.6" /></span>
+                <span class="jb-res__titles">
+                  <span class="jb-res__eyebrow">May cost</span>
+                  <span class="jb-res__title">Courses and credentials</span>
+                </span>
+                <span class="jb-res__count">{{ groups.mayCost.length }}</span>
+                <span class="jb-res__chev" aria-hidden="true"><Icon name="chevron" :size="16" :class="{ 'jb-collapse__icon--up': costOpen }" /></span>
+              </button>
+              <div v-show="costOpen" id="res-cost" class="jb-res__body">
+                <p class="jb-res__note">Some are free to preview. The full course or the certificate can cost.</p>
+                <ul class="jb-next__res">
+                  <li v-for="(l, i) in groups.mayCost" :key="l.url" :style="{ '--i': i }">
+                    <a :href="l.url" target="_blank" rel="noopener noreferrer"><span>{{ l.title }}</span><small>{{ l.kind }}</small></a>
+                  </li>
+                </ul>
+              </div>
+            </section>
+          </template>
           <p v-else class="jb-next__hint">We don’t have a recommended resource for this one yet.</p>
           <div class="jb-next__cta">
             <JbButton v-if="skill.state === 'ready'" :disabled="busy" @click="$emit('complete')">{{ busy ? 'Saving…' : 'Mark as done' }}</JbButton>
