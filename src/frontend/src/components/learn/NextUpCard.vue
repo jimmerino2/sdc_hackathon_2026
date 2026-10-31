@@ -13,19 +13,42 @@ export interface NextUpSkill {
   links: { title: string; url: string; kind: string }[];
 }
 
-const props = defineProps<{ skill: NextUpSkill | null; selected: boolean; busy?: boolean; error?: string | null }>();
-defineEmits<{ complete: [] }>();
+const props = defineProps<{
+  skill: NextUpSkill | null;
+  selected: boolean;
+  busy?: boolean;
+  error?: string | null;
+  eyebrow?: string;
+  closable?: boolean;
+}>();
+
+defineEmits<{
+  complete: [];
+  close: [];
+}>();
+
 const blockerText = computed(() => props.skill?.blockers.join(' and ') || 'the earlier skills');
 const collapsed = ref(false);
+
+const eyebrowText = computed(() => {
+  if (props.eyebrow) return props.eyebrow;
+  if (props.skill?.state === 'done') return 'Skill materials';
+  return 'Next up';
+});
 </script>
 
 <template>
   <section class="jb jb-card jb-next">
     <div class="jb-card__head">
-      <p class="jb-eyebrow">Next up</p>
-      <button v-if="skill" type="button" class="jb-collapse" :aria-expanded="!collapsed" aria-label="Toggle sources" @click="collapsed = !collapsed">
-        <Icon name="chevron" :size="16" :class="{ 'jb-collapse__icon--up': !collapsed }" />
-      </button>
+      <p class="jb-eyebrow">{{ eyebrowText }}</p>
+      <div class="jb-card__head-actions">
+        <button v-if="closable" type="button" class="jb-collapse" aria-label="Close skill materials" @click="$emit('close')">
+          <Icon name="x" :size="16" />
+        </button>
+        <button v-if="skill" type="button" class="jb-collapse" :aria-expanded="!collapsed" aria-label="Toggle sources" @click="collapsed = !collapsed">
+          <Icon name="chevron" :size="16" :class="{ 'jb-collapse__icon--up': !collapsed }" />
+        </button>
+      </div>
     </div>
     <div v-if="!skill" key="none" class="jb-next__body">
       <h3 class="jb-card__title">All done!</h3>

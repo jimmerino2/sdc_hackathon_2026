@@ -2,9 +2,9 @@
 import { ref } from 'vue';
 import Icon from './Icon.vue';
 
-/** A magnifier button that opens the detail behind a summary in a dialog, so the page itself stays short.
+/** An info/help question-mark button that opens the detail behind a summary in a dialog, so the page itself stays short.
  *  With `label` it shows as a small text button; without, as an icon next to a heading. */
-const props = defineProps<{ title: string; label?: string; wide?: boolean }>();
+const props = defineProps<{ title: string; label?: string; wide?: boolean; icon?: string }>();
 const dlg = ref<HTMLDialogElement>();
 const open = () => dlg.value?.showModal();
 const close = () => dlg.value?.close();
@@ -13,7 +13,7 @@ const close = () => dlg.value?.close();
 <template>
   <button type="button" class="info" :class="{ txt: !!props.label }" :aria-label="props.label ? undefined : `Explain: ${title}`"
           :title="props.label ? undefined : 'What does this mean?'" @click="open">
-    <Icon name="search" :size="props.label ? 14 : 13" :stroke="2.6" /><span v-if="props.label">{{ props.label }}</span>
+    <Icon :name="props.icon ?? 'help'" :size="props.label ? 14 : 14" :stroke="2.4" /><span v-if="props.label">{{ props.label }}</span>
   </button>
   <Teleport to="body">
     <dialog ref="dlg" class="idlg" :class="{ wide }" :aria-label="title" @click.self="close">

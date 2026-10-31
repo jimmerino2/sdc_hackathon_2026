@@ -51,6 +51,7 @@ const by = computed(() => {
 });
 
 const demandTooltip = 'Forecasted hiring demand: (+) means job openings are growing, (−) means openings are shrinking.';
+const matchTooltip = 'Compatibility match based on your skills, interests, career stage, and job outlook. Does not reflect hiring chances.';
 </script>
 
 <template>
@@ -66,9 +67,13 @@ const demandTooltip = 'Forecasted hiring demand: (+) means job openings are grow
         @click="emit('select', j.onet_code)"
       >
         <span v-if="picking" class="radio" aria-hidden="true"><Icon v-if="selected === j.onet_code" name="check" :size="14" :stroke="3.2" /></span>
-        <span class="score" :class="{ best: idx === 0 }" :style="{ '--p': matchPercent(j, scenarioName) }">
+        <span
+          class="score" 
+          :class="{ best: idx === 0 }" 
+          :style="{ '--p': matchPercent(j, scenarioName) }" 
+          :title="matchTooltip"
+          :aria-label="matchTooltip">
           <b>{{ matchPercent(j, scenarioName) }}<small>%</small></b>
-          <span>match</span>
         </span>
         <span class="body">
           <span class="title-row">

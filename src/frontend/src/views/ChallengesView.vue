@@ -39,6 +39,15 @@ const errors = ref<Record<string, string>>({});
 /** The "+ New challenge" role picker is open. */
 const picking = ref(false);
 
+/** Filter challenges: current active challenges (default), past completed challenges, or all */
+const tab = ref<"current" | "past" | "all">("current");
+
+const isChallengeComplete = (c: RoadmapChallenge) =>
+  !!c.completed_at || (c.stage === 2 && (c.status === "passed" || c.status === "advancing"));
+
+const activeChallenges = computed(() => (challenges.value ?? []).filter((c) => !isChallengeComplete(c)));
+const pastChallenges = computed(() => (challenges.value ?? []).filter((c) => isChallengeComplete(c)));
+
 /** A challenge just written from the picker: put it first and open it. */
 function added(c: RoadmapChallenge) {
   picking.value = false;
@@ -47,6 +56,7 @@ function added(c: RoadmapChallenge) {
   if (c.roadmap_id && rm?.roadmap_id === c.roadmap_id) {
     state.value.roadmap.data = { ...rm, challenges: [...(rm.challenges ?? []), c] };
   }
+  tab.value = "current";
   reveal(c.challenge_id);
 }
 const slots = computed(() => fight.value?.stings_to_kill ?? 5);
@@ -60,7 +70,16 @@ async function load() {
     const list = await fetchChallenges(id);
     challenges.value = list.challenges;
     stingers.value = list.stingers_available;
-    if (openId.value) reveal(openId.value);
+
+    if (openId.value) {
+      const opened = list.challenges.find((c) => c.challenge_id === openId.value);
+      if (opened && isChallengeComplete(opened)) {
+        tab.value = "past";
+      }
+      reveal(openId.value);
+    } else if (activeChallenges.value.length === 0 && pastChallenges.value.length > 0) {
+      tab.value = "past";
+    }
   } catch (e) {
     loadError.value =
       e instanceof RoadmapError ? e.message : "Jobee couldn’t load your challenges. Try again in a moment.";
@@ -99,14 +118,21 @@ async function submit(c: RoadmapChallenge, repoUrl: string) {
     const res = await submitChallenge(id, c.challenge_id, repoUrl);
     replace(res.challenge);
     stingers.value = res.stingers_available;
-    awarded.value = res.stinger_awarded;
-    if (res.passed && res.challenge.stage === 1) attack(res.challenge);
-    else if (res.passed) show("patched", res.challenge);
+    if (res.passed) {
+      if (c.stage === 1) {
+        // Stage 1 passed: Robbee rewrites the brief
+        attack(res.challenge);
+      } else {
+        // Stage 2 passed: challenge is complete
+        shown.value = res.challenge;
+        phase.value = "patched";
+        awarded.value = res.stinger_awarded;
+      }
+    }
   } catch (e) {
     errors.value = {
       ...errors.value,
-      [c.challenge_id]:
-        e instanceof RoadmapError ? e.message : "Jobee couldn’t judge that just now. Try again in a moment.",
+      [c.challenge_id]: e instanceof RoadmapError ? e.message : "Couldn’t judge that just now. Try again.",
     };
   } finally {
     busy.value = null;
@@ -116,57 +142,58 @@ async function submit(c: RoadmapChallenge, repoUrl: string) {
 /* ---------- Robbee's attack: warning, then assessing the damage while stage 2 is written, then the new brief ---------- */
 const phase = ref<HivePhase | null>(null);
 const shown = ref<RoadmapChallenge | null>(null);
+const awarded = ref(false);
 const alertError = ref<string | null>(null);
-/** The last pass paid a stinger; false when a completed challenge was resubmitted. */
-const awarded = ref(true);
-const WARNING_MS = 2600;
-const MIN_ASSESS_MS = 1800;
-const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-function show(p: HivePhase, c: RoadmapChallenge) {
-  shown.value = c;
-  alertError.value = null;
-  phase.value = p;
-}
 
 /** Robbee rewrites a passed stage 1. The rewrite runs during the warning; the damage report covers what's left. */
-async function attack(c: RoadmapChallenge, skipWarning = false) {
+async function attack(c: RoadmapChallenge, retry = false) {
   const id = profileId();
   if (!id) return;
-  show(skipWarning ? "assessing" : "warning", c);
-  const job = advanceChallenge(id, c.challenge_id).then(
-    (x) => ({ ok: true as const, x }),
-    (e) => ({ ok: false as const, e }),
-  );
-  if (!skipWarning) {
-    await wait(WARNING_MS);
-    if (phase.value !== "warning") return void job.then((r) => r.ok && replace(r.x));
-    phase.value = "assessing";
+  shown.value = c;
+  alertError.value = null;
+  phase.value = retry ? "assessing" : "warning";
+  awarded.value = false;
+
+  const writing = advanceChallenge(id, c.challenge_id)
+    .then((advanced) => {
+      replace(advanced);
+      shown.value = advanced;
+    })
+    .catch((e) => {
+      alertError.value =
+        e instanceof RoadmapError ? e.message : "Robbee couldn’t rewrite the brief just now. Try again in a moment.";
+    });
+
+  if (!retry) {
+    // Show the warning for at least 3.2s, then swap to the damage report once the rewrite has arrived (or failed).
+    await Promise.all([new Promise((ok) => setTimeout(ok, 3200)), writing]);
+  } else {
+    await writing;
   }
-  const [r] = await Promise.all([job, wait(MIN_ASSESS_MS)]);
-  if (r.ok) replace(r.x);
-  if (phase.value !== "assessing") return;
-  if (r.ok) show("rewritten", r.x);
-  else
-    alertError.value =
-      r.e instanceof RoadmapError ? r.e.message : "Robbee couldn’t rewrite the brief just now. Try again in a moment.";
+  if (!alertError.value) phase.value = "rewritten";
 }
 
 function startStage2() {
-  const c = shown.value;
+  const id = shown.value?.challenge_id;
   phase.value = null;
-  if (c) reveal(c.challenge_id);
+  if (id) {
+    openId.value = id;
+    reveal(id);
+  }
 }
 
-onMounted(load);
+onMounted(() => {
+  if (route.query.new === "1") picking.value = true;
+  load();
+});
 </script>
 
 <template>
   <div class="tab jb chal">
     <header class="chal__head">
       <div>
-        <h1>Challenges</h1>
-        <p>Real-world projects for your tech roles. Score 85+ to land a stinger on Robbee.</p>
+        <p class="eyebrow">Challenges</p>
+        <p class="chal__sub">Real-world projects for your tech roles. Score 85+ to land a stinger on Robbee.</p>
       </div>
       <HiveSwitch current="challenges" />
     </header>
@@ -197,34 +224,155 @@ onMounted(load);
       </div>
     </section>
 
+    <!-- Header with split tabs -->
     <div class="chal__listhead">
-      <h2>Your challenges</h2>
+      <div class="chal__filter-wrap">
+        <h2>{{ tab === 'past' ? 'Past challenges' : tab === 'all' ? 'All challenges' : 'Your challenges' }}</h2>
+        <div v-if="pastChallenges.length" class="chal__tabs" role="tablist" aria-label="Filter challenges">
+          <button
+            type="button"
+            role="tab"
+            class="chal__tab"
+            :class="{ on: tab === 'current' }"
+            :aria-selected="tab === 'current'"
+            @click="tab = 'current'"
+          >
+            <span>Current</span>
+            <span v-if="activeChallenges.length" class="chal__tab-n">{{ activeChallenges.length }}</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            class="chal__tab"
+            :class="{ on: tab === 'past' }"
+            :aria-selected="tab === 'past'"
+            @click="tab = 'past'"
+          >
+            <span>Past</span>
+            <span class="chal__tab-n">{{ pastChallenges.length }}</span>
+          </button>
+          <button
+            v-if="activeChallenges.length && pastChallenges.length"
+            type="button"
+            role="tab"
+            class="chal__tab"
+            :class="{ on: tab === 'all' }"
+            :aria-selected="tab === 'all'"
+            @click="tab = 'all'"
+          >
+            <span>All</span>
+            <span class="chal__tab-n">{{ (challenges ?? []).length }}</span>
+          </button>
+        </div>
+      </div>
+
       <button type="button" class="chal__new" @click="picking = true">+ New challenge</button>
     </div>
 
+    <!-- Error State -->
     <div v-if="loadError" class="learn__state">
       <Bubble :size="64">{{ loadError }}</Bubble>
       <button type="button" class="btn btn-secondary" @click="load">Try again</button>
     </div>
+
+    <!-- Loading Skeleton -->
     <div v-else-if="!challenges" class="chal__list" aria-busy="true">
       <div v-for="i in 3" :key="i" class="skel card chal__skel" />
     </div>
+
+    <!-- Empty State -->
     <div v-else-if="!challenges.length" class="learn__state">
       <Bubble :size="64">No challenges yet. Pick a tech role and Robbee will have a project waiting.</Bubble>
       <button type="button" class="btn btn-primary" @click="picking = true">Start a challenge</button>
     </div>
-    <div v-else class="chal__list">
-      <ChallengeRow
-        v-for="c in challenges"
-        :key="c.challenge_id"
-        :challenge="c"
-        :open="openId === c.challenge_id"
-        :busy="busy === c.challenge_id"
-        :error="errors[c.challenge_id] || null"
-        @toggle="openId = openId === c.challenge_id ? null : c.challenge_id"
-        @submit="(u) => submit(c, u)"
-        @advance="attack(c)"
-      />
+
+    <!-- All Tab: Split into Current and Past sections -->
+    <div v-else-if="tab === 'all'" class="chal__grouped">
+      <section v-if="activeChallenges.length" class="chal__section">
+        <div class="chal__section-head">
+          <h3>Current challenges</h3>
+          <span class="chal__badge">{{ activeChallenges.length }} active</span>
+        </div>
+        <div class="chal__list">
+          <ChallengeRow
+            v-for="c in activeChallenges"
+            :key="c.challenge_id"
+            :challenge="c"
+            :open="openId === c.challenge_id"
+            :busy="busy === c.challenge_id"
+            :error="errors[c.challenge_id] || null"
+            @toggle="openId = openId === c.challenge_id ? null : c.challenge_id"
+            @submit="(u) => submit(c, u)"
+            @advance="attack(c)"
+          />
+        </div>
+      </section>
+
+      <section v-if="pastChallenges.length" class="chal__section">
+        <div class="chal__section-head">
+          <h3>Past challenges</h3>
+          <span class="chal__badge chal__badge--done">{{ pastChallenges.length }} completed</span>
+        </div>
+        <div class="chal__list">
+          <ChallengeRow
+            v-for="c in pastChallenges"
+            :key="c.challenge_id"
+            :challenge="c"
+            :open="openId === c.challenge_id"
+            :busy="busy === c.challenge_id"
+            :error="errors[c.challenge_id] || null"
+            @toggle="openId = openId === c.challenge_id ? null : c.challenge_id"
+            @submit="(u) => submit(c, u)"
+            @advance="attack(c)"
+          />
+        </div>
+      </section>
+    </div>
+
+    <!-- Current Tab: ONLY Current Active Challenges -->
+    <div v-else-if="tab === 'current'" class="chal__list">
+      <template v-if="activeChallenges.length">
+        <ChallengeRow
+          v-for="c in activeChallenges"
+          :key="c.challenge_id"
+          :challenge="c"
+          :open="openId === c.challenge_id"
+          :busy="busy === c.challenge_id"
+          :error="errors[c.challenge_id] || null"
+          @toggle="openId = openId === c.challenge_id ? null : c.challenge_id"
+          @submit="(u) => submit(c, u)"
+          @advance="attack(c)"
+        />
+      </template>
+      <div v-else class="learn__state">
+        <Bubble :size="64">No active challenges right now. You’re all caught up!</Bubble>
+        <div class="chal__empty-actions">
+          <button type="button" class="btn btn-primary" @click="picking = true">Start a challenge</button>
+          <button v-if="pastChallenges.length" type="button" class="btn btn-secondary" @click="tab = 'past'">
+            View past challenges ({{ pastChallenges.length }})
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Past Tab: ONLY Completed Past Challenges -->
+    <div v-else-if="tab === 'past'" class="chal__list">
+      <template v-if="pastChallenges.length">
+        <ChallengeRow
+          v-for="c in pastChallenges"
+          :key="c.challenge_id"
+          :challenge="c"
+          :open="openId === c.challenge_id"
+          :busy="busy === c.challenge_id"
+          :error="errors[c.challenge_id] || null"
+          @toggle="openId = openId === c.challenge_id ? null : c.challenge_id"
+          @submit="(u) => submit(c, u)"
+          @advance="attack(c)"
+        />
+      </template>
+      <div v-else class="learn__state">
+        <Bubble :size="64">No completed challenges yet. Complete both stages of a challenge to see it here.</Bubble>
+      </div>
     </div>
 
     <HiveAlert
@@ -257,96 +405,123 @@ onMounted(load);
   gap: 16px;
   flex-wrap: wrap;
 }
-.chal__head h1 {
-  margin: 0;
-  font-size: 40px;
-  line-height: 48px;
+.eyebrow {
+  font-size: 11px;
   font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--orange);
 }
-.chal__head p {
+.chal__sub {
   margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 18px;
   color: var(--text-muted);
-  font-size: 16px;
   font-weight: 600;
 }
 
 .boss {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) minmax(220px, 360px);
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 32px;
-  padding: 26px 30px;
-  border: 2px solid var(--honey);
-  border-radius: 28px;
+  gap: 24px;
+  padding: 24px 28px;
+  border-radius: var(--radius-lg);
   background: var(--surface-raised);
+  border: 2px solid var(--line);
+  box-shadow: var(--shadow-soft);
 }
 .boss__art {
+  width: 200px;
+  height: 200px;
+  border-radius: var(--radius-md);
+  background: #fdecea;
+  border: 2px solid #f1b8b3;
   display: grid;
   place-items: center;
-  width: 250px;
-  height: 250px;
-  border-radius: 24px;
-  background: #fdf0c8;
+  overflow: hidden;
+}
+.boss__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
 }
 .boss__eyebrow {
-  font-size: 12px;
+  font-size: 11px;
+  line-height: 16px;
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #d9580a;
+  color: #b3261e;
 }
 .boss h2 {
-  margin: 6px 0 8px;
-  font-size: 38px;
-  line-height: 44px;
+  margin: 0;
+  font-size: 34px;
+  line-height: 40px;
   font-weight: 900;
 }
 .boss h2 small {
-  margin-left: 6px;
-  font-size: 18px;
-  font-weight: 700;
+  margin-left: 10px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--text-muted);
 }
 .boss p {
   margin: 0;
-  color: var(--text-muted);
-  font-size: 15px;
-  line-height: 22px;
+  font-size: 14px;
+  line-height: 20px;
   font-weight: 600;
+  color: var(--text-muted);
 }
 .boss__pips {
   display: flex;
   align-items: center;
+  gap: 8px;
+  margin-top: 10px;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 18px;
 }
 .boss__pip {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: #eeeae0;
-  color: #b7b2a3;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--line-strong);
+  color: var(--locked-edge);
+  opacity: 0.55;
+  transition:
+    transform var(--dur-fast) var(--ease-bounce),
+    background var(--dur-base),
+    color var(--dur-base),
+    opacity var(--dur-base);
 }
 .boss__pip.on {
   background: var(--honey);
+  border-color: var(--honey-deep);
   color: var(--on-honey);
+  opacity: 1;
+  box-shadow: 0 3px 0 var(--honey-deep);
 }
 .boss__count {
   margin-left: 6px;
-  font-size: 15px;
+  font-size: 13px;
+  line-height: 18px;
   font-weight: 800;
+  color: var(--accent-text);
 }
 .boss__side {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  align-items: stretch;
+  gap: 10px;
 }
 .boss__cta {
-  display: block;
-  padding: 16px;
+  padding: 14px 24px;
   border-radius: var(--radius-md);
   background: var(--honey);
   color: var(--on-honey);
@@ -370,13 +545,115 @@ onMounted(load);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
   margin-top: 8px;
+  flex-wrap: wrap;
+}
+.chal__filter-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 .chal__listhead h2 {
   margin: 0;
   font-size: 26px;
   font-weight: 900;
+}
+.chal__tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.chal__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background var(--dur-base),
+    color var(--dur-base),
+    border-color var(--dur-base),
+    transform var(--dur-fast);
+}
+.chal__tab:hover {
+  color: var(--text);
+  border-color: var(--honey);
+}
+.chal__tab.on {
+  background: var(--honey-tint);
+  border-color: var(--honey);
+  color: var(--text);
+  box-shadow: 0 3px 0 var(--honey);
+}
+.chal__tab-n {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--text);
+}
+.chal__tab.on .chal__tab-n {
+  background: var(--honey);
+  border-color: var(--honey);
+  color: var(--on-honey);
+}
+.chal__grouped {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+.chal__section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.chal__section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.chal__section-head h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+}
+.chal__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--honey-tint);
+  color: var(--accent-text);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 800;
+}
+.chal__badge--done {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  color: var(--text-muted);
+}
+.chal__empty-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 .chal__new {
   padding: 11px 22px;
@@ -416,10 +693,6 @@ onMounted(load);
   }
 }
 @media (max-width: 640px) {
-  .chal__head h1 {
-    font-size: 32px;
-    line-height: 40px;
-  }
   .boss {
     grid-template-columns: 1fr;
     padding: 20px;

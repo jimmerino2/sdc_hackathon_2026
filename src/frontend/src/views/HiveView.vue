@@ -280,8 +280,8 @@ const eventTag = (e: HiveEvent) => (e.kind === 'twist' ? 'Boss twist' : e.kind =
   <div class="tab jb hp">
     <header class="hp__head">
       <div>
-        <h1>Challenges</h1>
-        <p>Team up against Robbee. Every stinger counts for the whole party.</p>
+        <p class="eyebrow">Challenges</p>
+        <p class="hp__sub">Team up against Robbee. Every stinger counts for the whole party.</p>
       </div>
       <HiveSwitch current="hive" />
     </header>
@@ -380,8 +380,8 @@ const eventTag = (e: HiveEvent) => (e.kind === 'twist' ? 'Boss twist' : e.kind =
 <style scoped>
 .hp { display: flex; flex-direction: column; gap: 20px; max-width: 1600px; }
 .hp__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.hp__head h1 { margin: 0; font-size: 40px; line-height: 48px; font-weight: 900; }
-.hp__head p { margin: 4px 0 0; color: var(--text-muted); font-size: 16px; font-weight: 600; }
+.eyebrow { font-size: 11px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--orange); }
+.hp__sub { margin: 4px 0 0; color: var(--text-muted); font-size: 13px; line-height: 18px; font-weight: 600; }
 .hp__err { margin: -8px 0 0; color: #b3261e; font-size: 14px; font-weight: 700; }
 
 .invites { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
@@ -458,7 +458,7 @@ button.slot:hover .slot__ring { transform: scale(1.08); background: rgba(255, 25
 
 @media (prefers-reduced-motion: reduce) { .boss.returning, .floater { animation: none; } .floater { opacity: 1; } }
 @media (max-width: 900px) {
-  .hp__head h1 { font-size: 32px; line-height: 40px; }
+
   .hp__stage { aspect-ratio: auto; min-height: 780px; }
   .hpcard { left: 3%; right: 3%; top: 56px; width: auto; }
   .leave { top: 12px; right: 12px; }
