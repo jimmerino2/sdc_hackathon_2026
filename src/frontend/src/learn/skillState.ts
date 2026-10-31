@@ -17,6 +17,9 @@ export interface ResolvedUnit {
   skills: ResolvedSkill[];
 }
 
+/** A section's AI study guide: it comes first in its unit and the unit's skills wait for it. */
+export const isGuide = (s: ResolvedSkill): boolean => s.node.kind === 'ai_guide';
+
 export function allNodes(roadmap: Roadmap | null): RoadmapNode[] {
   return roadmap?.sections.flatMap((s) => s.units.flatMap((u) => u.nodes)) ?? [];
 }
@@ -129,6 +132,9 @@ const SLOT_MAX = 150; // width of one skill
 const SLOT_MIN = 110;
 const ORB = 64;
 const GRAPH_ROW = 156; // orb + label + room for the line to the next row
+const GUIDE_SCALE = 1.5; // an AI study guide is drawn this much bigger than a skill
+const GUIDE_ORB = ORB * GUIDE_SCALE;
+const GUIDE_EXTRA = 44; // the rows under a guide sit this much lower, for its bigger orb and label
 const GRAPH_UNIT_H = 64;
 const UNIT_GAP = 20;
 const OTHER = 'Other';
@@ -152,6 +158,8 @@ interface UnitPlan {
   cells: Map<string, ResolvedSkill[]>; // "col:row" -> the skills side by side there
   colSlots: number[]; // widest row of each column, in skills
   rows: number;
+  /** The unit's AI study guides, above row 0 of everything else and centred across the unit. */
+  guides: ResolvedSkill[];
 }
 
 function planUnit(u: ResolvedUnit, groupOf: (s: ResolvedSkill) => string | null | undefined): UnitPlan {
@@ -169,9 +177,13 @@ function planUnit(u: ResolvedUnit, groupOf: (s: ResolvedSkill) => string | null 
     return depth.get(id)!;
   };
 
+  // A guide sits on its own row above the skills, so it is kept out of the category columns.
+  const guides = u.skills.filter(isGuide);
+  const skills = u.skills.filter((s) => !isGuide(s));
+
   // One column per category, in the order they first appear; past COLS the smallest share the last column.
   const sizes = new Map<string, number>();
-  for (const s of u.skills) {
+  for (const s of skills) {
     const g = groupOf(s) || OTHER;
     sizes.set(g, (sizes.get(g) ?? 0) + 1);
   }
@@ -188,10 +200,10 @@ function planUnit(u: ResolvedUnit, groupOf: (s: ResolvedSkill) => string | null 
   // Vertical order is learning order: a skill sits below its required prerequisites and never above a skill
   // that comes before it. Skills with the same footing share a row, side by side within their category.
   const cells = new Map<string, ResolvedSkill[]>();
-  const rowOf = new Map<string, number>();
-  let floor = 0;
-  let rows = 0;
-  for (const s of [...u.skills].sort((a, b) => depthOf(a) - depthOf(b))) { // stable: ties keep the server's order
+  const rowOf = new Map<string, number>(guides.map((g) => [g.node.skill_id, 0]));
+  let floor = guides.length ? 1 : 0;
+  let rows = floor;
+  for (const s of [...skills].sort((a, b) => depthOf(a) - depthOf(b))) { // stable: ties keep the server's order
     const prev = gating(s).filter((p) => rowOf.has(p)).map((p) => rowOf.get(p)!);
     const row = Math.max(floor, prev.length ? 1 + Math.max(...prev) : 0);
     const key = `${colOf(s)}:${row}`;
@@ -201,7 +213,7 @@ function planUnit(u: ResolvedUnit, groupOf: (s: ResolvedSkill) => string | null 
     rows = Math.max(rows, row + 1);
   }
   const colSlots = columns.map((_, col) => Math.max(1, ...[...cells].filter(([k]) => k.startsWith(`${col}:`)).map(([, v]) => v.length)));
-  return { label: u.label, columns, crowded, cells, colSlots, rows };
+  return { label: u.label, columns, crowded, cells, colSlots, rows, guides };
 }
 
 /**
@@ -233,20 +245,26 @@ export function layoutGraph(units: ResolvedUnit[], groupOf: (s: ResolvedSkill) =
     });
     const top = y;
 
-    const placed = new Map<string, { cx: number; y: number; skill: ResolvedSkill }>();
+    const placed = new Map<string, { cx: number; y: number; orb: number; skill: ResolvedSkill }>();
     const nodes: GraphItem[] = [];
+    const lower = plan.guides.length ? GUIDE_EXTRA : 0;
+    for (const g of plan.guides) {
+      const gw = Math.min(width, slotW * GUIDE_SCALE);
+      nodes.push({ type: 'node', skill: g, x: (width - gw) / 2, y: top, w: gw, k: k++ });
+      placed.set(g.node.skill_id, { cx: width / 2, y: top, orb: GUIDE_ORB, skill: g });
+    }
     for (const [key, skills] of plan.cells) {
       const [col, row] = key.split(':').map(Number) as [number, number];
       const start = colLeft[col]! + (plan.colSlots[col]! * slotW - skills.length * slotW) / 2; // a short row is centred
       skills.forEach((s, i) => {
         const x = start + i * slotW + 5;
-        const ny = top + row * GRAPH_ROW;
+        const ny = top + row * GRAPH_ROW + (row > 0 ? lower : 0);
         nodes.push({ type: 'node', skill: s, x, y: ny, w: slotW - 10, k: k++ });
-        placed.set(s.node.skill_id, { cx: x + (slotW - 10) / 2, y: ny, skill: s });
+        placed.set(s.node.skill_id, { cx: x + (slotW - 10) / 2, y: ny, orb: ORB, skill: s });
       });
     }
     items.push(...nodes);
-    y = top + plan.rows * GRAPH_ROW + UNIT_GAP;
+    y = top + plan.rows * GRAPH_ROW + lower + UNIT_GAP;
 
     for (const to of placed.values()) {
       for (const id of to.skill.node.previous_nodes) {
@@ -254,7 +272,7 @@ export function layoutGraph(units: ResolvedUnit[], groupOf: (s: ResolvedSkill) =
         if (!from || from.y === to.y) continue; // level skills get no line
         // A recommended prerequisite can sit below the skill it suggests; the line still joins them.
         const [hi, lo] = from.y < to.y ? [from, to] : [to, from];
-        const [x1, y1, x2, y2] = [hi.cx, hi.y + ORB, lo.cx, lo.y];
+        const [x1, y1, x2, y2] = [hi.cx, hi.y + hi.orb, lo.cx, lo.y];
         const m = (y2 - y1) * 0.5;
         edges.push({ d: `M${x1} ${y1} C${x1} ${y1 + m} ${x2} ${y2 - m} ${x2} ${y2}`, done: from.skill.state === 'done' });
       }

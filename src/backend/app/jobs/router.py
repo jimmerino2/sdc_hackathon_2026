@@ -89,7 +89,7 @@ def simulate(body: SimulateRequest, db: Client = Depends(get_supabase_admin)):
         print(f"Interests not used: {e}")
         picked = []
     try:
-        return simulator.simulate(str(body.profile_id), skills, profile.stage, picked, body.skills, body.horizon, body.focus_role)
+        return simulator.simulate(str(body.profile_id), skills, profile.stage, picked, body.skills, body.horizon, body.focus_role, body.ai_skills)
     except simulator.UnknownSkill as e:
         raise HTTPException(422, f"Not a skill the roles use: {e}")
     except simulator.UnknownRole as e:

@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import FlowShell from '../components/FlowShell.vue';
 import Icon from '../components/Icon.vue';
-import { getProfile, markLoggedIn, readProfileId, sendSyncCode, SyncError, verifySyncCode } from '../api/profile';
+import { getProfile, markLoggedIn, markOnboarded, readProfileId, sendSyncCode, SyncError, verifySyncCode } from '../api/profile';
 import { useFlow } from '../state';
 import { go } from '../router';
 
@@ -102,7 +102,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <FlowShell next="building" next-label="Build my roadmap" back="gap" :mood="mood" :next-disabled="step !== 'done'">
+  <FlowShell next="pathway" next-label="Open my roadmap" back="aiskills" @next="markOnboarded()" :mood="mood" :next-disabled="step !== 'done'">
     <template #bubble>{{ say }}</template>
 
     <form v-if="step === 'email'" class="card block" @submit.prevent="sendCode">

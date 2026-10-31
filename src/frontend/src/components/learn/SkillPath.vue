@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import SkillNode from './SkillNode.vue';
 import { useFit } from '../../composables/useFit';
 import { groupStyle } from '../../data/skillGroups';
-import { layoutGraph, type ResolvedSkill, type ResolvedUnit } from '../../learn/skillState';
+import { isGuide, layoutGraph, type ResolvedSkill, type ResolvedUnit } from '../../learn/skillState';
 
 const props = defineProps<{
   units: ResolvedUnit[];
@@ -36,8 +36,9 @@ const { el, scale } = useFit(() => layout.value.width);
           :style="{ left: it.x + 'px', top: it.y + 'px', width: it.w + 'px', '--i': it.k }"
           :name="label(it.skill)"
           stack
-          :icon="groupStyle(kind(it.skill)).icon"
-          :shade="groupStyle(kind(it.skill)).shade"
+          :ai="isGuide(it.skill)"
+          :icon="isGuide(it.skill) ? 'sparkles' : groupStyle(kind(it.skill)).icon"
+          :shade="isGuide(it.skill) ? undefined : groupStyle(kind(it.skill)).shade"
           :state="it.skill.state"
           :selected="selectedId === it.skill.id"
           :tag="it.skill.id === startId ? 'START' : null"

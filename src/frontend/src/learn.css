@@ -438,3 +438,28 @@
 @media (max-width: 720px) { .jb-sharedlg__inner { padding: 18px 16px; } }
 @media (prefers-reduced-motion: reduce) { .jb-sharedlg__img--wait { animation: none; } }
 .jb-next__sdgs { margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* ---------- AI study guide: a section's first step, purple and 1.5x a skill ---------- */
+.jb { --ai: #8b4dff; --ai-deep: #6a2fd6; --ai-tint: #efe4ff; --ai-ink: #4a1fa3; }
+.jb-node[data-ai="true"] .jb-node__discwrap { width: 96px; height: 96px; }
+.jb-node[data-ai="true"] .jb-node__disc { width: 96px; height: 96px; box-shadow: 0 8px 0 var(--ai-deep); }
+.jb-node[data-ai="true"] .jb-node__disc svg { width: 45px; height: 45px; }
+.jb-node[data-ai="true"][data-state="ready"] .jb-node__disc { background: var(--ai); color: #fff; box-shadow: 0 8px 0 var(--ai-deep); }
+.jb-node[data-ai="true"][data-state="ready"] .jb-node__disc:hover { box-shadow: 0 11px 0 var(--ai-deep); }
+.jb-node[data-ai="true"][data-state="ready"] .jb-node__disc:active { box-shadow: 0 1px 0 var(--ai-deep); }
+.jb-node[data-ai="true"][data-state="done"] .jb-node__disc { background: var(--ai-ink); color: #e6d6ff; box-shadow: 0 8px 0 #2c1266; }
+.jb-node[data-ai="true"][data-state="locked"] .jb-node__disc { box-shadow: 0 8px 0 var(--locked-edge); }
+.jb-node[data-ai="true"] .jb-node__name { font-size: 20px; line-height: 24px; color: var(--ai-ink); }
+.jb-node[data-ai="true"][data-state="locked"] .jb-node__name { color: var(--text-muted); }
+.jb-node[data-ai="true"][data-selected="true"] .jb-node__name { text-decoration-color: var(--ai); }
+.jb-node[data-ai="true"] .jb-node__kind { padding: 1px 9px; border-radius: var(--radius-pill); background: var(--ai-tint); color: var(--ai-ink); font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.jb-node[data-ai="true"] .jb-node__tag { border-color: var(--ai); color: var(--ai-ink); }
+.jb-node[data-ai="true"] .jb-node__lock { right: -2px; bottom: -2px; }
+
+/* the side card that replaces the demand forecast when a guide is selected */
+.jb-aiskill { border-color: var(--ai); background: linear-gradient(180deg, var(--ai-tint), var(--surface-raised) 70%); }
+.jb-aiskill .jb-eyebrow { color: var(--ai-ink); }
+.jb-aiskill__badge { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 3px 11px; border-radius: var(--radius-pill); background: var(--ai); color: #fff; font-size: 13px; line-height: 18px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+.jb-aiskill__text { margin: 10px 0 0; font-size: 15px; line-height: 22px; font-weight: 600; color: var(--text); }
+.jb-next__steps { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 6px; font-size: 15px; line-height: 21px; font-weight: 600; color: var(--text-muted); }
+.jb-next__ai { display: inline-block; margin-top: 6px; padding: 2px 10px; border-radius: var(--radius-pill); background: var(--ai-tint); color: var(--ai-ink); font-size: 14px; line-height: 18px; font-weight: 800; }

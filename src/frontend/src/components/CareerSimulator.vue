@@ -20,6 +20,10 @@ const props = defineProps<{
   embedded?: boolean;
   /** Skill names to start with already added, e.g. the list Jobee proposed for the role. Only those in the list below are used. */
   preselect?: string[];
+  /** The AI skills page: the skills chosen on the page before stay added and can't be changed here, and the AI skills Jobee wrote for the
+   *  role are counted too, as a third bar next to Today and the added skills. The skill picker gives way to the list of AI skills. */
+  ai?: boolean;
+  aiSkills?: { name: string }[];
 }>();
 const router = useRouter();
 const { state } = useFlow();
@@ -42,6 +46,8 @@ let optionsFor: string | null = null;
 const roadmaps = ref<Record<string, RoadmapSummary>>({});
 const query = ref('');
 const showAll = ref(false);
+const aiNames = computed(() => (props.ai ? props.aiSkills?.map((s) => s.name) ?? [] : []));
+if (props.ai) for (const n of state.value.builtSkills ?? []) picked.value[n] = 1; // the list the roadmap was just built from, counted as learned
 
 const scenario = computed(() => backendScenario[state.value.scenario]);
 const pickedList = computed(() => Object.entries(picked.value).map(([name, score]) => ({ name, score })));
@@ -60,7 +66,7 @@ async function run() {
   const mine = ++latest;
   busy.value = true;
   try {
-    const res = await simulateSkills(id, pickedList.value, focus.value);
+    const res = await simulateSkills(id, pickedList.value, focus.value, aiNames.value);
     if (mine !== latest) return; // a newer choice is already on its way
     result.value = res;
     if (res.options.length) {
@@ -82,7 +88,7 @@ async function run() {
 /** Add the proposed skills once, when the list first arrives; after that the learner's own choices stand. */
 let preselected = false;
 function applyPreselect() {
-  if (preselected || !props.preselect?.length) return;
+  if (preselected || props.ai || !props.preselect?.length) return;
   preselected = true;
   const wanted = new Set(props.preselect.map((n) => n.toLowerCase()));
   for (const o of options.value) if (wanted.has(o.name.toLowerCase()) && Object.keys(picked.value).length < MAX_PICKS) picked.value[o.name] = o.trial;
@@ -104,7 +110,7 @@ watch(focus, async (code) => {
   }
 });
 watch(picked, () => {
-  if (props.embedded) state.value.roadmapSkills = Object.keys(picked.value).length ? Object.keys(picked.value) : null; // the roadmap is built from exactly these
+  if (props.embedded && !props.ai) state.value.roadmapSkills = Object.keys(picked.value).length ? Object.keys(picked.value) : null; // the roadmap is built from exactly these
   clearTimeout(timer);
   timer = setTimeout(run, 200);
 }, { deep: true });
@@ -140,11 +146,18 @@ const shownOptions = computed(() => {
 });
 
 const at = (r: RoleComparison) => r.scenarios.find((s) => s.scenario === scenario.value)!;
-const roles = computed(() => [...(result.value?.roles ?? [])].sort((a, b) => at(a).simulated_rank - at(b).simulated_rank));
+/** Where a role ends up: with the AI skills counted too on the AI page. */
+const rankOf = (r: RoleComparison) => (props.ai ? at(r).ai_rank ?? at(r).simulated_rank : at(r).simulated_rank);
+const finalOf = (r: RoleComparison) => (props.ai ? at(r).ai_percent ?? at(r).simulated_percent : at(r).simulated_percent);
+/** How much more the AI skills add on top of the added skills. */
+const aiGain = (r: RoleComparison) => Math.max(0, finalOf(r) - at(r).simulated_percent);
+const roles = computed(() => [...(result.value?.roles ?? [])].sort((a, b) => rankOf(a) - rankOf(b)));
 const summary = computed(() => result.value?.summary.find((s) => s.scenario === scenario.value));
-const moved = (r: RoleComparison) => at(r).current_rank - at(r).simulated_rank;
+const moved = (r: RoleComparison) => at(r).current_rank - rankOf(r);
 const best = computed(() => [...roles.value].sort((a, b) => at(b).change - at(a).change)[0] ?? null);
 const improved = computed(() => roles.value.filter((r) => at(r).change > 0).length);
+/** The role the AI skills were written for. */
+const aiRole = computed(() => roles.value.find((r) => r.onet_code === focus.value) ?? null);
 const newTop = computed(() => (summary.value && summary.value.current_top !== summary.value.simulated_top ? summary.value.simulated_top : null));
 
 const chosen = computed(() => roles.value.find((r) => r.onet_code === (focus.value ?? best.value?.onet_code)) ?? null);
@@ -179,7 +192,12 @@ function build() {
     <div v-else-if="result" class="grid">
       <section class="card pad graph" :class="{ busy }" aria-live="polite">
         <div class="headline">
-          <template v-if="!hasPicks"><b>Your matches today</b></template>
+          <template v-if="ai && aiRole && aiGain(aiRole) > 0">
+            <b class="big aibig">+{{ aiGain(aiRole) }} more with AI</b>
+            <span>for {{ aiRole.title }}</span>
+            <small>{{ at(aiRole).current_percent }}% today · {{ at(aiRole).simulated_percent }}% with your skills · {{ finalOf(aiRole) }}% with AI skills too</small>
+          </template>
+          <template v-else-if="!hasPicks"><b>Your matches today</b></template>
           <template v-else-if="best && at(best).change > 0">
             <b class="big">+{{ at(best).change }} points</b>
             <span>for {{ best.title }}</span>
@@ -197,15 +215,17 @@ function build() {
           <li v-for="r in roles" :key="r.onet_code">
             <button type="button" class="rrow" :aria-expanded="open === r.onet_code" @click="open = open === r.onet_code ? null : r.onet_code">
               <span class="rtop">
-                <span class="rname">{{ r.title }}<em v-if="embedded && r.onet_code === state.chosenRoleId" class="mine">your pick</em><em v-if="moved(r)" :class="moved(r) > 0 ? 'trend-up' : 'trend-down'">{{ moved(r) > 0 ? '▲' : '▼' }}{{ Math.abs(moved(r)) }}</em></span>
+                <span class="rname">{{ r.title }}<em v-if="embedded && r.onet_code === state.chosenRoleId" class="mine">your pick</em><em v-if="ai && aiGain(r) > 0" class="mine aitag">AI skills</em><em v-if="moved(r)" :class="moved(r) > 0 ? 'trend-up' : 'trend-down'">{{ moved(r) > 0 ? '▲' : '▼' }}{{ Math.abs(moved(r)) }}</em></span>
                 <span class="rval">
-                  <b>{{ at(r).simulated_percent }}%</b>
+                  <b>{{ finalOf(r) }}%</b>
                   <em v-if="at(r).change" class="delta" :class="at(r).change > 0 ? 'up' : 'down'">{{ at(r).change > 0 ? '+' : '' }}{{ at(r).change }}</em>
+                  <em v-if="ai && aiGain(r)" class="delta aid">+{{ aiGain(r) }}</em>
                 </span>
               </span>
-              <span class="track" role="img" :aria-label="`${r.title}: ${at(r).current_percent}% now, ${at(r).simulated_percent}% with these skills`">
+              <span class="track" role="img" :aria-label="`${r.title}: ${at(r).current_percent}% now, ${at(r).simulated_percent}% with these skills${ai ? `, ${finalOf(r)}% with AI skills too` : ''}`">
                 <i class="now" :style="{ width: `${Math.min(at(r).current_percent, at(r).simulated_percent)}%` }" />
                 <i class="diff" :class="{ down: at(r).change < 0 }" :style="{ width: `${Math.abs(at(r).change)}%` }" />
+                <i v-if="ai" class="aidiff" :style="{ width: `${aiGain(r)}%` }" />
               </span>
             </button>
             <div v-if="open === r.onet_code" class="more">
@@ -224,14 +244,24 @@ function build() {
 
         <div class="legend">
           <span class="key"><i class="now" /> Today</span>
-          <span class="key"><i class="diff" /> With new skills</span>
+          <span class="key"><i class="diff" /> {{ ai ? 'With your skills' : 'With new skills' }}</span>
+          <span v-if="ai" class="key"><i class="aidiff" /> With AI skills too</span>
           <div class="btn-group futures" role="group" aria-label="AI future">
             <button v-for="s in scenarios" :key="s.key" type="button" :class="{ on: state.scenario === s.key }" :aria-pressed="state.scenario === s.key" @click="state.scenario = s.key">{{ s.label }}</button>
           </div>
         </div>
       </section>
 
-      <section class="card pad picker">
+      <section v-if="ai" class="card pad picker aipanel">
+        <div class="row-head"><h2>AI skills</h2></div>
+        <p class="muted">One for each section of your roadmap, to use AI to learn that section's skills. Each comes first in its section.</p>
+        <ul class="aiskills">
+          <li v-for="a in aiSkills" :key="a.name"><span class="aihead"><Icon name="sparkles" :size="24" :stroke="2.6" />{{ a.name }}</span></li>
+        </ul>
+        <p v-if="aiRole" class="muted">Each counts double a top tool in {{ aiRole.title }}'s match, so only that role moves. The orange and green parts are the same as on the last page.</p>
+      </section>
+
+      <section v-else class="card pad picker">
         <div class="row-head">
           <h2>Pick a skill</h2>
           <button v-if="hasPicks" type="button" class="link" @click="reset">Clear</button>
@@ -341,6 +371,15 @@ h2 { font-size: 19px; font-weight: 900; }
 .now { background: var(--orange); }
 .diff { background: #2f9e52; }
 .diff.down { background: #d9534a; }
+.aidiff { background: #8b4dff; }
+.headline .aibig { color: #6a2fd6; }
+.delta.aid { background: #efe4ff; color: #4a1fa3; }
+.rname em.aitag { background: #efe4ff; color: #4a1fa3; }
+.aipanel { border-color: #8b4dff; background: linear-gradient(180deg, #f6f0ff, #fff 60%); }
+.aiskills { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.aiskills > li { padding: 14px 16px; border-radius: 14px; background: #fff; border: 2px solid #e2d3ff; }
+.aihead { display: flex; align-items: center; gap: 10px; color: #4a1fa3; font-size: 22px; line-height: 1.2; font-weight: 900; overflow-wrap: anywhere; }
+.aihead svg { flex: none; }
 .more { display: flex; flex-direction: column; gap: 6px; padding: 4px 8px 10px; }
 .chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .chip { font-size: 14px; padding: 4px 10px; }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Roadmap, RoadmapNode } from '../api/roadmap';
-import { completeLocally, layoutPath, progress, resolveNodes, resolveUnits, sectionCleared, trailPath } from './skillState';
+import { completeLocally, layoutGraph, layoutPath, progress, resolveNodes, resolveUnits, sectionCleared, trailPath } from './skillState';
 
 function node(id: string, status: RoadmapNode['status'], prev: string[] = [], required = true): RoadmapNode {
   return {
@@ -81,5 +81,32 @@ describe('path layout', () => {
     expect(height).toBeGreaterThan(pts[2]![1]);
     expect(trailPath(pts).startsWith(`M${pts[0]![0]} ${pts[0]![1]}`)).toBe(true);
     expect(trailPath([])).toBe('');
+  });
+});
+
+describe('AI study guide', () => {
+  const guide = (): RoadmapNode => ({ ...node('ai:guide:1', 'available'), kind: 'ai_guide', skill_name: 'AI for basics', guide: { title: 'AI for basics', description: 'Use AI.', steps: [], sources: [] } });
+  const unit = () => roadmap([guide(), node('a', 'locked', ['ai:guide:1']), node('b', 'locked', ['ai:guide:1'])]);
+
+  it('keeps the skills locked until the guide is done, then opens them', () => {
+    expect(stateOf(unit(), 'a').state).toBe('locked');
+    expect(stateOf(unit(), 'a').blockers).toEqual(['AI for basics']);
+    const done = completeLocally(unit(), 'd-ai:guide:1');
+    expect(stateOf(done, 'ai:guide:1').state).toBe('done');
+    expect(stateOf(done, 'a').blockers).toEqual([]);
+  });
+
+  it('is drawn above the skills of its unit and at least 1.5 times as wide as one', () => {
+    const units = resolveUnits(unit(), 1);
+    const nodes = layoutGraph(units, () => 'Programming Languages').items.filter((i) => i.type === 'node');
+    const g = nodes.find((i) => i.skill.node.kind === 'ai_guide')!;
+    const others = nodes.filter((i) => i !== g);
+    expect(others.every((o) => o.y > g.y)).toBe(true);
+    expect(g.w).toBeGreaterThanOrEqual(others[0]!.w * 1.5);
+  });
+
+  it('gets a line to every skill that waits for it', () => {
+    const { edges } = layoutGraph(resolveUnits(unit(), 1), () => 'Programming Languages');
+    expect(edges).toHaveLength(2);
   });
 });

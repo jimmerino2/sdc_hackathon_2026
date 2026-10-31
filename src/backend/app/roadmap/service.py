@@ -11,7 +11,7 @@ from app.jobs.service import _expand
 from app.profile import service as profiles
 from app.roadmap import duration, planner
 from app.roadmap.planner import Plan, PlanNode, PlanSection
-from app.roadmap.schemas import CurrentStep, LearnedSkill, Node, Roadmap, RoadmapSummary, SelectedSkill, Section, SkillSelection, Source, Unit
+from app.roadmap.schemas import CurrentStep, Guide, LearnedSkill, Node, Roadmap, RoadmapSummary, SelectedSkill, Section, SkillSelection, Source, Unit
 
 
 def _role(db: Client, onet_code: str) -> dict:
@@ -28,6 +28,44 @@ ROADMAP_SELECT = (
     "roadmap_detail(roadmap_detail_id,skill_id,section,unit,status,completed_at,previous_nodes,previous_nodes_required,"
     "onet_role_skills(skill_name,skill_type,importance,level))"
 )
+AI_COLUMNS = "skill_origin,ai_description,ai_steps"  # migration 0027
+GUIDE_SELECT = ROADMAP_SELECT.replace("importance,level))", f"importance,level,{AI_COLUMNS}))")
+
+_guides_ready = False
+
+
+def _has_guides(db: Client) -> bool:
+    """Whether migration 0027 is in (the AI columns of onet_role_skills). Without it no AI skill can be stored, so roadmaps are built
+    without them. Once seen it is remembered; until then it is checked again, so applying the migration needs no restart."""
+    global _guides_ready
+    if _guides_ready:
+        return True
+    try:
+        db.table("onet_role_skills").select(AI_COLUMNS).limit(1).execute()
+        _guides_ready = True
+    except Exception as e:
+        print(f"AI skills unavailable ({type(e).__name__}); apply migration 0027")
+    return _guides_ready
+
+
+def _existing_guides(db: Client, onet_code: str) -> dict[str, dict]:
+    """The AI skills this role already has, by normalised title, so a new roadmap reuses them instead of writing them again."""
+    try:
+        rows = db.table("onet_role_skills").select("skill_name,ai_description,ai_steps").eq("onet_code", onet_code).eq("skill_origin", "ai").execute().data
+    except Exception as e:
+        print(f"could not read the role's AI skills ({type(e).__name__}); writing them fresh")
+        return {}
+    return {planner.norm_title(r["skill_name"]): {"title": r["skill_name"], "description": r["ai_description"] or "", "steps": r["ai_steps"] or []} for r in rows}
+
+
+def _store_guides(db: Client, onet_code: str, guides: dict[int, dict]) -> None:
+    """Insert the AI skills into onet_role_skills, each only if the role doesn't have it yet (same id: same title). An existing one is
+    left exactly as it is. A roadmap node points at the row, so a failure here must stop the build."""
+    if not guides:
+        return
+    rows = [{"onet_code": onet_code, "skill_id": g["skill_id"], "skill_name": g["title"], "skill_type": "skill", "skill_origin": "ai",
+             "ai_description": g["description"], "ai_steps": g["steps"]} for g in guides.values()]
+    db.table("onet_role_skills").upsert(rows, on_conflict="onet_code,skill_id", ignore_duplicates=True).execute()
 
 
 def _sources(db: Client, skill_names: list[str]) -> dict[str, list[Source]]:
@@ -73,8 +111,9 @@ def learned_skills(db: Client, profile_id: str) -> list[LearnedSkill]:
     ids = [r["roadmap_id"] for r in db.table("roadmap").select("roadmap_id").eq("profile_id", profile_id).execute().data]
     if not ids:
         return []
-    rows = (db.table("roadmap_detail").select("completed_at,onet_role_skills(skill_name,skill_type)")
+    rows = (db.table("roadmap_detail").select("skill_id,completed_at,onet_role_skills(skill_name,skill_type)")
             .in_("roadmap_id", ids).eq("status", "completed").execute().data)
+    rows = [r for r in rows if not planner.is_guide(r["skill_id"])]  # a study guide is a step, not a skill the learner has
     latest: dict[str, dict] = {}
     for r in rows:  # the same skill can be done on two roadmaps; keep the later one
         name = r["onet_role_skills"]["skill_name"]
@@ -109,7 +148,7 @@ def list_roadmaps(db: Client, profile_id: str) -> list[RoadmapSummary]:
 
 def get_roadmap(db: Client, profile_id: str, onet_code: str | None = None) -> Roadmap:
     """The profile's roadmap for a role, or its most recently built one when no role is given."""
-    query = db.table("roadmap").select(ROADMAP_SELECT).eq("profile_id", profile_id)
+    query = db.table("roadmap").select(GUIDE_SELECT if _has_guides(db) else ROADMAP_SELECT).eq("profile_id", profile_id)
     if onet_code:
         query = query.eq("onet_code", onet_code)
     rows = query.order("created_at", desc=True).limit(1).execute().data
@@ -130,20 +169,27 @@ def get_roadmap(db: Client, profile_id: str, onet_code: str | None = None) -> Ro
             depth[skill_id] = 1 + max((depth_of(p) for p in prev.get(skill_id, []) if p in prev), default=-1)
         return depth[skill_id]
 
-    names = [d["onet_role_skills"]["skill_name"] for d in details]
+    names = [d["onet_role_skills"]["skill_name"] for d in details if not planner.is_guide(d["skill_id"])]
     sources = _sources(db, names)
     groups = _groups(db, names)
     grouped: dict[int, dict[int, list[Node]]] = {}
     for d in details:
-        skill = d["onet_role_skills"]
-        minutes, basis, via = duration.estimate(skill["skill_type"], skill["level"], sources.get(skill["skill_name"], []))
+        skill = {k: d["onet_role_skills"][k] for k in ("skill_name", "skill_type", "importance", "level")}
+        ai = d["onet_role_skills"]
+        guide = (Guide(title=skill["skill_name"], description=ai.get("ai_description") or "", steps=ai.get("ai_steps") or [], sources=[Source(**s) for s in planner.AI_SOURCES])
+                 if ai.get("skill_origin") == "ai" else None)
+        if guide:  # an AI skill: its name, description and steps are what the model wrote for it
+            minutes, basis, via = planner.GUIDE_MINUTES, "estimated", None
+        else:
+            minutes, basis, via = duration.estimate(skill["skill_type"], skill["level"], sources.get(skill["skill_name"], []))
         node = Node(
+            kind="ai_guide" if guide else "skill", guide=guide,
             minutes=minutes, minutes_basis=basis, minutes_source=via,
             roadmap_detail_id=d["roadmap_detail_id"],
             skill_id=d["skill_id"],
-            **d["onet_role_skills"],
-            skill_group=groups.get(d["onet_role_skills"]["skill_name"]),
-            sources=sources.get(d["onet_role_skills"]["skill_name"], []),
+            **skill,
+            skill_group=groups.get(skill["skill_name"]),
+            sources=guide.sources if guide else sources.get(skill["skill_name"], []),
             status=d["status"],
             completed_at=d["completed_at"],
             previous_nodes=d["previous_nodes"],
@@ -236,8 +282,10 @@ def plan_from_rows(rows: list[dict], titles: list[str] | None = None) -> Plan:
     completion times of whoever owned those rows are ignored on purpose. A row built before planner.sanitize
     enforced same-unit-only prerequisites may still carry a cross-unit one (the roadmap can't draw it, so it
     would just look broken again); drop those here too rather than copy them into a new roadmap.
+    AI study guides are not copied: they are written again for the new roadmap's sections (and a learner's progress on one is theirs).
     """
     titles = titles or []
+    rows = [r for r in rows if not planner.is_guide(r["skill_id"])]
     unit_of = {r["skill_id"]: (r["section"], r["unit"]) for r in rows}
     grouped: dict[int, dict[int, list[PlanNode]]] = {}
     for r in rows:
@@ -440,6 +488,17 @@ def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool, p
     if priority:
         rows = db.table("onet_role_skills").select("skill_id").eq("onet_code", onet_code).in_("skill_name", priority).execute().data
         plan = prioritised(plan, {r["skill_id"] for r in rows})
+
+    # Each section gets an AI skill as its first node, which its skills wait for (see planner.with_guides). The plan is final by
+    # now (arranged, completed, prioritised), so it always leads its section's first unit. The role's earlier AI skills are reused.
+    guides: dict[int, dict] = {}
+    if _has_guides(db):
+        guides = planner.write_guides(role["title"], onet_code, plan, {s["skill_id"]: s["skill_name"] for s in relevant}, _existing_guides(db, onet_code))
+        try:
+            _store_guides(db, onet_code, guides)
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"could not store the AI skills: {e}")
+    plan = planner.with_guides(plan, guides)
 
     # One roadmap row per role; its section/unit are the current step, starting at the first unit.
     roadmap_id = str(uuid.uuid4())

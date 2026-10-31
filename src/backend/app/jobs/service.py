@@ -103,6 +103,7 @@ def _expand(scores: dict[str, float]) -> dict[str, float]:
 
 
 TREND_WEIGHT = 2.0  # a key skill whose demand is forecast to rise counts this many times its O*NET importance
+AI_SKILL_WEIGHT = 8.0  # an AI skill (one Jobee wrote for a role) counts double O*NET's top tool weight (4.0), the same boost a rising skill gets (TREND_WEIGHT), when it is added to the role's key skills: it is the first step of its section, so it is meant to matter
 DEMAND_COUNTRY, DEMAND_HORIZON = "US", 6  # the occupational pipeline's biggest sample and middle horizon
 # O*NET role -> the occupational pipeline's occupation with forecasts for it. The other roles have none, so no skill is boosted there.
 OCCUPATIONS = {"15-1252.00": "software_engineer", "15-2051.00": "data_scientist", "15-2051.01": "data_analyst"}
@@ -276,14 +277,23 @@ def _skill_fit(role: dict, own: dict[str, float], proficiency: dict[str, float])
             for n in role["key_skills"]]
 
 
-def score_roles(own: dict[str, float], stage: str, picked: list[Interest], forecasts: dict[str, tuple[list[ScenarioOutlook], dict]]) -> list[dict]:
+def score_roles(own: dict[str, float], stage: str, picked: list[Interest], forecasts: dict[str, tuple[list[ScenarioOutlook], dict]],
+                extra_skills: dict[str, dict[str, float]] | None = None) -> list[dict]:
     """The one role-matching calculation: every tech role scored for these skills, best first. The cards, the saved
-    sets and the What-If simulator all come through here, so they can't disagree."""
+    sets and the What-If simulator all come through here, so they can't disagree.
+
+    extra_skills (O*NET code -> skill name -> weight) adds skills to a role's key skills on top of its ten, so a comparison can ask
+    what the match would be if those skills counted too. Nothing the learner sees today passes it."""
     proficiency = _expand(own)
     have = {n for n, v in proficiency.items() if v > 0}
     edu = scoring.education(stage)
     sdgs = _role_sdgs()
     roles = [{**_with_key_skills(r, have), "sdg": sdgs.get(r["onet_code"], [])} for r in _roles()]
+    for role in roles:
+        add = (extra_skills or {}).get(role["onet_code"])
+        if add:
+            role["key_skills"] = [*role["key_skills"], *(n for n in add if n not in role["key_skills"])]
+            role["weights"] = {**role["weights"], **{n: w for n, w in add.items() if n not in role["weights"]}}
     raw = {r["onet_code"]: scoring.interest_raw(picked, r["sdg"]) for r in roles}
     top_raw = max(raw.values(), default=0.0)
     scored = []

@@ -1,4 +1,5 @@
 """Turns a role's skills into a roadmap plan (sections -> units -> nodes with prerequisites) using an LLM."""
+import hashlib
 import json
 import re
 from dataclasses import dataclass, field
@@ -294,3 +295,136 @@ def _plan_with_openrouter(role_title: str, role_description: str | None, skills:
                 {"role": "user", "content": f"That reply was unusable ({e}). Reply again with only the JSON object in the required shape."},
             ]
     raise HTTPException(status_code=502, detail=f"model returned an unusable roadmap: {error}")
+
+
+# ---------- AI skills: one per section, first in the section's first unit; its skills wait for it ----------
+GUIDE_PREFIX = "ai:"  # skill_id of an AI skill: "ai:" and a short hash of the role and the title, so the same title for the same role is the same skill
+MAX_GUIDES = 8  # at most this many sections get one
+GUIDE_MINUTES = 20  # how long one is planned to take; it has no resource that states a length
+MAX_EXISTING = 30  # titles of the role's earlier AI skills shown to the model, so it can reuse one
+MAX_DESCRIPTION, MAX_STEP, MAX_STEPS = 160, 90, 3  # an AI skill's details are kept short
+
+# Where to learn to use AI well. Fixed, and checked by hand: a model must never be asked for links, it would invent them. Every AI skill
+# shows these, so each has at least one source. Entries are the Source schema's fields; the order is the rank.
+AI_SOURCES = [
+    {"source_type": "activity", "rank": 1, "title": "Prompt Engineering Guide", "url": "https://www.promptingguide.ai/", "duration_minutes": None},
+    {"source_type": "certificate", "rank": 2, "title": "Google Prompting Essentials", "url": "https://www.coursera.org/specializations/prompting-essentials-google", "duration_minutes": None},
+]
+
+GUIDE_PROMPT = """You write short "AI skills" for a learning roadmap. For each section you get its title and the skills in it. An AI skill teaches the learner how to use AI tools (a chat assistant, a coding assistant) to learn and simplify THOSE skills, so they learn faster and understand more, not so the AI does the work for them.
+
+For every section write:
+- title: a short name, at most 40 characters, e.g. "AI-assisted web basics". Name the area, not "AI skill". Two sections never share a title.
+- description: ONE or two short plain sentences, under 150 characters in all, on how AI helps with this section's skills. Name a real skill from the section.
+- steps: exactly 3, each under 80 characters and starting with a verb, e.g. "Ask an AI to explain loops, then explain them back." Make one check the AI's answer against a trusted source and one practise without it.
+
+existing_titles lists AI skills already written for this role. When one of them fits a section, use its exact title for that section instead of a new one.
+
+Rules: do not give URLs or name specific products as the only option. Write for a beginner. No hype.
+
+Reply with JSON only, no prose and no code fences, in exactly this shape:
+{"guides":[{"section":1,"title":"...","description":"...","steps":["...","..."]}]}
+Use only the section numbers you were given, once each."""
+
+
+def is_guide(skill_id: str) -> bool:
+    return skill_id.startswith(GUIDE_PREFIX)
+
+
+def norm_title(title: str) -> str:
+    """A title as compared for sameness: lower case, one space between words."""
+    return " ".join(title.lower().split())
+
+
+def ai_skill_id(onet_code: str, title: str) -> str:
+    """The skill_id of the AI skill with this title for this role: the same title always gives the same id."""
+    return GUIDE_PREFIX + hashlib.sha1(f"{onet_code}|{norm_title(title)}".encode()).hexdigest()[:12]
+
+
+def _clean(value, limit: int) -> str:
+    return " ".join(str(value or "").split())[:limit]
+
+
+def sanitize_guides(raw: dict, sections: list[int]) -> dict[int, dict]:
+    """The usable AI skills by section number: known sections only, each once, with a title and a description."""
+    out: dict[int, dict] = {}
+    for g in raw.get("guides", []):
+        if not isinstance(g, dict):
+            continue
+        try:
+            number = int(g.get("section"))
+        except (TypeError, ValueError):
+            continue
+        title, description = _clean(g.get("title"), 40), _clean(g.get("description"), MAX_DESCRIPTION)
+        steps = [s for s in (_clean(x, MAX_STEP) for x in g.get("steps") or []) if s][:MAX_STEPS]
+        if number in sections and number not in out and title and description:
+            out[number] = {"title": title, "description": description, "steps": steps}
+    if not out:
+        raise ValueError("no usable guides")
+    return out
+
+
+def fallback_guide(section_title: str, skill_names: list[str]) -> dict:
+    """When the model can't be used: an AI skill built from the section's own title and skill names."""
+    shown = ", ".join(skill_names[:3])
+    return {
+        "title": _clean(f"AI for {section_title}", 40),
+        "description": _clean(f"Use an AI as a study buddy for {shown}: have it explain and quiz you, then check it against a trusted source.", MAX_DESCRIPTION),
+        "steps": [
+            _clean(f"Ask an AI to explain {skill_names[0]}, then explain it back.", MAX_STEP),
+            "Answer its practice questions before it marks them.",
+            "Check what it says against the official docs.",
+        ],
+    }
+
+
+def write_guides(role_title: str, onet_code: str, plan: Plan, names: dict[str, str], existing: dict[str, dict] | None = None) -> dict[int, dict]:
+    """An AI skill for each section of the plan (at most MAX_GUIDES), by section number, each {skill_id, title, description, steps}.
+
+    `names` maps skill_id -> skill name; `existing` is the role's earlier AI skills by normalised title (see norm_title). A title that
+    matches one of them takes that skill's stored description and steps, so nothing the model already wrote for the role is rewritten.
+    Titles are made different across sections, since a roadmap holds each skill once. Never raises: if the model can't be used, every
+    section gets the plain fallback, so a roadmap always has them.
+    """
+    existing = existing or {}
+    sections = {i: [names[n.skill_id] for unit in sec.units for n in unit if n.skill_id in names] for i, sec in enumerate(plan[:MAX_GUIDES], start=1)}
+    sections = {i: ns for i, ns in sections.items() if ns}
+    if not sections:
+        return {}
+    fallback = {i: fallback_guide(plan[i - 1].title, ns) for i, ns in sections.items()}
+    try:
+        _require_openrouter()
+        listing = {"sections": [{"section": i, "title": plan[i - 1].title, "skills": ns} for i, ns in sections.items()],
+                   "existing_titles": [e["title"] for e in list(existing.values())[:MAX_EXISTING]]}
+        messages = [{"role": "system", "content": GUIDE_PROMPT}, {"role": "user", "content": f"Role: {role_title}\n\n{json.dumps(listing)}"}]
+        written = _chat_json(messages, lambda raw: sanitize_guides(raw, list(sections)), "AI skill list")
+    except HTTPException as e:
+        print(f"AI skills fell back ({e.detail})")
+        written = {}
+    out: dict[int, dict] = {}
+    taken: set[str] = set()
+    for i in sections:
+        g = {**fallback[i], **written.get(i, {})}
+        if norm_title(g["title"]) in taken:  # two sections with one title: the second is told apart by its number
+            g["title"] = f"{g['title'][:36]} {i}"
+        taken.add(norm_title(g["title"]))
+        old = existing.get(norm_title(g["title"]))
+        if old:
+            g = {**g, "description": old["description"], "steps": old["steps"]}
+        out[i] = {**g, "skill_id": ai_skill_id(onet_code, g["title"])}
+    return out
+
+
+def with_guides(plan: Plan, guides: dict[int, dict]) -> Plan:
+    """The plan with each guided section's AI skill as the first node of its first unit, and a required prerequisite of every other
+    node in that unit. So the section's skills stay locked until it is done and, since a unit opens only when the one before it
+    is finished, so does everything after them."""
+    out: Plan = []
+    for number, sec in enumerate(plan, start=1):
+        if number not in guides or not sec.units:
+            out.append(sec)
+            continue
+        gid = guides[number]["skill_id"]
+        first = [PlanNode(n.skill_id, [gid, *n.previous_nodes], True) for n in sec.units[0]]
+        out.append(PlanSection(sec.title, [[PlanNode(gid, [], True), *first], *sec.units[1:]]))
+    return out
