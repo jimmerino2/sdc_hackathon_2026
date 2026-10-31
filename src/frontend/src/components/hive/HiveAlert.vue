@@ -33,7 +33,7 @@ const crew = computed(() => {
 });
 const emit = defineEmits<{ close: []; start: []; retry: []; share: [] }>();
 
-const DAMAGE = ['Robbee is reading your repo…', 'Counting the dents in the hive…', 'Calling the client…', 'Rewriting your brief…'];
+const DAMAGE = ['Robbee is reading your repo…', 'Counting the dents in the hive…', 'Calling the client…', 'Adding an AI twist…', 'Rewriting your brief…'];
 const line = ref(0);
 let timer: number | undefined;
 watch(() => props.phase, (p) => {
@@ -89,6 +89,7 @@ const label = computed(() => ({
           </div>
           <span class="hive__word hive__word--gold">Warning</span>
           <span class="hive__sub">A boss has entered the hive</span>
+          <span class="hive__sub hive__sub--ai">Round 2: add AI to your project</span>
         </div>
 
         <!-- stage 2 is being written -->
@@ -118,7 +119,9 @@ const label = computed(() => ({
             <span class="hive__tag">Project rewritten</span>
             <span class="hive__lead">Robbee rewrote the brief for</span>
             <span class="hive__title">{{ title }}</span>
+            <span class="hive__ai">AI round: add an AI feature to your project</span>
             <span v-if="twist" class="hive__twist">“{{ twist }}”</span>
+            <span class="hive__note">Call a language-model API from your code, keep the key out of the repo, and show its answer as a suggestion.</span>
             <button ref="primary" type="button" class="jb-btn jb-btn--primary hive__btn" @click="emit('start')">Start stage 2</button>
           </div>
         </div>
@@ -188,6 +191,8 @@ const label = computed(() => ({
 }
 .hive__word--gold { color: #ffc107; margin-left: 4vw; animation-delay: .3s; }
 .hive__sub { margin-top: 18px; color: #fff; font-size: clamp(14px, 1.8vw, 24px); font-weight: 900; letter-spacing: .14em; text-transform: uppercase; animation: hive-fade .4s ease-out .6s both; }
+.hive__sub--ai { margin-top: 10px; padding: 6px 16px; border-radius: 10px; background: #ffc107; color: #1e1e1e; }
+.hive__ai { padding: 6px 14px; border-radius: 10px; background: #1e1e1e; color: #ffc107; font-size: clamp(15px, 1.6vw, 20px); font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
 .hive__siren { width: clamp(48px, 7vw, 110px); height: auto; flex: none; animation: hive-flash .5s steps(2, end) infinite; }
 .hive__bee { position: absolute; z-index: 2; animation: hive-shake .35s ease-in-out infinite alternate; }
 .hive__bee::after { content: '!!'; position: absolute; right: -10px; top: -18px; color: #e53935; font-size: 30px; font-weight: 900; }
