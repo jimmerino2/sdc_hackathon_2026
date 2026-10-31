@@ -78,7 +78,7 @@ The backend serves these from `app/occupational/`. They are read-only and pick u
 - `GET /occupational/signals?country=&occupation=`: the baseline next to its emerging-skill evidence, whether an adjusted forecast or rise alerts passed validation, and each indicator's source, freshness and quality
 - `GET /occupational/evaluation`
 
-The frontend page is `src/frontend/src/views/OccupationsView.vue`, route `/occupations` ("Occupations" in the sidebar). `?tab=emerging|adoption|method` opens a section directly.
+The frontend page is `src/frontend/src/views/OccupationsView.vue`, route `/occupations` ("Occupations" in the sidebar). `?tab=emerging|signals|method` opens a section directly. The AI adoption section is hidden: it is left out of `tabs` in that view, and its code and the `/occupational/adoption` endpoint are kept.
 
 ## Adding an occupation or sector
 

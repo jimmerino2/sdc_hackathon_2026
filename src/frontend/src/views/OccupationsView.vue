@@ -24,7 +24,6 @@ const tabs: { id: Tab; label: string; icon: string }[] = [
   { id: 'demand', label: 'Skill demand', icon: 'chart-bar' },
   { id: 'emerging', label: 'Emerging skills', icon: 'sparkles' },
   { id: 'signals', label: 'Emerging signals', icon: 'activity' },
-  { id: 'adoption', label: 'AI adoption', icon: 'users' },
   { id: 'method', label: 'Method & data', icon: 'search' },
 ];
 
