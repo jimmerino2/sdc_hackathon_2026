@@ -21,7 +21,7 @@
 | ----------------- | ------------------------------------------------------------- |
 | GitHub Repository | https://github.com/jimmerino2/sdc_hackathon_2026              |
 | Live Demo         | https://jobee-sdchack.replit.app/                             |
-| Slide Deck        | https://canva.link/9ogvetmkxddtzag                            |
+| Slide Deck        | https://canva.link/9q3ivpf74bexiix                            |
 | Demo Video        | https://youtu.be/xLT6an0eAq4                                  |
 
 ---
@@ -30,11 +30,11 @@
 
 ### Problem
 
-AI is changing which tech jobs are hiring, and which are shrinking, faster than most courses and career advice can keep up with. Students and recent graduates often choose a path based on job titles that may be fading, with no way to see how the market is moving or which skills would hold up. Career guidance is generic, and it rarely shows the trade-offs between roles.
+AI is changing which tech jobs are hiring and which are shrinking, faster than most courses and career advice can keep up. Students and recent graduates often pick a path based on job titles that may be fading, with no way to see how the market is moving or which skills will hold up. Career guidance is generic, rarely shows the trade-offs between roles, and leaves young people unsure whether the skills they are building will still lead to decent work. That uncertainty is a barrier to SDG 8, Decent Work and Economic Growth.
 
 ### Solution
 
-Jobee takes a short onboarding conversation (where you are in your journey, your interests, your skills) and matches you against tech roles. Each match is scored by arithmetic, not a black-box model: skills you have, interests that point at the UN Sustainable Development Goals, your career stage, and whether job postings for the role are rising or falling under the AI future you pick. A forecasting pipeline supplies the outlook, using published AI-adoption and job-posting data, and the app shows the forecast as a chart with its error range. An LLM writes a learning roadmap for the role you pick, and optional "Bonus Quests" let you prove a skill with a small project.
+Jobee starts with a short onboarding conversation about where you are in your journey, your interests and your skills, then matches you against tech roles. Each match is scored by plain arithmetic rather than a black-box model, combining the skills you have, interests tied to the UN Sustainable Development Goals, your career stage, and whether job postings for the role are rising or falling under the AI future you choose. A forecasting pipeline built on published AI-adoption and job-posting data supplies that outlook, and the app shows it as a chart with its error range. Upload a resume and Jobee reads your skills for you. An LLM then writes a learning roadmap for your chosen role, and optional Bonus Quests let you prove a skill with a small project, so every score and recommendation can be explained and checked. Challenges, a co-op Hive and a friends leaderboard keep learners motivated and engaged all along the way.
 
 ### Key Features
 
