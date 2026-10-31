@@ -8,7 +8,6 @@ import HiveAlert, { type HivePhase } from "../components/hive/HiveAlert.vue";
 import HiveSwitch from "../components/hive/HiveSwitch.vue";
 import NewChallenge from "../components/hive/NewChallenge.vue";
 import Robbee from "../components/hive/Robbee.vue";
-import Stinger from "../components/hive/Stinger.vue";
 import {
   advanceChallenge,
   fetchChallenges,
@@ -59,8 +58,8 @@ function added(c: RoadmapChallenge) {
   tab.value = "current";
   reveal(c.challenge_id);
 }
-const slots = computed(() => fight.value?.stings_to_kill ?? 5);
-const dealt = computed(() => fight.value?.stings_dealt ?? 0);
+/** Robbee's remaining HP as a 0-100 percentage; full until the fight loads. */
+const hp = computed(() => Math.max(0, Math.min(100, fight.value?.hp ?? 100)));
 
 async function load() {
   const id = profileId();
@@ -201,21 +200,31 @@ onMounted(() => {
     <section class="boss" aria-labelledby="boss-name">
       <div class="boss__art"><Robbee :size="170" /></div>
       <div class="boss__copy">
-        <span class="boss__eyebrow">Boss Information</span>
-        <h2 id="boss-name">Robbee <small>The Unemployed Chud</small></h2>
+        <span class="boss__eyebrow">Boss · Hornet</span>
+        <h2 id="boss-name">Robbee <small>The Corrupt CEO</small></h2>
         <p class="boss__say">
-          Bitter that he couldn't find a tech job due to a massive skill issue, Robbee now regularly harasses bees like
-          you. This includes saying you'll end up like him, asking for referrals, internships, or if your dad knows a
-          guy.
+          Founder and chairman of HornetCorp, Robbee thinks of nothing but profits and personal gain, even if it means
+          damaging the planet and those around him. He will cut every corner, bribe every inspector and burn any forest
+          if it makes his numbers go up.
         </p>
-        <p class="boss__say">Please don't tell him to "just put the fries in the bag", that raises his cortisol levels real bad...</p>
-        <div class="boss__pips" :aria-label="`${dealt} of ${slots} stings landed on Robbee, ${stingers} stingers ready`">
-          <span v-for="i in slots" :key="i" class="boss__pip" :class="{ on: i <= dealt }"
-            ><Stinger :size="20"
-          /></span>
-          <span class="boss__count">
-            <template v-if="fight">HP {{ fight.hp }}% · </template>{{ stingers }} {{ stingers === 1 ? "stinger" : "stingers" }} ready
-          </span>
+        <p class="boss__say">
+          He harasses bees like you with "unpaid internships", equity worth nothing, and offers to "circle back on your
+          career".
+        </p>
+        <p class="boss__quote">"I'll make HornetCorp great again, no one makes it great like me."</p>
+        <span class="boss__weak">Weakness: a well-written project</span>
+        <div class="boss__hp">
+          <div
+            class="boss__bar"
+            role="progressbar"
+            aria-label="Robbee's HP"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            :aria-valuenow="hp"
+          >
+            <span class="boss__fill" :style="{ width: `${hp}%` }" />
+          </div>
+          <span class="boss__count">HP {{ hp }}% · {{ stingers }} {{ stingers === 1 ? "stinger" : "stingers" }} ready</span>
         </div>
       </div>
       <div class="boss__side">
@@ -392,7 +401,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  max-width: 1600px;
+  max-width: 1180px;
 }
 .chal__head {
   display: flex;
@@ -480,38 +489,45 @@ onMounted(() => {
   font-weight: 400;
   color: var(--text);
 }
-.boss__pips {
+.boss p.boss__quote {
+  font-style: italic;
+  font-weight: 800;
+  color: var(--accent-text);
+}
+.boss__weak {
+  align-self: flex-start;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  background: #fde3e1;
+  color: #b3261e;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 800;
+}
+.boss__hp {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 14px;
   margin-top: 10px;
   flex-wrap: wrap;
 }
-.boss__pip {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+.boss__bar {
+  flex: 1 1 200px;
+  max-width: 360px;
+  height: 20px;
+  border-radius: var(--radius-pill);
   background: var(--surface);
   border: 2px solid var(--line-strong);
-  color: var(--locked-edge);
-  opacity: 0.55;
-  transition:
-    transform var(--dur-fast) var(--ease-bounce),
-    background var(--dur-base),
-    color var(--dur-base),
-    opacity var(--dur-base);
+  overflow: hidden;
 }
-.boss__pip.on {
-  background: var(--honey);
-  border-color: var(--honey-deep);
-  color: var(--on-honey);
-  opacity: 1;
-  box-shadow: 0 3px 0 var(--honey-deep);
+.boss__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #d32f2f;
+  transition: width var(--dur-slow) var(--ease-out);
 }
 .boss__count {
-  margin-left: 6px;
   font-size: 15px;
   line-height: 21px;
   font-weight: 800;

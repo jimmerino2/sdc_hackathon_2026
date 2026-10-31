@@ -6,6 +6,7 @@ import Stinger from './Stinger.vue';
 import type { RoadmapChallenge } from '../../api/roadmap';
 
 /** One roadmap's challenge in the list: its stage tracker and next action; opens into the full brief and repo form. */
+const base = import.meta.env.BASE_URL;
 const props = defineProps<{ challenge: RoadmapChallenge; open: boolean; busy?: boolean; error?: string | null }>();
 const emit = defineEmits<{ toggle: []; submit: [repoUrl: string]; advance: [] }>();
 
@@ -40,7 +41,7 @@ const meta = computed(() => `${c.value.role_title} · ${complete.value ? 'Comple
   <section :id="`challenge-${c.challenge_id}`" class="crow" :data-state="state">
     <div class="crow__main">
       <button type="button" class="crow__head" :aria-expanded="open" :aria-controls="`challenge-body-${c.challenge_id}`" @click="emit('toggle')">
-        <span class="crow__disc"><Icon name="trophy" :size="24" /></span>
+        <span class="crow__disc"><img :src="`${base}sdg/goal-${String(c.sdg).padStart(2, '0')}.jpg`" :alt="`UN Sustainable Development Goal ${c.sdg}: ${c.sdg_name}`" width="56" height="56" /></span>
         <span class="crow__label">
           <span class="crow__eyebrow">Challenge · SDG {{ c.sdg }} {{ c.sdg_name }}</span>
           <span class="crow__title">{{ c.title }}</span>
@@ -88,7 +89,8 @@ const meta = computed(() => `${c.value.role_title} · ${complete.value ? 'Comple
 .crow__main { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 24px; padding: 18px 26px 18px 0; }
 .crow__head { display: flex; align-items: center; gap: 22px; min-width: 0; padding: 4px 0 4px 26px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
 .crow__head:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; border-radius: var(--radius-md); }
-.crow__disc { flex: none; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--honey); color: var(--on-honey); transition: transform var(--dur-fast) var(--ease-bounce); }
+.crow__disc { flex: none; display: grid; place-items: center; width: 56px; height: 56px; border-radius: var(--radius-md); overflow: hidden; background: var(--honey); transition: transform var(--dur-fast) var(--ease-bounce); }
+.crow__disc img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .crow__head:hover .crow__disc { transform: rotate(-8deg); }
 .crow__label { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .crow__eyebrow { font-size: 13px; line-height: 18px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--honey-deep); }

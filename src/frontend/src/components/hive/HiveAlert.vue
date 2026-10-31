@@ -133,9 +133,9 @@ const label = computed(() => ({
             <span class="hive__fall"><Robbee :size="130" pose="defeated" :bob="false" /></span>
           </div>
           <div class="hive__copy">
-            <span class="hive__tag hive__tag--green">Boss defeated</span>
+            <span class="hive__tag hive__tag--green">Bankrupt &amp; unemployed</span>
             <span class="hive__title">Hive Protected!</span>
-            <span class="hive__lead">Robbee is now unemployed, hooray!</span>
+            <span class="hive__lead">Robbee is now bankrupt and unemployed, hooray!</span>
             <button ref="primary" type="button" class="jb-btn jb-btn--primary hive__btn" @click="emit('close')">
               {{ reward ? `Collect ${nf.format(reward)} pollen` : 'Nice teamwork' }}
             </button>

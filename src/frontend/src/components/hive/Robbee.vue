@@ -1,58 +1,77 @@
 <script setup lang="ts">
 /**
- * Robbee the Hornet Foreman: the challenges' boss. A red hornet in a cap, with a headset and a staff badge.
- * pose: idle, hit (eyes squeezed shut, shaking) or defeated (X eyes, tumbling over).
+ * Robbee the Corrupt CEO: the challenges' boss. A red hornet in a top hat and pinstripe suit, with a monocle, cigar and money bag.
+ * pose: idle, hit (eyes squeezed shut, shaking) or defeated (X eyes, hat off, pockets empty, tumbling over: bankrupt and unemployed).
  */
 withDefaults(defineProps<{ size?: number; bob?: boolean; pose?: 'idle' | 'hit' | 'defeated' }>(), { size: 160, bob: true, pose: 'idle' });
 </script>
 
 <template>
-  <svg class="robbee" :class="[{ bob: bob && pose === 'idle' }, `pose-${pose}`]" :width="size" :height="size * 1.1" viewBox="0 0 200 220" role="img" aria-label="Robbee the Hornet Foreman">
+  <svg class="robbee" :class="[{ bob: bob && pose === 'idle' }, `pose-${pose}`]" :width="size" :height="size * 1.1" viewBox="0 0 200 220" role="img" aria-label="Robbee the Corrupt CEO">
     <defs>
-      <clipPath id="robbee-body"><rect x="45" y="80" width="110" height="110" rx="30" /></clipPath>
+      <clipPath id="robbee-suit"><rect x="50" y="136" width="100" height="54" rx="16" /></clipPath>
     </defs>
+    <!-- smoke -->
+    <g v-if="pose !== 'defeated'" fill="#b0a898">
+      <circle cx="150" cy="96" r="9" /><circle cx="162" cy="78" r="12" /><circle cx="174" cy="56" r="8" />
+    </g>
     <!-- wings -->
     <ellipse cx="42" cy="128" rx="22" ry="36" transform="rotate(-14 42 128)" fill="#fff" stroke="#d9cfae" stroke-width="3" />
     <ellipse cx="158" cy="128" rx="22" ry="36" transform="rotate(14 158 128)" fill="#fff" stroke="#d9cfae" stroke-width="3" />
-    <!-- antennae -->
-    <path d="M84 74 L72 36 M116 74 L128 36" stroke="#1e1e1e" stroke-width="4" stroke-linecap="round" />
-    <circle cx="72" cy="35" r="6" fill="#1e1e1e" /><circle cx="128" cy="35" r="6" fill="#1e1e1e" />
     <!-- stinger -->
     <path d="M91 186 L100 214 L109 186 Z" fill="#1e1e1e" />
-    <!-- body and stripes -->
+    <!-- head -->
     <rect x="45" y="80" width="110" height="110" rx="30" fill="#d93a35" />
-    <g clip-path="url(#robbee-body)" fill="#4a1616">
-      <rect x="40" y="164" width="120" height="10" /><rect x="40" y="180" width="120" height="10" />
+    <!-- suit -->
+    <rect x="50" y="136" width="100" height="54" rx="16" fill="#2b2f3c" />
+    <g clip-path="url(#robbee-suit)" stroke="#444a5c" stroke-width="1.5">
+      <path d="M66 136 V190 M82 136 V190 M118 136 V190 M134 136 V190" />
     </g>
-    <!-- cap -->
-    <path d="M47 104 C47 52 153 52 153 104 Z" fill="#1e1e1e" />
-    <path d="M47 94 H153 V104 H47 Z" fill="#ffc107" />
-    <path d="M138 96 C162 88 188 96 186 108 C172 112 152 108 138 104 Z" fill="#1e1e1e" />
-    <circle cx="100" cy="66" r="4.5" fill="#ffc107" />
-    <text x="100" y="89" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="900" font-size="28" fill="#ffc107">R</text>
-    <!-- face -->
-    <path d="M128 110 L137 140" stroke="#8a1f1f" stroke-width="3" stroke-linecap="round" />
-    <path d="M129 120 L136 118 M131 129 L138 127" stroke="#8a1f1f" stroke-width="2" stroke-linecap="round" />
-    <path d="M66 116 L91 127 M134 116 L109 127" stroke="#1e1e1e" stroke-width="7" stroke-linecap="round" />
-    <template v-if="pose === 'idle'">
-      <circle cx="80" cy="135" r="9" fill="#1e1e1e" /><circle cx="120" cy="135" r="9" fill="#1e1e1e" />
-      <circle cx="83" cy="132" r="3" fill="#fff" /><circle cx="123" cy="132" r="3" fill="#fff" />
+    <path d="M84 136 L100 156 L116 136 Z" fill="#fff" />
+    <path d="M84 136 L96 164 L76 160 Z M116 136 L104 164 L124 160 Z" fill="#1f2230" />
+    <path d="M96 146 H104 L108 152 L102 180 H98 L92 152 Z" fill="#ffc107" />
+    <!-- pockets: a coin and a letter while he is rich, linings turned out once he is broke -->
+    <template v-if="pose !== 'defeated'">
+      <circle cx="72" cy="168" r="6" fill="#ffc107" /><text x="72" y="172" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="900" font-size="9" fill="#1e1e1e">$</text>
+      <rect x="116" y="162" width="16" height="11" rx="1.5" fill="#fff" /><path d="M116 163 L124 169 L132 163" stroke="#ffc107" stroke-width="1.8" fill="none" />
     </template>
-    <path v-else-if="pose === 'hit'" d="M71 127 L88 135 L71 143 M129 127 L112 135 L129 143" stroke="#1e1e1e" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-    <path v-else d="M72 127 L88 143 M88 127 L72 143 M112 127 L128 143 M128 127 L112 143" stroke="#1e1e1e" stroke-width="6" fill="none" stroke-linecap="round" />
-    <ellipse cx="64" cy="148" rx="8" ry="4.5" fill="#ff9a9a" opacity=".85" />
-    <ellipse cx="136" cy="148" rx="8" ry="4.5" fill="#ff9a9a" opacity=".85" />
-    <path d="M83 152 Q92 145 100 150 Q108 145 117 152 Q108 158 100 154 Q92 158 83 152 Z" fill="#1e1e1e" />
-    <path v-if="pose === 'idle'" d="M92 163 Q100 158 108 163" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" />
-    <path v-else d="M91 164 Q100 173 109 164" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" />
-    <!-- headset -->
-    <rect x="38" y="122" width="13" height="24" rx="5" fill="#1e1e1e" />
-    <path d="M46 146 Q50 170 80 168" stroke="#1e1e1e" stroke-width="4" fill="none" stroke-linecap="round" />
-    <circle cx="82" cy="168" r="4.5" fill="#1e1e1e" />
-    <!-- staff badge -->
-    <rect x="113" y="165" width="27" height="19" rx="3" fill="#fff" stroke="#1e1e1e" stroke-width="2" />
-    <rect x="117" y="169" width="8" height="8" fill="#ff9800" />
-    <rect x="128" y="170" width="8" height="2.5" fill="#cfcabb" /><rect x="128" y="175" width="8" height="2.5" fill="#cfcabb" />
+    <template v-else>
+      <path d="M66 164 L80 164 L74 180 Z" fill="#e8e4d4" /><path d="M120 164 L134 164 L128 180 Z" fill="#e8e4d4" />
+    </template>
+    <!-- face -->
+    <path d="M62 112 L90 124 M138 112 L110 124" stroke="#8a1f1f" stroke-width="6" stroke-linecap="round" />
+    <template v-if="pose === 'idle'">
+      <circle cx="80" cy="132" r="8" fill="#1e1e1e" /><circle cx="120" cy="132" r="8" fill="#1e1e1e" />
+      <circle cx="82" cy="129.5" r="2.8" fill="#fff" /><circle cx="122" cy="129.5" r="2.8" fill="#fff" />
+    </template>
+    <path v-else-if="pose === 'hit'" d="M71 125 L88 133 L71 141 M129 125 L112 133 L129 141" stroke="#1e1e1e" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+    <path v-else d="M72 125 L88 141 M88 125 L72 141 M112 125 L128 141 M128 125 L112 141" stroke="#1e1e1e" stroke-width="6" fill="none" stroke-linecap="round" />
+    <!-- monocle -->
+    <circle cx="80" cy="132" r="13" fill="none" stroke="#ffc107" stroke-width="3.5" />
+    <path v-if="pose === 'defeated'" d="M72 122 L80 133 L90 140 M84 120 L80 133" stroke="#ffc107" stroke-width="1.5" fill="none" />
+    <path d="M69 144 C64 156 66 166 70 172" stroke="#ffc107" stroke-width="2" fill="none" />
+    <!-- mouth and cigar -->
+    <path v-if="pose === 'idle'" d="M88 152 Q98 148 108 152" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" />
+    <path v-else d="M89 156 Q98 150 108 156" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" />
+    <g v-if="pose !== 'defeated'">
+      <path d="M104 156 L140 142" stroke="#8a5530" stroke-width="9" stroke-linecap="round" />
+      <path d="M138 143 L146 140" stroke="#e8702a" stroke-width="9" stroke-linecap="round" />
+    </g>
+    <!-- top hat: on his head, or knocked off -->
+    <g :transform="pose === 'defeated' ? 'translate(54 52) rotate(32 100 70)' : ''">
+      <rect x="72" y="40" width="56" height="38" rx="5" fill="#1e1e1e" />
+      <rect x="72" y="64" width="56" height="10" fill="#ffc107" />
+      <rect x="58" y="74" width="84" height="9" rx="4.5" fill="#1e1e1e" />
+      <text x="100" y="60" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="900" font-size="18" fill="#ffc107">R</text>
+    </g>
+    <!-- briefcase and money bag: gone when he is bankrupt -->
+    <g v-if="pose !== 'defeated'">
+      <rect x="18" y="168" width="34" height="26" rx="4" fill="#5c3a1e" /><rect x="30" y="176" width="10" height="7" fill="#ffc107" />
+      <rect x="22" y="161" width="30" height="9" rx="2" fill="#4caf50" transform="rotate(-6 37 165)" />
+      <path d="M158 178 Q146 190 150 204 Q160 212 172 204 Q176 190 164 178 Z" fill="#c8a24a" />
+      <path d="M155 178 H167 L165 172 H157 Z" fill="#a8822c" />
+      <text x="161" y="198" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="900" font-size="16" fill="#1e1e1e">$</text>
+    </g>
   </svg>
 </template>
 
