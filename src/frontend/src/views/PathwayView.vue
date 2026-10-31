@@ -51,6 +51,9 @@ const sections = computed(() => (roadmap.value?.sections ?? []).map((s) => {
 }));
 
 const selectedId = ref<string | null>(null);
+/** The skill's materials card was closed by its X; the demand forecast stays up for the selected skill until it's deselected. */
+const materialsClosed = ref(false);
+watch(selectedId, () => { materialsClosed.value = false; });
 const busyId = ref<string | null>(null);
 const error = ref<string | null>(null);
 const cleared = ref(false);
@@ -82,7 +85,9 @@ watch(() => roadmap.value?.onet_code, async (code) => {
 
 const firstReady = computed(() => [...resolved.value.values()].find((s) => s.state === 'ready') ?? null);
 const selected = computed(() => (selectedId.value ? resolved.value.get(selectedId.value) ?? null : null));
-const suggested = computed(() => selected.value ?? firstReady.value);
+/** The skill whose materials show: the selected one, until its card is closed. */
+const materialsSelected = computed(() => (materialsClosed.value ? null : selected.value));
+const suggested = computed(() => materialsSelected.value ?? firstReady.value);
 
 const kindOf = (s: ResolvedSkill) => s.node.skill_group ?? typeLabel[s.node.skill_type];
 function blurbOf(n: RoadmapNode): string | null {
@@ -353,13 +358,13 @@ onMounted(async () => {
           <div ref="sideCard" class="learn__sidecards">
             <NextUpCard
               :skill="nextUp"
-              :selected="!!selected"
+              :selected="!!materialsSelected"
               :programmes="programmes"
-              :closable="!!selected"
+              :closable="!!materialsSelected"
               :busy="!!busyId"
               :error="error"
               @complete="markDone"
-              @close="selectedId = null"
+              @close="materialsClosed = true"
             />
             <ShareCard
               v-if="devShare && roadmap"
@@ -384,13 +389,13 @@ onMounted(async () => {
         <template v-else>
           <div ref="sideCard" class="learn__sidecards">
             <NextUpCard
-              v-if="selected"
+              v-if="materialsSelected"
               :skill="nextUp"
               :selected="true"
               :programmes="programmes"
               closable
               eyebrow="Skill materials"
-              @close="selectedId = null"
+              @close="materialsClosed = true"
             />
             <ForecastCard
               v-if="selected && forecastSelected && roleForecast"

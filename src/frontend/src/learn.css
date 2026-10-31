@@ -151,16 +151,17 @@
 .jb-node__forecast:hover { transform: scale(1.12); }
 .jb-node__forecast[data-direction="falling"] { color: #b3261e; }
 .jb-node[data-layout="stack"] .jb-node__forecast { left: 50%; margin-left: -34px; bottom: 6px; }
-.jb-forecast { border-color: var(--honey); animation: jb-swap var(--dur-slow) var(--ease-out) both; }
 .jb-forecast__stat { margin-top: 14px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .jb-forecast__value { font-size: 38px; line-height: 1; font-weight: 800; color: var(--text); }
 .jb-forecast__delta { font-size: 16px; line-height: 23px; font-weight: 800; color: var(--text-muted); }
 .jb-forecast[data-direction="rising"] .jb-forecast__delta { color: var(--accent-text); }
 .jb-forecast[data-direction="falling"] .jb-forecast__delta { color: #b3261e; }
 .jb-forecast__lead { margin: 6px 0 0; font-size: 16px; line-height: 23px; font-weight: 800; color: var(--text); }
-.jb-forecast__hint { margin: 4px 0 0; font-size: 15px; line-height: 21px; font-weight: 600; color: var(--text-muted); }
-.jb-forecast__dir { margin: 12px 0 0; display: flex; align-items: center; gap: 8px; font-size: 16px; line-height: 23px; font-weight: 800; color: var(--accent-text); }
-.jb-forecast[data-direction="down"] .jb-forecast__dir { color: #b3261e; }
+.jb-forecast__hint { margin: 8px 0 0; font-size: 15px; line-height: 21px; font-weight: 600; color: var(--text-muted); }
+/* The direction reads as a chip, like the skill kind on the materials card. */
+.jb-forecast__dir { margin: 6px 0 0; display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: var(--radius-pill); background: var(--honey-tint); font-size: 14px; line-height: 18px; font-weight: 800; color: var(--text); }
+.jb-forecast[data-direction="rising"] .jb-forecast__dir { color: var(--accent-text); }
+.jb-forecast[data-direction="falling"] .jb-forecast__dir { color: #b3261e; }
 .jb-forecast__past { margin: 14px 0 0; }
 .jb-forecast__spark { display: block; width: 100%; height: 48px; overflow: visible; }
 .jb-forecast__sparkline { fill: none; stroke: var(--line-strong); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
