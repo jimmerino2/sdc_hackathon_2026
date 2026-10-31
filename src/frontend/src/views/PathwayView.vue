@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import '../learn.css';
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import Bubble from '../components/Bubble.vue';
 import Icon from '../components/Icon.vue';
 import InfoDialog from '../components/InfoDialog.vue';
@@ -58,6 +58,29 @@ const busyId = ref<string | null>(null);
 const error = ref<string | null>(null);
 const cleared = ref(false);
 const sideCard = ref<HTMLElement | null>(null);
+
+/* ---------- roadmap tabs: arrow buttons page through them instead of a scrollbar ---------- */
+const tabsEl = ref<HTMLElement | null>(null);
+const canPrev = ref(false);
+const canNext = ref(false);
+function updateTabArrows() {
+  const el = tabsEl.value;
+  canPrev.value = !!el && el.scrollLeft > 1;
+  canNext.value = !!el && el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+}
+function pageTabs(dir: -1 | 1) {
+  const el = tabsEl.value;
+  el?.scrollBy({ left: dir * el.clientWidth * 0.8, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+}
+let tabsObserver: ResizeObserver | undefined;
+watch(tabsEl, (el) => {
+  tabsObserver?.disconnect();
+  if (!el) return;
+  tabsObserver = new ResizeObserver(updateTabArrows);
+  tabsObserver.observe(el);
+  updateTabArrows();
+});
+onBeforeUnmount(() => tabsObserver?.disconnect());
 const side = ref<HTMLElement | null>(null);
 useTallAside(side, sideCard);
 
@@ -266,12 +289,22 @@ onMounted(async () => {
   const loading = state.value.roadmap.status === 'idle' ? loadRoadmap(state.value) : Promise.resolve();
   await Promise.all([loading, refreshSummaries()]);
 });
+
+/** Tabs added or progress changed: re-check the arrows, and bring the active tab into view. */
+watch([() => roadmapTabs.value, activeCode], () => nextTick(() => {
+  updateTabArrows();
+  tabsEl.value?.querySelector('.rmbar__tab.on')?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+}));
 </script>
 
 <template>
   <div class="tab">
     <div v-if="roadmapTabs.length" class="jb rmbar">
-      <div class="rmbar__tabs" role="tablist" aria-label="Your roadmaps">
+      <div class="rmbar__strip">
+      <button v-if="canPrev || canNext" type="button" class="rmbar__nav" :disabled="!canPrev" aria-label="Previous roadmaps" @click="pageTabs(-1)">
+        <Icon name="chevron" :size="18" class="rmbar__prev" />
+      </button>
+      <div ref="tabsEl" class="rmbar__tabs" role="tablist" aria-label="Your roadmaps" @scroll.passive="updateTabArrows">
         <button
           v-for="r in roadmapTabs"
           :key="r.code"
@@ -287,6 +320,10 @@ onMounted(async () => {
           <span class="rmbar__bar" aria-hidden="true"><i :style="{ width: r.pct + '%' }" /></span>
           <span class="rmbar__n">{{ r.done }}/{{ r.total }}</span>
         </button>
+      </div>
+      <button v-if="canPrev || canNext" type="button" class="rmbar__nav" :disabled="!canNext" aria-label="Next roadmaps" @click="pageTabs(1)">
+        <Icon name="chevron" :size="18" class="rmbar__next" />
+      </button>
       </div>
       <button v-if="roadmap" type="button" class="rmbar__del" :disabled="deleting" @click="confirming = !confirming">
         <Icon name="trash" :size="16" /> Delete

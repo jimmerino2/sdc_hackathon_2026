@@ -330,8 +330,19 @@
 }
 
 /* roadmap switcher above the Learn page */
+/* The arrows and tabs are as wide as the roadmap column: the .learn grid's width minus its side column and gap. Delete stays at the bar's right end. */
 .rmbar { display: flex; align-items: center; gap: 12px; max-width: 1400px; margin-bottom: 18px; }
-.rmbar__tabs { display: flex; gap: 8px; flex: 1; min-width: 0; overflow-x: auto; padding: 2px 2px 6px; }
+.rmbar__strip { --learn-w: min(100%, 1400px); display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; max-width: calc(var(--learn-w) - clamp(360px, calc(var(--learn-w) - 920px), 480px) - 32px); }
+.rmbar__del { margin-left: auto; }
+@media (max-width: 1000px) { .rmbar__strip { max-width: none; } }
+/* No scrollbar: the arrow buttons either side page through the tabs. The padding leaves room for the active tab's bottom shadow. */
+.rmbar__tabs { display: flex; gap: 8px; flex: 1; min-width: 0; overflow-x: auto; padding: 2px 2px 6px; scrollbar-width: none; }
+.rmbar__tabs::-webkit-scrollbar { display: none; }
+.rmbar__nav { flex: none; display: grid; place-items: center; width: 36px; height: 36px; margin-bottom: 4px; border: 2px solid var(--line-strong); border-radius: 50%; background: var(--surface-raised); color: var(--text); cursor: pointer; transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast); }
+.rmbar__nav:hover:not(:disabled) { transform: translateY(-1px); border-color: var(--honey); }
+.rmbar__nav:disabled { opacity: .35; cursor: default; }
+.rmbar__prev { transform: rotate(90deg); }
+.rmbar__next { transform: rotate(-90deg); }
 .rmbar__tab { display: inline-flex; align-items: center; gap: 10px; flex: none; max-width: 380px; padding: 9px 14px; border: 2px solid var(--line-strong); border-radius: var(--radius-pill); background: var(--surface-raised); color: var(--text-muted); font-size: 15px; line-height: 21px; font-weight: 800; cursor: pointer; transition: background var(--dur-base), color var(--dur-base), transform var(--dur-fast) var(--ease-bounce); }
 .rmbar__tab:hover { color: var(--text); transform: translateY(-1px); }
 .rmbar__tab.on { background: var(--honey-tint); border-color: var(--honey); color: var(--text); box-shadow: 0 3px 0 var(--honey); }
