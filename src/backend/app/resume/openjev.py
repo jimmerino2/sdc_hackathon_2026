@@ -3,6 +3,31 @@ import httpx
 from app.config import get_settings
 from app.resume.vocab import candidates_for
 
+CHECK_SECONDS = 3
+
+
+def _headers() -> dict:
+    token = get_settings().openjev_token
+    return {"Authorization": f"Bearer {token}"} if token else {}
+
+
+def is_available() -> bool:
+    """True if the OpenJev server is up and its model is loaded, so a resume can go to it now.
+
+    Asks the server's /ping, which answers 200 only once the model is ready; a stopped endpoint, a worker still
+    loading the model (about 7 minutes cold), a bad token or a network problem all count as not available. Never
+    raises, and gives up in a few seconds so the caller can use the LLM at once. A load-balancing endpoint may start
+    a worker when it is pinged, so with workers scaled down this can wake one for a later resume.
+    """
+    settings = get_settings()
+    if not settings.openjev_url:
+        return False
+    try:
+        res = httpx.get(settings.openjev_url.rstrip("/") + "/ping", headers=_headers(), timeout=httpx.Timeout(CHECK_SECONDS, connect=CHECK_SECONDS))
+    except httpx.HTTPError:
+        return False
+    return res.status_code == 200
+
 
 def score_resume(text: str, vocab: list[str] | None = None) -> dict:
     """Ask the OpenJev server which candidate skills the resume shows, each with a probability.
@@ -18,11 +43,10 @@ def score_resume(text: str, vocab: list[str] | None = None) -> dict:
         f"skill_{i}": {"type": "noul", "instructions": f"Does this resume show the skill: {name}?"}
         for i, name in enumerate(vocab)
     }
-    headers = {"Authorization": f"Bearer {settings.openjev_token}"} if settings.openjev_token else {}
     res = httpx.post(
         settings.openjev_url.rstrip("/") + "/v1/systemone",
         json={"model": "openjev", "state": text, "questions": questions},
-        headers=headers,
+        headers=_headers(),
         timeout=httpx.Timeout(60, connect=5),  # a stopped pod fails fast so the fallback starts at once
     )
     res.raise_for_status()

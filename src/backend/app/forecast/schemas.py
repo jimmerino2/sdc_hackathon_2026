@@ -108,3 +108,41 @@ class DataSource(BaseModel):
     as_of: str | None = Field(None, description="Date the data was last published, YYYY-MM-DD (from the data, not hard-coded)")
     latest_month: str | None = Field(None, description="Latest month of data the forecast uses, YYYY-MM")
     is_proxy_for_malaysia: bool = Field(False, description="True when the data is for another country standing in for Malaysia")
+
+
+class QuarterInfo(BaseModel):
+    """One quarter of data the model can be trained on."""
+
+    quarter: str = Field(description="e.g. 2026-Q3")
+    months: int = Field(description="Months of data in it so far (3 once the quarter is complete)")
+    first_month: str
+    last_month: str
+    has_outcome: bool = Field(description="False while its outcome is still unknown, so the model can't learn from it yet; leaving it out only moves where the forecast starts")
+
+
+class Quarters(BaseModel):
+    quarters: list[QuarterInfo] = Field(description="Oldest first")
+    latest_quarter: str
+    source: Literal["supabase", "csv"] = Field(description="Where the series are read from")
+    refresh_enabled: bool = Field(description="True when POST /forecast/refresh is allowed")
+    default_trained_rows: int | None = Field(None, description="Rows the 12-month model learns from with all the data")
+
+
+class RetrainRequest(BaseModel):
+    onet_code: str = Field(description="O*NET code of the job to forecast, e.g. 15-1252.00")
+    excluded_quarters: list[str] = Field(default_factory=list, description="Quarters to leave out, e.g. ['2020-Q1', '2026-Q3']. Empty = use all the data")
+
+
+class RetrainOut(BaseModel):
+    """A job's forecast from a model retrained without some quarters."""
+
+    excluded_quarters: list[str] = Field(description="The quarters left out, oldest first")
+    forecast_from: str = Field(description="The month the forecast starts from, YYYY-MM: the latest month whose inputs are all kept")
+    trained_rows: int = Field(description="Rows the 12-month model learned from")
+    default_trained_rows: int | None = Field(None, description="The same with all the data, when known")
+    holdout_origins: list[str] = Field(description="First and last month used to test the 12-month model")
+    model_status: Literal["indicative", "validated"]
+    source: Literal["supabase", "csv"]
+    seconds: float = Field(description="How long the retrain took")
+    cached: bool = Field(description="True if it had been done already, so this answer was instant")
+    forecasts: list[JobForecast] = Field(description="The job's three scenarios, like GET /forecast/jobs")

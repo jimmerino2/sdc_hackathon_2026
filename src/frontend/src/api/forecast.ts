@@ -80,3 +80,78 @@ export function fetchForecastSources(): Promise<DataSource[]> {
     });
   return sourcesCache;
 }
+
+/** One quarter of data the forecast can be trained up to. */
+export interface QuarterInfo {
+  /** e.g. 2026-Q3 */
+  quarter: string;
+  months: number;
+  first_month: string;
+  last_month: string;
+  /** False while its outcome is still unknown: the model can't learn from it, so leaving it out only moves where the forecast starts. */
+  has_outcome: boolean;
+}
+
+export interface Quarters {
+  /** Oldest first. */
+  quarters: QuarterInfo[];
+  latest_quarter: string;
+  source: 'supabase' | 'csv';
+  refresh_enabled: boolean;
+  default_trained_rows: number | null;
+}
+
+/** A forecast from a model retrained without some quarters. */
+export interface Retrained {
+  /** The quarters left out, oldest first. */
+  excluded_quarters: string[];
+  forecast_from: string;
+  trained_rows: number;
+  default_trained_rows: number | null;
+  holdout_origins: string[];
+  model_status: 'indicative' | 'validated';
+  source: 'supabase' | 'csv';
+  seconds: number;
+  cached: boolean;
+  forecasts: JobForecast[];
+}
+
+/** A failed forecast request, with a message that can be shown to the user as is. */
+export class ForecastError extends Error {}
+
+export async function fetchQuarters(): Promise<Quarters> {
+  const res = await fetch(`${API_URL}/forecast/quarters`);
+  if (!res.ok) throw new ForecastError('Couldn’t load the quarters.');
+  return res.json();
+}
+
+/**
+ * The job's forecast from a model retrained without the `excluded` quarters (none = all the data). Takes 2-3 seconds
+ * the first time for a set of quarters, then it is instant. `signal` cancels the request when the learner picks again.
+ */
+export async function retrainForecast(onetCode: string, excluded: string[], signal?: AbortSignal): Promise<Retrained> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/forecast/retrain`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ onet_code: onetCode, excluded_quarters: excluded }),
+      signal,
+    });
+  } catch (e) {
+    if ((e as Error).name === 'AbortError') throw e;
+    throw new ForecastError('Couldn’t reach the forecast service.');
+  }
+  if (res.status === 422) {
+    const detail = await res.json().then((b) => (typeof b?.detail === 'string' ? b.detail : null)).catch(() => null);
+    throw new ForecastError(detail ?? 'Those quarters can’t be used.');
+  }
+  if (!res.ok) throw new ForecastError('The forecast couldn’t be retrained just now. Try again.');
+  return res.json();
+}
+
+/** Makes the server re-read the stored series, so the next retrain sees changed rows. Only works where the server allows it. */
+export async function refreshForecastData(): Promise<void> {
+  const res = await fetch(`${API_URL}/forecast/refresh`, { method: 'POST' });
+  if (!res.ok) throw new ForecastError('Refreshing isn’t turned on for this server.');
+}

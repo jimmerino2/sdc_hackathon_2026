@@ -65,7 +65,8 @@ def extract_skills(text: str, source: str = "auto", on_event: Callable[[dict], N
     """Get the resume's top skills from OpenJev or the gateway LLM, and time it.
 
     Both engines get the same candidate skill list and return the same shape.
-    source: "auto" uses OpenJev when OPENJEV_URL is set and falls back to the LLM if it fails;
+    source: "auto" uses OpenJev when OPENJEV_URL is set and it answers a quick availability check, and the LLM
+    otherwise (it also falls back to the LLM if a request to OpenJev fails);
     "openjev" or "llm" use only that engine with no fallback, so a failure shows up as an error
     (this is what makes the two comparable). Returns {"skills", "top_skills", "error", "engine": {...}}, where skills are
     [{"name", "score"}] strongest first and top_skills is the first TOP_N of them. Never raises.
@@ -96,7 +97,13 @@ def _extract(text: str, source: str, emit: Callable[[dict], None]) -> dict:
         return failed("OPENJEV_URL is not set, so OpenJev can't be used.")
     vocab = candidates_for(text)
     emit({"type": "candidates", "count": len(vocab)})
-    if source in ("auto", "openjev") and settings.openjev_url:
+    use_openjev = source in ("auto", "openjev") and bool(settings.openjev_url)
+    if use_openjev and not openjev.is_available():
+        if source == "openjev":
+            return failed("OpenJev is not available right now (it may be off or still starting).")
+        print("OpenJev is not available; using the LLM")
+        use_openjev = False
+    if use_openjev:
         emit({"type": "engine", "source": "openjev"})
         try:
             found = openjev.score_resume(text, vocab)

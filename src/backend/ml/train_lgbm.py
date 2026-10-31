@@ -47,6 +47,13 @@ FEATURES = NUMERIC + CATS
 # unexposed ones more. Slow: the reverse. Baseline: no shift. Change these to tune the spread.
 SCENARIO_EFFECT = {"Slow": +0.25, "Baseline": 0.0, "Rapid AI": -0.25}
 
+# A sample uses the index and the AI and national series at these offsets (months back) from its origin month: the
+# index itself, the lags 1/3/12, and the AI changes over 3 and 12 months measured from last month. Dropping months
+# from the data drops every sample that touches one of them.
+USED_OFFSETS = (0, 1, 3, 4, 12, 13)
+MIN_TRAIN_ROWS = 300  # fewer than this after excluding months and the model isn't worth fitting
+MIN_HOLD_ROWS = 100
+
 # Small, heavily regularised trees: ~1.5-2.6k rows from 47 series with overlapping targets.
 PARAMS = dict(
     objective="regression",
@@ -144,7 +151,8 @@ def score(actual: pd.Series, pred: pd.Series, base: pd.Series) -> dict:
     }
 
 
-def run_horizon(h: int, args, exposure: pd.Series, manifest: dict) -> tuple[pd.DataFrame, lgb.LGBMRegressor, dict]:
+def run_horizon(h: int, args, exposure: pd.Series, manifest: dict, signals: pd.DataFrame | None = None, verbose: bool = True,
+                exclude_months: frozenset[str] = frozenset()) -> tuple[pd.DataFrame, lgb.LGBMRegressor, dict]:
     """Validate, refit and forecast one horizon `h` (months ahead). Returns (rows, model, meta).
 
     1. Holdout: the last `--holdout` origin months with a known target are held out. Training uses
@@ -155,27 +163,45 @@ def run_horizon(h: int, args, exposure: pd.Series, manifest: dict) -> tuple[pd.D
     3. Refit on all labelled rows and forecast from the latest month. The headline forecast is the
        yoy pace shifted by the scenario; the LightGBM forecast is given next to it.
     The scenario shift is defined for 12 months and scaled by h/12.
+    `signals` is the long signals table to train on; without it signals.csv is read. verbose=False prints nothing.
+    `exclude_months` ('YYYY-MM') are left out of the data: a sample is used only if every month it touches (its own,
+    the ones its lags and AI changes look back to, and its target month) is not excluded, and the forecast starts from the
+    latest month whose inputs are all kept. Raises ValueError when too little is left to train on.
     """
     scale = h / 12
-    tbl = build_training_table.build_training_table(DATA_DIR, horizon=h)
+    tbl = build_training_table.build_training_table(DATA_DIR, horizon=h, signals=signals, geos=["US"])
     tbl = tbl[tbl["geo"] == "US"].drop(columns="geo").reset_index(drop=True)
     df = add_features(tbl, target_col="target_index_ahead")
     cats = {c: sorted(df[c].unique().tolist()) for c in CATS}
     df = set_categories(df, cats)
 
     labelled = df.dropna(subset=NUMERIC + ["y"])
+    latest = df["month"].max()
+    if exclude_months:
+        per = df["month"].dt.to_period("M")
+        touches = pd.Series(False, index=df.index)
+        for k in USED_OFFSETS:
+            touches |= (per - k).astype(str).isin(exclude_months)
+        reaches = (per + h).astype(str).isin(exclude_months)
+        labelled = labelled[~(touches | reaches).loc[labelled.index]]
+        usable = df[~touches].dropna(subset=NUMERIC)
+        if usable.empty:
+            raise ValueError("no month is left to forecast from")
+        latest = usable["month"].max()
     if args.post_only:
         labelled = labelled[labelled["period"] == "post"]
-    latest = df["month"].max()
 
     last_origin = labelled["month"].max()
     hold_start = last_origin - pd.DateOffset(months=args.holdout - 1)
     train_end = hold_start - pd.DateOffset(months=h)
     train = labelled[labelled["month"] <= train_end]
     hold = labelled[labelled["month"] >= hold_start]
-    print(f"\n=== horizon {h} months === {len(labelled):,} labelled rows | holdout origins "
-          f"{hold_start:%Y-%m} -> {last_origin:%Y-%m} ({len(hold)} rows) | train origins up to "
-          f"{train_end:%Y-%m} ({len(train)} rows)")
+    if exclude_months and (len(train) < MIN_TRAIN_ROWS or len(hold) < MIN_HOLD_ROWS):
+        raise ValueError("too little data left to train on")
+    say = print if verbose else (lambda *a, **k: None)
+    say(f"\n=== horizon {h} months === {len(labelled):,} labelled rows | holdout origins "
+        f"{hold_start:%Y-%m} -> {last_origin:%Y-%m} ({len(hold)} rows) | train origins up to "
+        f"{train_end:%Y-%m} ({len(train)} rows)")
 
     model = fit(train, args.trees)
     growth = pd.Series(model.predict(hold[FEATURES]), index=hold.index)
@@ -188,8 +214,8 @@ def run_horizon(h: int, args, exposure: pd.Series, manifest: dict) -> tuple[pd.D
         "constant (mean train growth)": base * (1 + train["y"].mean()),
     }
     table = pd.DataFrame({name: score(actual, p, base) for name, p in preds.items()}).T
-    print(table.to_string())
-    print(f"({(hold['y'] < 0).mean() * 100:.1f}% of holdout sectors fell, so always guessing 'down' scores that for direction)")
+    say(table.to_string())
+    say(f"({(hold['y'] < 0).mean() * 100:.1f}% of holdout sectors fell, so always guessing 'down' scores that for direction)")
 
     # rough ranges: 10th-90th percentile of holdout errors in growth space, for the model and for yoy
     q_lo, q_hi = (float((hold["y"] - growth).quantile(q)) for q in (0.10, 0.90))
@@ -244,6 +270,29 @@ def run_horizon(h: int, args, exposure: pd.Series, manifest: dict) -> tuple[pd.D
     return pd.concat(frames, ignore_index=True), final, meta
 
 
+def train_all(args, data_dir: Path, signals: pd.DataFrame | None = None, verbose: bool = True,
+              exclude_months: frozenset[str] = frozenset()) -> dict:
+    """Train one model per horizon and build the sector and job forecasts, all in memory.
+
+    `args` needs holdout, trees and post_only (argparse's namespace, or any object with them); `data_dir` holds
+    manifest.json, crosswalk.csv and the AI exposure files. `signals` is the long signals table to train on
+    (default: signals.csv); verbose=False prints nothing; `exclude_months` are left out of the data (see run_horizon). Returns {"forecast", "jobs", "models" (horizon -> model), "by_horizon", "categories"}.
+    """
+    manifest_path = data_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
+    exposure = sector_exposure(data_dir)
+    frames, models, by_horizon = [], {}, {}
+    for h in HORIZONS:
+        rows, model, hmeta = run_horizon(h, args, exposure, manifest, signals, verbose, exclude_months)
+        frames.append(rows)
+        models[h] = model
+        by_horizon[str(h)] = {k: v for k, v in hmeta.items() if k != "categories"}
+        categories = hmeta["categories"]
+    out = pd.concat(frames, ignore_index=True)
+    jobs = job_forecast.build_job_forecast(out, data_dir, SCENARIO_EFFECT)
+    return {"forecast": out, "jobs": jobs, "models": models, "by_horizon": by_horizon, "categories": categories, "manifest": manifest}
+
+
 def main():
     """Train one model per horizon (3, 6, 9, 12 months) and write the forecasts, models and metadata.
 
@@ -259,22 +308,15 @@ def main():
     args = ap.parse_args()
 
     data_dir = Path(args.data).parent
-    manifest_path = data_dir / "manifest.json"
-    manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
-    exposure = sector_exposure(data_dir)
+    trained = train_all(args, data_dir)
+    manifest, out, jobs = trained["manifest"], trained["forecast"], trained["jobs"]
+    horizons_meta, categories = trained["by_horizon"], trained["categories"]
 
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    frames, horizons_meta = [], {}
-    for h in HORIZONS:
-        rows, model, hmeta = run_horizon(h, args, exposure, manifest)
-        frames.append(rows)
+    for h, model in trained["models"].items():
         model.booster_.save_model(str(out_dir / f"lgbm_model_h{h}.txt"))
-        horizons_meta[str(h)] = {k: v for k, v in hmeta.items() if k != "categories"}
-        categories = hmeta["categories"]
-    out = pd.concat(frames, ignore_index=True)
     out.to_csv(out_dir / "forecast_output.csv", index=False)
-    jobs = job_forecast.build_job_forecast(out, data_dir, SCENARIO_EFFECT)
     jobs.to_csv(out_dir / "job_forecast.csv", index=False)
 
     meta = {

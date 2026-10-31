@@ -52,10 +52,14 @@ def build_geo_table(s: pd.DataFrame, geo: str, horizon: int = 12) -> pd.DataFram
     return out
 
 
-def build_training_table(processed_dir, horizon: int = 12) -> pd.DataFrame:
-    """All geos stacked for one horizon, with `period` added and `month` parsed to a date; ready for add_features."""
-    s = pd.read_csv(processed_dir / "signals.csv", keep_default_na=False)
-    out = pd.concat([build_geo_table(s, g, horizon) for g in GEOS], ignore_index=True)
+def build_training_table(processed_dir, horizon: int = 12, signals: pd.DataFrame | None = None, geos: list[str] | None = None) -> pd.DataFrame:
+    """The geos stacked for one horizon, with `period` added and `month` parsed to a date; ready for add_features.
+
+    `signals` is the long signals table (the columns of signals.csv); without it signals.csv is read from
+    `processed_dir`. `geos` limits which geos are built (default all); a signals table that holds only some geos needs it.
+    """
+    s = signals if signals is not None else pd.read_csv(processed_dir / "signals.csv", keep_default_na=False)
+    out = pd.concat([build_geo_table(s, g, horizon) for g in (geos or GEOS)], ignore_index=True)
     out["period"] = (out["month"] < "2022-01").map({True: "pandemic", False: "post"})
     out["month"] = pd.to_datetime(out["month"] + "-01")
     return out.sort_values(["geo", "sector", "month"]).reset_index(drop=True)

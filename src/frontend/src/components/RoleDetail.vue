@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import Bubble from './Bubble.vue';
 import ChartWatcher from './ChartWatcher.vue';
 import ForecastInfo from './ForecastInfo.vue';
 import Icon from './Icon.vue';
+import QuarterPicker from './QuarterPicker.vue';
 import { scenarios, type ScenarioKey } from '../data/flows';
 import { skillLabel } from '../data/skills';
 import { useFlow } from '../state';
 import { useScenarioProbabilities } from '../composables/useScenarioProbabilities';
 import { personaCopy } from '../data/personaCopy';
 import { month } from '../occupational/format';
-import { backendScenario, fetchJobForecasts, type JobForecast } from '../api/forecast';
+import { formatSkip, parseSkip } from '../data/quarterPick';
+import { backendScenario, fetchJobForecasts, fetchQuarters, refreshForecastData, retrainForecast, type JobForecast, type JobHorizon, type Quarters, type Retrained } from '../api/forecast';
 import { fetchInterestReasons, type InterestReason, type JobMatch } from '../api/jobs';
 import { readProfileId } from '../api/profile';
 
@@ -20,7 +22,12 @@ const props = defineProps<{
   job?: JobMatch;
   /** Onboarding: Jobee already asks the question in the header, so drop the big headings and extra bubbles. */
   compact?: boolean;
+  /** Show the quarter picker: the learner can leave years or quarters out and see the forecast the model would make without them. */
+  pickQuarter?: boolean;
+  /** The quarters left out, as kept in the address ("2020,2021,2026-Q3"); null or missing = none. */
+  skip?: string | null;
 }>();
+const emit = defineEmits<{ 'update:skip': [skip: string | null] }>();
 
 const { state, key } = useFlow();
 const { metrics, metricTarget, pct } = useScenarioProbabilities();
@@ -59,20 +66,95 @@ watch(() => props.onetCode, () => {
   loadReasons();
 });
 
+/** What is shown: the stored forecast, or the retrained one for the quarters picked. */
 const forecasts = ref<JobForecast[]>([]);
+/** The stored forecast with every quarter; stays as the faint comparison line when a retrained one is shown. */
+const stored = ref<JobForecast[]>([]);
 const status = ref<'loading' | 'ready' | 'error'>('loading');
+const quarters = ref<Quarters | null>(null);
+const retrained = ref<Retrained | null>(null);
+const busy = ref(false);
+const pickError = ref<string | null>(null);
+let pending: AbortController | undefined;
+let wait: number | undefined;
+
+/** The quarters left out; can only be read once the quarters are known. */
+const excluded = computed(() => parseSkip(props.skip, quarters.value?.quarters ?? []));
+const DEBOUNCE_MS = 350;
+
+/** Retrains without the quarters (none = all the data). A newer pick cancels an older one still running, so a stale answer can't land. */
+async function retrain(left: string[]) {
+  pending?.abort();
+  const mine = (pending = new AbortController());
+  busy.value = true;
+  pickError.value = null;
+  try {
+    const r = await retrainForecast(props.onetCode, left, mine.signal);
+    retrained.value = r;
+    forecasts.value = r.forecasts;
+  } catch (e) {
+    if ((e as Error).name === 'AbortError') return;
+    pickError.value = e instanceof Error ? e.message : 'The forecast couldn’t be retrained just now. Try again.';
+  } finally {
+    if (pending === mine) busy.value = false;
+  }
+}
 
 async function load() {
   status.value = 'loading';
+  clearTimeout(wait);
+  pending?.abort();
+  busy.value = false;
+  retrained.value = null;
+  pickError.value = null;
   try {
-    forecasts.value = await fetchJobForecasts(props.onetCode);
+    stored.value = forecasts.value = await fetchJobForecasts(props.onetCode);
     status.value = forecasts.value.length ? 'ready' : 'error';
   } catch {
     status.value = 'error';
+    return;
   }
+  if (props.pickQuarter) fetchQuarters().then((q) => (quarters.value = q)).catch(() => {}); // the chart still works without the picker
 }
 onMounted(load);
 watch(() => props.onetCode, load);
+
+// Follow the choice: wait a moment so several taps in a row make one retrain, then show it. Nothing left out shows the stored forecast.
+watch([() => [...excluded.value].sort().join(','), status], ([key]) => {
+  clearTimeout(wait);
+  if (!props.pickQuarter || status.value !== 'ready' || !quarters.value) return;
+  if (!key) {
+    if (!retrained.value && !busy.value) return;
+    pending?.abort();
+    busy.value = false;
+    pickError.value = null;
+    retrained.value = null;
+    forecasts.value = stored.value;
+    return;
+  }
+  pending?.abort(); // an older request still running must not land (or un-dim the chart) over this choice
+  pending = undefined;
+  busy.value = true; // dim the chart at once; the request follows after the pause
+  wait = window.setTimeout(() => retrain(key.split(',')), DEBOUNCE_MS);
+});
+onBeforeUnmount(() => { clearTimeout(wait); pending?.abort(); });
+
+function pick(next: Set<string>) {
+  emit('update:skip', quarters.value ? formatSkip(next, quarters.value.quarters) : null);
+}
+
+/** Makes the server re-read the stored data, then retrains so a changed row shows. */
+async function refresh() {
+  try {
+    await refreshForecastData();
+    quarters.value = await fetchQuarters();
+  } catch (e) {
+    pickError.value = e instanceof Error ? e.message : 'Couldn’t refresh.';
+    return;
+  }
+  clearTimeout(wait);
+  await retrain([...excluded.value].sort());
+}
 
 const byScenario = computed(() => {
   const out = {} as Record<ScenarioKey, JobForecast | undefined>;
@@ -80,11 +162,34 @@ const byScenario = computed(() => {
   return out;
 });
 
+/**
+ * Where the numbers on the chart and the futures come from. With the quarter picker the machine-learning model is shown,
+ * since it is what retraining changes; the role page keeps the sector's recent pace ("last year's pace repeats").
+ */
+const useModel = computed(() => !!props.pickQuarter);
+function figure(o: JobHorizon): { pct: number; range: { low: number; high: number } } {
+  return useModel.value ? { pct: o.model_change_pct, range: o.model_range } : { pct: o.change_pct, range: o.range };
+}
+/** The model's own track record at 12 months, in words. */
+const modelCheck = computed(() => {
+  const status = retrained.value?.model_status ?? forecasts.value[0]?.outlook.at(-1)?.reliability.status;
+  return status === 'validated'
+    ? 'In past tests this model beat the simple baselines, so it is a fair guide.'
+    : 'In past tests this model did not beat the simple baselines, so treat it as a rough guide.';
+});
+
+/** The same scenario's forecast with every quarter, drawn faintly behind a retrained one so the change shows. */
+const ghost = computed(() => {
+  if (!retrained.value) return [];
+  const f = stored.value.find((x) => x.scenario === backendScenario[active.value]);
+  return f ? [{ m: 0, v: 0 }, ...f.outlook.map((o) => ({ m: o.horizon_months, v: figure(o).pct }))] : [];
+});
+
 /** Postings change (%) at months 0, 3, 6, 9, 12 for one scenario: the same figure the role cards show. */
 function series(k: ScenarioKey): { m: number; v: number }[] {
   const f = byScenario.value[k];
   if (!f) return [];
-  return [{ m: 0, v: 0 }, ...f.outlook.map((o) => ({ m: o.horizon_months, v: o.change_pct }))];
+  return [{ m: 0, v: 0 }, ...f.outlook.map((o) => ({ m: o.horizon_months, v: figure(o).pct }))];
 }
 
 /** The past months (m = -n..0, 0 = today), same for every scenario since they only differ in the future. */
@@ -99,8 +204,8 @@ const PAST = 12;
 const X0 = 34, X1 = 420, Y0 = 8, Y1 = 172;
 const band = computed(() => byScenario.value[active.value]?.outlook ?? []);
 const yRange = computed(() => {
-  const vals = [0, ...history.value.map((p) => p.v), ...scenarios.flatMap((s) => series(s.key).map((p) => p.v))];
-  for (const o of band.value) vals.push(o.range.low, o.range.high);
+  const vals = [0, ...history.value.map((p) => p.v), ...scenarios.flatMap((s) => series(s.key).map((p) => p.v)), ...ghost.value.map((p) => p.v)];
+  for (const o of band.value) vals.push(figure(o).range.low, figure(o).range.high);
   return { lo: Math.floor(Math.min(...vals) / 10) * 10, hi: Math.ceil(Math.max(...vals) / 10) * 10 };
 });
 const sx = (m: number) => X0 + ((m + PAST) / (PAST + 12)) * (X1 - X0);
@@ -111,12 +216,13 @@ const ticks = computed(() => {
   return out;
 });
 const histPts = computed(() => history.value.map((p) => `${sx(p.m)},${sy(p.v)}`).join(' '));
+const ghostPts = computed(() => ghost.value.map((p) => `${sx(p.m)},${sy(p.v)}`).join(' '));
 const pts = (k: ScenarioKey) => series(k).map((p) => `${sx(p.m)},${sy(p.v)}`).join(' ');
 const rangePoly = computed(() => {
   const o = band.value;
   if (!o.length) return '';
-  const up = [{ m: 0, v: 0 }, ...o.map((h) => ({ m: h.horizon_months, v: h.range.high }))];
-  const dn = [{ m: 0, v: 0 }, ...o.map((h) => ({ m: h.horizon_months, v: h.range.low }))].reverse();
+  const up = [{ m: 0, v: 0 }, ...o.map((h) => ({ m: h.horizon_months, v: figure(h).range.high }))];
+  const dn = [{ m: 0, v: 0 }, ...o.map((h) => ({ m: h.horizon_months, v: figure(h).range.low }))].reverse();
   return [...up, ...dn].map((p) => `${sx(p.m)},${sy(p.v)}`).join(' ');
 });
 const endLabel = computed(() => {
@@ -145,11 +251,13 @@ function outcome(k: ScenarioKey) {
   if (!last) return 'No forecast yet';
   const [y, m] = last.forecast_for.split('-');
   const month = new Date(Number(y), Number(m) - 1).toLocaleString('en', { month: 'short' });
-  return `${last.change_pct > 0 ? '+' : ''}${last.change_pct}% postings by ${month} ${y}`;
+  const pct = figure(last).pct;
+  return `${pct > 0 ? '+' : ''}${pct}% postings by ${month} ${y}`;
 }
 /** Which way postings head under one scenario, so the eye goes to ups (green) and downs (red). */
 function trendOf(k: ScenarioKey) {
-  const v = byScenario.value[k]?.outlook.at(-1)?.change_pct ?? 0;
+  const last = byScenario.value[k]?.outlook.at(-1);
+  const v = last ? figure(last).pct : 0;
   if (v >= 0.5) return { icon: 'tup', cls: 'trend-up' };
   if (v <= -0.5) return { icon: 'tdown', cls: 'trend-down' };
   return { icon: 'arrow', cls: 'trend-flat' };
@@ -159,17 +267,17 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
 </script>
 
 <template>
-  <div class="wrap" :class="{ compact }">
+  <div class="wrap" :class="{ compact, split: pickQuarter && quarters }">
       <section class="left">
         <h1 v-if="!compact">Here’s the AI outlook for {{ title }}</h1>
         <p v-else class="signal-note">{{ personaCopy[key].signalNote }}</p>
         <div class="card chart">
-          <small>{{ title }} · postings outlook</small>
+          <small>{{ title }} · {{ useModel ? 'machine-learning forecast' : 'postings outlook' }}</small>
           <h2>Three possible futures, next 12 months</h2>
           <div v-if="status === 'loading'" class="chart-skel" aria-hidden="true"><span class="skel" /><span class="skel line" /></div>
           <p v-else-if="status === 'error'" class="state">Couldn’t reach the forecast service. Make sure the backend is running on port 8000.</p>
           <template v-else>
-            <svg viewBox="0 0 440 190" role="img" :aria-label="`Forecast of ${title} job postings under three AI scenarios`">
+            <svg :class="{ busy }" viewBox="0 0 440 190" role="img" :aria-label="`Forecast of ${title} job postings under three AI scenarios`">
               <g stroke="#eceae5"><line v-for="t in ticks" :key="t" :x1="X0" :x2="X1" :y1="sy(t)" :y2="sy(t)" :stroke="t === 0 ? '#c2bfba' : '#eceae5'" /></g>
               <text v-for="t in ticks" :key="'l' + t" :x="X0 - 6" :y="sy(t) + 3" font-size="9" font-weight="800" text-anchor="end" fill="#8a8782">{{ t > 0 ? '+' : '' }}{{ t }}%</text>
               <polygon :points="rangePoly" fill="#fff3cc" opacity=".7" />
@@ -178,6 +286,7 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
               <text :x="sx(0) - 5" :y="Y0 + 8" font-size="9" font-weight="900" text-anchor="end" fill="#8a8782">PAST</text>
               <text :x="sx(0) + 5" :y="Y0 + 8" font-size="9" font-weight="900" text-anchor="start" fill="#8a8782">FORECAST</text>
               <polyline v-for="s in scenarios.filter((x) => x.key !== active)" :key="s.key" :points="pts(s.key)" fill="none" stroke="#c2bfba" stroke-width="3" stroke-dasharray="2 5" stroke-linecap="round" />
+              <polyline v-if="ghostPts" :points="ghostPts" fill="none" stroke="#1e1e1e" stroke-opacity=".28" stroke-width="3" stroke-dasharray="1 6" stroke-linecap="round" />
               <polyline :points="pts(active)" fill="none" stroke="#ff9800" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
               <circle v-for="p in series(active)" :key="p.m" :cx="sx(p.m)" :cy="sy(p.v)" r="4" fill="#1e1e1e" />
               <text :x="X1" :y="sy(series(active).at(-1)?.v ?? 0) - 10" font-size="11" font-weight="900" text-anchor="end" fill="#1e1e1e">{{ endLabel }}</text>
@@ -186,11 +295,18 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
               <text v-for="a in axis" :key="a.x" :x="a.x" y="11" font-size="9" font-weight="900" text-anchor="middle" :fill="a.today ? '#1e1e1e' : '#8a8782'">{{ a.today ? `TODAY · ${a.label}` : a.label }}</text>
             </svg>
             <p class="note">
-              Change in {{ title }} job postings vs today: the sector’s recent pace, shifted by how AI-exposed this role is under each scenario. Shaded band is the historical error band for the selected future: how far past forecasts missed, not a confidence interval.
+              <template v-if="useModel">
+                Change in {{ title }} job postings vs today, forecast by a machine-learning model (LightGBM) trained on the sector’s monthly postings, then shifted by how AI-exposed this role is under each scenario. Shaded band is how far the model’s past forecasts missed, not a confidence interval. {{ modelCheck }}
+              </template>
+              <template v-else>
+                Change in {{ title }} job postings vs today: the sector’s recent pace, shifted by how AI-exposed this role is under each scenario. Shaded band is the historical error band for the selected future: how far past forecasts missed, not a confidence interval.
+              </template>
               {{ meta?.is_proxy_for_malaysia ? 'Uses US postings data as a stand-in for Malaysia. ' : '' }}Indicative, not a prediction.
               <template v-if="meta"> Issued {{ meta.data_as_of ?? 'date not available' }}; last observation {{ meta.forecast_from }}.</template>
+              <template v-if="retrained"> Faint dotted line: {{ useModel ? 'the model’s forecast' : 'the forecast' }} with every quarter.</template>
             </p>
-            <ForecastInfo id="role_postings" class="fi-gap" />
+            <!-- Its text says the sector's pace is what is shown, which isn't true while the model is. -->
+            <ForecastInfo v-if="!useModel" id="role_postings" class="fi-gap" />
           </template>
         </div>
       </section>
@@ -223,6 +339,19 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
         </button>
         <p v-if="!compact" class="hint">Tap a future to see how {{ title }} fares in it.</p>
       </section>
+
+      <aside v-if="pickQuarter && quarters" class="aside" aria-label="Choose the data the forecast is trained on">
+        <QuarterPicker
+          :quarters="quarters.quarters"
+          :excluded="excluded"
+          :busy="busy"
+          :error="pickError"
+          :result="retrained"
+          :can-refresh="quarters.refresh_enabled"
+          @apply="pick"
+          @refresh="refresh"
+        />
+      </aside>
 
       <section v-if="job?.sdg_reasons?.length" class="sdg-row">
         <p class="eyebrow">Why it was suggested</p>
@@ -300,7 +429,8 @@ h1 { font-size: 30px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .chart { padding: 22px 24px; }
 .chart small { font-size: 11px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .chart h2 { font-weight: 900; font-size: 20px; margin: 6px 0 14px; }
-.chart > svg { width: 100%; overflow: visible; margin-top: 16px; }
+.chart > svg { width: 100%; overflow: visible; margin-top: 16px; transition: opacity .2s; }
+.chart > svg.busy { opacity: .45; }
 .state { margin: 18px 0 6px; font-size: 13px; font-weight: 700; color: var(--muted); }
 .chart > svg.axis { margin-top: 4px; }
 .note { margin-top: 14px; font-size: 11px; color: var(--muted); font-weight: 600; line-height: 1.4; }
@@ -344,4 +474,14 @@ h1 { font-size: 30px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .empty { font-size: 13px; font-weight: 700; color: var(--muted); }
 @media (max-width: 900px) { .wrap, .gap-cards { grid-template-columns: 1fr; } }
+
+/* The chart and the futures on the left, the data panel beside them; on a narrow screen the panel sits between the two. */
+.wrap.split { grid-template-columns: minmax(0, 1fr) 320px; grid-template-areas: 'left aside' 'right aside'; align-items: start; column-gap: 24px; }
+.split .left { grid-area: left; }
+.split .right { grid-area: right; }
+.aside { grid-area: aside; position: sticky; top: 0; }
+@media (max-width: 900px) {
+  .wrap.split { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'left' 'aside' 'right'; }
+  .aside { position: static; }
+}
 </style>

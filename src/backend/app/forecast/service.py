@@ -51,11 +51,11 @@ def _crosswalk() -> pd.DataFrame:
     return pd.read_csv(PROCESSED_DIR / "crosswalk.csv", usecols=["onet_code", "indeed_sector", "weight"])
 
 
-def _history(onet_code: str, forecast_from: str) -> list[HistoryPoint]:
+def _history(onet_code: str, forecast_from: str, idx: pd.DataFrame | None = None) -> list[HistoryPoint]:
     """The job's past months as a percent change vs `forecast_from`, blended over its sectors like the forecast is."""
     cw = _crosswalk()
     cw = cw[cw["onet_code"] == onet_code]
-    idx = _sector_index()
+    idx = _sector_index() if idx is None else idx
     idx = idx[idx.index <= forecast_from]
     if cw.empty or idx.empty or forecast_from not in idx.index:
         return []
@@ -187,10 +187,14 @@ def list_forecasts(sector: str | None, scenario: str | None, horizon: int | None
 
 
 def list_jobs(
-    onet_code: str | None, title: str | None, scenario: str | None, horizon: int | None
+    onet_code: str | None, title: str | None, scenario: str | None, horizon: int | None,
+    jobs: pd.DataFrame | None = None, sector_index: pd.DataFrame | None = None,
 ) -> list[JobForecast]:
-    """Job-level forecasts, optionally filtered by O*NET code, part of the title, scenario and/or horizon."""
-    df = _jobs()
+    """Job-level forecasts, optionally filtered by O*NET code, part of the title, scenario and/or horizon.
+
+    jobs and sector_index are a retrained forecast and the index series it used; without them the precomputed files are read.
+    """
+    df = _jobs() if jobs is None else jobs
     if onet_code:
         df = df[df["onet_code"] == onet_code]
     if title:
@@ -227,7 +231,21 @@ def list_jobs(
             ai_exposure_low_sample=bool(first["ai_exposure_low_sample"]),
             note=JOB_NOTE,
             data_as_of=first["as_of_date"],
-            history=_history(code, first["forecast_from"]),
+            history=_history(code, first["forecast_from"], sector_index),
             outlook=outlook,
         ))
     return out
+
+
+def clear_caches() -> None:
+    """Forget the tables read from disk, so the next request reads them again."""
+    for fn in (_meta, _table, _jobs, _sector_index, _crosswalk):
+        fn.cache_clear()
+
+
+def default_trained_rows() -> int | None:
+    """Rows the 12-month model learned from with all the data, from the last training run."""
+    try:
+        return int(_meta()["by_horizon"]["12"]["train_rows"])
+    except (OSError, KeyError, ValueError):
+        return None

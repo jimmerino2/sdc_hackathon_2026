@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     openjev_threshold: float = 0.5  # a skill counts as present at or above this probability
     resume_model: str = ""  # model for resume skill extraction; empty = use openrouter_model
     resume_thinking: bool = True  # false turns the model's hidden reasoning off: ~5 s instead of ~30 s, same skills on the resumes tried
+    forecast_refresh_enabled: bool = False  # lets POST /forecast/refresh clear the forecast caches (a flood of them would force retrains)
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:5173"]
 
 

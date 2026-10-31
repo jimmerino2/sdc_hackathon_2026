@@ -21,8 +21,10 @@ const props = withDefaults(
     gear?: Gear;
     /** Wider content column for data-heavy screens (roles, forecast). */
     wide?: boolean;
+    /** A column and a side panel, centred: wider than the default, narrower than `wide`. */
+    split?: boolean;
   }>(),
-  { mood: 'idle', gear: 'none', wide: false },
+  { mood: 'idle', gear: 'none', wide: false, split: false },
 );
 const emit = defineEmits<{ next: [] }>();
 const router = useRouter();
@@ -40,7 +42,7 @@ function onNext() {
 </script>
 
 <template>
-  <div class="shell" :class="{ wide }">
+  <div class="shell" :class="{ wide, split }">
     <header>
       <div v-if="showClose || showProgress" class="inner top">
         <RouterLink v-if="showClose" :to="go(closeTo)" class="x" aria-label="Close"><Icon name="x" :size="22" :stroke="2.6" /></RouterLink>
@@ -77,6 +79,7 @@ function onNext() {
   display: grid; grid-template-rows: auto minmax(0, 1fr) auto;
 }
 .shell.wide { --w: 1180px; }
+.shell.split { --w: 1040px; }
 .inner { width: 100%; max-width: calc(var(--w) + 40px); margin: 0 auto; padding: 0 20px; }
 
 /* header: progress + Jobee's prompt, never scrolls */
