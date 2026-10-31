@@ -2,6 +2,7 @@
 import hashlib
 import json
 import re
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
 from fastapi import HTTPException
@@ -146,23 +147,25 @@ def _thinking_options(mode: str, base_url: str) -> dict | None:
     return None
 
 
-def _complete(messages: list[dict]) -> str:
+def _complete(messages: list[dict], reasoning: str | None = None, max_tokens: int | None = None) -> str:
+    """One model call. `reasoning` ("off", "low", ...) replaces ROADMAP_REASONING for this call, `max_tokens` the output limit."""
     settings = get_settings()
     client = OpenAI(base_url=settings.openrouter_base_url, api_key=settings.openrouter_api_key)
-    extra = _thinking_options(settings.roadmap_reasoning, settings.openrouter_base_url)
+    extra = _thinking_options(reasoning or settings.roadmap_reasoning, settings.openrouter_base_url)
     res = client.chat.completions.create(
-        model=settings.openrouter_model, messages=messages, max_tokens=MAX_OUTPUT_TOKENS, extra_body=extra,
+        model=settings.openrouter_model, messages=messages, max_tokens=max_tokens or MAX_OUTPUT_TOKENS, extra_body=extra,
         temperature=0,  # the same learner and role should give the same plan
     )
     return res.choices[0].message.content
 
 
-def _chat_json(messages: list[dict], parse, what: str):
-    """Ask the model and parse its JSON reply with `parse`; one retry when the reply is unusable. 502 if it fails twice."""
+def _chat_json(messages: list[dict], parse, what: str, **options):
+    """Ask the model and parse its JSON reply with `parse`; one retry when the reply is unusable. 502 if it fails twice.
+    `options` (reasoning, max_tokens) go to _complete."""
     error = None
     for _ in range(2):
         try:
-            reply = _complete(messages)
+            reply = _complete(messages, **options)
         except Exception as e:
             raise HTTPException(status_code=502, detail=f"model call failed: {e}")
         try:
@@ -304,12 +307,51 @@ GUIDE_MINUTES = 20  # how long one is planned to take; it has no resource that s
 MAX_EXISTING = 30  # titles of the role's earlier AI skills shown to the model, so it can reuse one
 MAX_DESCRIPTION, MAX_STEP, MAX_STEPS = 160, 90, 3  # an AI skill's details are kept short
 
-# Where to learn to use AI well. Fixed, and checked by hand: a model must never be asked for links, it would invent them. Every AI skill
-# shows these, so each has at least one source. Entries are the Source schema's fields; the order is the rank.
-AI_SOURCES = [
-    {"source_type": "activity", "rank": 1, "title": "Prompt Engineering Guide", "url": "https://www.promptingguide.ai/", "duration_minutes": None},
-    {"source_type": "certificate", "rank": 2, "title": "Google Prompting Essentials", "url": "https://www.coursera.org/specializations/prompting-essentials-google", "duration_minutes": None},
+GUIDE_MAX_TOKENS = 3000  # eight short AI skills fit well inside this
+GUIDE_REASONING = "off"  # the model only has to name and describe them, so it answers without thinking first: speed over polish
+
+# The sources of an AI skill are never written by the model, which would invent links. Each one gets the real ESCO page of up to
+# SOURCE_LOOKUPS skills of its section (a page is used once in a roadmap, so they differ from skill to skill), then one of these
+# skills taxonomies, handed out in turn by section so there is always at least one source. Entries are (title, url).
+SOURCE_LOOKUPS = 2
+TAXONOMY_SOURCES = [
+    ("ESCO skills services and API", "https://esco.ec.europa.eu/en/use-esco/use-esco-services-api"),
+    ("Lightcast skills taxonomy", "https://lightcast.io/taxonomies/skills-taxonomy"),
+    ("WEF Global Skills Taxonomy", "https://initiatives.weforum.org/reskilling-revolution/gst"),
 ]
+
+
+def _source(rank: int, title: str, url: str) -> dict:
+    return {"source_type": "reference", "rank": rank, "title": title, "url": url, "duration_minutes": None}
+
+
+def taxonomy_source(number: int, rank: int = 1) -> dict:
+    """The taxonomy reference for a section (1, 2, 3, ... take the three in turn)."""
+    title, url = TAXONOMY_SOURCES[(number - 1) % len(TAXONOMY_SOURCES)]
+    return _source(rank, title, url)
+
+
+def attach_sources(plan: Plan, guides: dict[int, dict], names: dict[str, str], find, page) -> dict[int, dict]:
+    """The guides with their sources: the ESCO page of up to SOURCE_LOOKUPS of the section's skills, then a taxonomy reference.
+
+    `find(name)` gives {"uri", "title"} or None and `page(uri)` the link (see esco.py); they are looked up together. A guide that
+    already has sources (a reused one) keeps them. An ESCO page already used for another guide is left out, so each differs."""
+    todo = {i: g for i, g in guides.items() if not g.get("sources")}
+    picks = {i: [names[n.skill_id] for unit in plan[i - 1].units for n in unit if n.skill_id in names][:SOURCE_LOOKUPS] for i in todo}
+    wanted = list(dict.fromkeys(n for ns in picks.values() for n in ns))
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        found = dict(zip(wanted, pool.map(find, wanted)))
+    used: set[str] = set()
+    out = dict(guides)
+    for i in sorted(todo):
+        sources = []
+        for name in picks[i]:
+            hit = found.get(name)
+            if hit and hit["uri"] not in used:
+                used.add(hit["uri"])
+                sources.append(_source(len(sources) + 1, f"ESCO: {hit['title']}", page(hit["uri"])))
+        out[i] = {**todo[i], "sources": [*sources, taxonomy_source(i, len(sources) + 1)]}
+    return out
 
 GUIDE_PROMPT = """You write short "AI skills" for a learning roadmap. For each section you get its title and the skills in it. An AI skill teaches the learner how to use AI tools (a chat assistant, a coding assistant) to learn and simplify THOSE skills, so they learn faster and understand more, not so the AI does the work for them.
 
@@ -397,7 +439,7 @@ def write_guides(role_title: str, onet_code: str, plan: Plan, names: dict[str, s
         listing = {"sections": [{"section": i, "title": plan[i - 1].title, "skills": ns} for i, ns in sections.items()],
                    "existing_titles": [e["title"] for e in list(existing.values())[:MAX_EXISTING]]}
         messages = [{"role": "system", "content": GUIDE_PROMPT}, {"role": "user", "content": f"Role: {role_title}\n\n{json.dumps(listing)}"}]
-        written = _chat_json(messages, lambda raw: sanitize_guides(raw, list(sections)), "AI skill list")
+        written = _chat_json(messages, lambda raw: sanitize_guides(raw, list(sections)), "AI skill list", reasoning=GUIDE_REASONING, max_tokens=GUIDE_MAX_TOKENS)
     except HTTPException as e:
         print(f"AI skills fell back ({e.detail})")
         written = {}
@@ -410,7 +452,7 @@ def write_guides(role_title: str, onet_code: str, plan: Plan, names: dict[str, s
         taken.add(norm_title(g["title"]))
         old = existing.get(norm_title(g["title"]))
         if old:
-            g = {**g, "description": old["description"], "steps": old["steps"]}
+            g = {**g, "description": old["description"], "steps": old["steps"], "sources": old.get("sources") or []}
         out[i] = {**g, "skill_id": ai_skill_id(onet_code, g["title"])}
     return out
 

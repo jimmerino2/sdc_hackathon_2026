@@ -59,9 +59,13 @@ def test_the_same_title_for_the_same_role_is_the_same_skill():
     assert planner.is_guide(planner.ai_skill_id(CODE, "x")) and not planner.is_guide("2.A.1.a") and not planner.is_guide("tech:python")
 
 
+options_seen: dict = {}
+
+
 def _model(monkeypatch, reply):
     sent = []
-    monkeypatch.setattr(planner, "_complete", lambda messages: sent.append(messages) or reply)
+    options_seen.clear()
+    monkeypatch.setattr(planner, "_complete", lambda messages, **options: sent.append(messages) or options_seen.update(options) or reply)
     monkeypatch.setattr(planner, "get_settings", lambda: SimpleNamespace(ai_model_mode="OPENROUTER", openrouter_api_key="k"))
     return sent
 
@@ -130,9 +134,53 @@ def test_details_are_kept_short():
     assert len(fb["description"]) <= planner.MAX_DESCRIPTION and len(fb["steps"]) <= planner.MAX_STEPS and all(len(s) <= planner.MAX_STEP for s in fb["steps"])
 
 
-def test_every_ai_skill_has_at_least_one_source():
+def test_the_model_is_asked_without_thinking_and_with_a_small_output(monkeypatch):
+    _model(monkeypatch, "not json")
+    write()
+    assert options_seen == {"reasoning": "off", "max_tokens": planner.GUIDE_MAX_TOKENS}
+
+
+HITS = {"Python": {"uri": "u/python", "title": "Python (computer programming)"}, "SQL": {"uri": "u/sql", "title": "SQL"},
+        "Git": {"uri": "u/git", "title": "Git"}, "Docker": {"uri": "u/docker", "title": "Docker"}}
+
+
+def sourced(guides, find=lambda n: HITS.get(n)):
+    return planner.attach_sources(PLAN, guides, NAMES, find, lambda uri: f"https://esco.test/?uri={uri}")
+
+
+def test_each_ai_skill_gets_its_own_esco_pages_then_a_taxonomy_reference():
+    got = sourced(_guides())
+    one, two = got[1]["sources"], got[2]["sources"]
+    assert [s["title"] for s in one] == ["ESCO: Python (computer programming)", "ESCO: SQL", "ESCO skills services and API"]
+    assert [s["title"] for s in two] == ["ESCO: Docker", "Lightcast skills taxonomy"]
+    assert [s["rank"] for s in one] == [1, 2, 3] and all(s["source_type"] == "reference" for s in one)
+    assert not {s["url"] for s in one} & {s["url"] for s in two}  # none shared
+
+
+def test_an_esco_page_is_used_once_in_a_roadmap():
+    same = {"uri": "u/x", "title": "X"}
+    got = sourced(_guides(), lambda n: same)
+    assert [s["title"] for s in got[1]["sources"]][0] == "ESCO: X"
+    assert not any(s["title"] == "ESCO: X" for s in got[2]["sources"])
+
+
+def test_when_esco_has_nothing_every_ai_skill_still_has_a_source():
+    got = sourced(_guides(), lambda n: None)
+    assert [len(g["sources"]) for g in got.values()] == [1, 1]
+    assert got[1]["sources"][0]["url"] != got[2]["sources"][0]["url"]  # the three taxonomies are handed out in turn
+    assert all(s["url"].startswith("https://") for g in got.values() for s in g["sources"])
+
+
+def test_a_reused_ai_skill_keeps_the_sources_it_was_written_with():
+    g = _guides()
+    g[1]["sources"] = [{"source_type": "reference", "rank": 1, "title": "Old", "url": "https://old.test", "duration_minutes": None}]
+    got = sourced(g)
+    assert got[1]["sources"][0]["title"] == "Old" and len(got[1]["sources"]) == 1
+    assert got[2]["sources"][0]["title"] == "ESCO: Docker"
+
+
+def test_sources_fit_the_roadmaps_own_source_schema():
     from app.roadmap.schemas import Source
 
-    sources = [Source(**s) for s in planner.AI_SOURCES]  # they fit the roadmap's own source schema
-    assert sources and all(s.url.startswith("https://") for s in sources)
-    assert [s.rank for s in sources] == sorted(s.rank for s in sources)
+    for g in sourced(_guides()).values():
+        assert [Source(**s) for s in g["sources"]]

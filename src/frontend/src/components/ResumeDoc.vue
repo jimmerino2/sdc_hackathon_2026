@@ -59,7 +59,7 @@ watch(
 
 <style scoped>
 .doc {
-  position: relative; width: 420px; max-width: 100%; max-height: 600px; overflow: auto; background: #fff;
+  position: relative; width: 420px; max-width: 100%; max-height: min(600px, calc(100dvh - 250px)); overflow: auto; background: #fff;
   border: 2px solid var(--line-strong); border-radius: 12px; box-shadow: 0 8px 24px rgba(30, 30, 30, .08); scrollbar-width: thin;
   animation: rise .5s cubic-bezier(.22, 1, .36, 1) both;
 }

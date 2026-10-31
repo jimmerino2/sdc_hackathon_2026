@@ -10,8 +10,8 @@ from app.challenge.schemas import Challenge
 class Source(BaseModel):
     """One place to learn a skill (a row of skill_sources)."""
 
-    source_type: Literal["project", "certificate", "video", "activity"] = Field(
-        description="project = build something, certificate = a credential or course, video = watch, activity = practice"
+    source_type: Literal["project", "certificate", "video", "activity", "reference"] = Field(
+        description="project = build something, certificate = a credential or course, video = watch, activity = practice, reference = read (a taxonomy or definition page)"
     )
     rank: int = Field(description="1 = first pick")
     title: str

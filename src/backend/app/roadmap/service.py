@@ -9,7 +9,7 @@ from app.challenge import service as challenges
 from app.jobs import scoring
 from app.jobs.service import _expand
 from app.profile import service as profiles
-from app.roadmap import duration, planner
+from app.roadmap import duration, esco, planner
 from app.roadmap.planner import Plan, PlanNode, PlanSection
 from app.roadmap.schemas import CurrentStep, Guide, LearnedSkill, Node, Roadmap, RoadmapSummary, SelectedSkill, Section, SkillSelection, Source, Unit
 
@@ -28,7 +28,7 @@ ROADMAP_SELECT = (
     "roadmap_detail(roadmap_detail_id,skill_id,section,unit,status,completed_at,previous_nodes,previous_nodes_required,"
     "onet_role_skills(skill_name,skill_type,importance,level))"
 )
-AI_COLUMNS = "skill_origin,ai_description,ai_steps"  # migration 0027
+AI_COLUMNS = "skill_origin,ai_description,ai_steps,ai_sources"  # migrations 0027 and 0028
 GUIDE_SELECT = ROADMAP_SELECT.replace("importance,level))", f"importance,level,{AI_COLUMNS}))")
 
 _guides_ready = False
@@ -51,11 +51,12 @@ def _has_guides(db: Client) -> bool:
 def _existing_guides(db: Client, onet_code: str) -> dict[str, dict]:
     """The AI skills this role already has, by normalised title, so a new roadmap reuses them instead of writing them again."""
     try:
-        rows = db.table("onet_role_skills").select("skill_name,ai_description,ai_steps").eq("onet_code", onet_code).eq("skill_origin", "ai").execute().data
+        rows = db.table("onet_role_skills").select("skill_name,ai_description,ai_steps,ai_sources").eq("onet_code", onet_code).eq("skill_origin", "ai").execute().data
     except Exception as e:
         print(f"could not read the role's AI skills ({type(e).__name__}); writing them fresh")
         return {}
-    return {planner.norm_title(r["skill_name"]): {"title": r["skill_name"], "description": r["ai_description"] or "", "steps": r["ai_steps"] or []} for r in rows}
+    return {planner.norm_title(r["skill_name"]): {"title": r["skill_name"], "description": r["ai_description"] or "", "steps": r["ai_steps"] or [], "sources": r["ai_sources"] or []}
+            for r in rows}
 
 
 def _store_guides(db: Client, onet_code: str, guides: dict[int, dict]) -> None:
@@ -64,7 +65,7 @@ def _store_guides(db: Client, onet_code: str, guides: dict[int, dict]) -> None:
     if not guides:
         return
     rows = [{"onet_code": onet_code, "skill_id": g["skill_id"], "skill_name": g["title"], "skill_type": "skill", "skill_origin": "ai",
-             "ai_description": g["description"], "ai_steps": g["steps"]} for g in guides.values()]
+             "ai_description": g["description"], "ai_steps": g["steps"], "ai_sources": g["sources"]} for g in guides.values()]
     db.table("onet_role_skills").upsert(rows, on_conflict="onet_code,skill_id", ignore_duplicates=True).execute()
 
 
@@ -176,7 +177,8 @@ def get_roadmap(db: Client, profile_id: str, onet_code: str | None = None) -> Ro
     for d in details:
         skill = {k: d["onet_role_skills"][k] for k in ("skill_name", "skill_type", "importance", "level")}
         ai = d["onet_role_skills"]
-        guide = (Guide(title=skill["skill_name"], description=ai.get("ai_description") or "", steps=ai.get("ai_steps") or [], sources=[Source(**s) for s in planner.AI_SOURCES])
+        guide = (Guide(title=skill["skill_name"], description=ai.get("ai_description") or "", steps=ai.get("ai_steps") or [],
+                       sources=[Source(**s) for s in ai.get("ai_sources") or [planner.taxonomy_source(1)]])  # one at least, even for a skill stored without any
                  if ai.get("skill_origin") == "ai" else None)
         if guide:  # an AI skill: its name, description and steps are what the model wrote for it
             minutes, basis, via = planner.GUIDE_MINUTES, "estimated", None
@@ -493,7 +495,9 @@ def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool, p
     # now (arranged, completed, prioritised), so it always leads its section's first unit. The role's earlier AI skills are reused.
     guides: dict[int, dict] = {}
     if _has_guides(db):
-        guides = planner.write_guides(role["title"], onet_code, plan, {s["skill_id"]: s["skill_name"] for s in relevant}, _existing_guides(db, onet_code))
+        skill_names = {s["skill_id"]: s["skill_name"] for s in relevant}
+        guides = planner.write_guides(role["title"], onet_code, plan, skill_names, _existing_guides(db, onet_code))
+        guides = planner.attach_sources(plan, guides, skill_names, esco.find, esco.page)
         try:
             _store_guides(db, onet_code, guides)
         except Exception as e:
