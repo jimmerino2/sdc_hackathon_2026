@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import ChartWatcher from './ChartWatcher.vue';
 import MascoMap from './MascoMap.vue';
 import ForecastInfo from './ForecastInfo.vue';
@@ -115,6 +115,8 @@ const status = ref<'loading' | 'ready' | 'error'>('loading');
 const quarters = ref<Quarters | null>(null);
 const retrained = ref<Retrained | null>(null);
 const busy = ref(false);
+/** True while a page opened with quarters already left out (?skip=) waits for its first retrained forecast, so the stored chart isn't shown first. */
+const settling = ref(false);
 const pickError = ref<string | null>(null);
 let pending: AbortController | undefined;
 let wait: number | undefined;
@@ -137,7 +139,7 @@ async function retrain(left: string[]) {
     if ((e as Error).name === 'AbortError') return;
     pickError.value = e instanceof Error ? e.message : 'The forecast couldn’t be retrained just now. Try again.';
   } finally {
-    if (pending === mine) busy.value = false;
+    if (pending === mine) { busy.value = false; settling.value = false; }
   }
 }
 
@@ -148,14 +150,19 @@ async function load() {
   busy.value = false;
   retrained.value = null;
   pickError.value = null;
+  settling.value = !!(props.pickQuarter && props.skip);
+  const code = props.onetCode;
   try {
-    stored.value = forecasts.value = await fetchJobForecasts(props.onetCode);
-    status.value = forecasts.value.length ? 'ready' : 'error';
+    const rows = await fetchJobForecasts(code);
+    if (code !== props.onetCode) return; // another role was picked meanwhile; its own load will answer
+    stored.value = forecasts.value = rows;
+    status.value = rows.length ? 'ready' : 'error';
+    if (status.value === 'error') settling.value = false;
   } catch {
-    status.value = 'error';
+    if (code === props.onetCode) { status.value = 'error'; settling.value = false; }
     return;
   }
-  if (props.pickQuarter) fetchQuarters().then((q) => (quarters.value = q)).catch(() => {}); // the chart still works without the picker
+  if (props.pickQuarter) fetchQuarters().then((q) => (quarters.value = q)).catch(() => { settling.value = false; }); // the chart still works without the picker
 }
 onMounted(load);
 watch(() => props.onetCode, load);
@@ -165,6 +172,7 @@ watch([() => [...excluded.value].sort().join(','), status], ([key]) => {
   clearTimeout(wait);
   if (!props.pickQuarter || status.value !== 'ready' || !quarters.value) return;
   if (!key) {
+    settling.value = false; // the address named no quarter that exists, so the stored forecast is the one to show
     if (!retrained.value && !busy.value) return;
     pending?.abort();
     busy.value = false;
@@ -307,7 +315,17 @@ const demand = computed(() =>
 );
 const title = computed(() => meta.value?.title ?? 'This role');
 /** Onboarding shows one full-width loader until the chart is ready, so nothing below it appears first. */
-const waiting = computed(() => props.compact && status.value === 'loading');
+const painted = ref(false);
+// Ready means the data is in; painted means the chart has been drawn too, a frame later. Anything loading again (another role) starts over.
+watch(status, async (st) => {
+  painted.value = false;
+  if (st !== 'ready') return;
+  await nextTick();
+  requestAnimationFrame(() => requestAnimationFrame(() => { if (status.value === 'ready') painted.value = true; }));
+}, { immediate: true });
+const waiting = computed(() => props.compact && status.value !== 'error' && (!painted.value || settling.value));
+/** The content around the chart (the three futures, the SDGs) waits for the chart, here and on the role page, so the headings never show before the role's name is known. A failed forecast shows its message alone. */
+const showBelow = computed(() => painted.value && !settling.value);
 
 /** The role page's tabs; onboarding (compact) shows the forecast alone. */
 const TABS = [
@@ -322,12 +340,6 @@ const hasMasco = computed(() => !!mascoRoles[props.onetCode]?.minors?.length);
 
 <template>
   <div class="wrap" :class="{ compact, waiting, split: pickQuarter && quarters }">
-      <section v-if="waiting" class="card loader" role="status" aria-live="polite">
-        <span class="ring" aria-hidden="true" />
-        <h2>Loading the forecast…</h2>
-        <p>Reading the latest job-posting trends for this role.</p>
-        <div class="loader-skel" aria-hidden="true"><span class="skel" /><span class="skel line" /></div>
-      </section>
 
       <div v-if="!compact" class="tabs-bar">
        <div class="btn-group" role="tablist" aria-label="Role details">
@@ -402,13 +414,13 @@ const hasMasco = computed(() => !!mascoRoles[props.onetCode]?.minors?.length);
           </template>
         </div>
       </section>
-      <section v-show="!waiting && (compact || tab === 'forecast')" class="right">
+      <section v-show="showBelow && (compact || tab === 'forecast')" class="right">
         <ChartWatcher v-if="!compact" class="bub">Nobody knows the future for sure, so I plan for all three.</ChartWatcher>
-        <ScenarioPanel :demand="demand" />
+        <ScenarioPanel v-if="demand" :demand="demand" />
         <slot name="actions" />
       </section>
 
-      <aside v-if="pickQuarter && quarters" class="aside" aria-label="Choose the data the forecast is trained on">
+      <aside v-if="pickQuarter && quarters && !waiting" class="aside" aria-label="Choose the data the forecast is trained on">
         <QuarterPicker
           :quarters="quarters.quarters"
           :excluded="excluded"
@@ -421,11 +433,11 @@ const hasMasco = computed(() => !!mascoRoles[props.onetCode]?.minors?.length);
         />
       </aside>
 
-      <section v-if="!compact && !goals.length" v-show="tab === 'sdg'" id="panel-sdg" role="tabpanel" aria-labelledby="tab-sdg" class="sdg-row">
+      <section v-if="!compact && !goals.length && showBelow" v-show="tab === 'sdg'" id="panel-sdg" role="tabpanel" aria-labelledby="tab-sdg" class="sdg-row">
         <p class="empty card no-data">No SDG data found for this role.</p>
       </section>
 
-      <section v-if="goals.length && !waiting" v-show="compact || tab === 'sdg'" id="panel-sdg" :role="compact ? undefined : 'tabpanel'" aria-labelledby="tab-sdg" class="sdg-row impact">
+      <section v-if="goals.length && showBelow" v-show="compact || tab === 'sdg'" id="panel-sdg" :role="compact ? undefined : 'tabpanel'" aria-labelledby="tab-sdg" class="sdg-row impact">
         <h1 id="impact-title">How {{ job?.title ?? title }} serves the SDGs</h1>
         <div class="impact-goals">
           <div class="impact-group">
@@ -483,15 +495,6 @@ h1 { font-size: 34px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 
 .compact { gap: 24px; }
 .wrap.waiting { grid-template-columns: minmax(0, 1fr); }
-.loader { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 36px 24px 28px; }
-.loader h2 { margin: 10px 0 0; font-size: 23px; font-weight: 900; }
-.loader p { margin: 0; font-size: 16px; font-weight: 600; color: var(--muted); }
-.ring { width: 38px; height: 38px; border-radius: 50%; border: 4px solid var(--line); border-top-color: var(--yellow); animation: ring-spin .8s linear infinite; }
-.loader-skel { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 18px; }
-.loader-skel .skel:first-child { width: 100%; height: 220px; }
-.loader-skel .line { width: 60%; }
-@keyframes ring-spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .ring { animation: none; } }
 .chart-skel { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
 .chart-skel .skel:first-child { height: 170px; }
 .chart-skel .line { width: 60%; }

@@ -10,7 +10,7 @@ import { useScenarioProbabilities } from '../composables/useScenarioProbabilitie
 defineProps<{ demand?: Record<ScenarioKey, { text: string; trend: string }> }>();
 
 const { state } = useFlow();
-const { metrics, metricTarget, pct } = useScenarioProbabilities();
+const { metrics, metricTarget, pct, loaded } = useScenarioProbabilities();
 const activeMetricLabel = computed(() => metrics.find((m) => m.target === metricTarget.value)?.label ?? 'selected indicator');
 const scenarioTooltip = computed(
   () => `Statistical likelihood of this AI scenario occurring, based on ${activeMetricLabel.value.toLowerCase()} forecasts. Does not reflect your job match.`,
@@ -18,7 +18,7 @@ const scenarioTooltip = computed(
 </script>
 
 <template>
-  <div class="panel-card">
+  <div v-if="loaded" class="panel-card">
     <div class="panel-head">
       <span class="panel-eyebrow">AI Scenario</span>
       <ScenarioInfoDialog />

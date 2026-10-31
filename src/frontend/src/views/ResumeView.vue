@@ -94,11 +94,6 @@ const rows = computed<SkillRow[]>(() =>
     return { name: s.name, label, score: s.score, n };
   }),
 );
-/** Mentions are counted only for the skills in the result, since those are the ones highlighted. */
-const stats = computed(() => {
-  const d = doc.value;
-  return d ? { pages: d.pageCount, chars: d.chars, mentions: rows.value.reduce((a, r) => a + (r.n ?? 0), 0) } : null;
-});
 
 // While the AI works, only skills it has confirmed are highlighted; once it is done, the skills in the result. Without
 // live skills the browser's keyword scan stands in until the result arrives.
@@ -255,7 +250,7 @@ function undoRemove() {
       <template v-if="split">
         <div class="left">
           <button v-if="narrow && doc" type="button" class="docbtn" :aria-expanded="docOpen" @click="docOpen = !docOpen">
-            {{ docOpen ? 'Hide your resume' : showResults ? `Show your resume · ${stats?.mentions ?? 0} highlights` : 'Show your resume' }}
+            {{ docOpen ? 'Hide your resume' : 'Show your resume' }}
           </button>
           <ResumeDoc v-if="doc" v-show="!narrow || docOpen" :doc="doc" :reveal="reveal" :scan="scan" :shown-keys="shownKeys" :focus-key="focusKey" />
           <div v-else-if="previewFailed" class="card nopreview" role="status">
@@ -263,7 +258,7 @@ function undoRemove() {
             <p>Check that it’s a text-based PDF, not a scan. I’ll keep going in case Jobee can still read it.</p>
             <button type="button" class="link" @click="chooseAnother">Choose another file</button>
           </div>
-          <p v-if="doc && showResults && (!narrow || docOpen)" class="doclabel"><span>Your resume</span><span>{{ stats?.mentions ?? 0 }} highlights</span></p>
+          <button v-if="resume && !reading" type="button" class="link again" @click="chooseAnother">Upload a different PDF</button>
         </div>
         <div class="right">
           <ResumeProgress
@@ -303,6 +298,7 @@ function undoRemove() {
           :celebrate="justRead"
           @remove="removeSkill"
         />
+        <button type="button" class="link again" @click="chooseAnother">Upload a different PDF</button>
       </template>
 
       <button
@@ -322,7 +318,6 @@ function undoRemove() {
       </button>
 
       <p v-if="error" class="error" role="alert">{{ error }}</p>
-      <button v-if="resume && !reading" type="button" class="link again" @click="chooseAnother">Upload a different PDF</button>
     </div>
 
     <input ref="input" type="file" accept="application/pdf,.pdf" hidden aria-label="Resume PDF" @change="upload(($event.target as HTMLInputElement).files?.[0])" />
@@ -372,8 +367,8 @@ small { font-size: 15px; color: var(--muted); font-weight: 700; }
 .card.nopreview { padding: 16px 20px; }
 .nopreview p { margin: 6px 0 10px; font-size: 15px; font-weight: 700; color: var(--muted); }
 .link { border: 0; background: none; padding: 6px 4px; font: inherit; font-size: 15px; font-weight: 800; color: var(--amber-ink); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.link:hover { color: var(--ink); }
 .again { display: block; margin: 14px auto 0; }
-.doclabel { display: flex; justify-content: space-between; margin: 8px 2px 0; font-size: 14px; font-weight: 700; color: var(--muted); }
 
 .toast {
   position: fixed; left: 50%; bottom: 96px; z-index: 8; transform: translateX(-50%); display: flex; align-items: center; gap: 14px;
