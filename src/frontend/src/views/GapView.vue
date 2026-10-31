@@ -17,14 +17,14 @@ const waiting = computed(() => plan.value.status === 'loading' || (plan.value.st
 </script>
 
 <template>
-  <FlowShell next="sync" next-label="Build my pathway" back="signal" mood="happy" gear="glasses" wide>
+  <FlowShell next="building" next-label="Next" back="signal" mood="happy" gear="glasses" wide>
     <template #bubble>
       <template v-if="waiting">Choosing the skills worth learning for this role…</template>
       <template v-else-if="plan.status === 'done'">These are the skills I’d learn for this role. Add or remove any and watch your matches change.</template>
       <template v-else>What if you learned a new skill? Tap one and watch your matches change.</template>
     </template>
     <div v-if="waiting" class="wait skel card" aria-busy="true" aria-label="Choosing skills" />
-    <CareerSimulator v-else embedded :preselect="plan.skills" />
+    <CareerSimulator v-else embedded :preselect="state.roadmapSkills ?? plan.skills" />
   </FlowShell>
 </template>
 

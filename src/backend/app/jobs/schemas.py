@@ -142,6 +142,7 @@ class SimulateRequest(BaseModel):
     skills: list[SimulatedSkill] = Field(default_factory=list, max_length=20, description="Skills to try, by O*NET name; empty gives the baseline and the skill options")
     horizon: Literal[3, 6, 9, 12] = 12
     focus_role: str | None = Field(None, description="O*NET code of the role the skill options are for; leave out for the best match under AI accelerates")
+    ai_skills: list[str] = Field(default_factory=list, max_length=10, description="Names of the AI skills Jobee wrote for the focus role. They are learned in full and counted as extra key skills of that role, to show the match with them; nothing else changes")
 
 
 class SkillChange(BaseModel):
@@ -161,6 +162,8 @@ class ScenarioComparison(BaseModel):
     change: int = Field(description="simulated_percent - current_percent")
     current_rank: int
     simulated_rank: int
+    ai_percent: int | None = Field(None, description="The match with the request's ai_skills learned too; only when some were sent, and the same as simulated_percent for every role but the focus role")
+    ai_rank: int | None = None
     current: MatchBreakdown | None = None
     simulated: MatchBreakdown | None = None
     outlook: ScenarioOutlook | None = Field(None, description="The forecast under this scenario; its breakdown is the simulated one")

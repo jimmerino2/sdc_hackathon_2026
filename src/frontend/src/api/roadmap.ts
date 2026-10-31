@@ -12,7 +12,21 @@ export interface RoadmapSource {
   duration_minutes?: number | null;
 }
 
+/** What was written for an AI study guide node. */
+export interface RoadmapGuide {
+  title: string;
+  /** How AI can help the learner study this section's skills. */
+  description: string;
+  /** Concrete things to do, in order. */
+  steps: string[];
+  /** Where to read more; empty when the guide is only the AI's description. */
+  sources: RoadmapSource[];
+}
+
 export interface RoadmapNode {
+  /** ai_guide: a section's AI study guide, to be done before the section's skills. Missing on an older backend, meaning skill. */
+  kind?: 'skill' | 'ai_guide';
+  guide?: RoadmapGuide | null;
   roadmap_detail_id: string;
   skill_id: string;
   skill_name: string;

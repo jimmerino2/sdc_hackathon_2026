@@ -70,7 +70,7 @@ watch([clock.elapsed, data, roadmap], () => {
 function finish(delay: number) {
   finished.value = true;
   clock.stop();
-  leave = window.setTimeout(() => router.push(go('pathway')), delay);
+  leave = window.setTimeout(() => router.push(go(isOnboarded() ? 'pathway' : 'aiskills')), delay); // onboarding goes on to the AI skills, then the email step
 }
 
 function onEvent(e: RoadmapEvent) {
@@ -128,7 +128,7 @@ onBeforeUnmount(() => clearTimeout(leave));
 
       <div v-if="failed" class="actions">
         <button type="button" class="btn btn-secondary" @click="start"><Icon name="refresh" :size="18" /> Try again</button>
-        <RouterLink :to="go(isOnboarded() ? 'suggested' : 'signal')" class="back">Back</RouterLink>
+        <RouterLink :to="go(isOnboarded() ? 'suggested' : 'gap')" class="back">Back</RouterLink>
       </div>
     </div>
   </div>

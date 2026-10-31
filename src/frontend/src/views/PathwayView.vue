@@ -11,13 +11,14 @@ import ShareCard from '../components/learn/ShareCard.vue';
 import { fetchProgrammes, type Programme } from '../api/hrd';
 import { formatMinutes } from '../learn/time';
 import ForecastCard from '../components/learn/ForecastCard.vue';
+import AiSkillCard from '../components/learn/AiSkillCard.vue';
 import BeeGuide from '../components/learn/BeeGuide.vue';
 import ChallengeBanner from '../components/learn/ChallengeBanner.vue';
 import NextMoveCard from '../components/learn/NextMoveCard.vue';
 import { completeNode, deleteRoadmap, fetchRoadmapSummaries, RoadmapError, type RoadmapNode, type RoadmapSource, type RoadmapSummary } from '../api/roadmap';
 import { readProfileId } from '../api/profile';
 import { skillLabel } from '../data/skills';
-import { allNodes, completeLocally, learningLinks, progress, resolveNodes, resolveUnits, sectionCleared, type ResolvedSkill } from '../learn/skillState';
+import { allNodes, completeLocally, isGuide, learningLinks, progress, resolveNodes, resolveUnits, sectionCleared, type ResolvedSkill } from '../learn/skillState';
 import { prefersReducedMotion } from '../composables/useCountUp';
 import { useTallAside } from '../composables/useTallAside';
 import { loadRoleForecast, normalizeSkillName, type RoleForecast } from '../occupational/forecastMatch';
@@ -112,8 +113,11 @@ const selected = computed(() => (selectedId.value ? resolved.value.get(selectedI
 const materialsSelected = computed(() => (materialsClosed.value ? null : selected.value));
 const suggested = computed(() => materialsSelected.value ?? firstReady.value);
 
-const kindOf = (s: ResolvedSkill) => s.node.skill_group ?? typeLabel[s.node.skill_type];
+const kindOf = (s: ResolvedSkill) => (isGuide(s) ? 'AI skill' : s.node.skill_group ?? typeLabel[s.node.skill_type]);
+/** The selected node when it is a section's AI study guide: its card replaces the demand forecast. */
+const guideSelected = computed(() => (selected.value && isGuide(selected.value) ? { name: skillLabel(selected.value.node.skill_name) } : null));
 function blurbOf(n: RoadmapNode): string | null {
+  if (n.kind === 'ai_guide') return n.guide?.description ?? null;
   const parts = [n.importance != null ? `Importance for this role: ${n.importance.toFixed(1)} / 5` : '', n.level != null ? `level needed ${n.level.toFixed(1)} / 7` : ''].filter(Boolean);
   return parts.length ? parts.join(', ') + '.' : null;
 }
@@ -127,6 +131,8 @@ const nextUp = computed<NextUpSkill | null>(() => {
     state: s.state,
     kind: kindOf(s),
     blurb: blurbOf(s.node),
+    ai: isGuide(s),
+    steps: s.node.guide?.steps ?? [],
     blockers: s.blockers,
     links: learningLinks(s.node).map((l) => ({ ...l, kind: sourceLabel[l.kind] })),
     time: s.node.minutes
@@ -137,7 +143,7 @@ const nextUp = computed<NextUpSkill | null>(() => {
 
 /* ---------- HRD Corp courses for the selected skill (paid; the employer claims the fee) ---------- */
 const programmes = ref<Programme[] | null>(null);
-watch(() => selected.value?.node.skill_name, async (skill) => {
+watch(() => (selected.value && !isGuide(selected.value) ? selected.value.node.skill_name : null), async (skill) => {
   programmes.value = null;
   if (!skill) return;
   const found = await fetchProgrammes(skill);
@@ -411,6 +417,7 @@ watch([() => roadmapTabs.value, activeCode], () => nextTick(() => {
               :minutes="roadmap.minutes_total"
               :name="state.name"
             />
+            <AiSkillCard v-if="guideSelected" :name="guideSelected.name" />
             <ForecastCard
               v-if="forecastSelected && roleForecast"
               :name="forecastSelected.name"
@@ -434,6 +441,7 @@ watch([() => roadmapTabs.value, activeCode], () => nextTick(() => {
               eyebrow="Skill materials"
               @close="materialsClosed = true"
             />
+            <AiSkillCard v-if="guideSelected" :name="guideSelected.name" />
             <ForecastCard
               v-if="selected && forecastSelected && roleForecast"
               :name="forecastSelected.name"

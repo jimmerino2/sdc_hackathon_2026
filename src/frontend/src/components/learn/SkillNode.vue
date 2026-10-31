@@ -4,7 +4,7 @@ import Icon from '../Icon.vue';
 import { useFlash } from '../../composables/useFlash';
 import type { SkillState } from '../../learn/skillState';
 
-const props = defineProps<{ name: string; kind?: string; state: SkillState; selected?: boolean; tag?: string | null; busy?: boolean; /** Orb above its label, for the graph layout. */ stack?: boolean; /** The skill group's icon and yellow shade (0 lightest): they mark the orb. */ icon?: string; shade?: number; /** Set when a demand forecast matched this skill; shows a trend badge the learner can click to select it. */ forecastDirection?: 'rising' | 'falling' | 'flat' | null }>();
+const props = defineProps<{ name: string; kind?: string; state: SkillState; selected?: boolean; tag?: string | null; busy?: boolean; /** Orb above its label, for the graph layout. */ stack?: boolean; /** The skill group's icon and yellow shade (0 lightest): they mark the orb. */ icon?: string; shade?: number; /** Set when a demand forecast matched this skill; shows a trend badge the learner can click to select it. */ forecastDirection?: 'rising' | 'falling' | 'flat' | null ; /** A section's AI study guide: drawn purple and 1.5x the size. */ ai?: boolean }>();
 const emit = defineEmits<{ select: [] }>();
 
 const { on: shaking, trigger: shake } = useFlash(480);
@@ -35,7 +35,7 @@ function clickForecast(e: MouseEvent) {
 </script>
 
 <template>
-  <div class="jb jb-node" :data-layout="stack ? 'stack' : undefined" :data-grouped="shade !== undefined ? 'true' : undefined" :style="shade !== undefined ? { '--gs': shade } : undefined" :data-state="state" :data-selected="selected ? 'true' : 'false'" :data-shaking="shaking ? 'true' : 'false'">
+  <div class="jb jb-node" :data-ai="ai ? 'true' : undefined" :data-layout="stack ? 'stack' : undefined" :data-grouped="shade !== undefined ? 'true' : undefined" :style="shade !== undefined ? { '--gs': shade } : undefined" :data-state="state" :data-selected="selected ? 'true' : 'false'" :data-shaking="shaking ? 'true' : 'false'">
     <span v-if="tag" class="jb-node__tag">{{ tag }}</span>
     <div class="jb-node__discwrap">
       <button type="button" class="jb-node__disc" :aria-label="`${name}, ${status[state]}`" :aria-pressed="!!selected" :aria-busy="busy || undefined" @click="click">

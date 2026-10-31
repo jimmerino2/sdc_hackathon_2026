@@ -133,8 +133,11 @@ def _options(baseline: list[dict], own: dict[str, float], stage: str, picked: li
     return out
 
 
-def simulate(profile_id: str, skills: list[SkillScore], stage: str, picked: list[Interest], tried: list[SimulatedSkill], horizon: int, focus_role: str | None = None) -> SimulateResponse:
-    """The current profile against a copy with `tried` added. A skill the learner already has stays at the higher level."""
+def simulate(profile_id: str, skills: list[SkillScore], stage: str, picked: list[Interest], tried: list[SimulatedSkill], horizon: int, focus_role: str | None = None,
+             ai_skills: list[str] | None = None) -> SimulateResponse:
+    """The current profile against a copy with `tried` added. A skill the learner already has stays at the higher level.
+
+    With ai_skills, a third result is worked out on the copy: the focus role's key skills also include them, all learned in full."""
     catalogue = _catalogue()
     unknown = [s.name for s in tried if s.name.lower() not in catalogue]
     if unknown:
@@ -146,6 +149,10 @@ def simulate(profile_id: str, skills: list[SkillScore], stage: str, picked: list
         raise UnknownRole(focus_role)
     focus = focus_role or min(baseline, key=lambda t: _match(t, service.HEADLINE)[1])["role"]["onet_code"]
     simulated = service.score_roles(service.graded([*skills, *tried]), stage, picked, forecasts)
+    ai_names = list(dict.fromkeys(n.strip() for n in ai_skills or [] if n.strip()))
+    with_ai = (service.score_roles(service.graded([*skills, *tried, *(SkillScore(name=n, score=1.0) for n in ai_names)]), stage, picked, forecasts,
+                                   {focus: {n: service.AI_SKILL_WEIGHT for n in ai_names}}) if ai_names else None)
+    ai_after = {t["role"]["onet_code"]: t for t in with_ai or []}
     before = {t["role"]["onet_code"]: t for t in baseline}
     icons = service._role_icons()
 
@@ -157,7 +164,9 @@ def simulate(profile_id: str, skills: list[SkillScore], stage: str, picked: list
         scenarios = []
         for scenario, tab in service.SCENARIOS:
             (p0, r0, b0), (p1, r1, b1) = _match(was, scenario), _match(after, scenario)
+            ai = _match(ai_after[code], scenario) if code in ai_after else None
             scenarios.append(ScenarioComparison(scenario=scenario, tab=tab, current_percent=p0, simulated_percent=p1, change=p1 - p0, current_rank=r0, simulated_rank=r1,
+                                                ai_percent=ai[0] if ai else None, ai_rank=ai[1] if ai else None,
                                                 current=b0, simulated=b1, outlook=next((o for o in after["outlook"] if o.scenario == scenario), None),
                                                 explanation=_explain(title, p1 - p0, gained, replaced, r0, r1)))
         roles.append(RoleComparison(onet_code=code, title=title, icon=icons.get(code, service.DEFAULT_ICON), skills_owned_before=len(was["owned"]), skills_owned_after=len(after["owned"]),

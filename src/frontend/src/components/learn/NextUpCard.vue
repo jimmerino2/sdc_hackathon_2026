@@ -21,6 +21,9 @@ export interface NextUpSkill {
   links: { title: string; url: string; kind: string }[];
   /** How long it takes, and where that figure comes from. */
   time?: { text: string; note: string } | null;
+  /** A section's AI study guide: its blurb is what the AI wrote, with these steps under it, and there are no courses to offer. */
+  ai?: boolean;
+  steps?: string[];
 }
 
 const props = defineProps<{
@@ -92,12 +95,13 @@ const eyebrowText = computed(() => {
           <p class="jb-next__hint">Tap a skill to see how to learn it, then mark it done.</p>
         </div>
         <div v-else :key="`sel-${skill.id}-${skill.state}`" class="jb-next__body">
-          <span class="jb-next__kind">{{ skill.kind }}</span>
+          <span class="jb-next__kind" :class="{ 'jb-next__ai': skill.ai }">{{ skill.kind }}</span>
           <p v-if="skill.time" class="jb-next__hint"><b>About {{ skill.time.text }}</b> · {{ skill.time.note }}</p>
           <p v-if="goals.length" class="jb-next__sdgs" aria-label="Sustainable Development Goals this skill serves">
             <SdgTip v-for="g in goals" :key="g.sdg" :title="g.title" :targets="g.targets" :pill="g.color">SDG {{ g.sdg }}</SdgTip>
           </p>
           <p v-else-if="skill.blurb" class="jb-next__hint">{{ skill.blurb }}</p>
+          <ol v-if="skill.steps?.length" class="jb-next__steps"><li v-for="step in skill.steps" :key="step">{{ step }}</li></ol>
           <template v-if="skill.links.length">
             <section v-if="groups.free.length" class="jb-res jb-res--free" aria-label="Free resources">
               <button type="button" class="jb-res__head" :aria-expanded="freeOpen" aria-controls="res-free" @click="freeOpen = !freeOpen">
@@ -137,8 +141,8 @@ const eyebrowText = computed(() => {
               </div>
             </section>
           </template>
-          <p v-else class="jb-next__hint">We don’t have a recommended resource for this one yet.</p>
-          <HrdCard v-if="programmes" :programmes="programmes" />
+          <p v-else-if="!skill.ai" class="jb-next__hint">We don’t have a recommended resource for this one yet.</p>
+          <HrdCard v-if="programmes && !skill.ai" :programmes="programmes" />
           <div class="jb-next__cta">
             <JbButton v-if="skill.state === 'ready'" :disabled="busy" @click="$emit('complete')">{{ busy ? 'Saving…' : 'Mark as done' }}</JbButton>
             <p v-else-if="skill.state === 'done'" class="jb-next__note"><Icon name="check" :size="18" /> Marked as done</p>

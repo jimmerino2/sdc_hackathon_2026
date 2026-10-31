@@ -19,7 +19,18 @@ class Source(BaseModel):
     duration_minutes: int | None = Field(None, description="How long the resource says it takes, where its page states it; null if unknown")
 
 
+class Guide(BaseModel):
+    """What the model wrote for an AI study guide node (roadmap_detail.guide)."""
+
+    title: str
+    description: str = Field(description="How AI can help the learner study this section's skills")
+    steps: list[str] = Field(default_factory=list, description="Concrete things to do, in order")
+    sources: list[Source] = Field(default_factory=list, description="Where to read more, if any; empty when the guide is only the AI's description")
+
+
 class Node(BaseModel):
+    kind: Literal["skill", "ai_guide"] = Field("skill", description="ai_guide = a section's AI study guide: it must be done before the section's skills, and has no O*NET data of its own")
+    guide: Guide | None = Field(None, description="Set for an ai_guide node; its title is also skill_name")
     roadmap_detail_id: str = Field(description="Id of this node, used by POST /roadmap/complete/{roadmap_detail_id}")
     skill_id: str
     skill_name: str

@@ -213,3 +213,37 @@ def test_rising_skills_are_listed_first_and_flagged():
     flags = [o.rising for o in res.options]
     assert any(flags) and flags == sorted(flags, reverse=True)  # every rising skill comes before every other
     assert not any(o.rising for o in run(focus="15-2051.00").options)  # no trend data for that role's skills
+
+
+AI_SKILLS = ["AI-assisted web basics", "Checking AI output"]
+
+
+def test_without_ai_skills_there_is_no_third_result():
+    res = simulator.simulate("p", SKILLS, "fresh", [], [], 12)
+    assert all(s.ai_percent is None and s.ai_rank is None for r in res.roles for s in r.scenarios)
+
+
+def test_ai_skills_lift_the_focus_role_only_and_change_nothing_else():
+    plain = simulator.simulate("p", SKILLS, "fresh", [], [], 12)
+    res = simulator.simulate("p", SKILLS, "fresh", [], [], 12, None, AI_SKILLS)
+    focus = res.focus_role
+    for r, p in zip(res.roles, plain.roles):
+        for s, s0 in zip(r.scenarios, p.scenarios):
+            assert (s.current_percent, s.simulated_percent) == (s0.current_percent, s0.simulated_percent)  # today's and the tried skills' numbers are untouched
+            if r.onet_code == focus:
+                assert s.ai_percent > s.simulated_percent
+            else:
+                assert s.ai_percent == s.simulated_percent
+
+
+def test_the_ai_result_counts_the_skills_as_extra_key_skills_of_the_focus_role():
+    own = service.graded(SKILLS)
+    forecasts = service.outlooks(12)
+    code = simulator.simulate("p", SKILLS, "fresh", [], [], 12).focus_role
+    base = {t["role"]["onet_code"]: t for t in service.score_roles(own, "fresh", [], forecasts)}[code]
+    own_ai = service.graded([*SKILLS, *(SkillScore(name=n, score=1.0) for n in AI_SKILLS)])
+    more = {t["role"]["onet_code"]: t for t in service.score_roles(own_ai, "fresh", [], forecasts, {code: {n: service.AI_SKILL_WEIGHT for n in AI_SKILLS}})}[code]
+    assert more["role"]["key_skills"] == [*base["role"]["key_skills"], *AI_SKILLS]
+    assert more["skills"] > base["skills"]
+    w = base["role"]["weights"]
+    assert more["skills"] == pytest.approx((sum(w[n] * v for n, v in ((n, service._expand(own).get(n.lower(), 0.0)) for n in w)) + 2 * service.AI_SKILL_WEIGHT) / (sum(w.values()) + 2 * service.AI_SKILL_WEIGHT))

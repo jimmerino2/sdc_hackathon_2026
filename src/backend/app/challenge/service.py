@@ -42,7 +42,8 @@ def _goals(db: Client, interests: list, onet_code: str) -> list[tuple[int, float
 def _roadmap_stages(roadmap: Roadmap) -> tuple[list[Skill], list[int], list[Skill], list[int]]:
     """(stage 1 skills, their sections, stage 2's new skills, their sections) from a roadmap: sections 1-2, then the rest."""
     by_section = {
-        s.section: [Skill(n.skill_id, n.skill_name, n.skill_type, n.skill_group, n.importance, n.level) for u in s.units for n in u.nodes]
+        s.section: [Skill(n.skill_id, n.skill_name, n.skill_type, n.skill_group, n.importance, n.level) for u in s.units for n in u.nodes
+                    if n.kind == "skill"]  # an AI study guide is a step, not a skill a project can be built from
         for s in roadmap.sections
     }
     first, later = generator.stage_sections(list(by_section))

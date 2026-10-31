@@ -113,6 +113,9 @@ export interface ScenarioComparison {
   change: number;
   current_rank: number;
   simulated_rank: number;
+  /** The match with the AI skills sent to simulateSkills learned too. Null when none were sent; equal to simulated_percent for every role but the focus role. */
+  ai_percent?: number | null;
+  ai_rank?: number | null;
   current: MatchBreakdown | null;
   simulated: MatchBreakdown | null;
   outlook: ScenarioOutlook | null;
@@ -177,13 +180,14 @@ export async function fetchRecommendations(profileId: string): Promise<Recommend
 
 /** The matches now against the same profile with these skills added. Nothing is saved. */
 /** `focusRole` (an O*NET code) picks the role the skill options are for; leave it out for the best match. */
-export async function simulateSkills(profileId: string, skills: { name: string; score: number }[], focusRole?: string | null): Promise<SimulateResult> {
+/** aiSkills: names of the AI skills written for the focus role. They count as extra key skills of that role, learned in full, to give each role's ai_percent. */
+export async function simulateSkills(profileId: string, skills: { name: string; score: number }[], focusRole?: string | null, aiSkills: string[] = []): Promise<SimulateResult> {
   let res: Response;
   try {
     res = await fetch(`${API_URL}/jobs/simulate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ profile_id: profileId, skills, focus_role: focusRole ?? null }),
+      body: JSON.stringify({ profile_id: profileId, skills, focus_role: focusRole ?? null, ai_skills: aiSkills }),
     });
   } catch {
     throw new JobsError('Couldn’t reach Jobee. Check your connection and try again.');

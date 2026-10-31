@@ -35,6 +35,8 @@ interface FlowState {
   skillPlan: { status: 'idle' | 'loading' | 'done' | 'error'; role: string | null; skills: string[] };
   /** The learner's final skill list, set on the skills page; the roadmap is built from exactly these. Null = let the model choose. */
   roadmapSkills: string[] | null;
+  /** The skill list the roadmap was last built from, kept after the build uses up roadmapSkills, for the AI skills page to compare against. */
+  builtSkills: string[] | null;
 }
 
 const store = reactive<Record<PersonaKey, FlowState>>({
@@ -63,6 +65,7 @@ function init(k: PersonaKey): FlowState {
     roadmapPriority: [],
     skillPlan: { status: 'idle', role: null, skills: [] },
     roadmapSkills: null,
+    builtSkills: null,
   };
 }
 
@@ -75,6 +78,7 @@ export function openRoadmap(s: FlowState, onetCode: string, prioritySkills: stri
   s.chosenRoleId = onetCode;
   s.roadmapPriority = prioritySkills;
   s.roadmapSkills = null;
+  s.builtSkills = null;
   s.roadmap = { status: 'idle', data: null, error: null };
 }
 
@@ -136,7 +140,8 @@ export async function loadSkillPlan(s: FlowState) {
   }
 }
 
-/** Load the chosen role's roadmap into state.roadmap, building it first if needed (onEvent hears the build). Never throws. */
+/** Load the chosen role's roadmap into state.roadmap, building it first if needed (onEvent hears the build). Never throws.
+ *  It does not finish onboarding: the email step does, so the steps after the build (the AI skills, the email) stay open. */
 export async function loadRoadmap(s: FlowState, onEvent?: (event: RoadmapEvent) => void) {
   s.profileId ??= readProfileId();
   if (!s.profileId) {
@@ -155,12 +160,12 @@ export async function loadRoadmap(s: FlowState, onEvent?: (event: RoadmapEvent) 
       }
       s.chosenRoleId = saved.onet_code;
       s.roadmap = { status: 'done', data: saved, error: null };
-      markOnboarded();
+      markOnboarded(); // a returning learner resuming their saved roadmap
       return;
     }
     s.roadmap = { status: 'done', data: await ensureRoadmap(s.profileId, s.chosenRoleId, onEvent, s.roadmapPriority, s.roadmapSkills), error: null };
+    s.builtSkills = s.roadmapSkills;
     s.roadmapSkills = null; // used: later visits to the roadmap just open it
-    markOnboarded();
   } catch (e) {
     console.error(e);
     s.roadmap = { status: 'error', data: null, error: e instanceof RoadmapError ? e.message : 'Jobee couldn’t build your roadmap just now. Try again in a moment.' };
