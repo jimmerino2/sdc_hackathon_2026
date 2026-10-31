@@ -29,9 +29,6 @@ class Target:
 
 
 TARGETS: dict[str, Target] = {t.id: t for t in [
-    Target("ai_mention_share", "skill_demand",
-           "monthly mean of the daily share of new Indeed postings whose description mentions AI terms",
-           "percent of postings", "country x month", "indeed_ai_tracker", (1, 3, 6), "month", "implemented"),
     Target("btos_ai_use_rate", "business_adoption",
            "share of US businesses that used AI in the last two weeks, within one question wording",
            "percent of firms", "US sector x wording x fortnight", "census_btos", (6, 13), "fortnight", "implemented"),

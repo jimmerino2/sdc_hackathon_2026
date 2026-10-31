@@ -195,35 +195,9 @@ One row per **job** (46 rows) and one per **skill** (273 rows: every `skill_id` 
 
 ---
 
-## 9. `forecasting/ai_share_vintages.csv` and `forecasting/postings_vintages.csv`
+## 9. Removed: `ai_share_vintages.csv` and `postings_vintages.csv`
 
-The point-in-time store for the rebuilt forecast (`FORECAST_REBUILD.md`). There is one row per **published vintage × country × month**, so a backtest can see exactly what was public at any date. Both files are built by `src/backend/forecasting/vintages.py` from the git history of the two Indeed repos.
-
-- `ai_share_vintages.csv`: every AI Tracker vintage, 35 vintages (29 Apr 2024 to 8 Oct 2026), 24,273 rows.
-- `postings_vintages.csv`: per country, the last vintage of each calendar month, 76 commits (24 Feb 2021 to 20 Oct 2026), 23,660 rows.
-
-| Column           | Source                              | Type      | Derived from                                                                                                       |
-| ---------------- | ----------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------ |
-| `source_id`      | Ours                                | text      | `indeed_ai_tracker` or `indeed_postings` (keys of `forecasting/registry.py`)                                       |
-| `vintage_id`     | Indeed AI Tracker / Indeed Postings | text      | Commit SHA (12 characters) that published the file                                                                 |
-| `blob_sha`       | Indeed AI Tracker / Indeed Postings | text      | Git blob SHA of the file. Identical content republished later is kept once, under its first commit                 |
-| `available_at`   | Indeed AI Tracker / Indeed Postings | timestamp | Commit time in UTC: when the vintage became public. A forecast at time T may only use vintages with `available_at` ≤ T |
-| `source_file`    | Indeed AI Tracker / Indeed Postings | text      | Path in the repo (the file was renamed several times)                                                              |
-| `schema_version` | Ours                                | text      | The file's column names joined by a pipe character. A change marks a possible measurement break                    |
-| `geo`            | Indeed AI Tracker / Indeed Postings | text      | Country code (`jobcountry`). The AI Tracker's country set changes between vintages                                 |
-| `month`          | Ours                                | `YYYY-MM` | Daily dates grouped into months. Early files are day-first (`29/3/24`); the parser picks the format under which dates run day by day |
-| `value`          | Indeed AI Tracker / Indeed Postings | number    | Monthly mean of the daily value. AI: % of postings mentioning AI. Postings: index, 1 Feb 2020 = 100 (before mid-2021 Indeed published % change since 1 Feb 2020, converted as 100 + change) |
-| `numerator`      | Indeed AI Tracker                   | number    | Monthly sum of `AI_count`. Only in the Jul–Aug 2024 vintages; blank (never 0) otherwise                            |
-| `denominator`    | Indeed AI Tracker                   | number    | Monthly sum of `total` postings, same vintages                                                                     |
-| `n_days`         | Ours                                | int       | Days with data in the month                                                                                        |
-| `is_partial`     | Ours                                | bool      | `True` if `n_days` is below the days in the month. Partial months are never used as features or outcomes          |
-
-Caveats:
-
-- **Revisions are large.** The same AI-share country-month differs by 0.39 pp on average (1.58 pp at most) between the first and latest vintage.
-- **No vintage before 29 Apr 2024.** Earlier backtest origins are reconstructed (see `FORECAST_REBUILD.md` §4).
-
----
+These fed the AI mention share forecast, which has been removed.
 
 ## 10. `forecasting/btos_ai_observations.csv` and `forecasting/btos_calendar.csv`
 
@@ -324,7 +298,7 @@ Display only, not a model input. Task lengths each AI model completes at success
 
 ## Forecast outputs (`src/backend/forecasting/output/<target>/`)
 
-There is one folder per target: `ai_mention_share`, `btos_ai_use_rate`, `worker_genai_use_rate` and `frontier_time_horizon`.
+There is one folder per target: `btos_ai_use_rate`, `worker_genai_use_rate` and `frontier_time_horizon`.
 
 | File                            | One row per                                       | What it is                                                                                     |
 | ------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------- |

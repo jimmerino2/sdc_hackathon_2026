@@ -17,12 +17,6 @@ def test_adoption_models_use_no_cross_domain_source():
     specs = all_specs()
     assert set(specs["worker_genai_use_rate"].group_source.values()) == {"rps_genai"}  # no BTOS, no exposure
     assert set(specs["btos_ai_use_rate"].group_source.values()) == {"census_btos"}
-    assert "census_btos" not in set(specs["ai_mention_share"].group_source.values())
-
-
-def test_btos_is_not_a_skill_demand_feature():
-    with pytest.raises(C.SourceNotAllowed, match="census_btos"):
-        C.check_sources("ai_mention_share", "indeed_ai_tracker", {"census_btos"})
 
 
 def test_btos_is_not_an_occupation_adoption_label():
@@ -36,15 +30,12 @@ def test_forbidden_rules_survive_a_registry_edit(monkeypatch):
     monkeypatch.setitem(R.SOURCES, "census_btos", loose)
     with pytest.raises(C.SourceNotAllowed):
         C.check_sources("worker_genai_use_rate", "census_btos", set())
-    with pytest.raises(C.SourceNotAllowed):
-        C.check_sources("ai_mention_share", "indeed_ai_tracker", {"census_btos"})
 
 
 @pytest.mark.parametrize("label,target", [
     ("anthropic_ei", "worker_genai_use_rate"),        # task exposure is not adoption
     ("indeed_ai_tracker", "btos_ai_use_rate"),         # AI skill demand is not adoption
     ("indeed_ai_tracker", "worker_genai_use_rate"),
-    ("indeed_postings", "ai_mention_share"),           # posting growth is not skill demand / employment
     ("gdelt_doc", "frontier_time_horizon"),        # news volume is not capability
 ])
 def test_invalid_substitutions_are_refused(label, target):

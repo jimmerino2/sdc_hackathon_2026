@@ -4,7 +4,6 @@ Point-in-time forecasting pipeline with four separate targets, one per domain. N
 
 | Target | Domain | Source | Unit | Horizons |
 | --- | --- | --- | --- | --- |
-| `ai_mention_share` | skill demand | Indeed AI Tracker (+ postings) | country × month | 1, 3, 6 months |
 | `btos_ai_use_rate` | business adoption | Census BTOS | NAICS sector × wording × fortnight | 6, 13 fortnights |
 | `worker_genai_use_rate` | occupation adoption | RPS worker survey | SOC major group × quarter | 1, 2 quarters |
 | `frontier_time_horizon` | AI capability | METR time horizons via Epoch AI | METR suite version × month | 3, 6, 12 months + regime probabilities |

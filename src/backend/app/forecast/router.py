@@ -3,7 +3,8 @@ from fastapi import APIRouter, HTTPException, Query
 from app.config import get_settings
 from app.forecast import retrain as retraining
 from app.forecast import service, signals
-from app.forecast.schemas import DataSource, ForecastRow, JobForecast, QuarterInfo, Quarters, RetrainOut, RetrainRequest
+from app.forecast import sync as syncing
+from app.forecast.schemas import DataSource, ForecastRow, JobForecast, QuarterInfo, Quarters, RetrainOut, RetrainRequest, SyncOut
 
 router = APIRouter(prefix="/forecast", tags=["forecast"])
 
@@ -90,3 +91,21 @@ def refresh_forecast_data():
         raise HTTPException(status_code=403, detail="refreshing is turned off (set FORECAST_REFRESH_ENABLED=true)")
     retraining.clear()
     service.clear_caches()
+
+
+@router.post("/sync", response_model=SyncOut)
+def sync_trends():
+    """Pull the newest Indeed data, rebuild the tables and retrain the role forecasts, in about 10 seconds. The next GET /jobs/recommend uses them.
+
+    Then the AI forecasts whose tables changed run again, which takes minutes.
+
+    A failed run keeps the current data. Off unless FORECAST_REFRESH_ENABLED=true: 403 then, 409 if a sync is already running, 502 if it failed.
+    """
+    if not get_settings().forecast_refresh_enabled:
+        raise HTTPException(status_code=403, detail="syncing is turned off (set FORECAST_REFRESH_ENABLED=true)")
+    try:
+        return syncing.run()
+    except syncing.SyncBusy as e:
+        raise HTTPException(status_code=409, detail="A sync is already running.") from e
+    except syncing.SyncFailed as e:
+        raise HTTPException(status_code=502, detail=f"The sync failed, so the current data was kept: {e}") from e
