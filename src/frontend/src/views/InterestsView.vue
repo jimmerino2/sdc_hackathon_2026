@@ -31,7 +31,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <FlowShell :progress="2" next="outcome" back="who" :mood="status === 'error' ? 'surprised' : 'thinking'" :next-disabled="!state.interests.length">
+  <FlowShell :progress="2" next="resume" back="who" :mood="status === 'error' ? 'surprised' : 'thinking'" :next-disabled="!state.interests.length">
     <template #bubble>{{ status === 'error' ? error : personaCopy[key].interests }}</template>
 
     <div v-if="status === 'loading'" class="grid" aria-hidden="true">
