@@ -64,15 +64,19 @@ watch(() => props.onetCode, () => {
 
 /** The SDG targets the role and its skills serve (onet_roles_sdg / onet_skills_sdg). Null until loaded or if none. */
 const roleSdg = ref<RoleSdg | null>(null);
+/** True once the SDG request has answered (or failed), so the goals don't reshuffle after the page shows. */
+const sdgDone = ref(false);
 async function loadSdg() {
   const code = props.onetCode;
   roleSdg.value = null;
+  sdgDone.value = false;
   try {
     const r = await fetchRoleSdg(code);
     if (code === props.onetCode) roleSdg.value = r;
   } catch {
     // Not fatal: the page works without the targets.
   }
+  if (code === props.onetCode) sdgDone.value = true;
 }
 watch(() => props.onetCode, loadSdg, { immediate: true });
 /** The role's targets under one goal. */
@@ -113,6 +117,8 @@ const forecasts = ref<JobForecast[]>([]);
 const stored = ref<JobForecast[]>([]);
 const status = ref<'loading' | 'ready' | 'error'>('loading');
 const quarters = ref<Quarters | null>(null);
+/** True once the quarters request has answered (or failed); the picker's panel changes the layout, so it must be known before showing. */
+const quartersDone = ref(false);
 const retrained = ref<Retrained | null>(null);
 const busy = ref(false);
 /** True while a page opened with quarters already left out (?skip=) waits for its first retrained forecast, so the stored chart isn't shown first. */
@@ -152,6 +158,14 @@ async function load() {
   pickError.value = null;
   settling.value = !!(props.pickQuarter && props.skip);
   const code = props.onetCode;
+  quartersDone.value = !props.pickQuarter;
+  if (props.pickQuarter) {
+    // Fetched alongside the forecast so the picker is known before anything is shown.
+    fetchQuarters()
+      .then((q) => { if (code === props.onetCode) quarters.value = q; })
+      .catch(() => { if (code === props.onetCode) settling.value = false; }) // the chart still works without the picker
+      .finally(() => { if (code === props.onetCode) quartersDone.value = true; });
+  }
   try {
     const rows = await fetchJobForecasts(code);
     if (code !== props.onetCode) return; // another role was picked meanwhile; its own load will answer
@@ -160,9 +174,7 @@ async function load() {
     if (status.value === 'error') settling.value = false;
   } catch {
     if (code === props.onetCode) { status.value = 'error'; settling.value = false; }
-    return;
   }
-  if (props.pickQuarter) fetchQuarters().then((q) => (quarters.value = q)).catch(() => { settling.value = false; }); // the chart still works without the picker
 }
 onMounted(load);
 watch(() => props.onetCode, load);
@@ -316,12 +328,13 @@ const demand = computed(() =>
 const title = computed(() => meta.value?.title ?? 'This role');
 /** Onboarding shows one full-width loader until the chart is ready, so nothing below it appears first. */
 const painted = ref(false);
-// Ready means the data is in; painted means the chart has been drawn too, a frame later. Anything loading again (another role) starts over.
-watch(status, async (st) => {
+// Loaded means every request the page makes (forecast, quarters, SDG targets) has answered; painted means the chart has been drawn too, a frame later. Anything loading again (another role) starts over.
+const loaded = computed(() => status.value === 'ready' && quartersDone.value && sdgDone.value);
+watch(loaded, async (ok) => {
   painted.value = false;
-  if (st !== 'ready') return;
+  if (!ok) return;
   await nextTick();
-  requestAnimationFrame(() => requestAnimationFrame(() => { if (status.value === 'ready') painted.value = true; }));
+  requestAnimationFrame(() => requestAnimationFrame(() => { if (loaded.value) painted.value = true; }));
 }, { immediate: true });
 const waiting = computed(() => props.compact && status.value !== 'error' && (!painted.value || settling.value));
 /** The content around the chart (the three futures, the SDGs) waits for the chart, here and on the role page, so the headings never show before the role's name is known. A failed forecast shows its message alone. */
@@ -362,6 +375,14 @@ const hasMasco = computed(() => !!mascoRoles[props.onetCode]?.minors?.length);
         <MascoMap v-if="hasMasco" :onet-code="onetCode" :title="job?.title ?? title" />
         <p v-else class="empty card no-data">No data found for this O*NET job on eMASCO.</p>
       </section>
+
+      <div v-if="waiting" class="card page-skel" role="status" aria-label="Loading the forecast">
+        <span class="skel line short" />
+        <span class="skel line title" />
+        <span class="skel chart-block" />
+        <span class="skel line" />
+        <span class="skel line short" />
+      </div>
 
       <section v-show="!waiting && (compact || tab === 'forecast')" id="panel-forecast" :role="compact ? undefined : 'tabpanel'" aria-labelledby="tab-forecast" class="left">
         <template v-if="!compact"><h1>Here’s the AI outlook for {{ title }}</h1></template>
@@ -498,6 +519,10 @@ h1 { font-size: 34px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .chart-skel { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
 .chart-skel .skel:first-child { height: 170px; }
 .chart-skel .line { width: 60%; }
+.page-skel { display: flex; flex-direction: column; gap: 14px; padding: 22px 24px; }
+.page-skel .short { width: 30%; }
+.page-skel .title { height: 24px; width: 65%; }
+.page-skel .chart-block { height: 220px; }
 .gap-title { font-size: 25px; font-weight: 900; margin: 4px 0 16px; line-height: 1.2; }
 .chart { padding: 22px 24px; }
 .chart small { font-size: 13px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
