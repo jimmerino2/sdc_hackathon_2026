@@ -8,7 +8,7 @@ from app.config import get_settings
 def chat(prompt: str) -> str:
     settings = get_settings()
     client = OpenAI(
-        base_url="https://llm.grafilab.ai/v1",
+        base_url=settings.openrouter_base_url,
         api_key=settings.openrouter_api_key,
     )
     res = client.chat.completions.create(
@@ -25,7 +25,7 @@ def complete(prompt: str, *, system: str | None = None, model: str | None = None
     that should come back in a few seconds.
     """
     settings = get_settings()
-    client = OpenAI(base_url="https://llm.grafilab.ai/v1", api_key=settings.openrouter_api_key, timeout=60)
+    client = OpenAI(base_url=settings.openrouter_base_url, api_key=settings.openrouter_api_key, timeout=60)
     messages = ([{"role": "system", "content": system}] if system else []) + [{"role": "user", "content": prompt}]
     res = client.chat.completions.create(
         model=model or settings.openrouter_model, messages=messages, max_tokens=max_tokens, temperature=0,
@@ -41,7 +41,7 @@ def complete_stream(prompt: str, *, system: str | None = None, model: str | None
     on_reasoning(total_chars) is called as the model's hidden reasoning comes in, which is most of the wait when thinking is on.
     """
     settings = get_settings()
-    client = OpenAI(base_url="https://llm.grafilab.ai/v1", api_key=settings.openrouter_api_key, timeout=60)
+    client = OpenAI(base_url=settings.openrouter_base_url, api_key=settings.openrouter_api_key, timeout=60)
     messages = ([{"role": "system", "content": system}] if system else []) + [{"role": "user", "content": prompt}]
     res = client.chat.completions.create(
         model=model or settings.openrouter_model, messages=messages, max_tokens=max_tokens, temperature=0, stream=True,
