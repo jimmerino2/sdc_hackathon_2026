@@ -177,16 +177,21 @@ async function readBuild(res: Response, onEvent?: (event: RoadmapEvent) => void)
  * onEvent hears the build's progress, and `building` first when there is something to build; with a roadmap already
  * there it never fires. A server that can't stream (an older one) gets the plain request instead.
  * prioritySkills only matter for a new roadmap: an existing one and its progress are left as they are.
- * `skills` (names) are the learner's final list: the model then only arranges them, instead of choosing.
+ * `skills` (names) are the learner's final list: the model then only arranges them, instead of choosing. With a list the roadmap is always
+ * built fresh (replacing one that exists, keeping the steps already completed), so nothing is reused from an earlier build.
  */
 export async function ensureRoadmap(profileId: string, onetCode: string, onEvent?: (event: RoadmapEvent) => void, prioritySkills: string[] = [], skills: string[] | null = null): Promise<Roadmap> {
-  const existing = await getRoadmap(profileId, onetCode);
-  if (existing) return existing;
+  // A chosen skill list means a new roadmap: build it fresh even if one exists (progress is carried over by the server).
+  const rebuild = skills !== null;
+  if (!rebuild) {
+    const existing = await getRoadmap(profileId, onetCode);
+    if (existing) return existing;
+  }
   onEvent?.({ type: 'building' });
   const init: RequestInit = {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ profile_id: profileId, onet_code: onetCode, priority_skills: prioritySkills, skills }),
+    body: JSON.stringify({ profile_id: profileId, onet_code: onetCode, priority_skills: prioritySkills, skills, replace: rebuild }),
   };
   let res = await call('/stream', init);
   if (res.status === 404 || res.status === 405) res = await call('', init);

@@ -162,6 +162,7 @@ export async function loadRoadmap(s: FlowState, onEvent?: (event: RoadmapEvent) 
       return;
     }
     s.roadmap = { status: 'done', data: await ensureRoadmap(s.profileId, s.chosenRoleId, onEvent, s.roadmapPriority, s.roadmapSkills), error: null };
+    s.roadmapSkills = null; // used: later visits to the roadmap just open it
     markOnboarded();
   } catch (e) {
     console.error(e);
