@@ -42,6 +42,19 @@ export function findKeywords(text: string): KeywordHit[] {
   return [...text.matchAll(MATCHER)].map((m) => ({ key: ALIAS_TO.get(m[1].toLowerCase())!, start: m.index!, end: m.index! + m[1].length }));
 }
 
+/** Skills the AI inferred rather than found written down: enough to be useful, few enough to stay believable. */
+export const MAX_INFERRED = 5;
+
+/** Keeps every skill the resume names and only the strongest inferred ones. `skills` is strongest first. */
+export function limitInferred<T extends { name: string }>(skills: T[], resume: { counts: Record<string, number>; text: string }): T[] {
+  const counted = new Set(Object.keys(resume.counts).map((k) => k.toLowerCase()));
+  let inferred = 0;
+  return skills.filter((s) => {
+    const label = displayName(s.name).toLowerCase();
+    return counted.has(label) || resume.text.includes(label) || ++inferred <= MAX_INFERRED;
+  });
+}
+
 /** Taxonomy names the shared labels don't shorten. */
 const EXTRA_LABELS: Record<string, string> = { 'Amazon Redshift': 'Redshift', 'Amazon DynamoDB': 'DynamoDB' };
 

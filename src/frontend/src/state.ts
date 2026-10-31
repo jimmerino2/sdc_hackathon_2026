@@ -18,8 +18,6 @@ interface FlowState {
   scenario: ScenarioKey;
   /** Which /outlook metric the scenario picker's percentages are read from (data/outlookScenarios.ts target id). */
   scenarioMetric: string;
-  /** Roles page layout: role cards, or the demand-vs-AI chart. */
-  rolesView: 'cards' | 'chart';
   chosenRoleId: string | null;
   profileId: string | null;
   resume: { filename: string; size: number; pages: number; skills: SkillScore[] } | null;
@@ -54,7 +52,6 @@ function init(k: PersonaKey): FlowState {
     levels: {},
     scenario: 'accelerates',
     scenarioMetric: DEFAULT_SCENARIO_METRIC,
-    rolesView: 'cards',
     chosenRoleId: null,
     profileId: null,
     resume: null,

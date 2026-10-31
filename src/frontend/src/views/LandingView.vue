@@ -38,7 +38,7 @@ h1 { text-wrap: balance; font-size: 40px; line-height: 1.18; font-weight: 900; l
 @media (max-width: 860px) {
   header { padding: 18px 20px; }
   .hero { grid-template-columns: 1fr; gap: 20px; padding: 0 20px 40px; align-content: center; }
-  h1 { font-size: 30px; }
+  h1 { font-size: 34px; }
   .copy { gap: 28px; }
 }
 @media (prefers-reduced-motion: reduce) { h1, .ctas { animation: none; } }

@@ -5,10 +5,10 @@ import ChartWatcher from './ChartWatcher.vue';
 import ForecastInfo from './ForecastInfo.vue';
 import Icon from './Icon.vue';
 import QuarterPicker from './QuarterPicker.vue';
+import ScenarioPanel from './ScenarioPanel.vue';
 import { scenarios, type ScenarioKey } from '../data/flows';
 import { skillLabel } from '../data/skills';
 import { useFlow } from '../state';
-import { useScenarioProbabilities } from '../composables/useScenarioProbabilities';
 import { personaCopy } from '../data/personaCopy';
 import { month } from '../occupational/format';
 import { formatSkip, parseSkip } from '../data/quarterPick';
@@ -30,13 +30,6 @@ const props = defineProps<{
 const emit = defineEmits<{ 'update:skip': [skip: string | null] }>();
 
 const { state, key } = useFlow();
-const { metrics, metricTarget, pct } = useScenarioProbabilities();
-const activeMetricLabel = computed(() => metrics.find((m) => m.target === metricTarget.value)?.label ?? 'selected indicator');
-const scenarioTooltip = computed(
-  () => `Statistical likelihood of this AI scenario occurring, based on ${activeMetricLabel.value.toLowerCase()} forecasts. Does not reflect your job match.`
-);
-/** Each future keeps its place (accelerates, steady, slows) and its colour, whatever its chance is. */
-const chanceColor = { accelerates: '#2e7d4f', steady: 'var(--amber-ink)', slows: '#c62828' } as const;
 const base = import.meta.env.BASE_URL;
 /** The role's SDGs that one of the learner's interests points at, and the ones that come from the role itself. */
 const fromInterests = computed(() => props.job?.sdg_reasons?.filter((r) => r.interests.length) ?? []);
@@ -245,23 +238,25 @@ const axis = computed(() => {
   ].filter((a) => a.label).map((a) => ({ x: sx(a.m), label: month(a.label), today: a.m === 0 }));
 });
 const meta = computed(() => forecasts.value[0]);
-/** This role's 12-month postings change under one scenario, e.g. "−3.2% by Sep 2027". */
+/** This role's 12-month demand change under one scenario, e.g. "−3.2% demand by Sep 2027". */
 function outcome(k: ScenarioKey) {
   const last = byScenario.value[k]?.outlook.at(-1);
   if (!last) return 'No forecast yet';
   const [y, m] = last.forecast_for.split('-');
   const month = new Date(Number(y), Number(m) - 1).toLocaleString('en', { month: 'short' });
   const pct = figure(last).pct;
-  return `${pct > 0 ? '+' : ''}${pct}% postings by ${month} ${y}`;
+  return `${pct > 0 ? '+' : ''}${pct}% demand by ${month} ${y}`;
 }
-/** Which way postings head under one scenario, so the eye goes to ups (green) and downs (red). */
+/** Which way demand heads under one scenario, so the eye goes to ups (green) and downs (red). */
 function trendOf(k: ScenarioKey) {
   const last = byScenario.value[k]?.outlook.at(-1);
   const v = last ? figure(last).pct : 0;
-  if (v >= 0.5) return { icon: 'tup', cls: 'trend-up' };
-  if (v <= -0.5) return { icon: 'tdown', cls: 'trend-down' };
-  return { icon: 'arrow', cls: 'trend-flat' };
+  return v >= 0.5 ? 'trend-up' : v <= -0.5 ? 'trend-down' : 'trend-flat';
 }
+/** Each future's demand for the picker, once the forecast has loaded. */
+const demand = computed(() =>
+  status.value === 'ready' ? (Object.fromEntries(scenarios.map((s) => [s.key, { text: outcome(s.key), trend: trendOf(s.key) }])) as Record<ScenarioKey, { text: string; trend: string }>) : undefined,
+);
 const title = computed(() => meta.value?.title ?? 'This role');
 const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
 </script>
@@ -270,14 +265,13 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
   <div class="wrap" :class="{ compact, split: pickQuarter && quarters }">
       <section class="left">
         <h1 v-if="!compact">Here’s the AI outlook for {{ title }}</h1>
-        <p v-else class="signal-note">{{ personaCopy[key].signalNote }}</p>
         <div class="card chart">
-          <small>{{ title }} · {{ useModel ? 'machine-learning forecast' : 'postings outlook' }}</small>
+          <small>{{ title }} · {{ useModel ? 'machine-learning forecast' : 'demand outlook' }}</small>
           <h2>Three possible futures, next 12 months</h2>
           <div v-if="status === 'loading'" class="chart-skel" aria-hidden="true"><span class="skel" /><span class="skel line" /></div>
           <p v-else-if="status === 'error'" class="state">Couldn’t reach the forecast service. Make sure the backend is running on port 8000.</p>
           <template v-else>
-            <svg :class="{ busy }" viewBox="0 0 440 190" role="img" :aria-label="`Forecast of ${title} job postings under three AI scenarios`">
+            <svg :class="{ busy }" viewBox="0 0 440 190" role="img" :aria-label="`Forecast of ${title} demand under three AI scenarios`">
               <g stroke="#eceae5"><line v-for="t in ticks" :key="t" :x1="X0" :x2="X1" :y1="sy(t)" :y2="sy(t)" :stroke="t === 0 ? '#c2bfba' : '#eceae5'" /></g>
               <text v-for="t in ticks" :key="'l' + t" :x="X0 - 6" :y="sy(t) + 3" font-size="9" font-weight="800" text-anchor="end" fill="#8a8782">{{ t > 0 ? '+' : '' }}{{ t }}%</text>
               <polygon :points="rangePoly" fill="#fff3cc" opacity=".7" />
@@ -294,12 +288,18 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
             <svg class="axis" viewBox="0 0 440 16" aria-hidden="true">
               <text v-for="a in axis" :key="a.x" :x="a.x" y="11" font-size="9" font-weight="900" text-anchor="middle" :fill="a.today ? '#1e1e1e' : '#8a8782'">{{ a.today ? `TODAY · ${a.label}` : a.label }}</text>
             </svg>
+            <ul class="key" aria-label="Chart legend">
+              <li><i class="k-past" />Past demand</li>
+              <li><i class="k-picked" />Selected future</li>
+              <li><i class="k-other" />Other futures</li>
+              <li><i class="k-band" />How far past forecasts missed</li>
+            </ul>
             <p class="note">
               <template v-if="useModel">
-                Change in {{ title }} job postings vs today, forecast by a machine-learning model (LightGBM) trained on the sector’s monthly postings, then shifted by how AI-exposed this role is under each scenario. Shaded band is how far the model’s past forecasts missed, not a confidence interval. {{ modelCheck }}
+                Change in {{ title }} demand vs today, forecast by a machine-learning model (LightGBM) trained on the sector’s monthly postings, then shifted by how AI-exposed this role is under each scenario. Shaded band is how far the model’s past forecasts missed, not a confidence interval. {{ modelCheck }}
               </template>
               <template v-else>
-                Change in {{ title }} job postings vs today: the sector’s recent pace, shifted by how AI-exposed this role is under each scenario. Shaded band is the historical error band for the selected future: how far past forecasts missed, not a confidence interval.
+                Change in {{ title }} demand vs today: the sector’s recent pace, shifted by how AI-exposed this role is under each scenario. Shaded band is the historical error band for the selected future: how far past forecasts missed, not a confidence interval.
               </template>
               {{ meta?.is_proxy_for_malaysia ? 'Uses US postings data as a stand-in for Malaysia. ' : '' }}Indicative, not a prediction.
               <template v-if="meta"> Issued {{ meta.data_as_of ?? 'date not available' }}; last observation {{ meta.forecast_from }}.</template>
@@ -312,32 +312,37 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
       </section>
       <section class="right">
         <ChartWatcher v-if="!compact" class="bub">Nobody knows the future for sure, so I plan for all three.</ChartWatcher>
-        <div class="metric-wrap">
-          <span class="seg-label">Chances from</span>
-          <div class="metric-seg" role="radiogroup" aria-label="Metric the chances are based on">
-            <button
-              v-for="m in metrics"
-              :key="m.target"
-              type="button"
-              role="radio"
-              :aria-checked="metricTarget === m.target"
-              :class="{ on: metricTarget === m.target }"
-              @click="metricTarget = m.target"
-            >{{ m.label }}</button>
+        <ScenarioPanel :demand="demand" />
+        <slot name="actions" />
+      </section>
+
+      <section v-if="!compact" class="gap-row">
+        <p class="eyebrow">Your skill gap</p>
+        <h1 v-if="!compact">Here’s how close you are to {{ title }}</h1>
+        <template v-if="job">
+          <h2 v-if="compact" class="gap-title">{{ job.skills_owned }} of {{ job.skills_total }} key skills already yours</h2>
+          <Bubble v-else class="b" :size="60">
+            You already have {{ job.skills_owned }} of {{ job.skills_total }} key skills.
+            Let’s close the rest{{ firstName ? `, ${firstName}` : '' }}.
+          </Bubble>
+          <div class="gap-cards">
+            <div class="card block">
+              <div class="head"><h2>{{ compact ? personaCopy[key].haveTitle : 'Already yours' }}</h2><span class="pill pill-dark">{{ job.skills_you_have.length }} skills</span></div>
+              <div v-if="job.skills_you_have.length" class="chips">
+                <span v-for="s in job.skills_you_have" :key="s" class="chip chip-have"><Icon name="check" :size="14" :stroke="3" /> {{ skillLabel(s) }}</span>
+              </div>
+              <p v-else class="empty">None of this role’s key skills yet. Everyone starts somewhere.</p>
+            </div>
+            <div class="card block">
+              <div class="head"><h2>{{ compact ? personaCopy[key].gapTitle : 'Close your gap' }}</h2><span class="pill">{{ job.skills_to_learn.length }} to build</span></div>
+              <div v-if="job.skills_to_learn.length" class="chips">
+                <span v-for="s in job.skills_to_learn" :key="s" class="chip chip-gap"><Icon name="sparkles" :size="14" /> {{ skillLabel(s) }}</span>
+              </div>
+              <p v-else class="empty">You already cover every key skill for this role.</p>
+            </div>
           </div>
-        </div>
-        <button v-for="s in scenarios" :key="s.key" class="option sc" :class="{ selected: state.scenario === s.key }" @click="state.scenario = s.key">
-          <span class="ic" :class="trendOf(s.key).cls"><Icon :name="trendOf(s.key).icon" :size="22" :stroke="2.6" /></span>
-          <span>
-            <span class="pills">
-              <em v-if="pct(s.key) != null" class="pill pill-chance" :style="{ '--rc': chanceColor[s.key] }" :title="scenarioTooltip" :aria-label="scenarioTooltip">{{ pct(s.key) }}% chance</em>
-              <em class="pill" :class="{ 'pill-yellow': state.scenario === s.key }">{{ outcome(s.key) }}</em>
-            </span>
-            <h3>{{ s.title }}</h3><p>{{ s.blurb }}</p>
-          </span>
-          <span v-if="state.scenario === s.key" class="tick"><Icon name="check" :size="14" :stroke="3" /></span>
-        </button>
-        <p v-if="!compact" class="hint">Tap a future to see how {{ title }} fares in it.</p>
+        </template>
+        <p v-else class="empty">Pick this role from your matches to see which skills you already have and which to build.</p>
       </section>
 
       <aside v-if="pickQuarter && quarters" class="aside" aria-label="Choose the data the forecast is trained on">
@@ -383,77 +388,41 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
         </div>
         <p class="sdg-credit">SDG icons: United Nations. The UN has not approved this app.</p>
       </section>
-
-      <section v-if="!compact" class="gap-row">
-        <p class="eyebrow">Your skill gap</p>
-        <h1 v-if="!compact">Here’s how close you are to {{ title }}</h1>
-        <template v-if="job">
-          <h2 v-if="compact" class="gap-title">{{ job.skills_owned }} of {{ job.skills_total }} key skills already yours</h2>
-          <Bubble v-else class="b" :size="60">
-            You already have {{ job.skills_owned }} of {{ job.skills_total }} key skills.
-            Let’s close the rest{{ firstName ? `, ${firstName}` : '' }}.
-          </Bubble>
-          <div class="gap-cards">
-            <div class="card block">
-              <div class="head"><h2>{{ compact ? personaCopy[key].haveTitle : 'Already yours' }}</h2><span class="pill pill-dark">{{ job.skills_you_have.length }} skills</span></div>
-              <div v-if="job.skills_you_have.length" class="chips">
-                <span v-for="s in job.skills_you_have" :key="s" class="chip chip-have"><Icon name="check" :size="14" :stroke="3" /> {{ skillLabel(s) }}</span>
-              </div>
-              <p v-else class="empty">None of this role’s key skills yet. Everyone starts somewhere.</p>
-            </div>
-            <div class="card block">
-              <div class="head"><h2>{{ compact ? personaCopy[key].gapTitle : 'Close your gap' }}</h2><span class="pill">{{ job.skills_to_learn.length }} to build</span></div>
-              <div v-if="job.skills_to_learn.length" class="chips">
-                <span v-for="s in job.skills_to_learn" :key="s" class="chip chip-gap"><Icon name="sparkles" :size="14" /> {{ skillLabel(s) }}</span>
-              </div>
-              <p v-else class="empty">You already cover every key skill for this role.</p>
-            </div>
-          </div>
-        </template>
-        <p v-else class="empty">Pick this role from your matches to see which skills you already have and which to build.</p>
-      </section>
     </div>
 </template>
 
 <style scoped>
 .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 28px; }
-h1 { font-size: 30px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
+h1 { font-size: 34px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 
-.compact { grid-template-columns: 1fr; gap: 16px; }
+.compact { gap: 24px; }
 .chart-skel { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
 .chart-skel .skel:first-child { height: 170px; }
 .chart-skel .line { width: 60%; }
-.sc .ic { align-self: center; }
-.signal-note { font-size: 14px; font-weight: 700; color: var(--muted); line-height: 1.4; margin: 0 0 4px; }
-.gap-title { font-size: 22px; font-weight: 900; margin: 4px 0 16px; line-height: 1.2; }
+.gap-title { font-size: 25px; font-weight: 900; margin: 4px 0 16px; line-height: 1.2; }
 .chart { padding: 22px 24px; }
-.chart small { font-size: 11px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
-.chart h2 { font-weight: 900; font-size: 20px; margin: 6px 0 14px; }
+.chart small { font-size: 13px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.chart h2 { font-weight: 900; font-size: 23px; margin: 6px 0 14px; }
 .chart > svg { width: 100%; overflow: visible; margin-top: 16px; transition: opacity .2s; }
 .chart > svg.busy { opacity: .45; }
-.state { margin: 18px 0 6px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.state { margin: 18px 0 6px; font-size: 15px; font-weight: 700; color: var(--muted); }
 .chart > svg.axis { margin-top: 4px; }
-.note { margin-top: 14px; font-size: 11px; color: var(--muted); font-weight: 600; line-height: 1.4; }
+.note { margin-top: 14px; font-size: 13px; color: var(--muted); font-weight: 600; line-height: 1.4; }
+.key { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 12px; font-size: 14px; font-weight: 700; color: var(--muted); }
+.key li { display: inline-flex; align-items: center; gap: 7px; }
+.key i { flex: none; width: 20px; }
+.k-past { border-top: 3px solid #1e1e1e; }
+.k-picked { border-top: 5px solid #ff9800; border-radius: 3px; }
+.k-other { border-top: 3px dotted #c2bfba; }
+.k-band { height: 12px; border-radius: 3px; background: #fff3cc; box-shadow: inset 0 0 0 1px #e8d9a0; }
 .left, .chart { min-width: 0; }
 .fi-gap { margin-top: 12px; }
 .right { display: flex; flex-direction: column; gap: 14px; }
 .bub { margin-bottom: 8px; flex-direction: row-reverse; }
-.sc { align-items: center; } .sc h3 { margin-top: 4px; font-size: 17px; }
-.pills { display: flex; flex-wrap: wrap; gap: 6px; }
-.pill-chance { background: none; box-shadow: inset 0 0 0 1.5px var(--rc, var(--line-strong)); color: var(--rc, var(--muted)); }
-.metric-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.seg-label { font-size: 13px; font-weight: 900; color: var(--muted); }
-.metric-seg { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); padding: 4px; border-radius: 14px; background: var(--line); }
-.metric-seg button { padding: 7px 4px; border-radius: 10px; font-weight: 900; font-size: 11px; color: var(--muted); text-align: center; line-height: 1.2; transition: background .15s, color .15s; }
-.metric-seg button:hover { color: var(--ink); }
-.metric-seg button.on { background: #fff; color: var(--ink); box-shadow: 0 2px 0 rgba(30, 30, 30, .1); }
-.sc .tick { align-self: center; }
-.sc p { font-size: 13px; line-height: 1.35; }
-.hint { font-size: 12px; font-weight: 700; color: var(--muted); }
 .sdg-row { grid-column: 1 / -1; margin-top: 12px; }
 .sdg-group { margin-top: 6px; }
 .sdg-group + .sdg-group { margin-top: 26px; }
-.sdg-title { font-size: 20px; font-weight: 900; margin: 4px 0 14px; line-height: 1.2; }
+.sdg-title { font-size: 23px; font-weight: 900; margin: 4px 0 14px; line-height: 1.2; }
 .sdg-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 18px; }
 .sdg-card { width: 148px; display: flex; flex-direction: column; gap: 10px; }
 .sdg-tile { display: block; width: 100%; height: auto; border-radius: 12px; box-shadow: 0 4px 0 rgba(30, 30, 30, .12); }
@@ -462,18 +431,18 @@ h1 { font-size: 30px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .sdg-from .chip svg { flex: none; }
 .sdg-card.why { width: 230px; }
 .sdg-card.why .sdg-tile { width: 148px; }
-.sdg-why { font-size: 13px; font-weight: 600; line-height: 1.4; color: var(--muted); margin: 0 0 6px 4px; }
+.sdg-why { font-size: 15px; font-weight: 600; line-height: 1.4; color: var(--muted); margin: 0 0 6px 4px; }
 .sdg-why-skel { display: block; width: 100%; height: 36px; border-radius: 10px; margin-bottom: 6px; }
-.sdg-credit { margin-top: 14px; font-size: 11px; font-weight: 600; color: var(--muted); }
+.sdg-credit { margin-top: 14px; font-size: 13px; font-weight: 600; color: var(--muted); }
 .gap-row { grid-column: 1 / -1; margin-top: 12px; }
 .gap-row .b { margin-bottom: 18px; }
 .gap-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .block { padding: 20px 22px; }
 .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-.head h2 { font-weight: 900; font-size: 17px; }
+.head h2 { font-weight: 900; font-size: 19px; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.empty { font-size: 13px; font-weight: 700; color: var(--muted); }
-@media (max-width: 900px) { .wrap, .gap-cards { grid-template-columns: 1fr; } }
+.empty { font-size: 15px; font-weight: 700; color: var(--muted); }
+@media (max-width: 900px) { .wrap, .gap-cards { grid-template-columns: 1fr; } .bub { display: none; } }
 
 /* The chart and the futures on the left, the data panel beside them; on a narrow screen the panel sits between the two. */
 .wrap.split { grid-template-columns: minmax(0, 1fr) 320px; grid-template-areas: 'left aside' 'right aside'; align-items: start; column-gap: 24px; }

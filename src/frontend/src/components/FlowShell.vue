@@ -93,7 +93,7 @@ header { background: var(--bg); padding-top: 20px; border-bottom: 2px solid var(
 .bee { flex: none; }
 .bubble {
   position: relative; background: #fff; border: 2px solid var(--line-strong); border-radius: 18px;
-  padding: 12px 18px; font-size: 20px; font-weight: 900; line-height: 1.3; letter-spacing: -.005em;
+  padding: 12px 18px; font-size: 23px; font-weight: 900; line-height: 1.3; letter-spacing: -.005em;
   text-wrap: pretty;
   animation: say .35s cubic-bezier(.2, .8, .3, 1.2) both;
 }
@@ -112,7 +112,7 @@ footer { background: var(--bg); border-top: 2px solid var(--line); padding: 14px
 .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .right { margin-left: auto; display: flex; align-items: center; gap: 18px; }
 .skip, .right :slotted(.skip) {
-  font-size: 13px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+  font-size: 15px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
   padding: 10px 6px; border-radius: 10px; white-space: nowrap; transition: color .15s;
 }
 .skip:hover, .right :slotted(.skip:hover) { color: var(--ink); }
@@ -121,18 +121,18 @@ footer { background: var(--bg); border-top: 2px solid var(--line); padding: 14px
   header { padding-top: 12px; }
   .say { gap: 12px; padding-top: 12px; padding-bottom: 12px; }
   .bee { font-size: 46px !important; }
-  .bubble { font-size: 17px; padding: 10px 14px; }
+  .bubble { font-size: 19px; padding: 10px 14px; }
   .content { padding-top: 18px; padding-bottom: 24px; }
   footer { padding-top: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
-  .btn { padding: 14px 18px; font-size: 14px; }
+  .btn { padding: 14px 18px; font-size: 16px; }
   .right { gap: 10px; }
-  .skip, .right :slotted(.skip) { font-size: 12px; letter-spacing: .05em; }
+  .skip, .right :slotted(.skip) { font-size: 14px; letter-spacing: .05em; }
 }
 @media (max-height: 620px) {
   header { padding-top: 10px; }
   .say { padding-top: 8px; padding-bottom: 8px; }
   .bee { font-size: 40px !important; }
-  .bubble { font-size: 16px; padding: 8px 12px; }
+  .bubble { font-size: 18px; padding: 8px 12px; }
   .content { padding-top: 14px; }
   footer { padding-top: 8px; padding-bottom: 8px; }
   .btn { padding: 12px 18px; }

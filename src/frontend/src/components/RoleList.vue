@@ -22,8 +22,6 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{ select: [code: string] }>();
 
-const CHIPS = 3; // skills shown per side in the open row
-
 const { state } = useFlow();
 const scenarioName = computed(() => backendScenario[state.value.scenario]);
 /** The roles, best match first under the chosen AI future, so the order and the Best match tag follow the tab. */
@@ -85,13 +83,6 @@ const matchTooltip = 'Compatibility match based on your skills, interests, caree
             </span>
           </span>
           <span class="sub">{{ j.skills_owned }} of {{ j.skills_total }} key skills</span>
-          <span v-if="picking && selected === j.onet_code" class="more">
-            <span class="blurb">{{ j.description }}</span>
-            <span class="chips">
-              <span v-for="s in j.skills_you_have.slice(0, CHIPS)" :key="s" class="chip chip-have"><Icon name="check" :size="13" :stroke="3" /> {{ skillLabel(s) }}</span>
-              <span v-for="s in j.skills_to_learn.slice(0, CHIPS)" :key="s" class="chip chip-gap"><Icon name="sparkles" :size="13" /> {{ skillLabel(s) }}</span>
-            </span>
-          </span>
         </span>
         <span
           class="trend"
@@ -103,12 +94,18 @@ const matchTooltip = 'Compatibility match based on your skills, interests, caree
           <b>{{ change(j) }}</b>
         </span>
         <Icon v-if="!picking" name="arrow" :size="18" class="go" />
+        <span v-if="picking && selected === j.onet_code" class="more">
+            <span class="chips">
+              <span v-for="s in j.skills_you_have" :key="s" class="chip chip-have"><Icon name="check" :size="13" :stroke="3" /> {{ skillLabel(s) }}</span>
+              <span v-for="s in j.skills_to_learn" :key="s" class="chip chip-neutral">{{ skillLabel(s) }}</span>
+          </span>
+        </span>
       </button>
       <MatchWhy :job="j" :scenario="scenarioName" :stage="stage" />
       </div>
     </div>
     <p class="note">
-      The arrow shows forecast job ads {{ by }}.
+      The arrow shows forecast demand {{ by }}.
     </p>
     <SourceStamp />
   </div>
@@ -121,15 +118,16 @@ const matchTooltip = 'Compatibility match based on your skills, interests, caree
 .item:has(.selected) { filter: drop-shadow(0 4px 0 var(--orange)); }
 .item .role { z-index: 1; box-shadow: none; }
 .role { align-items: flex-start; padding: 16px 18px; }
+.role.selected { flex-wrap: wrap; }
 /* Match ring: the filled arc is the match %. */
 .score {
   flex: none; width: 58px; height: 58px; border-radius: 50%; display: grid; place-content: center; text-align: center;
   background: radial-gradient(closest-side, #fff 76%, transparent 78%), conic-gradient(var(--orange) calc(var(--p) * 1%), var(--line) 0);
 }
 .score.best { background: radial-gradient(closest-side, var(--yellow) 76%, transparent 78%), conic-gradient(var(--ink) calc(var(--p) * 1%), var(--line) 0); }
-.score b { font-size: 18px; font-weight: 900; line-height: 1; color: var(--ink); }
-.score b small { font-size: 11px; font-weight: 900; }
-.score span { font-size: 9px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: 1px; }
+.score b { font-size: 20px; font-weight: 900; line-height: 1; color: var(--ink); }
+.score b small { font-size: 13px; font-weight: 900; }
+.score span { font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: 1px; }
 .score.best span { color: var(--ink); }
 .role:not(.selected) { align-items: center; }
 .role:not(.selected) .trend, .role:not(.selected) .go, .role:not(.selected) .radio { margin-top: 0; }
@@ -137,20 +135,21 @@ const matchTooltip = 'Compatibility match based on your skills, interests, caree
 .selected .radio { background: var(--ink); border-color: var(--ink); color: var(--yellow); }
 .body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; text-align: left; }
 .title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.role h3 { font-size: 17px; }
-.sub { font-size: 13px; font-weight: 700; color: var(--muted); }
-.rm { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; border: 2px solid var(--line-strong); color: var(--muted); background: #fff; }
+.role h3 { font-size: 19px; }
+.sub { font-size: 15px; font-weight: 700; color: var(--muted); }
+.rm { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 800; border: 2px solid var(--line-strong); color: var(--muted); background: #fff; }
 .rm.ready { background: var(--cream); border-color: var(--yellow); color: var(--ink); }
 .rm.started { background: var(--yellow); border-color: var(--yellow); color: var(--ink); }
 .rm.completed { background: var(--ink); border-color: var(--ink); color: var(--yellow); }
-.more { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; animation: open .2s ease both; }
-.blurb { font-size: 13px; font-weight: 600; color: var(--muted); line-height: 1.45; }
+.more { flex: 0 0 100%; display: flex; flex-direction: column; gap: 12px; animation: open .2s ease both; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { font-size: 12px; padding: 5px 10px 5px 8px; }
+.chip { font-size: 14px; padding: 5px 10px; }
+.chip-have { padding-left: 8px; }
+.chip-neutral { padding: 3px 10px; }
 .trend { display: inline-flex; align-items: center; gap: 4px; flex: none; margin-top: 1px; }
-.trend b { font-size: 16px; font-weight: 900; }
+.trend b { font-size: 18px; font-weight: 900; }
 .go { flex: none; margin-top: 2px; color: var(--muted); }
-.note { margin-top: 16px; font-size: 12px; font-weight: 600; color: var(--muted); line-height: 1.5; }
+.note { margin-top: 16px; font-size: 14px; font-weight: 600; color: var(--muted); line-height: 1.5; }
 @keyframes open { from { opacity: 0; transform: translateY(-4px); } }
 
 </style>

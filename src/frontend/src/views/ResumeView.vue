@@ -1,5 +1,13 @@
+<script lang="ts">
+import { shallowRef } from 'vue';
+import type { ResumePreview } from '../api/readResumePdf';
+
+/** The resume's preview. Kept outside the component so it survives a trip to the skill check and back. */
+const doc = shallowRef<ResumePreview | null>(null);
+</script>
+
 <script setup lang="ts">
-import { computed, onBeforeUnmount, reactive, ref, shallowRef } from 'vue';
+import { computed, onBeforeUnmount, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import FlowShell from '../components/FlowShell.vue';
 import Icon from '../components/Icon.vue';
@@ -7,10 +15,10 @@ import PollenGame from '../components/PollenGame.vue';
 import ResumeDoc from '../components/ResumeDoc.vue';
 import ResumeProgress from '../components/ResumeProgress.vue';
 import ResumeResults, { type SkillRow } from '../components/ResumeResults.vue';
-import { checkResumeFile, extractResume, ResumeUploadError, type ResumeEvent, type ResumeResult } from '../api/resume';
-import { readResumePdf, type ResumePreview } from '../api/readResumePdf';
+import { checkResumeFile, extractResume, ResumeUploadError, type ResumeEvent } from '../api/resume';
+import { readResumePdf } from '../api/readResumePdf';
 import { EXPECTED_MS, SCAN_END, useAnalysisClock } from '../composables/useAnalysisClock';
-import { displayName } from '../data/resumeKeywords';
+import { displayName, limitInferred } from '../data/resumeKeywords';
 import { useFlow } from '../state';
 import { personaCopy } from '../data/personaCopy';
 import { go } from '../router';
@@ -33,10 +41,11 @@ let attempt = 0; // a newer upload wins over one still in flight
 
 const expectedMs = ref(EXPECTED_MS);
 const clock = useAnalysisClock(expectedMs);
-const doc = shallowRef<ResumePreview | null>(null);
+if (!state.value.resume) doc.value = null;
 const previewFailed = ref(false);
 const picked = ref<{ name: string; size: number } | null>(null);
-const engine = ref<ResumeResult['engine']>();
+/** A result just arrived, so Jobee can celebrate it; coming back to the page later doesn't count. */
+const justRead = ref(false);
 const focusKey = ref<string | null>(null);
 
 /** What the server has reported so far (empty when it can't stream, and the page falls back to the clock). */
@@ -101,8 +110,8 @@ const shownKeys = computed(() => {
 });
 const tray = computed(() =>
   liveSkills.value
-    ? { title: 'Skills found', items: foundLabels.value, waiting: 'The AI’s first matches will show up here.', allConfirmed: true }
-    : { title: 'Keywords spotted', items: spotted.value, waiting: null, allConfirmed: false },
+    ? { title: 'Skills found', items: foundLabels.value, allConfirmed: true }
+    : { title: 'Keywords spotted', items: spotted.value, allConfirmed: false },
 );
 // The stage follows the server's events; if it sent none, the clock.
 const stage = computed(() => (finished.value ? 3 : !live.read ? clock.stage.value : live.candidates === null ? 1 : 2));
@@ -115,6 +124,7 @@ const bubble = computed(() => {
 });
 
 async function upload(file: File | undefined) {
+  if (input.value) input.value.value = ''; // let the same file be picked again
   if (!file || reading.value) return;
   error.value = checkResumeFile(file);
   if (error.value) return;
@@ -124,7 +134,9 @@ async function upload(file: File | undefined) {
   finished.value = false;
   doc.value = null;
   previewFailed.value = false;
-  engine.value = undefined;
+  justRead.value = false;
+  undo.value = null;
+  state.value.resume = null;
   resetLive();
   docOpen.value = false;
   picked.value = { name: file.name, size: file.size };
@@ -149,8 +161,11 @@ async function upload(file: File | undefined) {
     finished.value = true;
     await Promise.all([preview, new Promise((r) => setTimeout(r, FINISH_MS))]);
     if (mine !== attempt) return;
-    engine.value = result.engine;
-    state.value.resume = { filename: result.filename ?? file.name, size: file.size, pages: result.page_count, skills: result.skills };
+    justRead.value = true;
+    // A scanned PDF has no text to check against, so its skills can't be told apart and all stay.
+    const read = doc.value as ResumePreview | null;
+    const skills = read?.chars ? limitInferred(result.skills, read) : result.skills;
+    state.value.resume = { filename: result.filename ?? file.name, size: file.size, pages: result.page_count, skills };
   } catch (e) {
     if (mine !== attempt) return;
     error.value = e instanceof ResumeUploadError ? e.message : 'Something went wrong reading your resume. Try again in a moment.';
@@ -161,7 +176,6 @@ async function upload(file: File | undefined) {
       reading.value = false;
       finished.value = false;
     }
-    if (input.value) input.value.value = ''; // let the same file be picked again
   }
 }
 
@@ -170,15 +184,16 @@ function onDrop(e: DragEvent) {
   upload(e.dataTransfer?.files[0]);
 }
 
-/** Leave the analysis (or the results) and pick a file again. */
+/** Pick a file again. The current results stay until one is chosen, so cancelling the file picker loses nothing. */
 function chooseAnother() {
-  attempt++;
-  clock.stop();
-  reading.value = false;
-  finished.value = false;
-  doc.value = null;
-  previewFailed.value = false;
-  state.value.resume = null;
+  if (reading.value) {
+    attempt++;
+    clock.stop();
+    reading.value = false;
+    finished.value = false;
+    doc.value = null;
+    previewFailed.value = false;
+  }
   input.value?.click();
 }
 
@@ -272,8 +287,7 @@ function undoRemove() {
             :size-label="kb(resume.size)"
             :pages="resume.pages"
             :rows="rows"
-            :stats="stats"
-            :engine="engine"
+            :celebrate="justRead"
             @focus="focusKey = $event"
             @remove="removeSkill"
           />
@@ -286,7 +300,7 @@ function undoRemove() {
           :size-label="kb(resume.size)"
           :pages="resume.pages"
           :rows="rows"
-          :stats="null"
+          :celebrate="justRead"
           @remove="removeSkill"
         />
       </template>
@@ -334,7 +348,7 @@ function undoRemove() {
 
 .docbtn {
   width: 100%; margin-bottom: 10px; padding: 12px 16px; border: 2px solid var(--line-strong); border-radius: 14px; background: #fff;
-  font: inherit; font-size: 14px; font-weight: 800; color: var(--ink); cursor: pointer;
+  font: inherit; font-size: 16px; font-weight: 800; color: var(--ink); cursor: pointer;
 }
 @media (min-width: 901px) { .docbtn { display: none; } }
 
@@ -351,19 +365,19 @@ function undoRemove() {
 .up { width: 48px; height: 48px; border-radius: 50%; background: var(--yellow); box-shadow: 0 4px 0 var(--orange); display: grid; place-items: center; margin-bottom: 8px; }
 .drop:hover .up, .drop.dragging .up { animation: bob .9s ease-in-out infinite; }
 @keyframes bob { 50% { transform: translateY(-4px); } }
-.drop strong { font-weight: 800; font-size: 16px; }
-small { font-size: 13px; color: var(--muted); font-weight: 700; }
+.drop strong { font-weight: 800; font-size: 18px; }
+small { font-size: 15px; color: var(--muted); font-weight: 700; }
 
-.error { margin: 14px auto 0; max-width: 600px; padding: 12px 16px; border-radius: 14px; background: #fdecea; color: #b3261e; font-weight: 800; font-size: 14px; line-height: 1.4; }
+.error { margin: 14px auto 0; max-width: 600px; padding: 12px 16px; border-radius: 14px; background: #fdecea; color: #b3261e; font-weight: 800; font-size: 16px; line-height: 1.4; }
 .card.nopreview { padding: 16px 20px; }
-.nopreview p { margin: 6px 0 10px; font-size: 13px; font-weight: 700; color: var(--muted); }
-.link { border: 0; background: none; padding: 6px 4px; font: inherit; font-size: 13px; font-weight: 800; color: var(--amber-ink); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.nopreview p { margin: 6px 0 10px; font-size: 15px; font-weight: 700; color: var(--muted); }
+.link { border: 0; background: none; padding: 6px 4px; font: inherit; font-size: 15px; font-weight: 800; color: var(--amber-ink); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
 .again { display: block; margin: 14px auto 0; }
-.doclabel { display: flex; justify-content: space-between; margin: 8px 2px 0; font-size: 12px; font-weight: 700; color: var(--muted); }
+.doclabel { display: flex; justify-content: space-between; margin: 8px 2px 0; font-size: 14px; font-weight: 700; color: var(--muted); }
 
 .toast {
   position: fixed; left: 50%; bottom: 96px; z-index: 8; transform: translateX(-50%); display: flex; align-items: center; gap: 14px;
-  padding: 10px 14px 10px 18px; border-radius: 16px; background: var(--ink); color: #fff; font-size: 13px; font-weight: 700;
+  padding: 10px 14px 10px 18px; border-radius: 16px; background: var(--ink); color: #fff; font-size: 15px; font-weight: 700;
   animation: pop .4s cubic-bezier(.34, 1.56, .64, 1) both;
 }
 .toast button { border: 0; background: none; color: var(--yellow); font: inherit; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }

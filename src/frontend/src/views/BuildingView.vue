@@ -141,31 +141,31 @@ onBeforeUnmount(() => clearTimeout(leave));
 .progress { width: 100%; height: 14px; }
 .progress.bad > i { background: #e8b4ae; }
 .progress.slow > i { animation: breathe 1.4s ease-in-out infinite; }
-.meta { display: flex; justify-content: space-between; gap: 12px; margin: 8px 0 16px; font-size: 12px; line-height: 16px; font-weight: 700; color: var(--muted); }
+.meta { display: flex; justify-content: space-between; gap: 12px; margin: 8px 0 16px; font-size: 14px; line-height: 18px; font-weight: 700; color: var(--muted); }
 .meta .bad { color: #b3261e; text-align: right; }
 
 .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .step { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; padding: 14px 16px; transition: opacity .26s, background .26s, border-color .26s; }
 .step[data-s='pending'] { opacity: .55; }
 .step[data-s='active'] { border-color: var(--yellow); background: #fff8e1; box-shadow: 0 8px 24px rgba(30, 30, 30, .08); }
-h3 { margin: 0; font-size: 17px; line-height: 26px; font-weight: 900; }
+h3 { margin: 0; font-size: 19px; line-height: 30px; font-weight: 900; }
 .dot { position: relative; width: 24px; height: 24px; margin-top: 1px; border-radius: 50%; border: 3px solid var(--line-strong); display: grid; place-items: center; color: var(--yellow); transition: background .26s, border-color .26s; }
 .dot svg { display: none; }
 [data-s='active'] .dot { border-color: var(--line); border-top-color: var(--yellow); animation: spin .8s linear infinite; }
 [data-s='done'] .dot { background: var(--ink); border-color: var(--ink); animation: pop .5s cubic-bezier(.34, 1.56, .64, 1); }
 [data-s='done'] .dot svg { display: block; }
 
-.sum { margin: 2px 0 0; font-size: 13px; line-height: 19px; font-weight: 700; color: var(--muted); animation: swap .4s ease-out both; }
+.sum { margin: 2px 0 0; font-size: 15px; line-height: 22px; font-weight: 700; color: var(--muted); animation: swap .4s ease-out both; }
 .det { animation: swap .45s ease-out both; }
-.det p { margin: 4px 0 0; font-size: 14px; line-height: 21px; font-weight: 600; }
+.det p { margin: 4px 0 0; font-size: 16px; line-height: 24px; font-weight: 600; }
 .det .why, .det .wait { color: var(--muted); }
 .det ul { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 7px; }
-.det li { display: flex; gap: 9px; font-size: 13px; line-height: 19px; font-weight: 800; opacity: 0; animation: swap .45s ease-out forwards; animation-delay: calc(var(--i) * 700ms + 500ms); }
+.det li { display: flex; gap: 9px; font-size: 15px; line-height: 22px; font-weight: 800; opacity: 0; animation: swap .45s ease-out forwards; animation-delay: calc(var(--i) * 700ms + 500ms); }
 .det li::before { content: ''; flex: none; width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: var(--yellow); }
 
 .actions { display: flex; flex-direction: column; align-items: center; gap: 14px; margin-top: 20px; }
 .btn { gap: 8px; }
-.back { font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.back { font-size: 14px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .back:hover { color: var(--ink); }
 
 /* On a phone the meadow gives way to the steps: shorter, and the steps tighter. Short windows do the same. */
@@ -175,11 +175,11 @@ h3 { margin: 0; font-size: 17px; line-height: 26px; font-weight: 900; }
   .meta { margin-bottom: 12px; }
   .steps { gap: 8px; }
   .step { grid-template-columns: 24px minmax(0, 1fr); gap: 10px; padding: 10px 12px; }
-  h3 { font-size: 15px; line-height: 24px; }
-  .det p { font-size: 13px; line-height: 19px; }
+  h3 { font-size: 16px; line-height: 27px; }
+  .det p { font-size: 15px; line-height: 22px; }
   .det ul { margin-top: 8px; gap: 5px; }
-  .det li { font-size: 12.5px; line-height: 18px; }
-  .meta .bad { font-size: 11px; }
+  .det li { font-size: 14px; line-height: 21px; }
+  .meta .bad { font-size: 13px; }
 }
 @media (max-width: 380px) { .stack :deep(.fpv) { height: 120px; } .stack :deep(.hud) { display: none; } }
 

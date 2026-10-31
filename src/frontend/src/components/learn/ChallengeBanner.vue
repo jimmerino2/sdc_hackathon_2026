@@ -21,7 +21,7 @@ const meta = computed(() => {
     <span class="jb-quest__head">
       <span class="jb-quest__disc"><Icon name="trophy" :size="24" /></span>
       <span class="jb-quest__label">
-        <span class="jb-eyebrow">Challenge · stage {{ c.stage }} of 2</span>
+        <span class="jb-eyebrow">Stage {{ c.stage }} of 2</span>
         <span class="jb-quest__title">{{ c.title }}</span>
         <span class="jb-quest__meta">{{ meta }}</span>
       </span>

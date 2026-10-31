@@ -38,7 +38,6 @@ const { el, scale } = useFit(() => layout.value.width);
           stack
           :icon="groupStyle(kind(it.skill)).icon"
           :shade="groupStyle(kind(it.skill)).shade"
-          :resources="it.skill.node.sources.length || (it.skill.node.source ? 1 : 0)"
           :state="it.skill.state"
           :selected="selectedId === it.skill.id"
           :tag="it.skill.id === startId ? 'START' : null"

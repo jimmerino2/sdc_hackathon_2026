@@ -16,13 +16,28 @@ export function postingChange(o: ScenarioOutlook): string {
 /** One part of a match in a few words, for the line beside its bar. Every name and figure comes from the job as scored. */
 export function partCaption(key: ScoreComponent['key'], job: JobMatch, outlook: ScenarioOutlook | undefined, stage?: string | null): string {
   if (key === 'skills') return `${job.skills_owned} of ${job.skills_total} key skills`;
-  if (key === 'outlook') return outlook ? `Job ads ${postingChange(outlook)}` : 'No forecast yet';
+  if (key === 'outlook') return outlook ? `Demand ${postingChange(outlook)}` : 'No forecast yet';
   if (key === 'interests') {
     const shared = [...new Set((job.sdg_reasons ?? []).flatMap((r) => r.interests))];
     if (!shared.length) return 'No link to your interests';
     return shared.length > 1 ? `Linked to ${shared[0]} +${shared.length - 1}` : `Linked to ${shared[0]}`;
   }
   return (stage && STAGE_LABELS[stage]) || 'Same for every role';
+}
+
+/** Each part's slice of the final match, in whole points that add up to it exactly. */
+export function matchSlices(b: MatchBreakdown): { key: ScoreComponent['key']; points: number }[] {
+  const raw = b.components.reduce((a, c) => a + c.points, 0);
+  if (raw <= 0) return b.components.map((c) => ({ key: c.key, points: 0 }));
+  const exact = b.components.map((c) => (c.points / raw) * b.match_percent);
+  const slices = b.components.map((c, i) => ({ key: c.key, points: Math.floor(exact[i]!) }));
+  let left = b.match_percent - slices.reduce((a, s) => a + s.points, 0);
+  // The largest remainders take the leftover points.
+  for (const i of exact.map((_, i) => i).sort((x, y) => (exact[y]! % 1) - (exact[x]! % 1))) {
+    if (left-- <= 0) break;
+    slices[i]!.points++;
+  }
+  return slices;
 }
 
 /** How the final number comes from the parts, for the "How it’s calculated" dialog. */

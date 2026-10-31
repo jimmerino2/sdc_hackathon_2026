@@ -93,7 +93,7 @@ const comps = computed(() => Object.entries(r.value?.components ?? {}));
       <p v-else-if="!data" class="muted">Loading…</p>
       <p v-else-if="!data.length" class="muted">No explanation is available for this forecast.</p>
       <template v-else-if="r">
-        <div class="tabs" role="tablist" aria-label="Horizon">
+        <div class="btn-group tabs" role="tablist" aria-label="Horizon">
           <button v-for="(d, i) in data" :key="d.h" type="button" role="tab" :aria-selected="i === pick"
                   :class="{ on: i === pick }" @click="pick = i">Next {{ months(d.h) }}</button>
         </div>
@@ -205,33 +205,31 @@ const comps = computed(() => Object.entries(r.value?.components ?? {}));
 .dlg::backdrop { background: rgba(30, 30, 30, .45); }
 .inner { padding: 22px 24px 26px; }
 .top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
-h2 { font-size: 20px; line-height: 1.25; }
+h2 { font-size: 23px; line-height: 1.25; }
 .close { border: 0; background: #f0efec; border-radius: 999px; width: 36px; height: 36px; display: grid; place-items: center; cursor: pointer; flex: none; }
-.tabs { display: flex; gap: 8px; margin: 16px 0 6px; flex-wrap: wrap; }
-.tabs button { border: 2px solid var(--line-strong); background: #fff; border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
-.tabs button.on { background: var(--yellow); border-color: var(--orange); }
+.tabs { margin: 16px 0 6px; }
 .steps { margin: 10px 0 0 20px; display: flex; flex-direction: column; gap: 18px; }
 .steps li::marker { font-weight: 900; color: var(--orange); }
-h3 { font-size: 15px; margin-bottom: 4px; }
-p { font-size: 14px; line-height: 1.55; }
+h3 { font-size: 16px; margin-bottom: 4px; }
+p { font-size: 16px; line-height: 1.55; }
 p + p { margin-top: 6px; }
 .muted { color: var(--muted); }
-.note { font-size: 12px; color: var(--muted); margin-top: 6px; }
-.tbl { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; font-variant-numeric: tabular-nums; }
+.note { font-size: 14px; color: var(--muted); margin-top: 6px; }
+.tbl { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 15px; font-variant-numeric: tabular-nums; }
 .tbl th, .tbl td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--line); }
 .tbl th:first-child, .tbl td:first-child { text-align: left; }
-.tbl th { font-size: 11px; color: var(--muted); font-weight: 800; }
+.tbl th { font-size: 13px; color: var(--muted); font-weight: 800; }
 .strip { width: 100%; height: auto; }
 .steps :deep(.ch) { margin-top: 8px; }
 .zone { font-size: 11px; font-weight: 800; fill: var(--muted); }
 .tick { font-size: 11px; fill: var(--muted); }
 .axis { stroke: var(--line-strong); stroke-width: 1; }
 .pace { stroke: var(--ink); stroke-width: 2; stroke-dasharray: 4 4; }
-.key { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; font-weight: 700; color: var(--muted); }
+.key { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; font-weight: 700; color: var(--muted); }
 .key span { display: inline-flex; align-items: center; gap: 6px; }
 .ln { display: inline-block; width: 18px; border-top: 2px solid var(--ink); }
 .pace-k { border-top-style: dashed; }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
-.result td:last-child { font-size: 15px; }
+.result td:last-child { font-size: 16px; }
 .sub { margin-top: 12px; }
 </style>

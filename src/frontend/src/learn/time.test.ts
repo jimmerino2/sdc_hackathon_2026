@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatMinutes, weeksFor } from './time';
+import { formatMinutes } from './time';
 
 describe('learning time helpers', () => {
   it('writes minutes the way a person would say them', () => {
@@ -10,10 +10,4 @@ describe('learning time helpers', () => {
     expect(formatMinutes(-5)).toBe('0 min');
   });
 
-  it('turns time left and hours per week into whole weeks', () => {
-    expect(weeksFor(0, 5)).toBe(0);
-    expect(weeksFor(30, 5)).toBe(1);
-    expect(weeksFor(60 * 38, 5)).toBe(8);
-    expect(weeksFor(60 * 10, 0)).toBe(10); // hours per week is never below 1
-  });
 });

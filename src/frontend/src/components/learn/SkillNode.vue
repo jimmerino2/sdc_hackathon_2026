@@ -4,7 +4,7 @@ import Icon from '../Icon.vue';
 import { useFlash } from '../../composables/useFlash';
 import type { SkillState } from '../../learn/skillState';
 
-const props = defineProps<{ name: string; kind?: string; resources?: number; state: SkillState; selected?: boolean; tag?: string | null; busy?: boolean; /** Orb above its label, for the graph layout. */ stack?: boolean; /** The skill group's icon and yellow shade (0 lightest): they mark the orb. */ icon?: string; shade?: number; /** Set when a demand forecast matched this skill; shows a trend badge the learner can click to select it. */ forecastDirection?: 'rising' | 'falling' | 'flat' | null }>();
+const props = defineProps<{ name: string; kind?: string; state: SkillState; selected?: boolean; tag?: string | null; busy?: boolean; /** Orb above its label, for the graph layout. */ stack?: boolean; /** The skill group's icon and yellow shade (0 lightest): they mark the orb. */ icon?: string; shade?: number; /** Set when a demand forecast matched this skill; shows a trend badge the learner can click to select it. */ forecastDirection?: 'rising' | 'falling' | 'flat' | null }>();
 const emit = defineEmits<{ select: [] }>();
 
 const { on: shaking, trigger: shake } = useFlash(480);
@@ -51,7 +51,6 @@ function clickForecast(e: MouseEvent) {
     <div class="jb-node__label" @click="click">
       <strong class="jb-node__name">{{ name }}</strong>
       <span v-if="kind" class="jb-node__kind">{{ kind }}</span>
-      <span v-if="resources" class="jb-node__res">{{ resources }} {{ resources === 1 ? 'resource' : 'resources' }}</span>
     </div>
   </div>
 </template>

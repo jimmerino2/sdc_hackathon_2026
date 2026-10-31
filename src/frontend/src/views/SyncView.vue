@@ -131,19 +131,19 @@ onMounted(async () => {
 
 <style scoped>
 .block { padding: 20px 22px; display: flex; flex-direction: column; gap: 12px; }
-label { font-weight: 800; font-size: 14px; }
+label { font-weight: 800; font-size: 16px; }
 .field {
   width: 100%; padding: 14px 16px; border: 2px solid var(--line-strong); border-radius: 14px; background: #fff;
   font: 800 16px 'Nunito', sans-serif; color: var(--ink); outline: none;
 }
 .field:focus { border-color: var(--orange); box-shadow: 0 0 0 4px rgba(255, 193, 7, .3); }
-.field.code { letter-spacing: .3em; font-size: 20px; }
-small { font-size: 12px; font-weight: 600; color: var(--muted); }
+.field.code { letter-spacing: .3em; font-size: 23px; }
+small { font-size: 14px; font-weight: 600; color: var(--muted); }
 .links { display: flex; gap: 18px; }
-.links button, .change { font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.links button, .change { font-size: 14px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .links button:hover, .change:hover { color: var(--ink); }
 .done { flex-direction: row; align-items: center; gap: 14px; }
 .ok { width: 36px; height: 36px; border-radius: 50%; background: var(--ink); color: var(--yellow); display: grid; place-items: center; flex: none; }
 .txt { display: flex; flex-direction: column; flex: 1; min-width: 0; } .txt strong { font-weight: 900; } .txt small { overflow-wrap: anywhere; }
-.error { margin-top: 14px; padding: 12px 16px; border-radius: 14px; background: #fdecea; color: #b3261e; font-weight: 800; font-size: 14px; line-height: 1.4; }
+.error { margin-top: 14px; padding: 12px 16px; border-radius: 14px; background: #fdecea; color: #b3261e; font-weight: 800; font-size: 16px; line-height: 1.4; }
 </style>

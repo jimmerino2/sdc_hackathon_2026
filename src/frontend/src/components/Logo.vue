@@ -14,5 +14,5 @@ withDefaults(defineProps<{ to?: Step }>(), { to: 'landing' });
 </template>
 
 <style scoped>
-.logo { display: inline-flex; align-items: center; gap: 8px; font-weight: 900; font-size: 28px; letter-spacing: -.02em; }
+.logo { display: inline-flex; align-items: center; gap: 8px; font-weight: 900; font-size: 32px; letter-spacing: -.02em; }
 </style>

@@ -27,7 +27,6 @@ const AVOID_PAD = 24;    // 避开区域外扩的安全距离
 
 const flowers = ref<Flower[]>([]);
 const pops = ref<Pop[]>([]);
-const score = ref(0);
 const bee = ref<HTMLElement>();
 const beeVisible = ref(false);
 let uid = 0;
@@ -88,7 +87,6 @@ function tick() {
 function collect(f: Flower) {
   // 越小的花越难点，分数越高
   const points = f.size < 40 ? 3 : f.size < 58 ? 2 : 1;
-  score.value += points;
   flowers.value = flowers.value.filter((x) => x.id !== f.id);
   const p: Pop = { id: ++uid, x: f.x, y: f.y, text: `+${points}`, hue: f.hue };
   pops.value.push(p);
@@ -162,7 +160,6 @@ onBeforeUnmount(() => {
         :style="{ left: p.x + 'px', top: p.y + 'px', color: `hsl(${p.hue} 80% 40%)` }"
       >{{ p.text }}</span>
 
-      <div class="score">🌼 Pollen <strong>{{ score }}</strong></div>
       <div v-show="beeVisible" ref="bee" class="bee">🐝</div>
     </div>
   </Teleport>
@@ -188,21 +185,13 @@ onBeforeUnmount(() => {
 @keyframes sway { 50% { transform: rotate(8deg); } }
 
 .pop {
-  position: absolute; font-weight: 900; font-size: 20px;
+  position: absolute; font-weight: 900; font-size: 23px;
   transform: translate(-50%, -50%); animation: rise .7s ease-out forwards;
 }
 @keyframes rise { to { transform: translate(-50%, -140%); opacity: 0; } }
 
-.score {
-  position: absolute; left: 16px; bottom: 16px;
-  padding: 8px 14px; border-radius: 999px;
-  background: #fff; box-shadow: 0 3px 0 var(--orange, #f57c00);
-  font-weight: 800; font-size: 14px;
-}
-.score strong { font-size: 18px; margin-left: 4px; }
-
 .bee {
-  position: absolute; left: 0; top: 0; font-size: 34px; line-height: 1;
+  position: absolute; left: 0; top: 0; font-size: 38px; line-height: 1;
   will-change: transform; filter: drop-shadow(0 3px 2px rgba(0, 0, 0, .2));
 }
 

@@ -27,7 +27,7 @@ function submit() {
 </template>
 
 <style scoped>
-.label { display: block; font-weight: 800; font-size: 14px; margin-bottom: 8px; }
+.label { display: block; font-weight: 800; font-size: 16px; margin-bottom: 8px; }
 .field {
   width: 100%; padding: 16px 18px; border: 2px solid var(--line-strong); border-radius: 16px; background: #fff;
   font: 800 18px 'Nunito', sans-serif; color: var(--ink); outline: none; transition: border-color .15s, box-shadow .15s;

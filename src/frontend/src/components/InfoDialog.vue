@@ -32,7 +32,7 @@ const close = () => dlg.value?.close();
 .info {
   display: inline-flex; align-items: center; justify-content: center; gap: 5px; flex: none; vertical-align: middle;
   width: 22px; height: 22px; border-radius: 999px; background: #f0efec; color: var(--muted);
-  font-size: 12px; font-weight: 800; letter-spacing: 0; text-transform: none; transition: background .1s, color .1s;
+  font-size: 14px; font-weight: 800; letter-spacing: 0; text-transform: none; transition: background .1s, color .1s;
 }
 .info:hover { background: var(--cream); color: var(--amber-ink); }
 .info.txt { width: auto; height: auto; padding: 4px 10px; color: var(--ink); }
@@ -41,15 +41,15 @@ const close = () => dlg.value?.close();
 .idlg::backdrop { background: rgba(30, 30, 30, .45); }
 .inner { padding: 22px 24px 26px; }
 .top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 10px; }
-h2 { font-size: 19px; line-height: 1.25; font-weight: 900; letter-spacing: 0; text-transform: none; color: var(--ink); }
+h2 { font-size: 21px; line-height: 1.25; font-weight: 900; letter-spacing: 0; text-transform: none; color: var(--ink); }
 .close { border: 0; background: #f0efec; border-radius: 999px; width: 36px; height: 36px; display: grid; place-items: center; cursor: pointer; flex: none; }
-.body { font-size: 14px; line-height: 1.55; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--ink); display: flex; flex-direction: column; gap: 10px; }
+.body { font-size: 16px; line-height: 1.55; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--ink); display: flex; flex-direction: column; gap: 10px; }
 .body :deep(.muted) { color: var(--muted); }
 .body :deep(ul) { margin-left: 18px; display: flex; flex-direction: column; gap: 4px; }
-.body :deep(h3) { font-size: 14.5px; font-weight: 900; margin-top: 6px; }
-.body :deep(table) { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.body :deep(h3) { font-size: 16px; font-weight: 900; margin-top: 6px; }
+.body :deep(table) { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
 .body :deep(th), .body :deep(td) { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--line); }
 .body :deep(th:first-child), .body :deep(td:first-child) { text-align: left; }
-.body :deep(th) { font-size: 11px; color: var(--muted); font-weight: 800; }
+.body :deep(th) { font-size: 13px; color: var(--muted); font-weight: 800; }
 .body :deep(.scroll) { overflow-x: auto; }
 </style>

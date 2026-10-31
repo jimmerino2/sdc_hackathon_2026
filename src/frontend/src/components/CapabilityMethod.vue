@@ -229,31 +229,31 @@ const cmp = computed(() => (bt.value.compare?.rows ?? [])
 </template>
 
 <style scoped>
-.meth { font-size: 12.5px; border-top: 2px solid var(--line); padding-top: 10px; }
+.meth { font-size: 14px; border-top: 2px solid var(--line); padding-top: 10px; }
 .meth { padding-top: 12px; }
 .meth > summary { cursor: pointer; list-style: none; }
 .meth > summary::-webkit-details-marker { display: none; }
-.sum-h { font-size: 15px; font-weight: 800; color: var(--ink); }
+.sum-h { font-size: 16px; font-weight: 800; color: var(--ink); }
 .sum-h::before { content: '+ '; color: var(--orange); font-weight: 900; }
 .meth[open] .sum-h::before { content: '− '; }
-h4 { font-size: 12.5px; margin: 14px 0 4px; }
+h4 { font-size: 14px; margin: 14px 0 4px; }
 .facts { margin: 0 0 0 16px; display: flex; flex-direction: column; gap: 4px; line-height: 1.5; color: var(--ink); }
 .w { display: block; color: var(--muted); }
 .small { color: var(--muted); line-height: 1.45; margin-bottom: 4px; }
 .scroll { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 12px; min-width: 420px; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; min-width: 420px; }
 th, td { text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--line); }
 th:first-child, td:first-child { text-align: left; }
-th { font-weight: 800; color: var(--muted); font-size: 11px; }
+th { font-weight: 800; color: var(--muted); font-size: 13px; }
 tr.shown td { font-weight: 800; }
 tr.base td { background: #faf9f6; }
-tr.n td { color: var(--muted); font-size: 11px; }
+tr.n td { color: var(--muted); font-size: 13px; }
 .ok { color: #1e5e30; font-weight: 800; }
 .okc { color: #1e5e30; }
 .badc { color: #a12a22; }
 .bad { color: #a12a22; font-weight: 800; }
 .pick { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 6px; }
-.pick button { border: 2px solid var(--line-strong); background: #fff; border-radius: 999px; padding: 3px 10px; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.pick button { border: 2px solid var(--line-strong); background: #fff; border-radius: 999px; padding: 3px 10px; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
 .pick button.on { background: var(--cream); border-color: var(--yellow); }
-.gen { margin-left: 6px; font-size: 10px; font-weight: 800; color: var(--muted); }
+.gen { margin-left: 6px; font-size: 12px; font-weight: 800; color: var(--muted); }
 </style>

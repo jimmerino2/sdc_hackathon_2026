@@ -89,13 +89,13 @@ const tipStyle = computed(() => {
 .tip {
   position: absolute; z-index: 5; pointer-events: none; min-width: 190px; max-width: 300px;
   background: #fff; border: 2px solid var(--line); border-radius: 12px; padding: 8px 10px;
-  box-shadow: 0 6px 20px rgba(30, 30, 30, .12); font-size: 12px; line-height: 1.35;
+  box-shadow: 0 6px 20px rgba(30, 30, 30, .12); font-size: 14px; line-height: 1.35;
 }
 .t { font-weight: 900; margin-bottom: 4px; }
 .r { display: flex; align-items: baseline; gap: 6px; }
 .r span { color: var(--muted); font-weight: 700; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .r b { font-weight: 900; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.r.m { font-size: 11px; }
+.r.m { font-size: 13px; }
 .r.m b { font-weight: 700; color: var(--muted); }
 .r i { width: 8px; height: 8px; border-radius: 2px; flex: none; align-self: center; }
 </style>

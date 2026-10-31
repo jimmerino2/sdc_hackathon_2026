@@ -38,7 +38,7 @@ function pick(m: Mood) { current.value = m; replay.value++; }
 
 <style scoped>
 .bees { display: flex; gap: 10px; justify-content: center; margin: -20px 0 28px; }
-.pillbtn { padding: 8px 16px; border-radius: 999px; border: 2px solid var(--line-strong); background: #fff; font-weight: 900; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+.pillbtn { padding: 8px 16px; border-radius: 999px; border: 2px solid var(--line-strong); background: #fff; font-weight: 900; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; }
 .pillbtn.on { background: var(--yellow); border-color: var(--yellow); }
 .pg { max-width: 920px; margin: 0 auto; padding: 40px 20px 100px; text-align: center; }
 h1 { font-size: 36px; font-weight: 900; }
@@ -47,5 +47,5 @@ h1 { font-size: 36px; font-weight: 900; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
 .tile { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 22px 14px; background: #fff; border: 2px solid var(--line-strong); border-radius: 18px; box-shadow: 0 4px 0 var(--line-strong); }
 .tile.on { background: var(--cream); border-color: var(--yellow); box-shadow: 0 4px 0 var(--orange); }
-.tile strong { font-weight: 900; } .tile small { font-size: 12px; color: var(--muted); font-weight: 600; }
+.tile strong { font-weight: 900; } .tile small { font-size: 14px; color: var(--muted); font-weight: 600; }
 </style>

@@ -104,14 +104,14 @@ const anyBaseline = computed(() => f.value?.configuration.horizons.some((h) => h
 </template>
 
 <style scoped>
-.fi { background: #faf9f6; border-radius: 12px; padding: 10px 14px; font-size: 12.5px; min-width: 0; max-width: 100%; }
+.fi { background: #faf9f6; border-radius: 12px; padding: 10px 14px; font-size: 14px; min-width: 0; max-width: 100%; }
 .body, section { min-width: 0; }
 .fi summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 800; color: var(--ink); }
 .fi summary::-webkit-details-marker { display: none; }
 .chev { margin-left: auto; color: var(--muted); transition: transform .15s; }
 .fi[open] .chev { transform: rotate(180deg); }
 .body { display: flex; flex-direction: column; gap: 14px; margin-top: 12px; }
-h4 { font-size: 13px; font-weight: 900; margin-bottom: 4px; }
+h4 { font-size: 15px; font-weight: 900; margin-bottom: 4px; }
 .base { display: flex; gap: 6px; align-items: flex-start; padding: 8px 10px; border-radius: 10px; background: var(--cream); font-weight: 700; line-height: 1.4; }
 .base svg { flex: none; margin-top: 2px; }
 dl { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 3px 10px; line-height: 1.4; }
@@ -125,6 +125,6 @@ ul { margin: 4px 0 0 16px; display: flex; flex-direction: column; gap: 3px; line
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 th, td { text-align: right; padding: 5px 7px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
-th { font-size: 11px; color: var(--muted); font-weight: 800; }
+th { font-size: 13px; color: var(--muted); font-weight: 800; }
 @media (max-width: 520px) { dl { grid-template-columns: 1fr; } dd { margin-bottom: 4px; } }
 </style>

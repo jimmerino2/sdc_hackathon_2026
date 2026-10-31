@@ -16,10 +16,9 @@ const props = defineProps<{
   filename: string;
   sizeLabel: string;
   rows: SkillRow[];
-  /** Null when there's no preview to count from. */
-  stats: { pages: number; chars: number; mentions: number } | null;
   pages: number;
-  engine?: { candidates?: number; seconds?: number };
+  /** Throw the confetti: a fresh result, not coming back to the page. */
+  celebrate?: boolean;
 }>();
 const emit = defineEmits<{ focus: [label: string | null]; remove: [row: SkillRow] }>();
 
@@ -28,11 +27,7 @@ const top = computed(() => props.rows.slice(0, 5));
 const rest = computed(() => props.rows.filter((r) => !top.value.includes(r)));
 const expanded = ref(false);
 const chips = computed(() => (expanded.value ? rest.value : rest.value.slice(0, SHOWN_CHIPS)));
-/** "Python, SQL and React": the headline of the page, before any list. */
-const takeaway = computed(() => {
-  const names = top.value.slice(0, 3).map((r) => r.label);
-  return names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : (names[0] ?? '');
-});
+const anyInferred = computed(() => props.rows.some((r) => r.n === 0));
 const total = useCountUp(computed(() => props.rows.length), 900);
 
 const leaving = ref<string | null>(null);
@@ -49,7 +44,7 @@ const filled = ref(false);
 const burst = ref(false);
 onMounted(() => {
   window.setTimeout(() => (filled.value = true), 50);
-  if (prefersReducedMotion()) return;
+  if (!props.celebrate || prefersReducedMotion()) return;
   burst.value = true;
   window.setTimeout(() => (burst.value = false), 1200);
 });
@@ -73,20 +68,11 @@ const mention = (n: number | null) => (n === null ? '' : n ? `${n}×` : 'inferre
   </div>
 
   <section class="sum in" style="--i: 1">
-    <p class="eyebrow">We found <span class="count">{{ total }}</span> {{ rows.length === 1 ? 'skill' : 'skills' }}</p>
-    <h2 v-if="takeaway">Strongest in {{ takeaway }}</h2>
-    <h2 v-else>No specific skills spotted</h2>
-    <ul class="facts">
-      <li v-if="stats?.mentions" style="--i: 0">{{ stats.mentions }} mentions highlighted</li>
-      <li v-if="stats?.chars" style="--i: 1">{{ stats.pages }} {{ stats.pages === 1 ? 'page' : 'pages' }} · {{ stats.chars.toLocaleString() }} characters</li>
-      <li v-if="engine?.candidates" style="--i: 2">{{ engine.candidates }} candidates checked</li>
-      <li v-if="engine?.seconds" style="--i: 3">Analysed in {{ Math.round(engine.seconds) }}s</li>
-    </ul>
+    <h2>We found <span class="count">{{ total }}</span> {{ rows.length === 1 ? 'skill' : 'skills' }}</h2>
   </section>
 
   <template v-if="top.length">
     <h3>Your strongest</h3>
-    <p class="sub">The bar shows how clearly your resume shows each skill, not how good you are at it. Hover one to see where it appears.</p>
     <ol class="top5">
       <li
         v-for="(r, i) in top"
@@ -125,9 +111,11 @@ const mention = (n: number | null) => (n === null ? '' : n ? `${n}×` : 'inferre
     </li>
     <li v-if="!expanded && rest.length > SHOWN_CHIPS"><button type="button" class="pill" @click="expanded = true">+ {{ rest.length - SHOWN_CHIPS }} more</button></li>
   </ul>
-  <p class="help">
-    <span class="legend"><i />Found in your resume</span>Dashed chips weren’t named in your resume, so the AI inferred them from context. Tap ✕ to remove a skill that isn’t right.
-  </p>
+  <ul class="key">
+    <li><i class="solid" />Named in your resume</li>
+    <li v-if="anyInferred"><i class="dashed" />Not named, so the AI inferred it from context</li>
+  </ul>
+  <p class="help">Tap ✕ to remove a skill that isn’t right.</p>
 </template>
 
 <style scoped>
@@ -135,42 +123,41 @@ const mention = (n: number | null) => (n === null ? '' : n ? `${n}×` : 'inferre
 .in { animation: rise .5s cubic-bezier(.22, 1, .36, 1) both; animation-delay: calc(var(--i, 0) * 90ms); }
 .file { display: flex; align-items: center; gap: 12px; }
 .name { flex: 1; min-width: 0; }
-.name b { display: block; font-size: 14px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-small { font-size: 12px; font-weight: 700; color: var(--muted); }
-.read { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px 4px 10px; border-radius: 999px; background: var(--ink); color: var(--yellow); font-size: 12px; font-weight: 800; flex: none; }
+.name b { display: block; font-size: 16px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+small { font-size: 14px; font-weight: 700; color: var(--muted); }
+.read { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px 4px 10px; border-radius: 999px; background: var(--ink); color: var(--yellow); font-size: 14px; font-weight: 800; flex: none; }
 
-.sum { position: relative; margin-top: 14px; padding: 20px 24px; border-radius: 20px; background: var(--ink); color: #fff; }
-.eyebrow { margin: 0; font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--yellow); }
-.sum h2 { margin: 6px 0 14px; font-size: 26px; line-height: 32px; font-weight: 900; color: #fff; text-wrap: balance; }
-.sum .count { display: inline-block; min-width: .6em; color: #fff; }
-.facts { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.facts li { padding: 6px 14px; border-radius: 999px; box-shadow: inset 0 0 0 2px #fff; font-size: 12px; font-weight: 800; animation: pop .6s cubic-bezier(.34, 1.56, .64, 1) both; animation-delay: calc(var(--i) * 90ms + 300ms); }
+.sum { position: relative; margin-top: 14px; padding: 14px 24px; border-radius: 20px; background: var(--ink); color: #fff; }
+.sum h2 { margin: 0; font-size: 25px; line-height: 32px; font-weight: 900; color: #fff; }
+.sum .count { display: inline-block; min-width: .6em; color: var(--yellow); }
 
-h3 { margin: 22px 0 12px; font-size: 16px; line-height: 20px; font-weight: 800; }
-.sub { margin: -6px 0 12px; font-size: 13px; line-height: 18px; font-weight: 600; color: var(--muted); }
+h3 { margin: 22px 0 12px; font-size: 18px; line-height: 23px; font-weight: 800; }
 
 .top5 { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .top5 li { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 16px; background: #fff; border: 2px solid var(--line); animation: fly .7s cubic-bezier(.34, 1.56, .64, 1) both; animation-delay: calc(var(--i) * 120ms + 200ms); transition: transform .26s cubic-bezier(.34, 1.56, .64, 1), border-color .26s; }
 .top5 li:hover, .top5 li:focus-visible { transform: translateX(6px); border-color: var(--yellow); }
-.rank { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--yellow); box-shadow: 0 3px 0 var(--orange); font-size: 15px; font-weight: 900; }
-.top5 b { display: flex; gap: 8px; align-items: baseline; margin-bottom: 6px; font-size: 15px; line-height: 20px; font-weight: 800; }
+.rank { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--yellow); box-shadow: 0 3px 0 var(--orange); font-size: 16px; font-weight: 900; }
+.top5 b { display: flex; gap: 8px; align-items: baseline; margin-bottom: 6px; font-size: 16px; line-height: 23px; font-weight: 800; }
 .meter { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
-.meter i { display: block; height: 100%; border-radius: 999px; background: var(--yellow); transition: width 1s cubic-bezier(.34, 1.56, .64, 1) calc(var(--i, 0) * 120ms + 600ms); }.pct { min-width: 3ch; text-align: right; font-size: 14px; font-weight: 900; }
+.meter i { display: block; height: 100%; border-radius: 999px; background: var(--yellow); transition: width 1s cubic-bezier(.34, 1.56, .64, 1) calc(var(--i, 0) * 120ms + 600ms); }.pct { min-width: 3ch; text-align: right; font-size: 16px; font-weight: 900; }
 
 .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
-.sk { display: inline-flex; align-items: center; gap: 8px; padding: 7px 8px 7px 14px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 13px; line-height: 16px; font-weight: 800; animation: pop .5s cubic-bezier(.34, 1.56, .64, 1) both; animation-delay: calc(var(--i) * 45ms + 900ms); transition: transform .14s cubic-bezier(.34, 1.56, .64, 1); }
+.sk { display: inline-flex; align-items: center; gap: 8px; padding: 7px 8px 7px 14px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 15px; line-height: 18px; font-weight: 800; animation: pop .5s cubic-bezier(.34, 1.56, .64, 1) both; animation-delay: calc(var(--i) * 45ms + 900ms); transition: transform .14s cubic-bezier(.34, 1.56, .64, 1); }
 .sk:hover { transform: translateY(-3px) rotate(-2deg); }
-.sk em { font-style: normal; font-size: 11px; font-weight: 700; opacity: .8; }
+.sk em { font-style: normal; font-size: 13px; font-weight: 700; opacity: .8; }
 .sk button { display: grid; place-items: center; width: 22px; height: 22px; border: 0; border-radius: 50%; background: transparent; color: inherit; opacity: .6; cursor: pointer; transition: opacity .14s, background .14s, transform .14s cubic-bezier(.34, 1.56, .64, 1); }
 .sk button:hover, .sk button:focus-visible { opacity: 1; background: rgba(255, 193, 7, .35); transform: rotate(90deg); }
 .sk.inf { background: transparent; color: var(--ink); border: 2px dashed var(--line-strong); padding: 5px 6px 5px 12px; }
 .sk.inf button:hover, .sk.inf button:focus-visible { background: var(--line); }
 .sk.out { animation: out .3s cubic-bezier(.22, 1, .36, 1) forwards; }
-.pill { padding: 7px 14px; border-radius: 999px; border: 0; background: #fff; color: var(--ink); font: inherit; font-size: 13px; font-weight: 800; box-shadow: inset 0 0 0 2px var(--line-strong); cursor: pointer; animation: pop .5s cubic-bezier(.34, 1.56, .64, 1) both; animation-delay: 1.6s; transition: transform .14s cubic-bezier(.34, 1.56, .64, 1); }
+.pill { padding: 7px 14px; border-radius: 999px; border: 0; background: #fff; color: var(--ink); font: inherit; font-size: 15px; font-weight: 800; box-shadow: inset 0 0 0 2px var(--line-strong); cursor: pointer; animation: pop .5s cubic-bezier(.34, 1.56, .64, 1) both; animation-delay: 1.6s; transition: transform .14s cubic-bezier(.34, 1.56, .64, 1); }
 .pill:hover { transform: translateY(-2px); }
-.help { margin: 14px 0 0; font-size: 13px; line-height: 18px; font-weight: 600; color: var(--muted); }
-.legend { display: inline-flex; align-items: center; gap: 6px; margin-right: 10px; }
-.legend i { display: inline-block; width: 14px; height: 8px; border-radius: 3px; background: var(--yellow); }
+.key { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 15px; line-height: 21px; font-weight: 700; color: var(--muted); }
+.key li { display: inline-flex; align-items: center; gap: 8px; }
+.key i { flex: none; width: 26px; height: 16px; border-radius: 999px; }
+.key .solid { background: var(--ink); }
+.key .dashed { border: 2px dashed var(--line-strong); }
+.help { margin: 6px 0 0; font-size: 15px; line-height: 21px; font-weight: 600; color: var(--muted); }
 
 .burst { position: fixed; left: 50%; top: 110px; width: 0; height: 0; z-index: 9; pointer-events: none; }
 .burst i { position: absolute; left: 0; top: 0; width: 9px; height: 9px; border-radius: 50%; background: var(--c); animation: burst .85s cubic-bezier(.22, 1, .36, 1) forwards; }
@@ -180,5 +167,5 @@ h3 { margin: 22px 0 12px; font-size: 16px; line-height: 20px; font-weight: 800; 
 @keyframes fly { 0% { opacity: 0; transform: translateY(26px) scale(.9); } }
 @keyframes out { to { opacity: 0; transform: scale(.4); } }
 @keyframes burst { 0% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0); opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .in, .facts li, .top5 li, .sk, .pill { animation: none !important; } .meter i { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .in, .top5 li, .sk, .pill { animation: none !important; } .meter i { transition: none; } }
 </style>

@@ -34,7 +34,7 @@ defineExpose({ strike, el: root });
 .pb { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .pb__fly { display: block; animation: pb-hover 3.4s ease-in-out infinite; }
 .pb.striking { animation: pb-strike .75s cubic-bezier(.5, 0, .3, 1); z-index: 5; }
-.pb__label { padding: 2px 10px; border-radius: 999px; background: rgba(255, 255, 255, .72); font-size: 14px; font-weight: 800; white-space: nowrap; color: #1b1b1b; }
+.pb__label { padding: 2px 10px; border-radius: 999px; background: rgba(255, 255, 255, .72); font-size: 16px; font-weight: 800; white-space: nowrap; color: #1b1b1b; }
 @keyframes pb-hover {
   0%, 100% { transform: translate(0, 0) rotate(-3deg); }
   30% { transform: translate(8px, -12px) rotate(3deg); }

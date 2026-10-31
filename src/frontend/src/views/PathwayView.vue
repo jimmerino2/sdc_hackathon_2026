@@ -3,12 +3,10 @@ import '../learn.css';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import Bubble from '../components/Bubble.vue';
 import Icon from '../components/Icon.vue';
-import SkillChips from '../components/learn/SkillChips.vue';
+import InfoDialog from '../components/InfoDialog.vue';
 import SectionBanner from '../components/learn/SectionBanner.vue';
 import SkillPath from '../components/learn/SkillPath.vue';
 import NextUpCard, { type NextUpSkill } from '../components/learn/NextUpCard.vue';
-import ProgressCard from '../components/learn/ProgressCard.vue';
-import TimeCard from '../components/learn/TimeCard.vue';
 import { formatMinutes } from '../learn/time';
 import ForecastCard from '../components/learn/ForecastCard.vue';
 import BeeGuide from '../components/learn/BeeGuide.vue';
@@ -24,31 +22,26 @@ import type { SkillRow } from '../api/occupational';
 import { loadRoadmap, openRoadmap, useFlow } from '../state';
 import { go } from '../router';
 
-const { state, profileSkills, key } = useFlow();
+const { state } = useFlow();
 
 const typeLabel = { tech: 'Tool', skill: 'Ability', knowledge: 'Knowledge' } as const;
 const sourceLabel: Record<RoadmapSource['source_type'] | 'link', string> = {
   project: 'Build it', certificate: 'Get certified', video: 'Watch', activity: 'Practise', link: 'Open',
 };
 const CHEERS = ['Nice!', 'Sweet!', 'On a roll!'];
-const MAX_CHIPS = 6;
 
 const roadmap = computed(() => state.value.roadmap.data);
-const job = computed(() => state.value.jobs.data?.jobs.find((j) => j.onet_code === state.value.chosenRoleId));
-/** Skills the user already has for this role (from matching); after a login, their strongest saved skills. */
-const haveAll = computed(() => {
-  const saved = [...state.value.savedSkills].sort((a, b) => b.score - a.score).map((s) => s.name);
-  const names = job.value?.skills_you_have ?? (saved.length ? saved : profileSkills.value.map((s) => s.name));
-  return names.map(skillLabel);
-});
-const have = computed(() => haveAll.value.slice(0, MAX_CHIPS));
-const haveMore = computed(() => Math.max(0, haveAll.value.length - MAX_CHIPS));
 
 const nodes = computed(() => allNodes(roadmap.value));
 const resolved = computed(() => resolveNodes(nodes.value, (n) => skillLabel(n.skill_name)));
 const counts = computed(() => progress(roadmap.value));
 const isRoleReady = computed(() => counts.value.total > 0 && counts.value.done >= counts.value.total);
-const sections = computed(() => (roadmap.value?.sections ?? []).map((s) => ({ section: s.section, title: s.title, units: resolveUnits(roadmap.value!, s.section, (n) => skillLabel(n.skill_name)), count: s.units.reduce((t, u) => t + u.nodes.length, 0) })));
+const sections = computed(() => (roadmap.value?.sections ?? []).map((s) => {
+  const nodes = s.units.flatMap((u) => u.nodes);
+  const left = nodes.filter((n) => n.status !== 'completed').reduce((t, n) => t + (n.minutes ?? 0), 0);
+  const time = !roadmap.value?.minutes_total ? '' : left ? ` · about ${formatMinutes(left)} left` : ' · nothing left';
+  return { section: s.section, title: s.title, units: resolveUnits(roadmap.value!, s.section, (n) => skillLabel(n.skill_name)), count: nodes.length, time };
+}));
 
 const selectedId = ref<string | null>(null);
 const busyId = ref<string | null>(null);
@@ -180,6 +173,17 @@ const challenge = computed(() => {
 /* ---------- the profile's roadmaps: switch between them, or delete the one on screen ---------- */
 const summaries = ref<RoadmapSummary[]>([]);
 const activeCode = computed(() => roadmap.value?.onet_code ?? state.value.chosenRoleId);
+/** One chip per roadmap with its progress. The one on screen counts live, and still shows if the list couldn't load. */
+const roadmapTabs = computed(() => {
+  const r = roadmap.value;
+  const list = summaries.value.length || !r ? summaries.value : [{ onet_code: r.onet_code, title: r.title, completed: counts.value.done, total: counts.value.total }];
+  return list.map((s) => {
+    const live = s.onet_code === activeCode.value && r;
+    const done = live ? counts.value.done : s.completed;
+    const total = live ? counts.value.total : s.total;
+    return { code: s.onet_code, title: s.title, done, total, pct: total ? Math.round((done / total) * 100) : 0 };
+  });
+});
 /** Every roadmap is gone, so there is nothing to show until the learner builds another. */
 const empty = ref(false);
 const confirming = ref(false);
@@ -242,20 +246,22 @@ onMounted(async () => {
 
 <template>
   <div class="tab">
-    <div v-if="summaries.length" class="jb rmbar">
+    <div v-if="roadmapTabs.length" class="jb rmbar">
       <div class="rmbar__tabs" role="tablist" aria-label="Your roadmaps">
         <button
-          v-for="r in summaries"
-          :key="r.onet_code"
+          v-for="r in roadmapTabs"
+          :key="r.code"
           type="button"
           role="tab"
           class="rmbar__tab"
-          :class="{ on: r.onet_code === activeCode }"
-          :aria-selected="r.onet_code === activeCode"
-          @click="switchTo(r.onet_code)"
+          :class="{ on: r.code === activeCode }"
+          :aria-selected="r.code === activeCode"
+          :aria-label="`${r.title}, ${r.done} of ${r.total} skills done`"
+          @click="switchTo(r.code)"
         >
           <span class="rmbar__name">{{ r.title }}</span>
-          <span class="rmbar__n">{{ r.onet_code === activeCode && roadmap ? counts.done : r.completed }}/{{ r.onet_code === activeCode && roadmap ? counts.total : r.total }}</span>
+          <span class="rmbar__bar" aria-hidden="true"><i :style="{ width: r.pct + '%' }" /></span>
+          <span class="rmbar__n">{{ r.done }}/{{ r.total }}</span>
         </button>
       </div>
       <button v-if="roadmap" type="button" class="rmbar__del" :disabled="deleting" @click="confirming = !confirming">
@@ -283,15 +289,21 @@ onMounted(async () => {
 
     <div v-else class="jb learn">
       <div class="learn__main">
-        <SkillChips v-if="have.length && !isRoleReady" :skills="have" :owned="job?.skills_owned" :total="job?.skills_total" :more="job ? haveMore : 0" />
-        <ChallengeBanner v-if="challenge && !isRoleReady" :challenge="challenge" />
-
         <template v-for="sec in sections" :key="sec.section">
           <SectionBanner
             :eyebrow="`Section ${sec.section}`"
             :title="sec.title ?? (sec.section === 1 ? roadmap.title : `Level up · part ${sec.section}`)"
-            :meta="`${sec.count} skills · ${sec.units.length} ${sec.units.length === 1 ? 'unit' : 'units'}`"
-          />
+            :meta="`${sec.count} skills · ${sec.units.length} ${sec.units.length === 1 ? 'unit' : 'units'}${sec.time}`"
+          >
+            <InfoDialog v-if="roadmap.minutes_total" title="How we estimate time">
+              <p>Each step shows how long it should take. Some come straight from the course or video page, which states its own length. The rest use our own formula, so they are estimates.</p>
+              <ul>
+                <li><b>{{ roadmap.stated_steps ?? 0 }} {{ roadmap.stated_steps === 1 ? 'step' : 'steps' }}</b>: the length is stated by the first resource that gives one (at least an hour; a short clip doesn’t teach a skill).</li>
+                <li><b>{{ roadmap.estimated_steps ?? 0 }} {{ roadmap.estimated_steps === 1 ? 'step' : 'steps' }}</b>: our formula, a base time for the kind of resource (build a project, take a course, watch a video, practise) × how deep the skill is for the role.</li>
+              </ul>
+              <p class="muted">Skills you already have count as done, so they add no time.</p>
+            </InfoDialog>
+          </SectionBanner>
           <div class="learn__path">
             <SkillPath
               :units="sec.units"
@@ -320,8 +332,6 @@ onMounted(async () => {
         <!-- IN-PROGRESS STATE: when roadmap is being worked on -->
         <template v-if="!isRoleReady">
           <div ref="sideCard" class="learn__sidecards">
-            <ProgressCard :done="counts.done" :total="counts.total" :role="roadmap.title" />
-            <TimeCard v-if="roadmap.minutes_total" :minutes-left="roadmap.minutes_left ?? 0" :stated-steps="roadmap.stated_steps ?? 0" :estimated-steps="roadmap.estimated_steps ?? 0" />
             <NextUpCard
               :skill="nextUp"
               :selected="!!selected"
@@ -338,6 +348,7 @@ onMounted(async () => {
               :occupation="roleForecast.occupation"
               :country="roleForecast.country"
             />
+            <ChallengeBanner v-if="challenge" :challenge="challenge" />
           </div>
         </template>
 

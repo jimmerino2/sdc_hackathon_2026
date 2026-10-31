@@ -18,8 +18,6 @@ export interface PersonaCopy {
   roles: string;
   /** Roles screen while matching. */
   rolesLoading: string;
-  /** Signal screen: one short line above the three AI futures. */
-  signalNote: string;
   /** Signal skill-gap card titles. */
   haveTitle: string;
   gapTitle: string;
@@ -37,7 +35,6 @@ export const personaCopy: Record<PersonaKey, PersonaCopy> = {
     skills: 'How confident are you in these skills?',
     roles: 'Which role do you want to aim for after graduating?',
     rolesLoading: 'Checking which roles fit you as AI grows…',
-    signalNote: 'Market signals, not headlines. Pick a possible future.',
     haveTitle: 'Already yours',
     gapTitle: 'Learn next',
     loadingMatch: 'Checking how AI could shape roles that fit you',
@@ -53,7 +50,6 @@ export const personaCopy: Record<PersonaKey, PersonaCopy> = {
     skills: 'How strong are these skills for your first role?',
     roles: 'Which role do you want to go for first?',
     rolesLoading: 'Looking for roles that fit you as AI grows…',
-    signalNote: 'Explore demand for your first role across possible AI futures.',
     haveTitle: 'Skills you bring',
     gapTitle: 'Close the gap',
     loadingMatch: 'Finding roles that fit you across 3 AI futures',
@@ -69,7 +65,6 @@ export const personaCopy: Record<PersonaKey, PersonaCopy> = {
     skills: 'How strong are these skills in your work today?',
     roles: 'Which role do you want to grow into?',
     rolesLoading: 'Seeing how your role could shift with AI…',
-    signalNote: 'How your role could shift as AI agents spread. Pick a possible future.',
     haveTitle: 'Transferable skills',
     gapTitle: 'Reskill next',
     loadingMatch: 'Seeing how your role could shift across 3 AI futures',

@@ -84,7 +84,7 @@ const status = computed(() => items.value[Math.min(stage.value, items.value.leng
 .stack { width: 100%; max-width: 440px; display: flex; flex-direction: column; align-items: center; }
 .stack :deep(.fpv) { margin-bottom: 28px; }
 .progress { width: 100%; height: 14px; margin-bottom: 18px; }
-.status { min-height: 2.8em; text-align: center; font-weight: 800; font-size: 17px; line-height: 1.4; color: var(--ink); }
+.status { min-height: 2.8em; text-align: center; font-weight: 800; font-size: 19px; line-height: 1.4; color: var(--ink); }
 .swap-enter-active, .swap-leave-active { transition: opacity .2s ease, transform .2s ease; }
 .swap-enter-from { opacity: 0; transform: translateY(6px); }
 .swap-leave-to { opacity: 0; transform: translateY(-6px); }

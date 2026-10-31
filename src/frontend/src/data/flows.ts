@@ -72,6 +72,10 @@ export const scenarios: {
   },
 ];
 
+/** Each future keeps its colour and icon, whatever its chance is: green speeds up, yellow holds steady, red slows down. */
+export const scenarioColor: Record<ScenarioKey, string> = { accelerates: '#2e7d4f', steady: 'var(--yellow)', slows: '#c62828' };
+export const scenarioIcon: Record<ScenarioKey, string> = { accelerates: 'tup', steady: 'arrow', slows: 'tdown' };
+
 const role = (
   id: string,
   title: string,

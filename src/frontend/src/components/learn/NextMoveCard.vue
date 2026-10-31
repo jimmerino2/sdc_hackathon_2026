@@ -114,14 +114,14 @@ const action = computed(() => {
 }
 .jb-nextmove__title {
   margin: 2px 0 0;
-  font-size: 20px;
-  line-height: 26px;
+  font-size: 23px;
+  line-height: 30px;
   font-weight: 900;
 }
 .jb-nextmove__desc {
   margin: 4px 0 0;
-  font-size: 13px;
-  line-height: 19px;
+  font-size: 15px;
+  line-height: 22px;
   font-weight: 600;
   color: var(--text-muted);
 }

@@ -61,7 +61,7 @@ function pick(i: number) {
 .field { --gap: 14px; position: relative; }
 .list { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); }
 .stage { flex-direction: column; align-items: center; text-align: center; padding: 22px 12px 18px; gap: 4px; }
-.stage h3 { font-size: 17px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.stage h3 { font-size: 19px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .who-ic { color: var(--orange); }
 .plot { display: block; width: 140px; height: 168px; margin-top: 2px; position: relative; }
 .plot :deep(.flower) { position: absolute; left: 0; bottom: 0; }

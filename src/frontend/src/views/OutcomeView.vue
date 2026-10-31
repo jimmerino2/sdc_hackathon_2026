@@ -46,7 +46,7 @@ const { key } = useFlow();
 .stop:not(:last-child)::after {
   content: ''; position: absolute; left: 51px; bottom: -16px; height: 16px; border-left: 3px dotted var(--yellow);
 }
-.stop p { font-size: 18px; font-weight: 800; line-height: 1.3; color: var(--ink); }
+.stop p { font-size: 20px; font-weight: 800; line-height: 1.3; color: var(--ink); }
 .art { flex: none; width: 64px; height: 52px; border-radius: 14px; background: var(--cream); display: grid; place-items: center; overflow: hidden; }
 
 /* roles that fit */
@@ -58,7 +58,7 @@ const { key } = useFlow();
 .c2 { left: 10px; top: 10px; border-color: var(--orange); animation: slide .6s calc(var(--d) + .35s) cubic-bezier(.2, .8, .3, 1.3) both; }
 .c2 em {
   position: absolute; right: -8px; top: -8px; width: 16px; height: 16px; border-radius: 50%; background: var(--orange); color: #fff;
-  font-size: 10px; font-style: normal; font-weight: 900; display: grid; place-items: center;
+  font-size: 12px; font-style: normal; font-weight: 900; display: grid; place-items: center;
   animation: pop .4s calc(var(--d) + .8s) cubic-bezier(.2, .8, .3, 1.6) both;
 }
 
@@ -88,7 +88,7 @@ const { key } = useFlow();
 @media (max-width: 640px) {
   .stop { gap: 14px; padding: 14px 16px; }
   .stop:not(:last-child)::after { left: 47px; }
-  .stop p { font-size: 16px; }
+  .stop p { font-size: 18px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .stop, .c2, .c2 em, .ln, .dot, .n, .bar { animation: none !important; stroke-dashoffset: 0; }

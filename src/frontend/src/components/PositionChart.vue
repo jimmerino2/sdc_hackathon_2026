@@ -158,7 +158,7 @@ const labels = computed(() => {
 <style scoped>
 svg { width: 100%; display: block; font-family: 'Nunito', sans-serif; }
 .q.risk { fill: #fdf0e6; } .q.transform { fill: #fff8e1; } .q.niche { fill: #f5f4f1; } .q.proof { fill: #eaf5ee; }
-.ql { font-size: 12px; font-weight: 900; }
+.ql { font-size: 14px; font-weight: 900; }
 .ql.risk { fill: #c2560f; } .ql.transform { fill: #a86b00; } .ql.niche { fill: #8a8782; } .ql.proof { fill: #2e7d4f; }
 .mid { stroke: #c2bfba; stroke-width: 1.5; }
 .tick { font-size: 10px; font-weight: 800; fill: #8a8782; }

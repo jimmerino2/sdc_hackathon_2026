@@ -38,14 +38,14 @@ function toggle(id: number) {
 </template>
 
 <style scoped>
-.hint { font-size: 13px; font-weight: 800; color: var(--muted); margin-bottom: 12px; }
+.hint { font-size: 15px; font-weight: 800; color: var(--muted); margin-bottom: 12px; }
 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .tile { position: relative; flex-direction: column; justify-content: center; min-height: 112px; padding: 14px 10px; gap: 10px; text-align: center; }
 .tile:disabled { opacity: .45; cursor: not-allowed; }
 .ic { flex: none; width: 44px; height: 44px; border-radius: 12px; background: var(--cream); display: grid; place-items: center; }
 .selected .ic { background: var(--yellow); }
 .txt { min-width: 0; }
-.tile h3 { font-size: 14px; line-height: 1.25; }
+.tile h3 { font-size: 16px; line-height: 1.25; }
 .tick { position: absolute; top: 8px; right: 8px; }
 @media (max-width: 420px) { .grid { grid-template-columns: repeat(2, 1fr); } }
 </style>

@@ -43,7 +43,7 @@ const flowers = [
 .ground { position: absolute; left: 0; right: 0; top: 46%; bottom: 0; background: linear-gradient(#a8d27a, #7dbb55); overflow: hidden; }
 .ground i { position: absolute; left: 50%; top: 0; width: 100%; height: 3px; background: rgba(255, 255, 255, .25); transform-origin: 50% 0; animation: stripe 3.3s linear infinite; }
 
-.fl { position: absolute; left: 50%; top: 46%; width: 0; height: 0; font-size: 22px; transform-origin: 0 0; animation: approach 7.2s cubic-bezier(.5, 0, .9, .6) infinite; opacity: 0; }
+.fl { position: absolute; left: 50%; top: 46%; width: 0; height: 0; font-size: 25px; transform-origin: 0 0; animation: approach 7.2s cubic-bezier(.5, 0, .9, .6) infinite; opacity: 0; }
 .stem { position: absolute; left: -2px; top: 0; width: 4px; height: 70px; background: #4f9a39; border-radius: 2px; }
 .bloom { position: absolute; left: 0; top: 0; width: 0; height: 0; }
 .bloom i { position: absolute; left: -.42em; top: -.42em; width: .84em; height: .84em; border-radius: 50%; background: var(--petal); border: 2px solid rgba(30, 30, 30, .14); }
@@ -54,9 +54,9 @@ const flowers = [
 .wing { position: absolute; bottom: -34px; width: 150px; height: 110px; background: #fff; border: 4px solid var(--orange); z-index: 3; }
 .wing.l { left: -34px; border-radius: 10% 90% 20% 80%; transform-origin: 0 100%; animation: flapL .26s ease-in-out infinite alternate; }
 .wing.r { right: -34px; border-radius: 90% 10% 80% 20%; transform-origin: 100% 100%; animation: flapR .26s ease-in-out infinite alternate; }
-.hud { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; background: rgba(255, 255, 255, .92); border: 2px solid var(--line-strong); border-radius: 999px; padding: 6px 14px; z-index: 4; font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.hud { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; background: rgba(255, 255, 255, .92); border: 2px solid var(--line-strong); border-radius: 999px; padding: 6px 14px; z-index: 4; font-size: 13px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
 .hud b { display: flex; gap: 5px; } .hud b i { width: 12px; height: 12px; border-radius: 50%; background: var(--line); animation: fill 7.2s infinite steps(1, end); }
-.tag { position: absolute; left: 14px; top: 12px; z-index: 4; background: var(--ink); color: var(--yellow); font-size: 10px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; }
+.tag { position: absolute; left: 14px; top: 12px; z-index: 4; background: var(--ink); color: var(--yellow); font-size: 12px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; }
 
 @keyframes cam { 0%, 100% { transform: translate(-3px, 2px) rotate(-.6deg); } 50% { transform: translate(3px, -3px) rotate(.6deg); } }
 @keyframes approach {

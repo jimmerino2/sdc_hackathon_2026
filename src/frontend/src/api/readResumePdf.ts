@@ -24,6 +24,8 @@ export interface ResumePreview {
   order: string[];
   pageCount: number;
   chars: number;
+  /** The text of those pages, lower-cased. */
+  text: string;
   /** Height of the rendered pages together. */
   height: number;
 }
@@ -39,7 +41,7 @@ export async function readResumePdf(file: File): Promise<ResumePreview> {
 
   const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
   const dpr = Math.min(2, window.devicePixelRatio || 1);
-  const out: ResumePreview = { pages: [], marks: [], counts: {}, order: [], pageCount: pdf.numPages, chars: 0, height: 0 };
+  const out: ResumePreview = { pages: [], marks: [], counts: {}, order: [], pageCount: pdf.numPages, chars: 0, text: '', height: 0 };
 
   for (let n = 1; n <= Math.min(pdf.numPages, MAX_PAGES); n++) {
     const page = await pdf.getPage(n);
@@ -62,6 +64,7 @@ export async function readResumePdf(file: File): Promise<ResumePreview> {
       return at;
     });
     out.chars += text.length;
+    out.text += `${text.toLowerCase()}\n`;
 
     for (const hit of findKeywords(text)) {
       out.counts[hit.key] = (out.counts[hit.key] ?? 0) + 1;

@@ -41,7 +41,7 @@ const landed = reactive<Record<string, boolean>>({});
 .grid { display: grid; gap: 14px; }
 .bee { flex-direction: column; align-items: center; text-align: center; padding: 22px 14px 18px; gap: 4px; }
 .bee .m { margin: 8px 0 14px; }
-.bee small { font-size: 12px; color: var(--muted); font-weight: 600; line-height: 1.35; margin-top: 4px; }
+.bee small { font-size: 14px; color: var(--muted); font-weight: 600; line-height: 1.35; margin-top: 4px; }
 .bee .tick { position: absolute; top: 12px; right: 12px; margin: 0; }
 
 /* The flower's head sits at the stage's lower middle; the bee lands on it. */

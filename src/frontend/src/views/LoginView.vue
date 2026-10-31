@@ -97,20 +97,20 @@ function changeEmail() {
 .page { min-height: 100vh; display: flex; flex-direction: column; }
 header { padding: 32px 80px; }
 main { width: 100%; max-width: 480px; margin: 0 auto; padding: 24px 20px 60px; }
-h1 { font-size: 30px; font-weight: 900; margin-bottom: 24px; }
+h1 { font-size: 34px; font-weight: 900; margin-bottom: 24px; }
 .b { margin-bottom: 22px; }
 .block { padding: 20px 22px; display: flex; flex-direction: column; gap: 12px; }
-label { font-weight: 800; font-size: 14px; }
+label { font-weight: 800; font-size: 16px; }
 .field {
   width: 100%; padding: 14px 16px; border: 2px solid var(--line-strong); border-radius: 14px; background: #fff;
   font: 800 16px 'Nunito', sans-serif; color: var(--ink); outline: none;
 }
 .field:focus { border-color: var(--orange); }
-.field.code { letter-spacing: .3em; font-size: 20px; }
+.field.code { letter-spacing: .3em; font-size: 23px; }
 .links { display: flex; gap: 18px; }
-.links button, .back { font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.links button, .back { font-size: 14px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .links button:hover, .back:hover { color: var(--ink); }
 .back { display: inline-block; margin-top: 22px; }
-.error { margin-top: 14px; padding: 12px 16px; border-radius: 14px; background: #fdecea; color: #b3261e; font-weight: 800; font-size: 14px; line-height: 1.4; }
+.error { margin-top: 14px; padding: 12px 16px; border-radius: 14px; background: #fdecea; color: #b3261e; font-weight: 800; font-size: 16px; line-height: 1.4; }
 @media (max-width: 900px) { header { padding: 20px; } }
 </style>

@@ -27,7 +27,7 @@ const shown = computed(() => sources.value.filter((s) => s.id === 'indeed_postin
 </template>
 
 <style scoped>
-.stamp { margin: 8px 0 0; font-size: 12px; font-weight: 700; line-height: 1.5; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
+.stamp { margin: 8px 0 0; font-size: 14px; font-weight: 700; line-height: 1.5; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
 .stamp b { color: var(--ink); font-weight: 900; }
 .stamp a { color: inherit; text-decoration: underline; }
 </style>

@@ -58,15 +58,15 @@ const short = (m: string) => m.split('/').pop();
 
 <style scoped>
 .pad { padding: 20px 24px; }
-.tried h2 { font-size: 18px; display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
-.small { font-size: 12.5px; line-height: 1.5; }
+.tried h2 { font-size: 20px; display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.small { font-size: 14px; line-height: 1.5; }
 .muted { color: var(--muted); }
 .muted a { color: var(--ink); font-weight: 800; }
 .scroll { overflow-x: auto; }
-.tbl { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.tbl { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; font-variant-numeric: tabular-nums; }
 .tbl th, .tbl td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 .tbl th:first-child, .tbl td:first-child { text-align: left; white-space: normal; }
-.tbl th { font-size: 11px; font-weight: 800; color: var(--muted); }
+.tbl th { font-size: 13px; font-weight: 800; color: var(--muted); }
 .tbl tr.shown td { font-weight: 800; }
 @media (max-width: 860px) { .pad { padding: 16px; } }
 </style>

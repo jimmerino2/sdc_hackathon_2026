@@ -203,13 +203,12 @@ onMounted(() => {
       <div class="boss__copy">
         <span class="boss__eyebrow">Boss Information</span>
         <h2 id="boss-name">Robbee <small>The Unemployed Chud</small></h2>
-        <p>
+        <p class="boss__say">
           Bitter that he couldn't find a tech job due to a massive skill issue, Robbee now regularly harasses bees like
           you. This includes saying you'll end up like him, asking for referrals, internships, or if your dad knows a
           guy.
         </p>
-        <br />
-        <p>Please don't tell him to "just put the fries in the bag", that raises his cortisol levels real bad...</p>
+        <p class="boss__say">Please don't tell him to "just put the fries in the bag", that raises his cortisol levels real bad...</p>
         <div class="boss__pips" :aria-label="`${dealt} of ${slots} stings landed on Robbee, ${stingers} stingers ready`">
           <span v-for="i in slots" :key="i" class="boss__pip" :class="{ on: i <= dealt }"
             ><Stinger :size="20"
@@ -220,7 +219,7 @@ onMounted(() => {
         </div>
       </div>
       <div class="boss__side">
-        <RouterLink :to="go('hive')" class="boss__cta">Protect the hive</RouterLink>
+        <RouterLink :to="go('hive')" class="jb-btn jb-btn--primary">Protect the hive</RouterLink>
       </div>
     </section>
 
@@ -228,11 +227,10 @@ onMounted(() => {
     <div class="chal__listhead">
       <div class="chal__filter-wrap">
         <h2>{{ tab === 'past' ? 'Past challenges' : tab === 'all' ? 'All challenges' : 'Your challenges' }}</h2>
-        <div v-if="pastChallenges.length" class="chal__tabs" role="tablist" aria-label="Filter challenges">
+        <div v-if="pastChallenges.length" class="btn-group" role="tablist" aria-label="Filter challenges">
           <button
             type="button"
             role="tab"
-            class="chal__tab"
             :class="{ on: tab === 'current' }"
             :aria-selected="tab === 'current'"
             @click="tab = 'current'"
@@ -243,7 +241,6 @@ onMounted(() => {
           <button
             type="button"
             role="tab"
-            class="chal__tab"
             :class="{ on: tab === 'past' }"
             :aria-selected="tab === 'past'"
             @click="tab = 'past'"
@@ -255,7 +252,6 @@ onMounted(() => {
             v-if="activeChallenges.length && pastChallenges.length"
             type="button"
             role="tab"
-            class="chal__tab"
             :class="{ on: tab === 'all' }"
             :aria-selected="tab === 'all'"
             @click="tab = 'all'"
@@ -266,7 +262,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <button type="button" class="chal__new" @click="picking = true">+ New challenge</button>
+      <button type="button" class="jb-btn jb-btn--primary" @click="picking = true">+ New challenge</button>
     </div>
 
     <!-- Error State -->
@@ -406,7 +402,7 @@ onMounted(() => {
   flex-wrap: wrap;
 }
 .eyebrow {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 900;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -414,8 +410,8 @@ onMounted(() => {
 }
 .chal__sub {
   margin: 4px 0 0;
-  font-size: 13px;
-  line-height: 18px;
+  font-size: 15px;
+  line-height: 21px;
   color: var(--text-muted);
   font-weight: 600;
 }
@@ -448,8 +444,8 @@ onMounted(() => {
   min-width: 0;
 }
 .boss__eyebrow {
-  font-size: 11px;
-  line-height: 16px;
+  font-size: 13px;
+  line-height: 18px;
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -457,14 +453,14 @@ onMounted(() => {
 }
 .boss h2 {
   margin: 0;
-  font-size: 34px;
-  line-height: 40px;
+  font-size: 38px;
+  line-height: 46px;
   font-weight: 900;
 }
 .boss h2 small {
   margin-left: 10px;
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 16px;
+  line-height: 23px;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -472,10 +468,17 @@ onMounted(() => {
 }
 .boss p {
   margin: 0;
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 16px;
+  line-height: 23px;
   font-weight: 600;
   color: var(--text-muted);
+}
+.boss p.boss__say {
+  font-family: 'Patrick Hand', 'Comic Sans MS', cursive;
+  font-size: 20px;
+  line-height: 27px;
+  font-weight: 400;
+  color: var(--text);
 }
 .boss__pips {
   display: flex;
@@ -509,8 +512,8 @@ onMounted(() => {
 }
 .boss__count {
   margin-left: 6px;
-  font-size: 13px;
-  line-height: 18px;
+  font-size: 15px;
+  line-height: 21px;
   font-weight: 800;
   color: var(--accent-text);
 }
@@ -519,26 +522,6 @@ onMounted(() => {
   flex-direction: column;
   align-items: stretch;
   gap: 10px;
-}
-.boss__cta {
-  padding: 14px 24px;
-  border-radius: var(--radius-md);
-  background: var(--honey);
-  color: var(--on-honey);
-  text-align: center;
-  text-decoration: none;
-  font-size: 15px;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  box-shadow: 0 4px 0 var(--honey-deep);
-  transition:
-    transform var(--dur-fast) var(--ease-out),
-    box-shadow var(--dur-fast) var(--ease-out);
-}
-.boss__cta:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 0 var(--honey-deep);
 }
 
 .chal__listhead {
@@ -557,43 +540,8 @@ onMounted(() => {
 }
 .chal__listhead h2 {
   margin: 0;
-  font-size: 26px;
+  font-size: 30px;
   font-weight: 900;
-}
-.chal__tabs {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.chal__tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border: 2px solid var(--line-strong);
-  border-radius: var(--radius-pill);
-  background: var(--surface-raised);
-  color: var(--text-muted);
-  font-size: 13px;
-  line-height: 16px;
-  font-weight: 800;
-  cursor: pointer;
-  transition:
-    background var(--dur-base),
-    color var(--dur-base),
-    border-color var(--dur-base),
-    transform var(--dur-fast);
-}
-.chal__tab:hover {
-  color: var(--text);
-  border-color: var(--honey);
-}
-.chal__tab.on {
-  background: var(--honey-tint);
-  border-color: var(--honey);
-  color: var(--text);
-  box-shadow: 0 3px 0 var(--honey);
 }
 .chal__tab-n {
   display: inline-grid;
@@ -604,14 +552,9 @@ onMounted(() => {
   border-radius: var(--radius-pill);
   background: var(--surface);
   border: 1px solid var(--line-strong);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 900;
   color: var(--text);
-}
-.chal__tab.on .chal__tab-n {
-  background: var(--honey);
-  border-color: var(--honey);
-  color: var(--on-honey);
 }
 .chal__grouped {
   display: flex;
@@ -630,7 +573,7 @@ onMounted(() => {
 }
 .chal__section-head h3 {
   margin: 0;
-  font-size: 20px;
+  font-size: 23px;
   font-weight: 900;
 }
 .chal__badge {
@@ -640,8 +583,8 @@ onMounted(() => {
   border-radius: var(--radius-pill);
   background: var(--honey-tint);
   color: var(--accent-text);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 14px;
+  line-height: 18px;
   font-weight: 800;
 }
 .chal__badge--done {
@@ -654,17 +597,6 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-}
-.chal__new {
-  padding: 11px 22px;
-  border-radius: var(--radius-md);
-  background: var(--honey);
-  color: var(--on-honey);
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
 }
 .chal__list {
   display: flex;
@@ -703,8 +635,8 @@ onMounted(() => {
     height: 170px;
   }
   .boss h2 {
-    font-size: 30px;
-    line-height: 36px;
+    font-size: 34px;
+    line-height: 41px;
   }
 }
 </style>

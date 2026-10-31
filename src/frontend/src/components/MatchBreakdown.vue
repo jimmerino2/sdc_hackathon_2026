@@ -1,60 +1,87 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import InfoDialog from './InfoDialog.vue';
-import type { JobMatch, ScenarioOutlook } from '../api/jobs';
-import { COMPONENT_LABELS, SCORE_TOOLTIP, formulaLine, partCaption } from '../data/matchExplain';
+import type { JobMatch, ScenarioOutlook, ScoreComponent } from '../api/jobs';
+import { COMPONENT_LABELS, SCORE_TOOLTIP, formulaLine, matchSlices, partCaption } from '../data/matchExplain';
 
-/** Why a role scored what it did under one AI future: a bar per part. The sums stay in the dialog. */
+/** How a role's match is made up under one AI future: a pie of the parts in a dialog, so the card stays short. */
 const props = defineProps<{ job: JobMatch; scenario: ScenarioOutlook['scenario']; stage?: string | null }>();
+
+/** Each part keeps its colour whichever parts a role has. */
+const COLORS: Record<ScoreComponent['key'], string> = { skills: '#d97a00', outlook: '#2b6cb0', interests: '#0fa37f', education: '#8e4bb5' };
+const R = 42;
+const CIRCUMFERENCE = 2 * Math.PI * R;
+const GAP = 1; // percent of the ring left bare between slices
 
 const outlook = computed(() => props.job.outlook.find((o) => o.scenario === props.scenario));
 const breakdown = computed(() => outlook.value?.breakdown ?? null);
+const slices = computed(() => (breakdown.value ? matchSlices(breakdown.value).filter((s) => s.points > 0) : []));
+const arcs = computed(() => {
+  let at = 0;
+  return slices.value.map((s) => {
+    const start = at;
+    at += s.points;
+    return { ...s, dash: `${(Math.max(s.points - GAP, 0.5) / 100) * CIRCUMFERENCE} ${CIRCUMFERENCE}`, offset: (-start / 100) * CIRCUMFERENCE };
+  });
+});
+const rest = computed(() => 100 - slices.value.reduce((a, s) => a + s.points, 0));
+const pieLabel = computed(() => `${breakdown.value?.match_percent}% match: ${slices.value.map((s) => `${COMPONENT_LABELS[s.key]} ${s.points}`).join(', ')}`);
 </script>
 
 <template>
-  <div class="mb">
-    <p v-if="!breakdown" class="muted">Regenerate your roles to see why this role scored what it did.</p>
-    <template v-else>
-      <ul class="parts">
-        <li v-for="c in breakdown.components" :key="c.key">
-          <b>{{ COMPONENT_LABELS[c.key] }}</b>
-          <span class="bar" role="img" :aria-label="`${COMPONENT_LABELS[c.key]}: ${Math.round(c.score * 100)} out of 100`"><i :style="{ width: `${c.score * 100}%` }" /></span>
-          <small>{{ partCaption(c.key, job, outlook, stage) }}</small>
+  <p v-if="!breakdown" class="muted">Regenerate your roles to see why this role scored what it did.</p>
+  <InfoDialog v-else title="How your match is calculated" label="How it’s calculated">
+    <div class="pie">
+      <svg viewBox="0 0 100 100" role="img" :aria-label="pieLabel">
+        <circle cx="50" cy="50" :r="R" class="track" />
+        <circle
+          v-for="a in arcs"
+          :key="a.key"
+          cx="50"
+          cy="50"
+          :r="R"
+          class="arc"
+          :stroke="COLORS[a.key]"
+          :stroke-dasharray="a.dash"
+          :stroke-dashoffset="a.offset"
+          transform="rotate(-90 50 50)"
+        ><title>{{ COMPONENT_LABELS[a.key] }}: {{ a.points }} points</title></circle>
+        <text x="50" y="49" text-anchor="middle" class="big">{{ breakdown.match_percent }}%</text>
+        <text x="50" y="60" text-anchor="middle" class="small">match</text>
+      </svg>
+      <ul class="legend">
+        <li v-for="s in slices" :key="s.key">
+          <i :style="{ background: COLORS[s.key] }" />
+          <span><b>{{ COMPONENT_LABELS[s.key] }}</b><small>{{ partCaption(s.key, job, outlook, stage) }}</small></span>
+          <em>{{ s.points }}</em>
+        </li>
+        <li v-if="rest > 0">
+          <i class="none" />
+          <span><b>Not matched yet</b></span>
+          <em>{{ rest }}</em>
         </li>
       </ul>
-
-      <InfoDialog title="How your match is calculated" label="How it’s calculated">
-        <p>{{ SCORE_TOOLTIP }}</p>
-        <table class="sums">
-          <thead><tr><th>Part</th><th>Your score</th><th>Weight</th><th>Points</th></tr></thead>
-          <tbody>
-            <tr v-for="c in breakdown.components" :key="c.key">
-              <td>{{ COMPONENT_LABELS[c.key] }}</td><td>{{ Math.round(c.score * 100) }}/100</td><td>{{ (c.share * 100).toFixed(1) }}%</td><td>+{{ (c.points * 100).toFixed(1) }}</td>
-            </tr>
-          </tbody>
-        </table>
-        <p>{{ formulaLine(breakdown) }}</p>
-        <p class="muted">Interests come from Jobee’s mapping of roles and interests to the UN goals. Job ads are a forecast of US data, and career stage is the same for every role. This score hasn’t been validated as a measure of career suitability.</p>
-      </InfoDialog>
-    </template>
-  </div>
+    </div>
+    <p>{{ SCORE_TOOLTIP }}</p>
+    <p class="muted">{{ formulaLine(breakdown) }} The slices show each part’s share of that final score.</p>
+    <p class="muted">Interests come from Jobee’s mapping of roles and interests to the UN goals. Demand is a forecast of US data, and career stage is the same for every role. This score hasn’t been validated as a measure of career suitability.</p>
+  </InfoDialog>
 </template>
 
 <style scoped>
-.mb { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; text-align: left; }
-.parts { list-style: none; width: 100%; display: flex; flex-direction: column; gap: 9px; }
-.parts li { display: grid; grid-template-columns: 96px minmax(50px, 1fr) minmax(0, 190px); align-items: center; gap: 10px; font-size: 13px; }
-.parts b { font-weight: 800; }
-.parts small { font-size: 12.5px; font-weight: 700; color: var(--muted); }
-.bar { height: 9px; border-radius: 999px; background: var(--line); overflow: hidden; }
-.bar i { display: block; height: 100%; border-radius: 999px; background: var(--orange); }
-.muted { font-size: 12px; font-weight: 600; line-height: 1.45; color: var(--muted); }
-.sums { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; font-variant-numeric: tabular-nums; }
-.sums th, .sums td { padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--line); }
-.sums th:first-child, .sums td:first-child { text-align: left; }
-.sums th { font-size: 11px; color: var(--muted); font-weight: 800; }
-@media (max-width: 560px) {
-  .parts li { grid-template-columns: 1fr auto; gap: 4px 10px; }
-  .bar { grid-column: 1 / -1; grid-row: 2; }
-}
+.muted { font-size: 14px; font-weight: 600; line-height: 1.45; color: var(--muted); }
+.pie { display: grid; grid-template-columns: 190px minmax(0, 1fr); align-items: center; gap: 24px; margin: 4px 0 8px; }
+.track { fill: none; stroke: var(--line); stroke-width: 13; }
+.arc { fill: none; stroke-width: 13; }
+.big { font-size: 17px; font-weight: 900; fill: var(--ink); }
+.small { font-size: 7px; font-weight: 800; fill: var(--muted); }
+.legend { list-style: none; margin: 0 !important; display: flex; flex-direction: column; gap: 10px !important; }
+.legend li { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.legend i { width: 14px; height: 14px; border-radius: 4px; }
+.legend i.none { background: var(--line); }
+.legend span { display: flex; flex-direction: column; line-height: 1.25; }
+.legend b { font-weight: 800; }
+.legend small { font-size: 14px; font-weight: 600; color: var(--muted); }
+.legend em { font-style: normal; font-size: 18px; font-weight: 900; font-variant-numeric: tabular-nums; }
+@media (max-width: 520px) { .pie { grid-template-columns: 1fr; } .pie svg { max-width: 180px; margin: 0 auto; } }
 </style>

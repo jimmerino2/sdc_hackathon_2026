@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { displayName, findKeywords } from './resumeKeywords';
+import { displayName, findKeywords, limitInferred, MAX_INFERRED } from './resumeKeywords';
 
 const keys = (text: string) => findKeywords(text).map((h) => h.key);
 
@@ -19,6 +19,22 @@ describe('findKeywords', () => {
 
   it('handles symbols in names', () => {
     expect(keys('C++, C# and CI/CD with .NET')).toEqual(['C++', 'C#', 'CI/CD', '.NET']);
+  });
+});
+
+describe('limitInferred', () => {
+  const skills = ['Python', 'Programming', 'Docker', 'Linux', 'Git', 'Agile', 'Scrum', 'Jira', 'Figma'].map((name) => ({ name }));
+
+  it('keeps named skills and only the strongest inferred ones', () => {
+    const kept = limitInferred(skills, { counts: { Python: 2 }, text: 'python' }).map((s) => s.name);
+    expect(kept).toEqual(['Python', 'Programming', 'Docker', 'Linux', 'Git', 'Agile']);
+    expect(kept.length - 1).toBe(MAX_INFERRED);
+  });
+
+  it('does not count a skill written in the resume but missing from the keyword list as inferred', () => {
+    const kept = limitInferred(skills, { counts: {}, text: 'figma, jira and scrum' }).map((s) => s.name);
+    expect(kept).toEqual(expect.arrayContaining(['Figma', 'Jira', 'Scrum']));
+    expect(kept).toHaveLength(MAX_INFERRED + 3);
   });
 });
 

@@ -32,6 +32,7 @@ onMounted(() => {
   <FlowShell
     next="signal"
     back="skills"
+    wide
     :next-disabled="!selected || loading"
     :mood="state.jobs.status === 'error' ? 'surprised' : loading ? 'thinking' : 'happy'"
     @next="state.chosenRoleId = selected"
@@ -54,12 +55,8 @@ onMounted(() => {
     <template v-else>
       <RoleBrowser
         pick
-        cards-only
         :jobs="jobs"
-        :context="state.jobs.data?.context ?? []"
-        :note="state.jobs.data?.note"
         :selected="selected"
-        chart-hint="Tap one to pick it."
         @select="pick"
       />
     </template>

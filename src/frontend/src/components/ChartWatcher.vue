@@ -28,7 +28,7 @@ import Mascot from './Mascot.vue';
 .bars rect:nth-child(2) { animation-delay: .15s; } .bars rect:nth-child(3) { animation-delay: .3s; } .bars rect:nth-child(4) { animation-delay: .45s; } .bars rect:nth-child(5) { animation-delay: .6s; }
 .line { stroke-dasharray: 120; animation: draw 4s ease-out infinite; }
 .dot { animation: blip 4s ease-out infinite; transform-box: fill-box; transform-origin: center; }
-.text { background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 12px 16px; font-weight: 800; font-size: 14px; line-height: 1.35; }
+.text { background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 12px 16px; font-weight: 800; font-size: 16px; line-height: 1.35; }
 @keyframes grow { 0% { transform: scaleY(0); } 30%, 100% { transform: scaleY(1); } }
 @keyframes draw { 0% { stroke-dashoffset: 120; } 55%, 100% { stroke-dashoffset: 0; } }
 @keyframes blip { 0%, 50% { transform: scale(0); } 65% { transform: scale(1.4); } 80%, 100% { transform: scale(1); } }

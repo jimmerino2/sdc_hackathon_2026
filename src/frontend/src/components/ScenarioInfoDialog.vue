@@ -41,10 +41,10 @@ const futureText: Record<string, string> = {
 
 <style scoped>
 .src-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 10px; }
-.src-item { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 2px solid var(--line); border-radius: 14px; font-size: 13px; font-weight: 600; line-height: 1.45; }
+.src-item { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 2px solid var(--line); border-radius: 14px; font-size: 15px; font-weight: 600; line-height: 1.45; }
 .src-item.now { border-color: var(--yellow); background: var(--cream); }
 .src-item b { font-weight: 900; }
 .src-about { color: var(--muted); }
 .src-item a { color: var(--ink); text-decoration: underline; }
-.tag-now { align-self: flex-start; font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: var(--amber-ink); }
+.tag-now { align-self: flex-start; font-size: 12px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: var(--amber-ink); }
 </style>

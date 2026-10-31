@@ -14,7 +14,7 @@ const props = defineProps<{
   progress: number;
   slow: boolean;
   /** What the tray shows: skills the AI has confirmed, or keywords from the browser's scan while nothing is confirmed live. */
-  tray: { title: string; items: string[]; waiting: string | null; allConfirmed: boolean };
+  tray: { title: string; items: string[]; allConfirmed: boolean };
   /** Words of reasoning the AI has done so far, when the server reports it. */
   thinkingWords: number | null;
   /** How many candidate skills the server picked to check, when known. */
@@ -60,12 +60,11 @@ const pct = computed(() => Math.round((props.finished ? 1 : props.progress) * 10
     </ol>
   </div>
 
-  <div v-if="tray.items.length || tray.waiting" class="card tray in" style="--i: 2">
+  <div v-if="tray.items.length" class="card tray in" style="--i: 2">
     <p class="eyebrow">{{ tray.title }} <b>{{ tray.items.length }}</b></p>
     <ul>
       <li v-for="k in tray.items" :key="k" :class="{ ok: tray.allConfirmed }">{{ k }}</li>
     </ul>
-    <small v-if="!tray.items.length">{{ tray.waiting }}</small>
   </div>
 
   <div class="card meter in" style="--i: 3">
@@ -85,15 +84,15 @@ const pct = computed(() => Math.round((props.finished ? 1 : props.progress) * 10
 .in { animation: rise .5s cubic-bezier(.22, 1, .36, 1) both; animation-delay: calc(var(--i, 0) * 90ms); }
 .file { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
 .name { flex: 1; min-width: 0; }
-.name b { display: block; font-size: 14px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-small { display: block; font-size: 13px; line-height: 18px; font-weight: 700; color: var(--muted); }
+.name b { display: block; font-size: 16px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+small { display: block; font-size: 15px; line-height: 21px; font-weight: 700; color: var(--muted); }
 .spin { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--yellow); animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
 li[data-s] { display: flex; gap: 12px; align-items: flex-start; transition: opacity .26s; }
 li[data-s='pending'] { opacity: .45; }
-li b { display: block; font-size: 15px; line-height: 22px; font-weight: 800; }
+li b { display: block; font-size: 16px; line-height: 25px; font-weight: 800; }
 li small { animation: swap .26s ease-out both; }
 .ico { position: relative; flex: none; width: 24px; height: 24px; margin-top: 1px; border-radius: 50%; border: 3px solid var(--line-strong); display: grid; place-items: center; transition: background .26s, border-color .26s; }
 .ico svg { display: none; }
@@ -101,10 +100,10 @@ li small { animation: swap .26s ease-out both; }
 [data-s='done'] .ico { background: var(--ink); border-color: var(--ink); color: var(--yellow); animation: pop .5s cubic-bezier(.34, 1.56, .64, 1); }
 [data-s='done'] .ico svg { display: block; }
 
-.eyebrow { margin: 0 0 10px; font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); display: flex; gap: 8px; align-items: baseline; }
-.eyebrow b { color: var(--amber-ink); font-size: 14px; }
+.eyebrow { margin: 0 0 10px; font-size: 13px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); display: flex; gap: 8px; align-items: baseline; }
+.eyebrow b { color: var(--amber-ink); font-size: 16px; }
 .tray ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; min-height: 36px; max-height: 190px; overflow: hidden; }
-.tray li { padding: 7px 14px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 13px; line-height: 16px; font-weight: 800; animation: fly .7s cubic-bezier(.34, 1.56, .64, 1) both; transition: background .26s, color .26s; }
+.tray li { padding: 7px 14px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 15px; line-height: 18px; font-weight: 800; animation: fly .7s cubic-bezier(.34, 1.56, .64, 1) both; transition: background .26s, color .26s; }
 .tray li.ok { background: var(--yellow); color: var(--ink); }
 
 .meter { padding-bottom: 12px; }
@@ -112,7 +111,7 @@ li small { animation: swap .26s ease-out both; }
 .bar i { position: relative; display: block; height: 100%; min-width: 2%; border-radius: 999px; background: var(--yellow); overflow: hidden; transition: width .5s cubic-bezier(.22, 1, .36, 1); }
 .bar i::after { content: ''; position: absolute; inset: 0; width: 60%; background: rgba(255, 255, 255, .55); animation: shimmer 1.8s ease-in-out infinite; }
 .bar.slow i { animation: breathe 1.4s ease-in-out infinite; }
-.meta { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; font-size: 12px; font-weight: 700; color: var(--muted); }
+.meta { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; font-size: 14px; font-weight: 700; color: var(--muted); }
 
 @keyframes rise { from { opacity: 0; transform: translateY(14px) scale(.96); } }
 @keyframes swap { from { opacity: 0; transform: translateY(8px); } }

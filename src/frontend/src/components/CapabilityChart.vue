@@ -192,7 +192,7 @@ svg { width: 100%; height: auto; display: block; }
 .bridged { fill: #fff; stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 2 2; }
 .mark { fill: var(--amber-ink); stroke: #fff; stroke-width: 2; }
 .mark-t { font-size: 11px; font-weight: 800; fill: var(--amber-ink); paint-order: stroke; stroke: #fff; stroke-width: 3px; }
-.key { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 11px; font-weight: 700; color: var(--muted); }
+.key { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 13px; font-weight: 700; color: var(--muted); }
 .key span { display: inline-flex; align-items: center; gap: 6px; }
 .key i { display: inline-block; }
 .k-obs { width: 9px; height: 9px; border-radius: 50%; background: var(--ink); }
@@ -201,5 +201,5 @@ svg { width: 100%; height: auto; display: block; }
 .k-med { width: 16px; border-top: 2.5px dashed var(--amber-ink); }
 .k-fan { width: 16px; height: 9px; border-radius: 2px; background: linear-gradient(var(--cream), var(--cream)); box-shadow: inset 0 0 0 3px var(--cream), inset 0 0 0 9px rgba(255, 193, 7, .45); }
 .k-lag { width: 12px; height: 9px; background: #f0efec; border: 1px solid var(--line-strong); }
-.note { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.note { font-size: 13px; color: var(--muted); margin-top: 2px; }
 </style>

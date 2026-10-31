@@ -88,8 +88,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
 .nc__dim { position: absolute; inset: 0; background: rgba(40, 36, 28, .45); }
 .nc__card { position: relative; display: flex; flex-direction: column; gap: 14px; width: min(620px, 100%); max-height: min(720px, calc(100vh - 32px)); padding: 24px; border: 2px solid var(--honey); border-radius: 24px; background: var(--surface-raised); box-shadow: var(--shadow-lift); animation: jb-rise var(--dur-base) var(--ease-out) both; }
 .nc__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.nc__head h2, .nc__writing h2 { margin: 0; font-size: 26px; line-height: 32px; font-weight: 900; }
-.nc__head p, .nc__writing p { margin: 4px 0 0; color: var(--text-muted); font-size: 14px; line-height: 20px; font-weight: 600; }
+.nc__head h2, .nc__writing h2 { margin: 0; font-size: 30px; line-height: 36px; font-weight: 900; }
+.nc__head p, .nc__writing p { margin: 4px 0 0; color: var(--text-muted); font-size: 16px; line-height: 23px; font-weight: 600; }
 .nc__x { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: #f1ece0; color: var(--text); cursor: pointer; }
 .nc__x:focus-visible, .nc__role:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .nc__list { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0 4px 4px 0; list-style: none; overflow-y: auto; }
@@ -97,9 +97,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
 .nc__role { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border: 2px solid var(--line); border-radius: var(--radius-md); background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out); }
 .nc__role:hover { border-color: var(--honey); background: var(--honey-tint); }
 .nc__icon { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--honey); color: var(--on-honey); }
-.nc__name { flex: 1; min-width: 0; font-size: 15px; font-weight: 800; }
-.nc__tag { padding: 2px 10px; border-radius: var(--radius-pill); background: var(--banner-ink); color: var(--honey); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-.nc__count { color: var(--text-muted); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.nc__name { flex: 1; min-width: 0; font-size: 16px; font-weight: 800; }
+.nc__tag { padding: 2px 10px; border-radius: var(--radius-pill); background: var(--banner-ink); color: var(--honey); font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.nc__count { color: var(--text-muted); font-size: 14px; font-weight: 700; white-space: nowrap; }
 .nc__go { flex: none; color: var(--text-muted); }
 .nc__writing { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px 8px; text-align: center; }
 .nc__dots { display: flex; gap: 8px; margin-top: 6px; }
