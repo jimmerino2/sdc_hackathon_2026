@@ -34,7 +34,7 @@ const devShare = computed(() => import.meta.env.DEV && route.query.share !== und
 
 const typeLabel = { tech: 'Tool', skill: 'Ability', knowledge: 'Knowledge' } as const;
 const sourceLabel: Record<RoadmapSource['source_type'] | 'link', string> = {
-  project: 'Build it', certificate: 'Get certified', video: 'Watch', activity: 'Practice', reference: 'Read', link: 'Open',
+  project: 'Build it', certificate: 'Get certified', video: 'Watch', activity: 'Practice', link: 'Open',
 };
 const CHEERS = ['Nice!', 'Sweet!', 'On a roll!'];
 

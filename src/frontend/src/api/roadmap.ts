@@ -3,7 +3,7 @@ import { takeSseEvents } from './resume';
 
 /** One place to learn a skill. */
 export interface RoadmapSource {
-  source_type: 'project' | 'certificate' | 'video' | 'activity' | 'reference';
+  source_type: 'project' | 'certificate' | 'video' | 'activity';
   /** 1 = first pick. */
   rank: number;
   title: string;
