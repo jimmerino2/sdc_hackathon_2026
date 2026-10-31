@@ -407,3 +407,35 @@
 .jb-hrd__price { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 0; text-align: right; }
 .jb-hrd__price b { font-size: 16px; line-height: 21px; font-weight: 900; color: var(--hrd-deep); white-space: nowrap; }
 .jb-hrd__price s { font-size: 13px; line-height: 17px; font-weight: 700; color: var(--text-muted); white-space: nowrap; }
+
+
+/* ---------- share on LinkedIn ---------- */
+.jb-share__note { margin: 12px 0 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 15px; line-height: 21px; font-weight: 700; color: var(--text-muted); }
+.jb-share__note--ok { color: #17652f; }
+.jb-share__note a { color: var(--accent-text); font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
+
+.jb-sharedlg { margin: auto; padding: 0; border: 0; border-radius: var(--radius-lg); width: min(880px, calc(100vw - 24px)); max-height: calc(100vh - 32px); background: var(--surface-raised); color: var(--text); box-shadow: 0 20px 60px rgba(0, 0, 0, .28); }
+.jb-sharedlg::backdrop { background: rgba(27, 27, 27, .5); }
+.jb-sharedlg__inner { padding: 22px 24px 22px; display: flex; flex-direction: column; gap: 14px; }
+.jb-sharedlg__top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.jb-sharedlg__top h2 { margin: 0; font-size: 22px; line-height: 28px; font-weight: 900; }
+.jb-sharedlg__close { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--surface); box-shadow: inset 0 0 0 2px var(--line); cursor: pointer; }
+.jb-sharedlg__grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.jb-sharedlg__imgwrap { display: flex; flex-direction: column; gap: 8px; }
+.jb-sharedlg__img { display: block; width: 100%; aspect-ratio: 1200 / 627; border-radius: var(--radius-md); border: 2px solid var(--line); background: var(--honey-tint); object-fit: cover; }
+.jb-sharedlg__img--wait { animation: jb-breathe 1.4s ease-in-out infinite; }
+.jb-sharedlg__check { display: flex; align-items: center; gap: 8px; font-size: 15px; line-height: 21px; font-weight: 700; cursor: pointer; }
+.jb-sharedlg__check input { width: 18px; height: 18px; accent-color: var(--honey-deep); }
+.jb-sharedlg__form { display: flex; flex-direction: column; gap: 6px; }
+.jb-sharedlg__label { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 15px; line-height: 21px; font-weight: 800; }
+.jb-sharedlg__label span { font-size: 13px; font-weight: 700; color: var(--text-muted); }
+.jb-sharedlg__text { width: 100%; resize: vertical; min-height: 150px; padding: 12px 14px; border-radius: var(--radius-md); border: 2px solid var(--line-strong); background: #fff; color: var(--text); font: inherit; font-size: 15px; line-height: 22px; font-weight: 600; }
+.jb-sharedlg__text:focus-visible { outline: 3px solid var(--honey); outline-offset: 1px; }
+.jb-sharedlg__count { margin: 0; font-size: 13px; line-height: 18px; font-weight: 700; color: var(--text-muted); }
+.jb-sharedlg__count--over { color: #b3261e; }
+.jb-sharedlg__actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.jb-sharedlg__actions .jb-btn { text-decoration: none; }
+.jb-sharedlg__consent { margin: 0; font-size: 13px; line-height: 19px; font-weight: 600; color: var(--text-muted); }
+@keyframes jb-breathe { 50% { opacity: .55; } }
+@media (max-width: 720px) { .jb-sharedlg__grid { grid-template-columns: 1fr; } .jb-sharedlg__inner { padding: 18px 16px; } }
+@media (prefers-reduced-motion: reduce) { .jb-sharedlg__img--wait { animation: none; } }

@@ -10,6 +10,7 @@ from app.hive.router import router as hive_router
 from app.hrd.router import router as hrd_router
 from app.interests.router import router as interests_router
 from app.jobs.router import router as jobs_router
+from app.linkedin.router import router as linkedin_router
 from app.llm.router import router as llm_router
 from app.llm_bench.router import router as llm_bench_router
 from app.methodology.router import router as methodology_router
@@ -47,6 +48,7 @@ def create_app() -> FastAPI:
     app.include_router(hrd_router)
     app.include_router(interests_router)
     app.include_router(jobs_router)
+    app.include_router(linkedin_router)
     app.include_router(llm_router)
     app.include_router(llm_bench_router)
     app.include_router(methodology_router)

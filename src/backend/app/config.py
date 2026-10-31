@@ -26,6 +26,13 @@ class Settings(BaseSettings):
     github_token: str = ""  # optional; reading a submitted repo without it is limited to 60 GitHub API calls an hour
     resume_prefilter: bool = True  # consider only tools named in the resume (plus the general skills); false = all ~260
     resume_thinking: bool = True  # false turns the model's hidden reasoning off: ~5 s instead of ~30 s, same skills on the resumes tried
+    # "Post to LinkedIn": a LinkedIn developer app with the "Sign In with LinkedIn using OpenID Connect" and "Share on LinkedIn" products.
+    # The redirect URI must be registered in that app, e.g. http://localhost:8000/linkedin/callback. Leave empty to hide the Post button.
+    linkedin_client_id: str = ""
+    linkedin_client_secret: str = ""
+    linkedin_redirect_uri: str = ""
+    linkedin_api_version: str = ""  # YYYYMM of LinkedIn's versioned API; empty finds a working recent month itself (old ones are retired)
+    linkedin_return_url: str = "http://localhost:5173/pathway"  # where the browser goes after LinkedIn, with ?linkedin=posted|cancelled|error
     forecast_refresh_enabled: bool = False  # lets POST /forecast/refresh clear the forecast caches (a flood of them would force retrains)
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:5173"]
 

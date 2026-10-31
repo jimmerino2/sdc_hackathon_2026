@@ -8,6 +8,7 @@ import SectionBanner from '../components/learn/SectionBanner.vue';
 import SkillPath from '../components/learn/SkillPath.vue';
 import NextUpCard, { type NextUpSkill } from '../components/learn/NextUpCard.vue';
 import HrdCard from '../components/learn/HrdCard.vue';
+import ShareCard from '../components/learn/ShareCard.vue';
 import { fetchProgrammes, type Programme } from '../api/hrd';
 import { formatMinutes } from '../learn/time';
 import ForecastCard from '../components/learn/ForecastCard.vue';
@@ -22,9 +23,13 @@ import { prefersReducedMotion } from '../composables/useCountUp';
 import { loadRoleForecast, normalizeSkillName, type RoleForecast } from '../occupational/forecastMatch';
 import type { SkillRow } from '../api/occupational';
 import { loadRoadmap, openRoadmap, useFlow } from '../state';
+import { useRoute } from 'vue-router';
 import { go } from '../router';
 
 const { state } = useFlow();
+const route = useRoute();
+/** Development only (never in a production build): ?share shows the LinkedIn card before the role is complete, to try it out. */
+const devShare = computed(() => import.meta.env.DEV && route.query.share !== undefined);
 
 const typeLabel = { tech: 'Tool', skill: 'Ability', knowledge: 'Knowledge' } as const;
 const sourceLabel: Record<RoadmapSource['source_type'] | 'link', string> = {
@@ -354,6 +359,14 @@ onMounted(async () => {
               @close="selectedId = null"
             />
             <HrdCard v-if="selected" :skill="nextUp?.name ?? ''" :programmes="programmes" />
+            <ShareCard
+              v-if="devShare && roadmap"
+              :role="roadmap.title"
+              :skills="counts.total"
+              :sections="roadmap.sections.length"
+              :minutes="roadmap.minutes_total"
+              :name="state.name"
+            />
             <ForecastCard
               v-if="forecastSelected && roleForecast"
               :name="forecastSelected.name"
@@ -383,6 +396,14 @@ onMounted(async () => {
               :row="forecastSelected.row"
               :occupation="roleForecast.occupation"
               :country="roleForecast.country"
+            />
+            <ShareCard
+              v-if="roadmap"
+              :role="roadmap.title"
+              :skills="counts.total"
+              :sections="roadmap.sections.length"
+              :minutes="roadmap.minutes_total"
+              :name="state.name"
             />
             <NextMoveCard
               :other-roadmap="otherIncompleteRoadmap"

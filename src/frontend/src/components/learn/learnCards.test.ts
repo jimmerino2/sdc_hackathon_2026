@@ -21,7 +21,7 @@ const skill = (links: NextUpSkill['links']): NextUpSkill => ({
 describe('HRD Corp card', () => {
   it('shows the verified title, that it is paid, the fee after the discount and the original', async () => {
     const html = await render(HrdCard, { skill: 'Critical Thinking', programmes: [programme()] });
-    expect(html).toContain('HRD Corp verified');
+    expect(html).toContain('HRD Corp Verified');
     expect(html).toContain('Paid');
     expect(html).toContain('RM 6,400');
     expect(html).toContain('RM 8,000');
