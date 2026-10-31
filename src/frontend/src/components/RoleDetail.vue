@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import ChartWatcher from './ChartWatcher.vue';
 import MascoMap from './MascoMap.vue';
 import ForecastInfo from './ForecastInfo.vue';
@@ -7,6 +7,7 @@ import Icon from './Icon.vue';
 import InfoDialog from './InfoDialog.vue';
 import QuarterPicker from './QuarterPicker.vue';
 import ScenarioPanel from './ScenarioPanel.vue';
+import SdgTip from './SdgTip.vue';
 import { scenarios, type ScenarioKey } from '../data/flows';
 import { skillLabel } from '../data/skills';
 import { useFlow } from '../state';
@@ -94,31 +95,6 @@ const interestFits = computed(() => goals.value.flatMap((g) => g.interests.map((
 /** All the role's targets, main goal's first. */
 const allTargets = computed(() => goals.value.flatMap((g) => g.targets));
 
-/**
- * The skill whose targets are showing (hover, focus or tap). Its card is fixed to the screen beside the chip, so opening
- * it never makes the page taller; it flips above the chip when there is no room below and closes on scroll.
- */
-const tip = ref<string | null>(null);
-const tipPos = ref({ top: 0, left: 0 });
-async function showTip(id: string, e: Event) {
-  const at = (e.currentTarget as HTMLElement).getBoundingClientRect();
-  tip.value = id;
-  tipPos.value = { top: at.bottom + 8, left: at.left };
-  await nextTick();
-  const r = document.getElementById(`tip-${id}`)?.getBoundingClientRect();
-  if (!r || tip.value !== id) return;
-  const below = at.bottom + 8 + r.height <= window.innerHeight - 8;
-  tipPos.value = {
-    top: below ? at.bottom + 8 : Math.max(8, at.top - 8 - r.height),
-    left: Math.max(16, Math.min(at.left, window.innerWidth - 16 - r.width)),
-  };
-}
-function hideTip(id: string) {
-  if (tip.value === id) tip.value = null;
-}
-const closeTip = () => (tip.value = null);
-onMounted(() => window.addEventListener('scroll', closeTip, { capture: true, passive: true }));
-onBeforeUnmount(() => window.removeEventListener('scroll', closeTip, { capture: true }));
 const sdgTile = (sdg: number) => `${base}sdg/goal-${String(sdg).padStart(2, '0')}.jpg`;
 const sdgColor = (sdg: number) => SDG_GOALS[sdg]?.color ?? 'var(--ink)';
 /** The role's key skills (the gap cards' chips) with the goal and targets each serves; skills to build first. */
@@ -482,26 +458,8 @@ const hasMasco = computed(() => !!mascoRoles[props.onetCode]?.minors?.length);
         <div v-if="skillSdgs.length" class="skills-block">
           <h3 class="impact-sub skills-sub">Your key skills and the goals they serve</h3>
           <ul class="skill-sdgs">
-            <li v-for="s in skillSdgs" :key="s.skill_id" @mouseenter="showTip(s.skill_id, $event)" @mouseleave="hideTip(s.skill_id)">
-              <button
-                type="button"
-                class="chip skill-chip"
-                :class="s.have ? 'chip-have' : 'chip-gap'"
-                :aria-expanded="tip === s.skill_id"
-                :aria-describedby="tip === s.skill_id ? `tip-${s.skill_id}` : undefined"
-                @focus="showTip(s.skill_id, $event)"
-                @blur="hideTip(s.skill_id)"
-                @click="showTip(s.skill_id, $event)"
-                @keydown.esc="closeTip"
-              >{{ skillLabel(s.skill_name) }}</button>
-              <Teleport to="body">
-                <div v-if="tip === s.skill_id" :id="`tip-${s.skill_id}`" class="skill-tip" role="tooltip" :style="{ top: `${tipPos.top}px`, left: `${tipPos.left}px` }">
-                  <p class="skill-tip-title">{{ skillLabel(s.skill_name) }}</p>
-                  <ul class="sdg-targets">
-                    <li v-for="t in s.targets" :key="t.code"><b :style="{ color: sdgColor(t.sdg) }">{{ t.code }}</b> {{ capFirst(t.text) }}</li>
-                  </ul>
-                </div>
-              </Teleport>
+            <li v-for="s in skillSdgs" :key="s.skill_id">
+              <SdgTip :title="skillLabel(s.skill_name)" :targets="s.targets" :class="s.have ? 'chip-have' : 'chip-gap'">{{ skillLabel(s.skill_name) }}</SdgTip>
             </li>
           </ul>
         </div>
@@ -560,15 +518,9 @@ h1 { font-size: 34px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .sdg-targets b { font-weight: 900; margin-right: 4px; }
 .skills-sub { margin-top: 0; }
 .skill-sdgs { list-style: none; display: flex; flex-wrap: wrap; gap: 10px; }
-.skill-chip { cursor: help; font-size: 15px; padding: 8px 14px; white-space: normal; text-align: left; line-height: 1.25; }
-.skill-chip.chip-have { border: 2px solid var(--ink); }
-.skill-chip:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
-.skill-tip { position: fixed; z-index: 50; width: min(340px, calc(100vw - 32px)); padding: 14px 16px; border-radius: 16px; background: #fff; border: 2px solid var(--line); box-shadow: 0 10px 28px rgba(30, 30, 30, .16); pointer-events: none; }
 .role-goal { margin-bottom: 18px; padding-bottom: 16px; border-bottom: 2px solid var(--line); }
 .goal-text { font-size: 16px; font-weight: 600; line-height: 1.45; }
 .goal-tag { display: inline-block; margin-right: 8px; padding: 1px 9px; border-radius: 999px; font-size: 13px; font-weight: 900; color: #fff; background: var(--c); vertical-align: 1px; }
-.skill-tip-title { font-size: 16px; font-weight: 900; margin-bottom: 8px; }
-.skill-tip .sdg-targets { font-size: 15px; gap: 6px; color: var(--muted); }
 @media (max-width: 560px) { .sdg-tile { width: 84px; } .sdg-tile.main { width: 120px; } .fit, .targets-card { padding: 16px; } }
 .gap-row { grid-column: 1 / -1; }
 .tabs-bar { grid-column: 1 / -1; display: flex; min-width: 0; }

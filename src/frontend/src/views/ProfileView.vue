@@ -5,7 +5,10 @@ import Bubble from '../components/Bubble.vue';
 import BeePicker from '../components/BeePicker.vue';
 import Icon from '../components/Icon.vue';
 import InterestPicker from '../components/InterestPicker.vue';
+import SdgTip from '../components/SdgTip.vue';
 import { bee, type BeeName } from '../bee';
+import { fetchSkillSdgs, type SkillSdg } from '../api/sdg';
+import { INTEREST_SDGS } from '../data/interestSdgs';
 import { fetchInterests, MAX_INTERESTS, type Interest } from '../api/interests';
 import { getProfile, readProfileId, setBee, stageForWho, updateProfile } from '../api/profile';
 import { fetchLearnedSkills, fetchRoadmapSummaries, type LearnedSkill, type RoadmapSummary } from '../api/roadmap';
@@ -139,6 +142,10 @@ async function pickBee(next: BeeName) {
 const roadmaps = ref<RoadmapSummary[] | null>(null);
 const roadmapsError = ref(false);
 const learned = ref<LearnedSkill[] | null>(null);
+/** The SDG targets behind each skill and interest chip, shown on hover. A chip with none stays plain. */
+const skillSdgs = ref<Map<string, SkillSdg>>(new Map());
+onMounted(async () => (skillSdgs.value = await fetchSkillSdgs()));
+const interestTargets = (name: string) => (INTEREST_SDGS[name] ?? []).flatMap((g) => g.targets.map((t) => ({ ...t, sdg: g.sdg })));
 const learnedError = ref(false);
 
 const active = computed(() => (roadmaps.value ?? []).filter((r) => r.status !== 'completed'));
@@ -241,7 +248,10 @@ onMounted(() => {
           </div>
         </form>
         <div v-else-if="pickedInterests.length" class="chips">
-          <span v-for="i in pickedInterests" :key="i.id" class="chip chip-have"><Icon :name="i.icon" :size="14" /> {{ i.interest }}</span>
+          <template v-for="i in pickedInterests" :key="i.id">
+            <SdgTip v-if="interestTargets(i.interest).length" :title="i.interest" :targets="interestTargets(i.interest)" class="chip-have"><Icon :name="i.icon" :size="14" /> {{ i.interest }}</SdgTip>
+            <span v-else class="chip chip-have"><Icon :name="i.icon" :size="14" /> {{ i.interest }}</span>
+          </template>
         </div>
         <p v-else class="hint">None picked yet.</p>
         <p v-if="interestsError" class="error" role="alert">{{ interestsError }}</p>
@@ -299,7 +309,10 @@ onMounted(() => {
           <div v-for="[group, skills] in learnedGroups" :key="group" class="grp">
             <h3 class="sub">{{ group }}</h3>
             <div class="chips">
-              <span v-for="s in skills" :key="s.skill_name" class="chip chip-have"><Icon name="check" :size="14" :stroke="3" /> {{ skillLabel(s.skill_name) }}</span>
+              <template v-for="s in skills" :key="s.skill_name">
+                <SdgTip v-if="skillSdgs.get(s.skill_name)?.targets.length" :title="skillLabel(s.skill_name)" :targets="skillSdgs.get(s.skill_name)!.targets" class="chip-have"><Icon name="check" :size="14" :stroke="3" /> {{ skillLabel(s.skill_name) }}</SdgTip>
+                <span v-else class="chip chip-have"><Icon name="check" :size="14" :stroke="3" /> {{ skillLabel(s.skill_name) }}</span>
+              </template>
             </div>
           </div>
         </template>

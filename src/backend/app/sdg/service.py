@@ -95,3 +95,8 @@ def role_sdg(onet_code: str) -> RoleSdg | None:
         SkillSdg(skill_id=i, skill_name=skills[i]["skill_name"], skill_type=skills[i]["skill_type"], **_parts(skills[i]))
         for i in _role_skill_ids().get(onet_code, []) if i in skills
     ])
+
+
+def all_skills() -> list[SkillSdg]:
+    """Every skill with SDGs on record, in the table's order."""
+    return [SkillSdg(skill_id=i, skill_name=r["skill_name"], skill_type=r["skill_type"], **_parts(r)) for i, r in _skills().items()]

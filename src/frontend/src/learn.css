@@ -437,3 +437,4 @@
 @keyframes jb-breathe { 50% { opacity: .55; } }
 @media (max-width: 720px) { .jb-sharedlg__inner { padding: 18px 16px; } }
 @media (prefers-reduced-motion: reduce) { .jb-sharedlg__img--wait { animation: none; } }
+.jb-next__sdgs { margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
