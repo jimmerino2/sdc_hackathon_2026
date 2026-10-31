@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import {
   Briefcase, Bug, Check, Cloud, Code2, Cpu, Database, GraduationCap, Layers, Search, Shield, Sparkles, Target,
   TrendingDown, TrendingUp, ArrowRight, Lock, Star, Trophy, BookOpen, User, Route, X, Flame, Upload, FileText,
-  Play, RefreshCw, Megaphone, Users, Boxes, ClipboardList, ChartPie, Calculator, ShieldCheck, Landmark, Monitor,
+  Play, RefreshCw, ExternalLink, Gift, Megaphone, Users, Boxes, ClipboardList, ChartPie, Calculator, ShieldCheck, Landmark, Monitor,
   Headset, Palette, Sigma, Brain, ChartBar, Zap, Leaf, Factory, Microscope, HandHeart, Scale, Baby, School, PenTool,
   Languages, Activity, Stethoscope, Pill, ClipboardPlus, HeartHandshake, ShieldAlert, ChefHat, ShoppingBag, Receipt,
   Banknote, Headphones, Keyboard, Plug, Sun, Wrench, Wind, Truck, Package, Pencil, LogOut, Trash2, Sprout, Dumbbell, Music, PawPrint, Gamepad2, Shirt, Hammer, HeartPulse, Mountain, Coins, Minus, ChevronDown, Mail, Crown,
@@ -16,7 +16,7 @@ const map = {
   mail: Mail, crown: Crown,
   help: CircleHelp, question: CircleHelp, chart: BarChart3, lightbulb: Lightbulb,
   tdown: TrendingDown, tup: TrendingUp, tflat: Minus, chevron: ChevronDown, arrow: ArrowRight, lock: Lock, star: Star, trophy: Trophy, book: BookOpen,
-  user: User, route: Route, x: X, flame: Flame, upload: Upload, file: FileText, play: Play, refresh: RefreshCw,
+  user: User, route: Route, x: X, flame: Flame, upload: Upload, file: FileText, play: Play, refresh: RefreshCw, external: ExternalLink, gift: Gift,
   // Role icons (onet_roles.icon, migration 0006)
   megaphone: Megaphone, users: Users, boxes: Boxes, 'clipboard-list': ClipboardList, 'chart-pie': ChartPie,
   calculator: Calculator, 'shield-check': ShieldCheck, landmark: Landmark, monitor: Monitor, headset: Headset,

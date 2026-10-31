@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import ChartWatcher from './ChartWatcher.vue';
 import MascoMap from './MascoMap.vue';
 import ForecastInfo from './ForecastInfo.vue';
@@ -7,12 +7,15 @@ import Icon from './Icon.vue';
 import QuarterPicker from './QuarterPicker.vue';
 import ScenarioPanel from './ScenarioPanel.vue';
 import { scenarios, type ScenarioKey } from '../data/flows';
+import { skillLabel } from '../data/skills';
 import { useFlow } from '../state';
 import { month } from '../occupational/format';
 import { formatSkip, parseSkip } from '../data/quarterPick';
 import { backendScenario, fetchJobForecasts, fetchQuarters, refreshForecastData, retrainForecast, type JobForecast, type JobHorizon, type Quarters, type Retrained } from '../api/forecast';
 import { fetchInterestReasons, type InterestReason, type JobMatch } from '../api/jobs';
 import { readProfileId } from '../api/profile';
+import { fetchRoleSdg, type RoleSdg, type SdgTargetNote } from '../api/sdg';
+import { SDG_GOALS } from '../data/interestSdgs';
 
 /** A role's AI outlook (the three-futures chart) and skill gap. Shared by the onboarding forecast page and the role page. */
 const props = defineProps<{
@@ -29,9 +32,8 @@ const emit = defineEmits<{ 'update:skip': [skip: string | null] }>();
 
 const { state, key } = useFlow();
 const base = import.meta.env.BASE_URL;
-/** The role's SDGs that one of the learner's interests points at, and the ones that come from the role itself. */
+/** The role's SDGs that one of the learner's interests points at. */
 const fromInterests = computed(() => props.job?.sdg_reasons?.filter((r) => r.interests.length) ?? []);
-const fromJob = computed(() => props.job?.sdg_reasons?.filter((r) => !r.interests.length) ?? []);
 const active = computed(() => state.value.scenario);
 
 /** The LLM's sentence for each interest card, by "sdg:interest". Only fetched on the role page, not in onboarding. */
@@ -55,6 +57,76 @@ watch(() => props.onetCode, () => {
   reasons.value = {};
   reasonsStatus.value = 'idle';
   loadReasons();
+});
+
+/** The SDG targets the role and its skills serve (onet_roles_sdg / onet_skills_sdg). Null until loaded or if none. */
+const roleSdg = ref<RoleSdg | null>(null);
+async function loadSdg() {
+  const code = props.onetCode;
+  roleSdg.value = null;
+  try {
+    const r = await fetchRoleSdg(code);
+    if (code === props.onetCode) roleSdg.value = r;
+  } catch {
+    // Not fatal: the page works without the targets.
+  }
+}
+watch(() => props.onetCode, loadSdg, { immediate: true });
+/** The role's targets under one goal. */
+const targetsFor = (sdg: number): SdgTargetNote[] => roleSdg.value?.targets.filter((t) => t.sdg === sdg) ?? [];
+/**
+ * Every goal the role serves, main first, each with its targets and the learner's interests that point at it. From the
+ * SDG targets, or the match's goals if those didn't load. An interest can point at a goal of the match's weights that
+ * the targets don't list, so that goal is kept.
+ */
+const goals = computed(() => {
+  const r = roleSdg.value;
+  const list = r ? [r.main, ...r.relevant] : (props.job?.sdg_reasons ?? []).map((g) => ({ sdg: g.sdg, name: g.name }));
+  for (const g of fromInterests.value) if (!list.some((x) => x.sdg === g.sdg)) list.push({ sdg: g.sdg, name: g.name });
+  return list.map((g) => ({ ...g, targets: targetsFor(g.sdg), interests: props.job?.sdg_reasons?.find((x) => x.sdg === g.sdg)?.interests ?? [] }));
+});
+const mainGoal = computed(() => goals.value[0]);
+const relevantGoals = computed(() => goals.value.slice(1));
+/** Each of the learner's interests that points at one of the role's goals, with the LLM's sentence on why it fits. */
+const interestFits = computed(() => goals.value.flatMap((g) => g.interests.map((i) => ({ sdg: g.sdg, name: g.name, interest: i, reason: reasons.value[`${g.sdg}:${i}`] }))));
+/** All the role's targets, main goal's first. */
+const allTargets = computed(() => goals.value.flatMap((g) => g.targets));
+
+/**
+ * The skill whose targets are showing (hover, focus or tap). Its card is fixed to the screen beside the chip, so opening
+ * it never makes the page taller; it flips above the chip when there is no room below and closes on scroll.
+ */
+const tip = ref<string | null>(null);
+const tipPos = ref({ top: 0, left: 0 });
+async function showTip(id: string, e: Event) {
+  const at = (e.currentTarget as HTMLElement).getBoundingClientRect();
+  tip.value = id;
+  tipPos.value = { top: at.bottom + 8, left: at.left };
+  await nextTick();
+  const r = document.getElementById(`tip-${id}`)?.getBoundingClientRect();
+  if (!r || tip.value !== id) return;
+  const below = at.bottom + 8 + r.height <= window.innerHeight - 8;
+  tipPos.value = {
+    top: below ? at.bottom + 8 : Math.max(8, at.top - 8 - r.height),
+    left: Math.max(16, Math.min(at.left, window.innerWidth - 16 - r.width)),
+  };
+}
+function hideTip(id: string) {
+  if (tip.value === id) tip.value = null;
+}
+const closeTip = () => (tip.value = null);
+onMounted(() => window.addEventListener('scroll', closeTip, { capture: true, passive: true }));
+onBeforeUnmount(() => window.removeEventListener('scroll', closeTip, { capture: true }));
+const sdgTile = (sdg: number) => `${base}sdg/goal-${String(sdg).padStart(2, '0')}.jpg`;
+const sdgColor = (sdg: number) => SDG_GOALS[sdg]?.color ?? 'var(--ink)';
+/** The role's key skills (the gap cards' chips) with the goal and targets each serves; skills to build first. */
+const skillSdgs = computed(() => {
+  const all = roleSdg.value?.skills ?? [];
+  const names = props.job ? [...props.job.skills_to_learn, ...props.job.skills_you_have] : [];
+  return names.flatMap((n) => {
+    const s = all.find((x) => x.skill_name === n);
+    return s ? [{ ...s, have: props.job!.skills_you_have.includes(n) }] : [];
+  });
 });
 
 /** What is shown: the stored forecast, or the retrained one for the quarters picked. */
@@ -332,34 +404,68 @@ const title = computed(() => meta.value?.title ?? 'This role');
         />
       </aside>
 
-      <section v-if="job?.sdg_reasons?.length" class="sdg-row">
-        <p class="eyebrow">Why it was suggested</p>
-        <div v-if="fromInterests.length" class="sdg-group">
-          <h2 class="sdg-title">Your interests</h2>
-          <ul class="sdg-list">
-            <li v-for="r in fromInterests" :key="r.sdg" class="sdg-card" :class="{ why: !compact }">
-              <img class="sdg-tile" :src="`${base}sdg/goal-${String(r.sdg).padStart(2, '0')}.jpg`" :alt="`UN Sustainable Development Goal ${r.sdg}: ${r.name}`" width="132" height="132" loading="lazy" />
-              <div class="sdg-from">
-                <template v-for="i in r.interests" :key="i">
-                  <span class="chip chip-have"><Icon name="check" :size="13" :stroke="3" /> <span>{{ i }}</span></span>
-                  <p v-if="reasons[`${r.sdg}:${i}`]" class="sdg-why">{{ reasons[`${r.sdg}:${i}`] }}</p>
-                  <span v-else-if="reasonsStatus === 'loading'" class="skel sdg-why-skel" aria-hidden="true" />
-                </template>
-              </div>
+      <section v-if="goals.length" class="sdg-row impact" aria-labelledby="impact-title">
+        <p class="eyebrow">Global goals</p>
+        <h2 id="impact-title" class="sdg-title">How {{ job?.title ?? title }} serves the SDGs</h2>
+        <div class="impact-goals">
+          <div class="impact-group">
+            <span class="impact-label">Main SDG</span>
+            <img class="sdg-tile main" :src="sdgTile(mainGoal.sdg)" :alt="`UN Sustainable Development Goal ${mainGoal.sdg}: ${mainGoal.name}`" width="148" height="148" loading="lazy" />
+          </div>
+          <div v-if="relevantGoals.length" class="impact-group">
+            <span class="impact-label">Relevant SDGs</span>
+            <ul class="sdg-list">
+              <li v-for="g in relevantGoals" :key="g.sdg">
+                <img class="sdg-tile" :src="sdgTile(g.sdg)" :alt="`UN Sustainable Development Goal ${g.sdg}: ${g.name}`" width="112" height="112" loading="lazy" />
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div v-if="interestFits.length" class="card fit">
+          <h3 class="impact-sub">Why it fits your interests</h3>
+          <ul class="fit-list">
+            <li v-for="f in interestFits" :key="`${f.sdg}:${f.interest}`">
+              <p class="fit-head"><span class="chip chip-have">{{ f.interest }}</span><span class="fit-goal" :style="{ color: sdgColor(f.sdg) }">SDG {{ f.sdg }} · {{ f.name }}</span></p>
+              <p v-if="f.reason" class="fit-why">{{ f.reason }}</p>
+              <span v-else-if="reasonsStatus === 'loading'" class="skel fit-skel" aria-hidden="true" />
             </li>
           </ul>
         </div>
-        <div v-if="fromJob.length" class="sdg-group">
-          <h2 class="sdg-title">Job features</h2>
-          <ul class="sdg-list">
-            <li v-for="r in fromJob" :key="r.sdg" class="sdg-card">
-              <img class="sdg-tile" :src="`${base}sdg/goal-${String(r.sdg).padStart(2, '0')}.jpg`" :alt="`UN Sustainable Development Goal ${r.sdg}: ${r.name}`" width="132" height="132" loading="lazy" />
-              <div class="sdg-from">
-                <span class="chip chip-gap"><Icon name="briefcase" :size="13" /> <span>{{ job.title }}</span></span>
-              </div>
-            </li>
+
+        <div v-if="allTargets.length" class="card targets-card">
+          <h3 class="impact-sub">Targets</h3>
+          <ul class="sdg-targets">
+            <li v-for="t in allTargets" :key="t.code"><b :style="{ color: sdgColor(t.sdg) }">{{ t.code }}</b> {{ t.text }}</li>
           </ul>
         </div>
+
+        <template v-if="skillSdgs.length">
+          <h3 class="impact-sub skills-sub">Your key skills and the goals they serve</h3>
+          <ul class="skill-sdgs">
+            <li v-for="s in skillSdgs" :key="s.skill_id" @mouseenter="showTip(s.skill_id, $event)" @mouseleave="hideTip(s.skill_id)">
+              <button
+                type="button"
+                class="chip skill-chip"
+                :class="s.have ? 'chip-have' : 'chip-gap'"
+                :aria-expanded="tip === s.skill_id"
+                :aria-describedby="tip === s.skill_id ? `tip-${s.skill_id}` : undefined"
+                @focus="showTip(s.skill_id, $event)"
+                @blur="hideTip(s.skill_id)"
+                @click="showTip(s.skill_id, $event)"
+                @keydown.esc="closeTip"
+              >{{ skillLabel(s.skill_name) }}</button>
+              <Teleport to="body">
+                <div v-if="tip === s.skill_id" :id="`tip-${s.skill_id}`" class="skill-tip" role="tooltip" :style="{ top: `${tipPos.top}px`, left: `${tipPos.left}px` }">
+                  <p class="skill-tip-title">{{ skillLabel(s.skill_name) }}</p>
+                  <ul class="sdg-targets">
+                    <li v-for="t in s.targets" :key="t.code"><b :style="{ color: sdgColor(t.sdg) }">{{ t.code }}</b> {{ t.text }}</li>
+                  </ul>
+                </div>
+              </Teleport>
+            </li>
+          </ul>
+        </template>
         <p class="sdg-credit">SDG icons: United Nations. The UN has not approved this app.</p>
       </section>
     </div>
@@ -394,23 +500,37 @@ h1 { font-size: 34px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .right { display: flex; flex-direction: column; gap: 14px; }
 .bub { margin-bottom: 8px; flex-direction: row-reverse; }
 .sdg-row { grid-column: 1 / -1; margin-top: 12px; }
-.sdg-group { margin-top: 6px; }
-.sdg-group + .sdg-group { margin-top: 26px; }
-.sdg-title { font-size: 23px; font-weight: 900; margin: 4px 0 14px; line-height: 1.2; }
-.sdg-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 18px; }
-.sdg-card { width: 148px; display: flex; flex-direction: column; gap: 10px; }
-.sdg-tile { display: block; width: 100%; height: auto; border-radius: 12px; box-shadow: 0 4px 0 rgba(30, 30, 30, .12); }
-.sdg-from { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
-.sdg-from .chip { max-width: 100%; white-space: normal; text-align: left; line-height: 1.25; border-radius: 14px; }
-.sdg-from .chip svg { flex: none; }
-.sdg-card.why { width: 230px; }
-.sdg-card.why .sdg-tile { width: 148px; }
-.sdg-why { font-size: 15px; font-weight: 600; line-height: 1.4; color: var(--muted); margin: 0 0 6px 4px; }
-.sdg-why-skel { display: block; width: 100%; height: 36px; border-radius: 10px; margin-bottom: 6px; }
-.sdg-credit { margin-top: 14px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.sdg-title { font-size: 23px; font-weight: 900; margin: 4px 0 16px; line-height: 1.2; }
+.sdg-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 14px; }
+.sdg-tile { display: block; width: 112px; height: auto; border-radius: 12px; box-shadow: 0 4px 0 rgba(30, 30, 30, .12); }
+.sdg-tile.main { width: 148px; }
+.sdg-credit { margin-top: 18px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.impact-goals { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 18px 28px; }
+.impact-group { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.impact-label { padding: 6px 14px; border-radius: 10px; background: var(--ink); color: #fff; font-size: 15px; font-weight: 900; }
+.impact-sub { font-size: 19px; font-weight: 900; line-height: 1.25; margin-bottom: 12px; }
+.fit, .targets-card { margin-top: 20px; padding: 20px 22px; max-width: 760px; }
+.fit { background: var(--cream); border-color: rgba(255, 152, 0, .35); }
+.fit-list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+.fit-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.fit-head .chip { padding: 5px 12px; font-size: 15px; }
+.fit-goal { font-size: 14px; font-weight: 900; }
+.fit-why { margin-top: 6px; font-size: 16px; font-weight: 600; line-height: 1.45; }
+.fit-skel { display: block; height: 40px; border-radius: 10px; margin-top: 6px; }
+.sdg-targets { list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 16px; font-weight: 600; line-height: 1.4; }
+.sdg-targets b { font-weight: 900; margin-right: 4px; }
+.skills-sub { margin-top: 26px; }
+.skill-sdgs { list-style: none; display: flex; flex-wrap: wrap; gap: 10px; }
+.skill-chip { cursor: help; font-size: 15px; padding: 8px 14px; white-space: normal; text-align: left; line-height: 1.25; }
+.skill-chip.chip-have { border: 2px solid var(--ink); }
+.skill-chip:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+.skill-tip { position: fixed; z-index: 50; width: min(340px, calc(100vw - 32px)); padding: 14px 16px; border-radius: 16px; background: #fff; border: 2px solid var(--line); box-shadow: 0 10px 28px rgba(30, 30, 30, .16); pointer-events: none; }
+.skill-tip-title { font-size: 16px; font-weight: 900; margin-bottom: 8px; }
+.skill-tip .sdg-targets { font-size: 15px; gap: 6px; color: var(--muted); }
+@media (max-width: 560px) { .sdg-tile { width: 84px; } .sdg-tile.main { width: 120px; } .fit, .targets-card { padding: 16px; } }
 .gap-row { grid-column: 1 / -1; }
 .empty { font-size: 15px; font-weight: 700; color: var(--muted); }
-@media (max-width: 900px) { .wrap, .bub { display: none; } }
+@media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } .bub { display: none; } }
 
 /* The chart and the futures on the left, the data panel beside them; on a narrow screen the panel sits between the two. */
 .wrap.split { grid-template-columns: minmax(0, 1fr) 320px; grid-template-areas: 'left aside' 'right aside'; align-items: start; column-gap: 24px; }

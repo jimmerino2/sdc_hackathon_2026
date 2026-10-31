@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import csv
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -41,7 +42,28 @@ TABLES: dict[str, dict] = {
     "crosswalk": dict(key=["onet_code", "indeed_sector"], float=["weight"]),
     "onet_to_my_group": dict(key=["onet_code"]),
     "my_vacancies": dict(key=["freq", "period", "group_type", "group"], int=["vacancies"], bool=["is_partial"]),
+    # migrations/0026: the CSVs' text columns are parsed into goal numbers and a targets array (see sdg_row)
+    "onet_roles_sdg": dict(key=["onet_code"], sdg=True),
+    "onet_skills_sdg": dict(key=["skill_id"], sdg=True),
 }
+
+
+def sdg_row(table: str, raw: dict) -> dict:
+    """One row of onet_roles_sdg.csv / onet_skills_sdg.csv in the table's shape. 'SDG 8: Decent Work...' -> 8;
+    'SDG 12 (...), SDG 9 (...)' -> [12, 9]; '8.2 productivity ... · 12.8 awareness ...' -> [{code, sdg, text}, ...]."""
+    main = re.match(r"SDG (\d+)", raw["main_sdg"])
+    if not main:
+        raise ValueError(f"main_sdg is not 'SDG <n>: ...': {raw['main_sdg']!r}")
+    targets = []
+    for t in filter(None, (t.strip() for t in raw["targets"].split("·"))):
+        m = re.match(r"(\d+)\.([0-9a-z]+) (.+)", t)
+        if not m:
+            raise ValueError(f"target is not '<goal>.<n> <text>': {t!r}")
+        targets.append({"code": f"{m[1]}.{m[2]}", "sdg": int(m[1]), "text": m[3]})
+    row = {"main_sdg": int(main[1]), "relevant_sdgs": [int(n) for n in re.findall(r"SDG (\d+)", raw["relevant_sdgs"])], "targets": targets}
+    if table == "onet_roles_sdg":
+        return {"onet_code": raw["onet_id"], **row}
+    return {"skill_id": raw["onet_id"], "skill_name": raw["skill_name"], "skill_type": raw["skill_type"], **row}
 
 
 def to_bool(v: str) -> bool:
@@ -64,6 +86,12 @@ def read_rows(table: str) -> list[dict]:
     rows = []
     with open(PROCESSED / f"{table}.csv", encoding="utf-8", newline="") as f:
         for n, raw in enumerate(csv.DictReader(f), start=2):
+            if spec.get("sdg"):
+                try:
+                    rows.append(sdg_row(table, raw))
+                except ValueError as e:
+                    raise SystemExit(f"{table}.csv line {n}: {e}")
+                continue
             row = {}
             for col, val in raw.items():
                 if val == "":
