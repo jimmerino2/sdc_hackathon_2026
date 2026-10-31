@@ -8,6 +8,8 @@ import type { ScenarioKey } from '../data/flows';
 export function useScenarioProbabilities() {
   const { state } = useFlow();
   const probs = ref<ScenarioProbabilities | null>(null);
+  /** True once the first chances have come back (or failed), so the card can wait for them instead of filling in later. Stays true when the metric changes. */
+  const loaded = ref(false);
 
   const metric = computed(() => SCENARIO_METRICS.find((m) => m.target === state.value.scenarioMetric) ?? SCENARIO_METRICS[0]!);
 
@@ -16,6 +18,7 @@ export function useScenarioProbabilities() {
     async (m) => {
       probs.value = null; // don't show the previous metric's numbers while the new one loads
       probs.value = await scenarioProbabilities(m);
+      loaded.value = true;
     },
     { immediate: true },
   );
@@ -45,6 +48,7 @@ export function useScenarioProbabilities() {
       get: () => metric.value.target,
       set: (target: string) => { state.value.scenarioMetric = target; },
     }),
+    loaded,
     pct,
     ranked,
     rankColor,
