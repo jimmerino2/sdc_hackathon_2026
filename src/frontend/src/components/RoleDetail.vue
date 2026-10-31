@@ -306,6 +306,8 @@ const demand = computed(() =>
   status.value === 'ready' ? (Object.fromEntries(scenarios.map((s) => [s.key, { text: outcome(s.key), trend: trendOf(s.key) }])) as Record<ScenarioKey, { text: string; trend: string }>) : undefined,
 );
 const title = computed(() => meta.value?.title ?? 'This role');
+/** Onboarding shows one full-width loader until the chart is ready, so nothing below it appears first. */
+const waiting = computed(() => props.compact && status.value === 'loading');
 
 /** The role page's tabs; onboarding (compact) shows the forecast alone. */
 const TABS = [
@@ -319,7 +321,14 @@ const hasMasco = computed(() => !!mascoRoles[props.onetCode]?.minors?.length);
 </script>
 
 <template>
-  <div class="wrap" :class="{ compact, split: pickQuarter && quarters }">
+  <div class="wrap" :class="{ compact, waiting, split: pickQuarter && quarters }">
+      <section v-if="waiting" class="card loader" role="status" aria-live="polite">
+        <span class="ring" aria-hidden="true" />
+        <h2>Loading the forecast…</h2>
+        <p>Reading the latest job-posting trends for this role.</p>
+        <div class="loader-skel" aria-hidden="true"><span class="skel" /><span class="skel line" /></div>
+      </section>
+
       <div v-if="!compact" class="tabs-bar">
        <div class="btn-group" role="tablist" aria-label="Role details">
         <button
@@ -342,7 +351,7 @@ const hasMasco = computed(() => !!mascoRoles[props.onetCode]?.minors?.length);
         <p v-else class="empty card no-data">No data found for this O*NET job on eMASCO.</p>
       </section>
 
-      <section v-show="compact || tab === 'forecast'" id="panel-forecast" :role="compact ? undefined : 'tabpanel'" aria-labelledby="tab-forecast" class="left">
+      <section v-show="!waiting && (compact || tab === 'forecast')" id="panel-forecast" :role="compact ? undefined : 'tabpanel'" aria-labelledby="tab-forecast" class="left">
         <template v-if="!compact"><h1>Here’s the AI outlook for {{ title }}</h1></template>
         <div class="card chart">
           <small>{{ title }} · {{ useModel ? 'machine-learning forecast' : 'demand outlook' }}</small>
@@ -393,7 +402,7 @@ const hasMasco = computed(() => !!mascoRoles[props.onetCode]?.minors?.length);
           </template>
         </div>
       </section>
-      <section v-show="compact || tab === 'forecast'" class="right">
+      <section v-show="!waiting && (compact || tab === 'forecast')" class="right">
         <ChartWatcher v-if="!compact" class="bub">Nobody knows the future for sure, so I plan for all three.</ChartWatcher>
         <ScenarioPanel :demand="demand" />
         <slot name="actions" />
@@ -416,7 +425,7 @@ const hasMasco = computed(() => !!mascoRoles[props.onetCode]?.minors?.length);
         <p class="empty card no-data">No SDG data found for this role.</p>
       </section>
 
-      <section v-if="goals.length" v-show="compact || tab === 'sdg'" id="panel-sdg" :role="compact ? undefined : 'tabpanel'" aria-labelledby="tab-sdg" class="sdg-row impact">
+      <section v-if="goals.length && !waiting" v-show="compact || tab === 'sdg'" id="panel-sdg" :role="compact ? undefined : 'tabpanel'" aria-labelledby="tab-sdg" class="sdg-row impact">
         <h1 id="impact-title">How {{ job?.title ?? title }} serves the SDGs</h1>
         <div class="impact-goals">
           <div class="impact-group">
@@ -473,6 +482,16 @@ const hasMasco = computed(() => !!mascoRoles[props.onetCode]?.minors?.length);
 h1 { font-size: 34px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 
 .compact { gap: 24px; }
+.wrap.waiting { grid-template-columns: minmax(0, 1fr); }
+.loader { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 36px 24px 28px; }
+.loader h2 { margin: 10px 0 0; font-size: 23px; font-weight: 900; }
+.loader p { margin: 0; font-size: 16px; font-weight: 600; color: var(--muted); }
+.ring { width: 38px; height: 38px; border-radius: 50%; border: 4px solid var(--line); border-top-color: var(--yellow); animation: ring-spin .8s linear infinite; }
+.loader-skel { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 18px; }
+.loader-skel .skel:first-child { width: 100%; height: 220px; }
+.loader-skel .line { width: 60%; }
+@keyframes ring-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ring { animation: none; } }
 .chart-skel { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
 .chart-skel .skel:first-child { height: 170px; }
 .chart-skel .line { width: 60%; }
