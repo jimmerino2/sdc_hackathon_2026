@@ -31,7 +31,7 @@ const crew = computed(() => {
   const spots = SPOTS[members.length] ?? [];
   return members.map((m, i) => ({ ...m, x: spots[i][0], y: spots[i][1], delay: i * 0.18 }));
 });
-const emit = defineEmits<{ close: []; start: []; retry: [] }>();
+const emit = defineEmits<{ close: []; start: []; retry: []; share: [] }>();
 
 const DAMAGE = ['Robbee is reading your repo…', 'Counting the dents in the hive…', 'Calling the client…', 'Rewriting your brief…'];
 const line = ref(0);
@@ -153,6 +153,7 @@ const label = computed(() => ({
             <span v-if="awarded" class="hive__earn"><Stinger :size="22" /> +1 stinger · {{ stingers }} total</span>
             <span v-else class="hive__earn"><Stinger :size="22" /> Stingers already earned · {{ stingers }} total</span>
             <button ref="primary" type="button" class="jb-btn jb-btn--primary hive__btn" @click="emit('close')">Back to challenges</button>
+            <button type="button" class="jb-btn jb-btn--quiet hive__btn" @click="emit('share')">Create LinkedIn post</button>
           </div>
         </div>
       </div>

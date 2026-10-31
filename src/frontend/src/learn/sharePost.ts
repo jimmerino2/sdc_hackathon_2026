@@ -9,6 +9,8 @@ export interface ShareFacts {
   /** The learner's name, only when they chose to put it on the image. */
   name?: string | null;
   date?: Date;
+  /** Set for a finished challenge: the card and post are about it, not a roadmap. */
+  challenge?: { title: string; sdg: number; sdgName: string; score?: number | null; stack?: { area: string; skills: string[] }[]; repoUrl?: string | null };
 }
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
@@ -19,8 +21,18 @@ export function hashtagFor(title: string): string {
 }
 
 /** The post to start from. It says what the learner did, nothing more: no "certified" and no claim of a qualification. */
-export function draftText({ role, skills, sections }: ShareFacts): string {
+export function draftText({ role, skills, sections, challenge }: ShareFacts): string {
   const tag = hashtagFor(role);
+  if (challenge) {
+    const stack = (challenge.stack ?? []).filter((a) => a.skills.length).map((a) => `${a.area}: ${a.skills.join(', ')}`);
+    return [
+      `I just completed a Jobee challenge, "${challenge.title}", a real-world project for ${role} tied to SDG ${challenge.sdg}: ${challenge.sdgName}. I held off Robbee, the Corrupt CEO, through a rewritten brief too.`,
+      '',
+      ...(stack.length ? ['Here is the tech stack:', ...stack, ''] : []),
+      ...(challenge.repoUrl ? ['View the full repo over here:', challenge.repoUrl, ''] : []),
+      ['#Jobee', tag ? `#${tag}` : '', `#SDG${challenge.sdg}`].filter(Boolean).join(' '),
+    ].join('\n');
+  }
   return [
     `I just completed a Jobee learning roadmap for ${role}: ${plural(skills, 'skill')} across ${plural(sections, 'section')}, built around what the role actually asks for.`,
     '',
@@ -87,15 +99,17 @@ export function drawCertificate(ctx: CanvasRenderingContext2D, f: ShareFacts): v
   ctx.textAlign = 'left';
   ctx.fillStyle = amber;
   ctx.font = font(900, 28);
-  ctx.fillText('JOBEE ROADMAP COMPLETED', 72, 210);
+  ctx.fillText(f.challenge ? 'JOBEE CHALLENGE COMPLETED' : 'JOBEE ROADMAP COMPLETED', 72, 210);
   ctx.fillStyle = ink;
   ctx.font = font(900, 70);
-  const lines = wrapLines(f.role, (s) => ctx.measureText(s).width, W - 144, 2);
+  const lines = wrapLines(f.challenge?.title ?? f.role, (s) => ctx.measureText(s).width, W - 144, 2);
   lines.forEach((l, i) => ctx.fillText(l, 72, 292 + i * 78));
 
   // what they did
   const y = 292 + (lines.length - 1) * 78 + 70;
-  const chips = [plural(f.skills, 'skill'), plural(f.sections, 'section'), f.minutes ? `about ${formatMinutes(f.minutes)}` : ''].filter(Boolean);
+  const chips = f.challenge
+    ? [f.role, `SDG ${f.challenge.sdg}`, f.challenge.score != null ? `Score ${Math.round(f.challenge.score)}` : ''].filter(Boolean)
+    : [plural(f.skills, 'skill'), plural(f.sections, 'section'), f.minutes ? `about ${formatMinutes(f.minutes)}` : ''].filter(Boolean);
   ctx.font = font(800, 28);
   let x = 72;
   for (const chip of chips) {

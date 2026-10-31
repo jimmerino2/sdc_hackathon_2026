@@ -6,6 +6,7 @@ import Bubble from "../components/Bubble.vue";
 import ChallengeRow from "../components/hive/ChallengeRow.vue";
 import HiveAlert, { type HivePhase } from "../components/hive/HiveAlert.vue";
 import HiveSwitch from "../components/hive/HiveSwitch.vue";
+import LinkedInShareDialog from "../components/learn/LinkedInShareDialog.vue";
 import NewChallenge from "../components/hive/NewChallenge.vue";
 import Robbee from "../components/hive/Robbee.vue";
 import {
@@ -15,6 +16,7 @@ import {
   submitChallenge,
   type RoadmapChallenge,
 } from "../api/roadmap";
+import { skillLabel } from "../data/skills";
 import { fetchHive, type Hive } from "../api/hive";
 import { readProfileId } from "../api/profile";
 import { prefersReducedMotion } from "../composables/useCountUp";
@@ -37,6 +39,9 @@ const busy = ref<string | null>(null);
 const errors = ref<Record<string, string>>({});
 /** The "+ New challenge" role picker is open. */
 const picking = ref(false);
+/** The finished challenge being shared, from the popup or a row in the list. */
+const sharing = ref<RoadmapChallenge | null>(null);
+const shareDialog = ref<InstanceType<typeof LinkedInShareDialog>>();
 
 /** Filter challenges: current active challenges (default), past completed challenges, or all */
 const tab = ref<"current" | "past" | "all">("current");
@@ -170,6 +175,11 @@ async function attack(c: RoadmapChallenge, retry = false) {
     await writing;
   }
   if (!alertError.value) phase.value = "rewritten";
+}
+
+function share(c: RoadmapChallenge) {
+  sharing.value = c;
+  nextTick(() => shareDialog.value?.open());
 }
 
 function startStage2() {
@@ -309,6 +319,7 @@ onMounted(() => {
             @toggle="openId = openId === c.challenge_id ? null : c.challenge_id"
             @submit="(u) => submit(c, u)"
             @advance="attack(c)"
+            @share="share(c)"
           />
         </div>
       </section>
@@ -329,6 +340,7 @@ onMounted(() => {
             @toggle="openId = openId === c.challenge_id ? null : c.challenge_id"
             @submit="(u) => submit(c, u)"
             @advance="attack(c)"
+            @share="share(c)"
           />
         </div>
       </section>
@@ -347,6 +359,7 @@ onMounted(() => {
           @toggle="openId = openId === c.challenge_id ? null : c.challenge_id"
           @submit="(u) => submit(c, u)"
           @advance="attack(c)"
+            @share="share(c)"
         />
       </template>
       <div v-else class="learn__state">
@@ -373,6 +386,7 @@ onMounted(() => {
           @toggle="openId = openId === c.challenge_id ? null : c.challenge_id"
           @submit="(u) => submit(c, u)"
           @advance="attack(c)"
+            @share="share(c)"
         />
       </template>
       <div v-else class="learn__state">
@@ -391,6 +405,14 @@ onMounted(() => {
       @close="phase = null"
       @start="startStage2"
       @retry="attack(shown, true)"
+      @share="shown && share(shown)"
+    />
+    <LinkedInShareDialog
+      v-if="sharing"
+      ref="shareDialog"
+      :role="sharing.role_title"
+      :name="state.name"
+      :challenge="{ title: sharing.title, sdg: sharing.sdg, sdgName: sharing.sdg_name, score: sharing.score, stack: sharing.tech_stack.map((a) => ({ area: a.area, skills: a.skills.map(skillLabel) })), repoUrl: sharing.repo_url }"
     />
     <NewChallenge v-if="picking && profileId()" :profile-id="profileId()!" @close="picking = false" @created="added" />
   </div>

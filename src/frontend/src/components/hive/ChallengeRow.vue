@@ -8,7 +8,7 @@ import type { RoadmapChallenge } from '../../api/roadmap';
 /** One roadmap's challenge in the list: its stage tracker and next action; opens into the full brief and repo form. */
 const base = import.meta.env.BASE_URL;
 const props = defineProps<{ challenge: RoadmapChallenge; open: boolean; busy?: boolean; error?: string | null }>();
-const emit = defineEmits<{ toggle: []; submit: [repoUrl: string]; advance: [] }>();
+const emit = defineEmits<{ toggle: []; submit: [repoUrl: string]; advance: []; share: [] }>();
 
 const c = computed(() => props.challenge);
 const pts = (n: number | null | undefined) => (n == null ? null : Math.round(n));
@@ -62,6 +62,7 @@ const meta = computed(() => `${c.value.role_title} · ${complete.value ? 'Comple
 
       <div class="crow__act">
         <button v-if="complete" type="button" class="crow__earned" :aria-expanded="open" :title="open ? 'Close' : 'Open to resubmit'" @click="emit('toggle')"><Stinger :size="18" /><Stinger :size="18" /> 2 stingers</button>
+        <button v-if="complete" type="button" class="crow__share" @click="emit('share')">Create LinkedIn post</button>
         <button v-else-if="twistDue" type="button" class="crow__btn crow__btn--alert" @click="emit('advance')">See Robbee’s twist</button>
         <button v-else type="button" class="crow__fold" :class="{ open }" :aria-expanded="open" :aria-label="`${open ? 'Close' : 'Open'} ${c.title}`" @click="emit('toggle')"><Icon name="chevron" :size="22" /></button>
       </div>
@@ -107,7 +108,10 @@ const meta = computed(() => `${c.value.role_title} · ${complete.value ? 'Comple
 [data-dot="hidden"] .crow__dot { border: 2px solid var(--locked-edge); background: var(--surface-raised); color: var(--locked-icon); }
 .crow__dlabel { font-size: 14px; line-height: 18px; font-weight: 700; color: var(--text-muted); white-space: nowrap; }
 
-.crow__act { display: flex; justify-content: center; }
+.crow__act { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.crow__share { width: 100%; padding: 9px 16px; border: 2px solid var(--line-strong); border-radius: var(--radius-md); background: var(--surface-raised); color: var(--text); font: inherit; font-size: 14px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; transition: background var(--dur-fast); }
+.crow__share:hover { background: var(--honey-tint); }
+.crow__share:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .crow__fold { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--surface); color: var(--text-muted); transition: color var(--dur-fast), background var(--dur-fast); }
 .crow__fold:hover { color: var(--text); background: var(--honey-tint); }
 .crow__fold svg { transition: transform var(--dur-base) var(--ease-out); }
@@ -134,7 +138,7 @@ const meta = computed(() => `${c.value.role_title} · ${complete.value ? 'Comple
 @media (prefers-reduced-motion: reduce) { .crow, .crow__btn--alert { animation: none; } }
 @media (max-width: 1100px) {
   .crow__main { grid-template-columns: minmax(0, 1fr) auto; padding: 16px 18px 16px 0; row-gap: 14px; }
-  .crow__act { justify-content: flex-end; }
+  .crow__act { align-items: flex-end; }
   .crow__head { padding-left: 18px; grid-column: 1 / -1; }
   .crow__track { padding-left: 18px; }
 }
@@ -143,7 +147,7 @@ const meta = computed(() => `${c.value.role_title} · ${complete.value ? 'Comple
   .crow__head { gap: 14px; }
   .crow__disc { width: 44px; height: 44px; }
   .crow__title { font-size: 20px; line-height: 26px; }
-  .crow__act { padding-left: 18px; justify-content: flex-start; }
+  .crow__act { padding-left: 18px; align-items: flex-start; }
   .crow__twist { padding: 12px 18px; }
 }
 </style>
