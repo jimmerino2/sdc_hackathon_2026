@@ -8,6 +8,8 @@ export interface RoadmapSource {
   rank: number;
   title: string;
   url: string;
+  /** How long the resource says it takes, where its page states it. */
+  duration_minutes?: number | null;
 }
 
 export interface RoadmapNode {
@@ -27,6 +29,12 @@ export interface RoadmapNode {
   completed_at: string | null;
   previous_nodes: string[];
   previous_nodes_required: boolean;
+  /** How long this step takes, in minutes. Missing on an older backend. */
+  minutes?: number | null;
+  /** stated: a resource's own page gives its length. estimated: our written formula. */
+  minutes_basis?: 'stated' | 'estimated' | null;
+  /** Title of the resource whose stated length was used. */
+  minutes_source?: string | null;
 }
 
 /** One weighted line of a Bonus Quest's rubric. */
@@ -112,6 +120,11 @@ export interface Roadmap {
   sections: { section: number; /** What this section covers, e.g. "Web Fundamentals"; null on a roadmap built before this was tracked. */ title: string | null; units: { unit: number; nodes: RoadmapNode[] }[] }[];
   /** The challenges tied to this roadmap, oldest first; empty (or missing, on an older backend) for non-tech roles. */
   challenges?: RoadmapChallenge[];
+  /** Minutes for every step, and for the steps not yet completed; with how many come from a stated length or the formula. Missing on an older backend. */
+  minutes_total?: number;
+  minutes_left?: number;
+  stated_steps?: number;
+  estimated_steps?: number;
 }
 
 /** A failed roadmap request, with a message that can be shown to the user as is. */

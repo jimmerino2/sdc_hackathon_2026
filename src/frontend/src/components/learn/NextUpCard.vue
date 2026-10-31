@@ -11,6 +11,8 @@ export interface NextUpSkill {
   blurb: string | null;
   blockers: string[];
   links: { title: string; url: string; kind: string }[];
+  /** How long it takes, and where that figure comes from. */
+  time?: { text: string; note: string } | null;
 }
 
 const props = defineProps<{
@@ -62,6 +64,7 @@ const eyebrowText = computed(() => {
         </div>
         <div v-else :key="`sel-${skill.id}-${skill.state}`" class="jb-next__body">
           <span class="jb-next__kind">{{ skill.kind }}</span>
+          <p v-if="skill.time" class="jb-next__hint"><b>About {{ skill.time.text }}</b> · {{ skill.time.note }}</p>
           <p v-if="skill.blurb" class="jb-next__hint">{{ skill.blurb }}</p>
           <ul v-if="skill.links.length" class="jb-next__res">
             <li v-for="(l, i) in skill.links" :key="l.url" :style="{ '--i': i }">

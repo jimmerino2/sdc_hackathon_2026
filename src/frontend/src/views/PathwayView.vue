@@ -8,6 +8,8 @@ import SectionBanner from '../components/learn/SectionBanner.vue';
 import SkillPath from '../components/learn/SkillPath.vue';
 import NextUpCard, { type NextUpSkill } from '../components/learn/NextUpCard.vue';
 import ProgressCard from '../components/learn/ProgressCard.vue';
+import TimeCard from '../components/learn/TimeCard.vue';
+import { formatMinutes } from '../learn/time';
 import ForecastCard from '../components/learn/ForecastCard.vue';
 import BeeGuide from '../components/learn/BeeGuide.vue';
 import ChallengeBanner from '../components/learn/ChallengeBanner.vue';
@@ -96,6 +98,9 @@ const nextUp = computed<NextUpSkill | null>(() => {
     blurb: blurbOf(s.node),
     blockers: s.blockers,
     links: learningLinks(s.node).map((l) => ({ ...l, kind: sourceLabel[l.kind] })),
+    time: s.node.minutes
+      ? { text: formatMinutes(s.node.minutes), note: s.node.minutes_basis === 'stated' ? `length stated by “${s.node.minutes_source}”` : 'our estimate' }
+      : null,
   };
 });
 
@@ -316,6 +321,7 @@ onMounted(async () => {
         <template v-if="!isRoleReady">
           <div ref="sideCard" class="learn__sidecards">
             <ProgressCard :done="counts.done" :total="counts.total" :role="roadmap.title" />
+            <TimeCard v-if="roadmap.minutes_total" :minutes-left="roadmap.minutes_left ?? 0" :stated-steps="roadmap.stated_steps ?? 0" :estimated-steps="roadmap.estimated_steps ?? 0" />
             <NextUpCard
               :skill="nextUp"
               :selected="!!selected"

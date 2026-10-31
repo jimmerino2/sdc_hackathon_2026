@@ -9,7 +9,7 @@ from app.challenge import service as challenges
 from app.jobs import scoring
 from app.jobs.service import _expand
 from app.profile import service as profiles
-from app.roadmap import planner
+from app.roadmap import duration, planner
 from app.roadmap.planner import Plan, PlanNode, PlanSection
 from app.roadmap.schemas import CurrentStep, LearnedSkill, Node, Roadmap, RoadmapSummary, SelectedSkill, Section, SkillSelection, Source, Unit
 
@@ -38,14 +38,17 @@ def _sources(db: Client, skill_names: list[str]) -> dict[str, list[Source]]:
     if not skill_names:
         return {}
     try:
-        rows = (db.table("skill_sources").select("skill_name,source_type,rank,title,url")
-                .in_("skill_name", sorted(set(skill_names))).order("rank").execute().data)
+        names = sorted(set(skill_names))
+        try:
+            rows = db.table("skill_sources").select("skill_name,source_type,rank,title,url,duration_minutes").in_("skill_name", names).order("rank").execute().data
+        except Exception:  # migration 0024 (stated durations) not applied yet: the times then all come from the formula
+            rows = db.table("skill_sources").select("skill_name,source_type,rank,title,url").in_("skill_name", names).order("rank").execute().data
     except Exception as e:
         print(f"skill_sources could not be read ({type(e).__name__}); nodes will have no sources")
         return {}
     found: dict[str, list[Source]] = {}
     for r in rows:
-        found.setdefault(r["skill_name"], []).append(Source(**{k: r[k] for k in ("source_type", "rank", "title", "url")}))
+        found.setdefault(r["skill_name"], []).append(Source(**{k: r.get(k) for k in ("source_type", "rank", "title", "url", "duration_minutes")}))
     return found
 
 
@@ -132,7 +135,10 @@ def get_roadmap(db: Client, profile_id: str, onet_code: str | None = None) -> Ro
     groups = _groups(db, names)
     grouped: dict[int, dict[int, list[Node]]] = {}
     for d in details:
+        skill = d["onet_role_skills"]
+        minutes, basis, via = duration.estimate(skill["skill_type"], skill["level"], sources.get(skill["skill_name"], []))
         node = Node(
+            minutes=minutes, minutes_basis=basis, minutes_source=via,
             roadmap_detail_id=d["roadmap_detail_id"],
             skill_id=d["skill_id"],
             **d["onet_role_skills"],
@@ -157,7 +163,12 @@ def get_roadmap(db: Client, profile_id: str, onet_code: str | None = None) -> Ro
         )
         for sec, units in sorted(grouped.items())
     ]
+    nodes = [n for sec in sections for u in sec.units for n in u.nodes]
     out = Roadmap(
+        minutes_total=sum(n.minutes or 0 for n in nodes),
+        minutes_left=sum(n.minutes or 0 for n in nodes if n.status != "completed"),
+        stated_steps=sum(n.minutes_basis == "stated" for n in nodes),
+        estimated_steps=sum(n.minutes_basis == "estimated" for n in nodes),
         profile_id=profile_id,
         onet_code=onet_code,
         title=roadmap["onet_roles"]["title"],

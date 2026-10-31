@@ -16,6 +16,7 @@ class Source(BaseModel):
     rank: int = Field(description="1 = first pick")
     title: str
     url: str
+    duration_minutes: int | None = Field(None, description="How long the resource says it takes, where its page states it; null if unknown")
 
 
 class Node(BaseModel):
@@ -32,6 +33,9 @@ class Node(BaseModel):
     completed_at: datetime | None = None
     previous_nodes: list[str] = Field(description="skill_ids that come before this node")
     previous_nodes_required: bool = Field(description="true: previous nodes must be completed first")
+    minutes: int | None = Field(None, description="How long this step takes, in minutes")
+    minutes_basis: Literal["stated", "estimated"] | None = Field(None, description="stated = a resource's own page gives its length; estimated = our written formula (see roadmap/duration.py)")
+    minutes_source: str | None = Field(None, description="Title of the resource whose stated length was used, when the basis is stated")
 
 
 class Unit(BaseModel):
@@ -59,6 +63,10 @@ class Roadmap(BaseModel):
     status: Literal["locked", "available", "in_progress", "completed"] | None = None
     current: CurrentStep | None = Field(None, description="The step the learner is on")
     sections: list[Section]
+    minutes_total: int = Field(0, description="All steps, in minutes")
+    minutes_left: int = Field(0, description="Steps not yet completed, in minutes")
+    stated_steps: int = Field(0, description="Steps whose time a resource states")
+    estimated_steps: int = Field(0, description="Steps whose time comes from the written formula")
     challenges: list[Challenge] = Field(
         default_factory=list, description="The challenges tied to this roadmap, oldest first; tech roles only, empty for the others"
     )
