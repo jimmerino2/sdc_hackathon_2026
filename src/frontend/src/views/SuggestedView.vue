@@ -119,9 +119,6 @@ onMounted(load);
             <DataFreshness :updated="updated" />
           </div>
         </div>
-      </div>
-
-      <div class="nav-bar">
         <div class="btn-group" role="group" aria-label="View">
           <RouterLink :to="{ ...go('suggested'), query: {} }" :class="{ on: !simulating }" :aria-current="!simulating ? 'page' : undefined">Your matches</RouterLink>
           <RouterLink :to="{ ...go('suggested'), query: { view: 'simulate' } }" :class="{ on: simulating }" :aria-current="simulating ? 'page' : undefined"><Icon name="lightbulb" :size="15" /> What-if simulator</RouterLink>
@@ -168,13 +165,12 @@ onMounted(load);
 
 <style scoped>
 .page { max-width: 1100px; }
-.head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
 .eyebrow { font-size: 13px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--orange); }
 .when { margin-top: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 14px; font-weight: 700; color: var(--muted); }
 .sync { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 2px var(--line-strong); color: var(--ink); font-size: 14px; font-weight: 800; }
 .sync:hover { box-shadow: inset 0 0 0 2px var(--yellow); }
 .sync:disabled { opacity: .6; cursor: default; }
-.nav-bar { display: flex; align-items: center; margin-bottom: 20px; min-height: 44px; }
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .banner { margin-bottom: 18px; }
