@@ -10,7 +10,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from app.interests.sdg import SDG_NAMES
-from app.sdg.schemas import RoleSdg, SdgGoal, SdgTarget, SkillSdg
+from app.sdg.schemas import RoleGoal, RoleSdg, SdgGoal, SdgTarget, SkillSdg
 from app.supabase import get_client
 
 DATA_DIR = Path(__file__).resolve().parents[4] / "data" / "processed"
@@ -63,6 +63,17 @@ def _role_skill_ids() -> dict[str, list[str]]:
     return out
 
 
+@lru_cache
+def _role_goals() -> dict[str, RoleGoal]:
+    """Each role's measurable goal, from onet_roles_sustainable_goals.csv."""
+    out: dict[str, RoleGoal] = {}
+    with open(DATA_DIR / "onet_roles_sustainable_goals.csv", encoding="utf-8", newline="") as f:
+        for r in csv.DictReader(f):
+            m = re.match(r"SDG (\d+)", r["prosperity_sdg"])
+            out[r["onet_role_id"]] = RoleGoal(sdg=int(m[1]) if m else None, text=r["goal"].strip())
+    return out
+
+
 def _goal(n: int) -> SdgGoal:
     return SdgGoal(sdg=n, name=SDG_NAMES[n])
 
@@ -80,7 +91,7 @@ def role_sdg(onet_code: str) -> RoleSdg | None:
     if not r:
         return None
     skills = _skills()
-    return RoleSdg(onet_code=onet_code, **_parts(r), skills=[
+    return RoleSdg(onet_code=onet_code, **_parts(r), goal=_role_goals().get(onet_code), skills=[
         SkillSdg(skill_id=i, skill_name=skills[i]["skill_name"], skill_type=skills[i]["skill_type"], **_parts(skills[i]))
         for i in _role_skill_ids().get(onet_code, []) if i in skills
     ])
