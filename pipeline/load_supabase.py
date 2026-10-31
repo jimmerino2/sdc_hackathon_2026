@@ -118,6 +118,16 @@ def env_url() -> str | None:
     return None
 
 
+def env_service_key() -> str | None:
+    if os.environ.get("SUPABASE_SERVICE_KEY"):
+        return os.environ["SUPABASE_SERVICE_KEY"]
+    if BACKEND_ENV.exists():
+        for line in BACKEND_ENV.read_text(encoding="utf-8").splitlines():
+            if line.startswith("SUPABASE_SERVICE_KEY="):
+                return line.split("=", 1)[1].strip().strip('"\'')
+    return None
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--dry-run", action="store_true", help="parse and validate the CSVs, do not connect")
@@ -131,7 +141,7 @@ def main() -> int:
     if args.dry_run:
         return 0
 
-    url, key = env_url(), os.environ.get("SUPABASE_SERVICE_KEY")
+    url, key = env_url(), env_service_key()
     if not url or not key:
         print("Set SUPABASE_URL (or src/backend/.env) and SUPABASE_SERVICE_KEY.", file=sys.stderr)
         return 1

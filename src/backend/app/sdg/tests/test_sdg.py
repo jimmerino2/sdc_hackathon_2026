@@ -45,3 +45,36 @@ def test_role_with_its_skills():
 
 def test_unknown_role():
     assert client.get("/sdg/roles/00-0000.00").status_code == 404
+
+
+def test_reevaluated_role_systems_analysts():
+    r = client.get("/sdg/roles/15-1211.00")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["onet_code"] == "15-1211.00"
+    assert body["main"]["sdg"] == 9
+    assert sorted([g["sdg"] for g in body["relevant"]]) == [8, 17]
+    assert len(body["targets"]) == 5
+    target_codes = [t["code"] for t in body["targets"]]
+    assert target_codes == ["9.1", "9.4", "9.c", "8.2", "17.8"]
+    # Main SDG targets must precede relevant SDG targets
+    assert [t["sdg"] for t in body["targets"][:3]] == [9, 9, 9]
+
+
+def test_reevaluated_role_software_developers():
+    r = client.get("/sdg/roles/15-1252.00")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["onet_code"] == "15-1252.00"
+    assert body["main"]["sdg"] == 9
+    # Confirm flawed SDGs 4 and 13 are no longer present
+    relevant_ids = [g["sdg"] for g in body["relevant"]]
+    assert 4 not in relevant_ids
+    assert 13 not in relevant_ids
+    assert sorted(relevant_ids) == [8, 17]
+    assert len(body["targets"]) == 5
+    target_codes = [t["code"] for t in body["targets"]]
+    assert target_codes == ["9.5", "9.1", "9.4", "8.2", "17.8"]
+    # Main SDG targets must precede relevant SDG targets
+    assert [t["sdg"] for t in body["targets"][:3]] == [9, 9, 9]
+
