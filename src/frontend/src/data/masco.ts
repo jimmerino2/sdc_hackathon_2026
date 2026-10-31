@@ -8,7 +8,19 @@ export interface MascoMinor {
   tasks: string[];
 }
 
+/** The unit group itself, as eMASCO describes it (translated and condensed from its Malay page). */
+export interface MascoUnit {
+  about: string;
+  tasks: string[];
+  /** Basic salary for a degree holder, from eMASCO's starting salary guide. */
+  degreeSalary: string;
+  /** Yearly salary increment. */
+  increment: string;
+}
+
 export interface MascoRole {
+  /** The unit group's own details, shown when its box is picked. */
+  unit?: MascoUnit;
   /** A short description of the job. */
   about: string;
   /** The minor unit groups under this role's unit group, drawn around it. */
@@ -78,6 +90,23 @@ export const mascoRoles: Record<string, MascoRole> = {
       },
     ],
     url: `${EMASCO_URL}/masco/2512`,
+    unit: {
+      about: 'Researches, analyses and evaluates the requirements of existing or new software applications and operating systems, then designs, develops, tests and troubleshoots software to meet them.',
+      degreeSalary: 'RM 4,360',
+      increment: 'Minimum 6% a year',
+      tasks: [
+        'Research, analyse and evaluate requirements for software applications and operating systems',
+        'Research, design and develop computer software systems',
+        'Consult engineering staff on the interface between hardware and software',
+        'Develop and direct software testing and validation procedures',
+        'Modify existing software to fix errors, adapt it to new hardware, or upgrade interfaces and performance',
+        'Direct software programming and the development of documentation',
+        'Evaluate, develop, upgrade and document maintenance procedures for operating systems, communication environments and applications',
+        'Advise customers on software system maintenance',
+        'Improve understanding and coordinate how the work is carried out',
+        'Carry out related tasks',
+      ],
+    },
   },
   '15-2051.00': {
     url: `${EMASCO_URL}/masco/2524-01`,
@@ -94,6 +123,23 @@ export const mascoRoles: Record<string, MascoRole> = {
   '15-1211.00': {
     about: 'Computer systems analysts gather and examine facts about an organisation’s operations, procedures and systems so they can be turned into programs suited to data processing equipment. They also recommend how computers can improve the organisation’s productivity and profitability.',
     url: `${EMASCO_URL}/masco/2511`,
+    unit: {
+      about: 'Gathers and analyses information about operations, procedures and systems so they can be converted into programs suited to data processing equipment, and recommends how computers can improve the organisation’s productivity and profit.',
+      degreeSalary: 'RM 3,250',
+      increment: 'Minimum 6% a year',
+      tasks: [
+        'Prepare program specifications for computer programmers to act on',
+        'Research, analyse and assess information technology needs, procedures or customer problems',
+        'Develop proposals and plans to improve current or future information systems, and carry them out',
+        'Identify and assess inefficiencies, and analyse processes, procedures and work practices to improve performance',
+        'Design, undertake and implement system testing projects',
+        'Develop functional specifications for system developers',
+        'Extend or modify systems to improve workflows for new services',
+        'Coordinate and integrate computer systems within the organisation for operational efficiency',
+        'Improve understanding and coordinate how the work is carried out',
+        'Perform related tasks',
+      ],
+    },
     minors: [
       {
         name: 'Management Information Systems (MIS) Analyst',

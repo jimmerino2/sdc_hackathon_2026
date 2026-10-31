@@ -333,7 +333,7 @@ const title = computed(() => meta.value?.title ?? 'This role');
 /** The role page's tabs; onboarding (compact) shows the forecast alone. */
 const TABS = [
   { key: 'forecast', label: 'AI outlook' },
-  { key: 'sits', label: 'Where it sits' },
+  { key: 'sits', label: 'About' },
   { key: 'sdg', label: 'SDGs' },
 ] as const;
 const tab = ref<(typeof TABS)[number]['key']>('forecast');
@@ -360,7 +360,7 @@ const hasMasco = computed(() => !!mascoRoles[props.onetCode]?.minors?.length);
       </div>
 
       <section v-if="!compact" v-show="tab === 'sits'" id="panel-sits" role="tabpanel" aria-labelledby="tab-sits" class="gap-row">
-        <p class="eyebrow">Where it sits</p>
+        <p class="eyebrow">About</p>
         <h1>Where {{ title }} sits</h1>
         <MascoMap v-if="hasMasco" :onet-code="onetCode" :title="job?.title ?? title" />
         <p v-else class="empty card no-data">No data found for this O*NET job on eMASCO.</p>
