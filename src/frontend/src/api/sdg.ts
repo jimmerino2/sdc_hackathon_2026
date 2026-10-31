@@ -12,6 +12,15 @@ export interface SdgTargetNote {
   text: string;
 }
 
+/** A target's text starts lowercase in the data; shown with a capital. */
+export const capFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** A measurable goal a role could work towards. */
+export interface RoleGoal {
+  sdg: number | null;
+  text: string;
+}
+
 /** The SDGs one of a role's skills serves. */
 export interface SkillSdg {
   skill_id: string;
@@ -30,6 +39,8 @@ export interface RoleSdg {
   relevant: SdgGoal[];
   /** Main goal's targets first. */
   targets: SdgTargetNote[];
+  /** Null if the role has no goal on record. */
+  goal?: RoleGoal | null;
   skills: SkillSdg[];
 }
 

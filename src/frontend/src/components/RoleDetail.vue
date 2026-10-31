@@ -15,7 +15,7 @@ import { formatSkip, parseSkip } from '../data/quarterPick';
 import { backendScenario, fetchJobForecasts, fetchQuarters, refreshForecastData, retrainForecast, type JobForecast, type JobHorizon, type Quarters, type Retrained } from '../api/forecast';
 import { fetchInterestReasons, type InterestReason, type JobMatch } from '../api/jobs';
 import { readProfileId } from '../api/profile';
-import { fetchRoleSdg, type RoleSdg, type SdgTargetNote } from '../api/sdg';
+import { capFirst, fetchRoleSdg, type RoleSdg, type SdgTargetNote } from '../api/sdg';
 import { SDG_GOALS } from '../data/interestSdgs';
 import { mascoRoles } from '../data/masco';
 
@@ -469,9 +469,13 @@ const hasMasco = computed(() => !!mascoRoles[props.onetCode]?.minors?.length);
         </div>
 
         <div v-if="allTargets.length" class="card targets-card">
+          <div v-if="roleSdg?.goal" class="role-goal" :style="{ '--c': sdgColor(roleSdg.goal.sdg ?? mainGoal.sdg) }">
+            <h3 class="impact-sub">Goal</h3>
+            <p class="goal-text"><span v-if="roleSdg.goal.sdg" class="goal-tag">SDG {{ roleSdg.goal.sdg }}</span>{{ roleSdg.goal.text }}</p>
+          </div>
           <h3 class="impact-sub">Targets</h3>
           <ul class="sdg-targets">
-            <li v-for="t in allTargets" :key="t.code"><b :style="{ color: sdgColor(t.sdg) }">{{ t.code }}</b> {{ t.text }}</li>
+            <li v-for="t in allTargets" :key="t.code"><b :style="{ color: sdgColor(t.sdg) }">{{ t.code }}</b> {{ capFirst(t.text) }}</li>
           </ul>
         </div>
 
@@ -494,7 +498,7 @@ const hasMasco = computed(() => !!mascoRoles[props.onetCode]?.minors?.length);
                 <div v-if="tip === s.skill_id" :id="`tip-${s.skill_id}`" class="skill-tip" role="tooltip" :style="{ top: `${tipPos.top}px`, left: `${tipPos.left}px` }">
                   <p class="skill-tip-title">{{ skillLabel(s.skill_name) }}</p>
                   <ul class="sdg-targets">
-                    <li v-for="t in s.targets" :key="t.code"><b :style="{ color: sdgColor(t.sdg) }">{{ t.code }}</b> {{ t.text }}</li>
+                    <li v-for="t in s.targets" :key="t.code"><b :style="{ color: sdgColor(t.sdg) }">{{ t.code }}</b> {{ capFirst(t.text) }}</li>
                   </ul>
                 </div>
               </Teleport>
@@ -560,6 +564,9 @@ h1 { font-size: 34px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .skill-chip.chip-have { border: 2px solid var(--ink); }
 .skill-chip:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
 .skill-tip { position: fixed; z-index: 50; width: min(340px, calc(100vw - 32px)); padding: 14px 16px; border-radius: 16px; background: #fff; border: 2px solid var(--line); box-shadow: 0 10px 28px rgba(30, 30, 30, .16); pointer-events: none; }
+.role-goal { margin-bottom: 18px; padding-bottom: 16px; border-bottom: 2px solid var(--line); }
+.goal-text { font-size: 16px; font-weight: 600; line-height: 1.45; }
+.goal-tag { display: inline-block; margin-right: 8px; padding: 1px 9px; border-radius: 999px; font-size: 13px; font-weight: 900; color: #fff; background: var(--c); vertical-align: 1px; }
 .skill-tip-title { font-size: 16px; font-weight: 900; margin-bottom: 8px; }
 .skill-tip .sdg-targets { font-size: 15px; gap: 6px; color: var(--muted); }
 @media (max-width: 560px) { .sdg-tile { width: 84px; } .sdg-tile.main { width: 120px; } .fit, .targets-card { padding: 16px; } }
