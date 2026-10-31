@@ -70,7 +70,7 @@ const spark = computed(() => {
       {{ noData ? 'Not enough data yet' : DIR_LABEL[row.direction as 'rising' | 'falling'] }}
     </p>
 
-    <div v-show="!collapsed">
+    <div v-show="!collapsed" class="jb-next__body">
       <template v-if="noData">
         <p class="jb-forecast__hint">Too few job ads for this role mention it yet for a reliable trend.</p>
       </template>

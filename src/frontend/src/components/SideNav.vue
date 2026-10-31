@@ -27,7 +27,7 @@ const holds = (e: Entry, id: TabId | undefined) => e.id === id || (isMenu(e) && 
 const items: Entry[] = [
   { id: 'learn', label: 'Learn', icon: 'route', to: 'pathway' },
   { id: 'roles', label: 'Roles', icon: 'tup', to: 'suggested' },
-  { id: 'community', label: 'Community', icon: 'users', children: [
+  { id: 'community', label: 'Community', icon: 'house', children: [
     { id: 'challenges', label: 'Challenges', icon: 'trophy', to: 'challenges' },
     { id: 'social', label: 'Social', icon: 'users', to: 'social' },
   ] },
@@ -35,8 +35,8 @@ const items: Entry[] = [
 ];
 /** The market-insight tabs, grouped together just above Log out. */
 const insights: Entry[] = [
-  { id: 'insights', label: 'Insights', icon: 'sparkles', children: [
-    { id: 'outlook', label: 'AI outlook', icon: 'sparkles', to: 'outlook' },
+  { id: 'insights', label: 'Insights', icon: 'search', children: [
+    { id: 'outlook', label: 'AI outlook', icon: 'telescope', to: 'outlook' },
     { id: 'occupations', label: 'Occupations', icon: 'chart-bar', to: 'occupations' },
     // A dev tool, so it stays out of the deployed app's nav.
     ...(import.meta.env.DEV ? [{ id: 'benchmark', label: 'Benchmark', icon: 'brain', to: 'benchmark' } as Item] : []),

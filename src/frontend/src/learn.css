@@ -151,16 +151,17 @@
 .jb-node__forecast:hover { transform: scale(1.12); }
 .jb-node__forecast[data-direction="falling"] { color: #b3261e; }
 .jb-node[data-layout="stack"] .jb-node__forecast { left: 50%; margin-left: -34px; bottom: 6px; }
-.jb-forecast { border-color: var(--honey); animation: jb-swap var(--dur-slow) var(--ease-out) both; }
 .jb-forecast__stat { margin-top: 14px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .jb-forecast__value { font-size: 38px; line-height: 1; font-weight: 800; color: var(--text); }
 .jb-forecast__delta { font-size: 16px; line-height: 23px; font-weight: 800; color: var(--text-muted); }
 .jb-forecast[data-direction="rising"] .jb-forecast__delta { color: var(--accent-text); }
 .jb-forecast[data-direction="falling"] .jb-forecast__delta { color: #b3261e; }
 .jb-forecast__lead { margin: 6px 0 0; font-size: 16px; line-height: 23px; font-weight: 800; color: var(--text); }
-.jb-forecast__hint { margin: 4px 0 0; font-size: 15px; line-height: 21px; font-weight: 600; color: var(--text-muted); }
-.jb-forecast__dir { margin: 12px 0 0; display: flex; align-items: center; gap: 8px; font-size: 16px; line-height: 23px; font-weight: 800; color: var(--accent-text); }
-.jb-forecast[data-direction="down"] .jb-forecast__dir { color: #b3261e; }
+.jb-forecast__hint { margin: 8px 0 0; font-size: 15px; line-height: 21px; font-weight: 600; color: var(--text-muted); }
+/* The direction reads as a chip, like the skill kind on the materials card. */
+.jb-forecast__dir { margin: 6px 0 0; display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: var(--radius-pill); background: var(--honey-tint); font-size: 14px; line-height: 18px; font-weight: 800; color: var(--text); }
+.jb-forecast[data-direction="rising"] .jb-forecast__dir { color: var(--accent-text); }
+.jb-forecast[data-direction="falling"] .jb-forecast__dir { color: #b3261e; }
 .jb-forecast__past { margin: 14px 0 0; }
 .jb-forecast__spark { display: block; width: 100%; height: 48px; overflow: visible; }
 .jb-forecast__sparkline { fill: none; stroke: var(--line-strong); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -329,8 +330,19 @@
 }
 
 /* roadmap switcher above the Learn page */
+/* The arrows and tabs are as wide as the roadmap column: the .learn grid's width minus its side column and gap. Delete stays at the bar's right end. */
 .rmbar { display: flex; align-items: center; gap: 12px; max-width: 1400px; margin-bottom: 18px; }
-.rmbar__tabs { display: flex; gap: 8px; flex: 1; min-width: 0; overflow-x: auto; padding: 2px 2px 6px; }
+.rmbar__strip { --learn-w: min(100%, 1400px); display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; max-width: calc(var(--learn-w) - clamp(360px, calc(var(--learn-w) - 920px), 480px) - 32px); }
+.rmbar__del { margin-left: auto; }
+@media (max-width: 1000px) { .rmbar__strip { max-width: none; } }
+/* No scrollbar: the arrow buttons either side page through the tabs. The padding leaves room for the active tab's bottom shadow. */
+.rmbar__tabs { display: flex; gap: 8px; flex: 1; min-width: 0; overflow-x: auto; padding: 2px 2px 6px; scrollbar-width: none; }
+.rmbar__tabs::-webkit-scrollbar { display: none; }
+.rmbar__nav { flex: none; display: grid; place-items: center; width: 36px; height: 36px; margin-bottom: 4px; border: 2px solid var(--line-strong); border-radius: 50%; background: var(--surface-raised); color: var(--text); cursor: pointer; transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast); }
+.rmbar__nav:hover:not(:disabled) { transform: translateY(-1px); border-color: var(--honey); }
+.rmbar__nav:disabled { opacity: .35; cursor: default; }
+.rmbar__prev { transform: rotate(90deg); }
+.rmbar__next { transform: rotate(-90deg); }
 .rmbar__tab { display: inline-flex; align-items: center; gap: 10px; flex: none; max-width: 380px; padding: 9px 14px; border: 2px solid var(--line-strong); border-radius: var(--radius-pill); background: var(--surface-raised); color: var(--text-muted); font-size: 15px; line-height: 21px; font-weight: 800; cursor: pointer; transition: background var(--dur-base), color var(--dur-base), transform var(--dur-fast) var(--ease-bounce); }
 .rmbar__tab:hover { color: var(--text); transform: translateY(-1px); }
 .rmbar__tab.on { background: var(--honey-tint); border-color: var(--honey); color: var(--text); box-shadow: 0 3px 0 var(--honey); }
@@ -375,19 +387,12 @@
 
 /* ---------- HRD Corp verified (paid): government blue, with a tick ---------- */
 .jb-hrd { --hrd: #0b3b91; --hrd-deep: #072a6b; --hrd-tint: #e9effc; --hrd-line: #bdcdf0; --g: var(--hrd); --g-deep: var(--hrd-deep); --g-tint: var(--hrd-tint); --g-line: var(--hrd-line); }
-.jb-hrd__seal { position: relative; }
-.jb-hrd__verified { position: absolute; right: -5px; bottom: -4px; display: grid; place-items: center; width: 17px; height: 17px; border-radius: 50%; background: #17884a; color: #fff; border: 2px solid var(--hrd); }
-.jb-hrd__none { margin: 0; font-size: 14px; line-height: 20px; font-weight: 600; color: var(--text-muted); }
-.jb-hrd__none a { color: var(--hrd); font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
-.jb-hrd__skel { display: grid; gap: 8px; }
-.jb-hrd__skel .skel { height: 52px; }
 .jb-hrd__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .jb-hrd__list li { border-radius: var(--radius-sm); background: #fff; border: 2px solid var(--hrd-line); transition: border-color var(--dur-fast), transform var(--dur-base) var(--ease-bounce); }
 .jb-hrd__list li:hover { border-color: var(--hrd); transform: translateX(3px); }
 .jb-hrd__list li a { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; color: inherit; text-decoration: none; }
 .jb-hrd__list li a:focus-visible { outline: 3px solid var(--hrd); outline-offset: 2px; border-radius: var(--radius-sm); }
 .jb-hrd__out { flex: none; margin-top: 3px; color: var(--hrd); opacity: .7; }
-.jb-hrd__tick { flex: none; display: grid; place-items: center; width: 20px; height: 20px; margin-top: 2px; border-radius: 50%; background: var(--hrd); color: #fff; }
 .jb-hrd__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .jb-hrd__main b { font-size: 15px; line-height: 20px; font-weight: 800; color: var(--hrd-deep); overflow-wrap: anywhere; }
 .jb-hrd__main small { font-size: 13px; line-height: 18px; font-weight: 700; color: var(--text-muted); }
@@ -395,9 +400,10 @@
 .jb-hrd__tag { display: inline-flex; align-items: center; gap: 4px; font-style: normal; white-space: nowrap; padding: 1px 9px; border-radius: var(--radius-pill); background: #fff; border: 1.5px solid var(--hrd-line); color: var(--hrd); font-size: 12px; line-height: 17px; font-weight: 800; }
 .jb-hrd__tag--cert { background: var(--hrd); border-color: var(--hrd); color: #fff; }
 .jb-hrd__tag svg { flex: none; }
-.jb-hrd__price { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 0; text-align: right; }
+.jb-hrd__price { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 6px; }
 .jb-hrd__price b { font-size: 16px; line-height: 21px; font-weight: 900; color: var(--hrd-deep); white-space: nowrap; }
 .jb-hrd__price s { font-size: 13px; line-height: 17px; font-weight: 700; color: var(--text-muted); white-space: nowrap; }
+.jb-hrd__off { background: #eaf6ee; border-color: #bfe0c9; color: #17652f; } /* savings read green */
 
 
 /* ---------- share on LinkedIn ---------- */

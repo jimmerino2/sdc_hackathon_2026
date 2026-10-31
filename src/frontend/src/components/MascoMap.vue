@@ -57,8 +57,12 @@ const detail = computed(() => {
             <button type="button" class="minor" :class="{ on: isOpen(m) }" :aria-expanded="isOpen(m)" @click="pickMinor(m)">{{ m.name }}</button>
           </li>
         </ul>
+        <p v-if="role?.url" class="src">
+          Classification: <a :href="role.url" target="_blank" rel="noopener">eMASCO, Ministry of Human Resources</a>
+        </p>
       </div>
-      <aside v-if="detail" class="detail" aria-live="polite">
+      <div v-if="detail" class="detail-cell">
+      <aside class="detail" aria-live="polite">
         <h2>{{ detail.name }}</h2>
         <p class="d-about">{{ detail.about }}</p>
         <dl v-if="detail.facts.length" class="facts">
@@ -68,8 +72,9 @@ const detail = computed(() => {
         <ul><li v-for="t in detail.tasks" :key="t">{{ t }}</li></ul>
         <a class="d-link" :href="detail.url" target="_blank" rel="noopener">Read the full entry on eMASCO <span aria-hidden="true">↗</span></a>
       </aside>
+      </div>
     </div>
-    <p v-if="role?.url" class="src">
+    <p v-if="role?.url && !showMap" class="src">
       Classification: <a :href="role.url" target="_blank" rel="noopener">eMASCO, Ministry of Human Resources</a>
     </p>
   </div>
@@ -80,37 +85,40 @@ const detail = computed(() => {
 .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
 
 /* The flowchart: one tall box on the left joined by elbow lines to a stack of boxes on the right. */
-.flow { display: flex; flex-direction: column; gap: 14px; background: #fff; border: 2px solid #1e1e1e; border-radius: 20px; padding: 16px; box-shadow: 0 4px 0 rgba(30, 30, 30, .12); }
-.major, .minor { display: flex; align-items: center; width: 100%; height: 56px; padding: 0 18px; border: 2.5px solid #1e1e1e; border-radius: 14px; font: inherit; font-size: 15px; font-weight: 800; line-height: 1.25; color: #1e1e1e; cursor: pointer; transition: background .12s, box-shadow .12s, transform .12s; }
-.major { justify-content: center; text-align: center; background: #ff9800; }
+.flow { display: flex; flex-direction: column; gap: 14px; background: #fff; border: 2px solid var(--line); border-radius: 20px; padding: 16px; }
+/* Boxes follow the .option pattern from the rest of the app: soft border, flat drop shadow, cream and yellow when picked. All text is left-aligned. */
+.major, .minor { display: flex; align-items: center; justify-content: flex-start; text-align: left; width: 100%; min-height: 56px; padding: 10px 18px; border: 2px solid var(--line-strong); border-radius: 16px; box-shadow: 0 4px 0 var(--line-strong); font: inherit; font-size: 15px; font-weight: 800; line-height: 1.25; color: #1e1e1e; cursor: pointer; transition: transform .1s ease, box-shadow .1s ease, background .1s ease; }
+.major { background: var(--yellow); border-color: var(--yellow); box-shadow: 0 4px 0 var(--orange); }
 .major:disabled { cursor: default; }
-.major:not(:disabled):hover { background: #ffa726; }
+.major:not(:disabled):hover, .minor:hover { transform: translateY(-1px); }
 .minors { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
 /* A short line from the box above joins each box into one column. */
 .minors li { position: relative; }
 .minors li::before { content: ''; position: absolute; left: 50%; top: -14px; height: 14px; border-left: 3px solid #c2bfba; }
-.minor { text-align: left; background: #fff3cc; }
-.minor:hover { background: #ffe9a8; }
-/* The picked box stands out: filled, with a thick outline. */
-.major.on, .minor.on { background: #ffc61a; box-shadow: 0 0 0 3px #fff, 0 0 0 6px #1e1e1e; transform: translateX(2px); }
+.minor { background: #fff; }
+/* The picked box stands out like a selected .option: cream fill, yellow border, orange shadow. */
+.major.on, .minor.on { background: var(--cream); border-color: var(--yellow); box-shadow: 0 4px 0 var(--orange); }
+.major:active:not(:disabled), .minor:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--orange); }
 .major:focus-visible, .minor:focus-visible { outline: 3px solid #ff9800; outline-offset: 4px; }
 
-.detail { background: #fff; border: 2px solid #1e1e1e; border-radius: 20px; padding: 22px 26px; box-shadow: 0 4px 0 rgba(30, 30, 30, .12); border-top: 8px solid #ff9800; animation: d-in .18s ease-out; max-height: min(78vh, 720px); overflow-y: auto; overscroll-behavior: contain; position: sticky; top: 12px; }
+.detail { background: #fff; border: 2px solid var(--line); border-radius: 20px; padding: 22px 26px; animation: d-in .18s ease-out; position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; }
+/* The detail card never makes the row taller: it fills the space beside the flowchart and scrolls inside it. */
+.detail-cell { position: relative; align-self: stretch; min-height: 320px; }
 @keyframes d-in { from { opacity: 0; transform: translateX(8px); } }
 @media (prefers-reduced-motion: reduce) { .detail { animation: none; } }
 .detail h2 { font-size: 24px; font-weight: 900; line-height: 1.2; margin: 0 0 10px; }
 .detail h3 { font-size: 13px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; }
 .d-about { font-size: 16px; font-weight: 600; line-height: 1.55; margin: 0; }
 .facts { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 0; }
-.facts div { flex: 1 1 150px; padding: 10px 14px; border-radius: 14px; background: #fff3cc; border: 2px solid #1e1e1e; }
+.facts div { flex: 1 1 150px; padding: 10px 14px; border-radius: 14px; background: var(--cream); border: 2px solid var(--line); }
 .facts dt { font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .facts dd { margin: 2px 0 0; font-size: 18px; font-weight: 900; }
 .detail ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 15px; font-weight: 600; line-height: 1.45; }
 .detail li { position: relative; padding-left: 20px; }
-.detail li::before { content: ''; position: absolute; left: 0; top: .5em; width: 9px; height: 9px; border-radius: 50%; background: #ff9800; border: 2px solid #1e1e1e; box-sizing: border-box; }
-.d-link { display: inline-block; margin-top: 18px; padding: 9px 16px; border: 2px solid #1e1e1e; border-radius: 999px; font-size: 14px; font-weight: 800; color: inherit; text-decoration: none; background: #fff3cc; }
-.d-link:hover { background: #ffe9a8; }
-.src { margin-top: 10px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.detail li::before { content: ''; position: absolute; left: 0; top: .5em; width: 9px; height: 9px; border-radius: 50%; background: var(--orange); }
+.d-link { display: inline-block; margin-top: 18px; padding: 9px 16px; border: 2px solid var(--line-strong); border-radius: 999px; box-shadow: 0 3px 0 var(--line-strong); font-size: 14px; font-weight: 800; color: inherit; text-decoration: none; background: #fff; }
+.d-link:hover { background: var(--cream); }
+.src { margin: 4px 0 0; font-size: 13px; font-weight: 600; color: var(--muted); }
 .src a { color: inherit; text-decoration: underline; }
-@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } .detail-cell { min-height: 0; } .detail { position: static; max-height: 70vh; } }
 </style>

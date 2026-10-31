@@ -20,23 +20,24 @@ const skill = (links: NextUpSkill['links']): NextUpSkill => ({
 
 describe('HRD Corp card', () => {
   it('shows the verified title, that it is paid, the fee after the discount and the original', async () => {
-    const html = await render(HrdCard, { skill: 'Critical Thinking', programmes: [programme()] });
+    const html = await render(HrdCard, { programmes: [programme()] });
     expect(html).toContain('HRD Corp Verified');
     expect(html).toContain('Paid');
     expect(html).toContain('RM 6,400');
     expect(html).toContain('RM 8,000');
-    expect(html).toContain('20% off');
-    expect(html).toContain('employer');
+    expect(html).toContain('-20%');
+    expect(html).not.toContain('jb-hrd__tick');
+    expect(html).not.toContain('employer');
   });
 
-  it('has a government building in its seal, with a small verified tick', async () => {
-    const html = await render(HrdCard, { skill: 'X', programmes: [programme()] });
+  it('has a government building in its seal, like the other bands', async () => {
+    const html = await render(HrdCard, { programmes: [programme()] });
     expect(html).toContain('lucide-landmark');
-    expect(html).toContain('jb-hrd__verified');
+    expect(html).not.toContain('jb-hrd__verified');
   });
 
   it('shows no in-house note, RM 0 for a free course, and no footnote about the list', async () => {
-    const html = await render(HrdCard, { skill: 'X', programmes: [programme({ in_house: true, fee_after_discount_rm: 0, discount_pct: 100, fee_rm: 1280 })] });
+    const html = await render(HrdCard, { programmes: [programme({ in_house: true, fee_after_discount_rm: 0, discount_pct: 100, fee_rm: 1280 })] });
     expect(html).not.toContain('In-house');
     expect(html).not.toContain('company books');
     expect(html).toContain('RM 0');
@@ -44,44 +45,33 @@ describe('HRD Corp card', () => {
   });
 
   it('marks a professional certification with a short tag that keeps the full name as its title', async () => {
-    const cert = await render(HrdCard, { skill: 'X', programmes: [programme({ certification: 'Professional Certification' })] });
+    const cert = await render(HrdCard, { programmes: [programme({ certification: 'Professional Certification' })] });
     expect(cert).toContain('jb-hrd__tag--cert');
     expect(cert).toContain('title="Professional certification"');
     expect(cert).not.toContain('>Professional certification<');
-    const plain = await render(HrdCard, { skill: 'X', programmes: [programme()] });
+    const plain = await render(HrdCard, { programmes: [programme()] });
     expect(plain).not.toContain('jb-hrd__tag--cert');
   });
 
   it('opens each course on its source_url in a new tab', async () => {
     const url = 'https://bizmatch.test/courses?page=25&sortOrder=asc&sortCol=name';
-    const html = await render(HrdCard, { skill: 'X', programmes: [programme({ source_url: url })] });
+    const html = await render(HrdCard, { programmes: [programme({ source_url: url })] });
     expect(html).toContain(`href="${url.replace(/&/g, '&amp;')}"`);
     expect(html).toContain('target="_blank"');
     expect(html).toContain('rel="noopener noreferrer"');
   });
 
-  it('starts closed, opens from its header, and says how many courses it holds', async () => {
-    const html = await render(HrdCard, { skill: 'X', programmes: [programme(), programme({ course_id: 2 })] });
-    expect(html).toContain('2 courses');
-    expect(html).toContain('aria-expanded="false"');
+  it('starts open like the other bands, toggles from its header, and shows a plain count', async () => {
+    const html = await render(HrdCard, { programmes: [programme(), programme({ course_id: 2 })] });
+    expect(html).toContain('jb-res__count">2<');
+    expect(html).toContain('aria-expanded="true"');
     expect(html).toContain('aria-controls="hrd-body"');
     expect(html).toContain('id="hrd-body"');
   });
 
-  it('says so plainly when there is no course, and shows a placeholder while loading', async () => {
-    const none = await render(HrdCard, { skill: 'Origami', programmes: [] });
-    expect(none).toContain('We don’t guess');
-    expect(none).toContain('0 courses');
-    const loading = await render(HrdCard, { skill: 'Origami', programmes: null });
-    expect(loading).toContain('skel');
-    expect(loading).not.toContain('We don’t guess');
-    expect(loading).not.toContain('0 courses');
-  });
-
-  it('leaves the claim explanation to its header', async () => {
-    const html = await render(HrdCard, { skill: 'X', programmes: [programme()] });
-    expect(html).toContain('employer claims the fee');
-    expect(html).not.toContain('claimable list');
+  it('renders nothing when there is no course or the list is still loading', async () => {
+    expect(await render(HrdCard, { programmes: [] })).not.toContain('HRD Corp Verified');
+    expect(await render(HrdCard, { programmes: null })).not.toContain('HRD Corp Verified');
   });
 });
 
@@ -128,16 +118,16 @@ describe('Next up card: free and may-cost links', () => {
     expect(onlyPaid).toContain('May cost');
   });
 
-  it('holds the HRD Corp courses as its last band, closed while Free resources stays open', async () => {
+  it('holds the HRD Corp courses as its last band, open like the other two', async () => {
     const html = await render(NextUpCard, { skill: skill(links), selected: true, programmes: [programme()] });
     expect(html.indexOf('HRD Corp Verified')).toBeGreaterThan(html.indexOf('Courses and credentials'));
     expect(html).toMatch(/aria-expanded="true" aria-controls="res-free"/);
-    expect(html).toMatch(/aria-expanded="false" aria-controls="hrd-body"/);
+    expect(html).toMatch(/aria-expanded="true" aria-controls="hrd-body"/);
   });
 
-  it('still shows the HRD Corp band when the skill has no links of its own', async () => {
+  it('hides the HRD Corp band when there are no courses, even when the skill has no links of its own', async () => {
     const html = await render(NextUpCard, { skill: skill([]), selected: true, programmes: [] });
     expect(html).toContain('We don’t have a recommended resource');
-    expect(html).toContain('HRD Corp Verified');
+    expect(html).not.toContain('HRD Corp Verified');
   });
 });
