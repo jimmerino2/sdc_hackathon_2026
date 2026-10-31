@@ -19,6 +19,7 @@ from app.outlook.router import router as outlook_router
 from app.profile.router import router as profile_router
 from app.roadmap.router import router as roadmap_router
 from app.resume.router import router as resume_router
+from app.sdg.router import router as sdg_router
 from app.social.router import router as social_router
 
 
@@ -57,6 +58,7 @@ def create_app() -> FastAPI:
     app.include_router(profile_router)
     app.include_router(roadmap_router)
     app.include_router(resume_router)
+    app.include_router(sdg_router)
     app.include_router(social_router)
     return app
 

@@ -17,7 +17,7 @@ function submit() {
 </script>
 
 <template>
-  <FlowShell :progress="0" next="who" back="bee" mood="happy" :next-disabled="empty" @next="state.name = state.name.trim()">
+  <FlowShell :progress="0" next="who" back="landing" mood="happy" :next-disabled="empty" @next="state.name = state.name.trim()">
     <template #bubble>What should I call you?</template>
     <form @submit.prevent="submit">
       <label for="name" class="label">First name or nickname</label>

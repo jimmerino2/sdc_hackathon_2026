@@ -4,7 +4,6 @@ import { isOnboarded } from './api/profile';
 export const steps = [
   'landing',
   'login',
-  'bee',
   'name',
   'who',
   'interests',
@@ -34,7 +33,6 @@ export type Step = (typeof steps)[number];
 export const stepLabels: Record<Step, string> = {
   landing: '01 Landing',
   login: '01a Log in',
-  bee: '01b Pick your bee',
   name: '01c What do we call you',
   who: '02 Who are you',
   interests: '03 What you’re into',
