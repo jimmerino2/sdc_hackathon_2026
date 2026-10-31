@@ -51,3 +51,13 @@ export async function fetchRoleSdg(onetCode: string): Promise<RoleSdg | null> {
   if (!res.ok) throw new Error(`SDG request failed (${res.status})`);
   return res.json();
 }
+
+let skillsByName: Promise<Map<string, SkillSdg>> | undefined;
+/** Every skill's SDG targets by skill name, fetched once. An empty map if the request fails, so chips just show no tooltip. */
+export function fetchSkillSdgs(): Promise<Map<string, SkillSdg>> {
+  skillsByName ??= fetch(`${API_URL}/sdg/skills`)
+    .then((r) => (r.ok ? (r.json() as Promise<SkillSdg[]>) : []))
+    .catch(() => [] as SkillSdg[])
+    .then((list) => new Map(list.map((s) => [s.skill_name, s])));
+  return skillsByName;
+}
