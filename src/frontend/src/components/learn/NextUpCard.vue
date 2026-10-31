@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import SdgTip from '../SdgTip.vue';
+import { fetchSkillSdgs, type SkillSdg } from '../../api/sdg';
+import { SDG_GOALS } from '../../data/interestSdgs';
 import Icon from '../Icon.vue';
 import JbButton from './JbButton.vue';
 import HrdCard from './HrdCard.vue';
@@ -35,6 +38,20 @@ defineEmits<{
   complete: [];
   close: [];
 }>();
+
+/** The goals the selected skill serves (main first), each with its targets, for the hoverable SDG chips. */
+const skillSdgs = ref<Map<string, SkillSdg>>(new Map());
+onMounted(async () => (skillSdgs.value = await fetchSkillSdgs()));
+const goals = computed(() => {
+  const s = skillSdgs.value.get(props.skill?.skillName ?? '');
+  if (!s) return [];
+  return [s.main, ...s.relevant].map((g) => ({
+    sdg: g.sdg,
+    title: `SDG ${g.sdg} · ${SDG_GOALS[g.sdg]?.title ?? g.name}`,
+    color: SDG_GOALS[g.sdg]?.color ?? 'var(--ink)',
+    targets: s.targets.filter((t) => t.sdg === g.sdg),
+  }));
+});
 
 /** The links split into those that are free and those on sites that sell courses, so "Free" is never claimed for a paid course. */
 const groups = computed(() => splitByCost(props.skill?.links ?? []));
@@ -77,7 +94,10 @@ const eyebrowText = computed(() => {
         <div v-else :key="`sel-${skill.id}-${skill.state}`" class="jb-next__body">
           <span class="jb-next__kind">{{ skill.kind }}</span>
           <p v-if="skill.time" class="jb-next__hint"><b>About {{ skill.time.text }}</b> · {{ skill.time.note }}</p>
-          <p v-if="skill.blurb" class="jb-next__hint">{{ skill.blurb }}</p>
+          <p v-if="goals.length" class="jb-next__sdgs" aria-label="Sustainable Development Goals this skill serves">
+            <SdgTip v-for="g in goals" :key="g.sdg" :title="g.title" :targets="g.targets" :pill="g.color">SDG {{ g.sdg }}</SdgTip>
+          </p>
+          <p v-else-if="skill.blurb" class="jb-next__hint">{{ skill.blurb }}</p>
           <template v-if="skill.links.length">
             <section v-if="groups.free.length" class="jb-res jb-res--free" aria-label="Free resources">
               <button type="button" class="jb-res__head" :aria-expanded="freeOpen" aria-controls="res-free" @click="freeOpen = !freeOpen">
