@@ -10,6 +10,7 @@ from app.interests.schemas import Interest
 from app.interests.sdg import SDG_NAMES
 from app.interests.service import sdg_focus as focus_of
 from app.jobs import scoring
+from app.occupational import service as occupational
 from app.jobs.schemas import ContextRole, Engine, JobMatch, MatchBreakdown, MatchParts, RecommendRequest, RecommendResponse, ScenarioOutlook, SdgReason, SkillFit
 from app.supabase import get_client
 
@@ -101,6 +102,45 @@ def _expand(scores: dict[str, float]) -> dict[str, float]:
     return out
 
 
+TREND_WEIGHT = 2.0  # a key skill whose demand is forecast to rise counts this many times its O*NET importance
+DEMAND_COUNTRY, DEMAND_HORIZON = "US", 6  # the occupational pipeline's biggest sample and middle horizon
+# O*NET role -> the occupational pipeline's occupation with forecasts for it. The other roles have none, so no skill is boosted there.
+OCCUPATIONS = {"15-1252.00": "software_engineer", "15-2051.00": "data_scientist", "15-2051.01": "data_analyst"}
+# O*NET names the pipeline's registry spells differently.
+REGISTRY_NAMES = {
+    "structured query language sql": "sql", "oracle java": "java", "amazon web services aws software": "aws",
+    "microsoft azure software": "azure", "hypertext markup language html": "html", "cascading style sheets css": "css",
+}
+
+
+@lru_cache
+def _demand() -> dict[str, list[dict]]:
+    """Forecast rows by registry skill name and alias (lower case), biggest sample first. Empty if the pipeline output is missing."""
+    try:
+        f = occupational.table("latest/forecast.csv.gz")
+        f = f[(f["country"] == DEMAND_COUNTRY) & (f["h"] == DEMAND_HORIZON)].sort_values("ads_12m", ascending=False)
+        rows = occupational.records(f)
+        aliases = {e["skill_id"]: [e["name"], *e.get("aliases_seen", [])] for e in occupational.doc("taxonomy/skill_registry.json")["skills"]}
+    except Exception as e:  # context only: the matching works without it
+        print(f"Skill demand unavailable ({type(e).__name__})")
+        return {}
+    out: dict[str, list[dict]] = {}
+    for r in rows:
+        for name in aliases.get(r["skill_id"], [r["skill_name"]]):
+            out.setdefault(name.lower(), []).append(r)
+    return out
+
+
+@lru_cache
+def is_rising(onet_code: str, skill_name: str) -> bool:
+    """Whether the Occupations page forecasts rising demand for this skill in this role's occupation (evidence above low)."""
+    occupation = OCCUPATIONS.get(onet_code)
+    if occupation is None:
+        return False
+    rows = [r for r in _demand().get(REGISTRY_NAMES.get(skill_name.lower(), skill_name.lower()), []) if r["occupation"] == occupation and r["evidence"] != "low"]
+    return bool(rows) and rows[0]["direction"] == "rising"
+
+
 def _with_key_skills(role: dict, have: set[str]) -> dict:
     """The role with its key skills picked: the top tools and abilities.
 
@@ -118,7 +158,10 @@ def _with_key_skills(role: dict, have: set[str]) -> dict:
         if len(tools) == KEY_TOOLS:
             break
     picked = tools + role["abilities"][:KEY_ABILITIES]
-    return {**role, "key_skills": [n for n, _ in picked], "weights": dict(picked)}
+    # Trend momentum: a skill forecast to be in rising demand for this role counts double, so learning it moves the match more.
+    trending = {n for n, _ in picked if is_rising(role["onet_code"], n)}
+    return {**role, "key_skills": [n for n, _ in picked], "trending": trending,
+            "weights": {n: w * (TREND_WEIGHT if n in trending else 1.0) for n, w in picked}}
 
 
 _icons: dict[str, str] = {}
@@ -229,7 +272,7 @@ def _skill_fit(role: dict, own: dict[str, float], proficiency: dict[str, float])
         linked = [*(n for f in FAMILIES if name in f for n in f if n != name), *(n for n, implied in IMPLIES.items() if name in implied)]
         return next((n for n in linked if own.get(n.lower(), 0.0) == proficiency[key]), None)
 
-    return [SkillFit(name=n, importance_share=round(role["weights"][n] / total, 4), proficiency=proficiency.get(n.lower(), 0.0), via=via(n))
+    return [SkillFit(name=n, importance_share=round(role["weights"][n] / total, 4), proficiency=proficiency.get(n.lower(), 0.0), via=via(n), trending=n in role["trending"])
             for n in role["key_skills"]]
 
 

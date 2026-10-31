@@ -41,6 +41,8 @@ export interface SkillFit {
   importance_share: number;
   proficiency: number;
   via: string | null;
+  /** Demand for it is forecast to rise, so it counts double in the skills part of the match. */
+  trending?: boolean;
 }
 
 /** How much AI already touches a job (Anthropic Economic Index); null when unknown. */
@@ -140,6 +142,8 @@ export interface SkillOption {
   gap_roles: string[];
   gains: { scenario: ScenarioOutlook['scenario']; average_change: number; best_change: number; best_role: string }[];
   demand: { occupation: string; direction: 'rising' | 'falling' | 'flat'; last_share: number | null; forecast: number; target_month: string; evidence: string } | null;
+  /** Demand is forecast to rise for the role on the Occupations page: listed first, and counts double if it is a key skill. */
+  rising?: boolean;
   emerging: boolean;
 }
 

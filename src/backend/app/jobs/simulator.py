@@ -13,14 +13,8 @@ from app.resume.schemas import SkillScore
 
 MIN_IMPORTANCE = 2.25  # a skill counts as linked to a role only above this O*NET importance (the roadmap uses the same cut-off); O*NET rates every subject area for every role, most of them near zero
 LEARNED = 1.0  # every skill the learner adds counts the same: fully learned, with no Basic / Good / Strong choice
-DEMAND_COUNTRY, DEMAND_HORIZON = "US", 6  # the occupational pipeline's biggest sample and middle horizon
-# O*NET role -> the occupational pipeline's occupation with forecasts for it. The other roles have none.
-OCCUPATIONS = {"15-1252.00": "software_engineer", "15-2051.00": "data_scientist", "15-2051.01": "data_analyst"}
-# O*NET names the pipeline's registry spells differently.
-REGISTRY_NAMES = {
-    "structured query language sql": "sql", "oracle java": "java", "amazon web services aws software": "aws",
-    "microsoft azure software": "azure", "hypertext markup language html": "html", "cascading style sheets css": "css",
-}
+# The skill demand lookup is shared with the matching (service.py), so a skill counted as rising here is the one the score counts double.
+DEMAND_COUNTRY, OCCUPATIONS, REGISTRY_NAMES, _demand = service.DEMAND_COUNTRY, service.OCCUPATIONS, service.REGISTRY_NAMES, service._demand
 
 
 class UnknownRole(ValueError):
@@ -88,23 +82,6 @@ def _coverage(scored: list[dict]) -> float:
     return round(sum(len(t["owned"]) for t in scored) / total, 4) if total else 0.0
 
 
-def _demand() -> dict[str, list[dict]]:
-    """Forecast rows by registry skill name and alias (lower case), biggest sample first. Empty if the pipeline output is missing."""
-    try:
-        f = occupational.table("latest/forecast.csv.gz")
-        f = f[(f["country"] == DEMAND_COUNTRY) & (f["h"] == DEMAND_HORIZON)].sort_values("ads_12m", ascending=False)
-        rows = occupational.records(f)
-        aliases = {e["skill_id"]: [e["name"], *e.get("aliases_seen", [])] for e in occupational.doc("taxonomy/skill_registry.json")["skills"]}
-    except Exception as e:  # context only: the simulator works without it
-        print(f"Skill demand unavailable ({type(e).__name__})")
-        return {}
-    out: dict[str, list[dict]] = {}
-    for r in rows:
-        for name in aliases.get(r["skill_id"], [r["skill_name"]]):
-            out.setdefault(name.lower(), []).append(r)
-    return out
-
-
 def _emerging() -> set[str]:
     """Skill names whose rise in job ads clears the pipeline's evidence minimum, with more than low confidence."""
     try:
@@ -148,11 +125,11 @@ def _options(baseline: list[dict], own: dict[str, float], stage: str, picked: li
         rows = [r for r in demand.get(key, []) if r["occupation"] in OCCUPATIONS.values()]
         d = next((r for r in rows if r["evidence"] != "low"), rows[0] if rows else None)
         out.append(SkillOption(
-            name=name, current=current, trial=trial, roles_listing=listing[name], gap_roles=tied.get(name, []), gains=gains, emerging=key in emerging,
+            rising=service.is_rising(focus, name), name=name, current=current, trial=trial, roles_listing=listing[name], gap_roles=tied.get(name, []), gains=gains, emerging=key in emerging,
             demand=d and SkillDemand(occupation=d["occupation"], direction=d["direction"], last_share=d["last_share_3m"], forecast=d["forecast"],
                                      target_month=d["target_month"], evidence=d["evidence"]),
         ))
-    out.sort(key=lambda o: -max(g.best_change for g in o.gains))
+    out.sort(key=lambda o: (not o.rising, -max(g.best_change for g in o.gains)))  # rising skills first, then by what they add
     return out
 
 

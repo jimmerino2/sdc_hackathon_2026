@@ -25,6 +25,7 @@ const router = useRouter();
 const { state } = useFlow();
 
 const SUGGESTED = 12; // skills shown before searching
+const risingNote = 'Demand is forecast to rise. It counts double in your match when it is a key skill for the role.';
 const MAX_PICKS = 20; // what POST /jobs/simulate accepts, and the most a roadmap holds
 const REMAINING_SHOWN = 4;
 
@@ -132,7 +133,8 @@ const sampleNone = computed(() => options.value.find((o) => gainOf(o) === 0));
 
 const shownOptions = computed(() => {
   const q = query.value.trim().toLowerCase();
-  const list = [...options.value].sort((a, b) => gainOf(b) - gainOf(a));
+  // In onboarding the skills with rising demand come first, then the rest by what they add.
+  const list = [...options.value].sort((a, b) => (props.embedded ? Number(!!b.rising) - Number(!!a.rising) : 0) || gainOf(b) - gainOf(a));
   if (q) return list.filter((o) => skillLabel(o.name).toLowerCase().includes(q) || o.name.toLowerCase().includes(q));
   return showAll.value ? list : list.filter((o) => gainOf(o) > 0).slice(0, SUGGESTED);
 });
@@ -261,7 +263,7 @@ function build() {
         <ul class="tiles" :class="{ long: showAll || query }">
           <li v-for="o in shownOptions" :key="o.name">
             <button type="button" class="tile" :class="{ on: o.name in picked }" :aria-pressed="o.name in picked" :disabled="atLimit && !(o.name in picked)" @click="toggle(o)">
-              <span class="tname">{{ skillLabel(o.name) }}<span v-if="rising(o)" class="trend-up" title="Rising in job ads" aria-label="Rising in job ads"><Icon name="tup" :size="13" /></span></span>
+              <span class="tname">{{ skillLabel(o.name) }}<span v-if="o.rising || rising(o)" class="trend-up" :title="o.rising ? risingNote : 'Rising in job ads'" :aria-label="o.rising ? risingNote : 'Rising in job ads'"><Icon name="tup" :size="13" /></span></span>
               <b v-if="gainOf(o) > 0" class="tgain">+{{ gainOf(o) }}</b>
               <span v-else class="tnone" title="Won’t change your matches">–</span>
             </button>

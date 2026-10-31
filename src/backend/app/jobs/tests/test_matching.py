@@ -190,3 +190,26 @@ def test_saved_set_keeps_its_scores_and_gains_a_reconciled_breakdown():
     assert out.jobs[0].outlook[0].match_percent == fresh["jobs"][0]["outlook"][0]["match_percent"]
     assert all(o.breakdown.match_percent == o.match_percent for j in out.jobs[1:] for o in j.outlook)
     assert "35%" not in out.note
+
+
+def test_a_skill_with_rising_demand_counts_double_in_the_skills_part():
+    role = next(r for r in service._roles() if r["onet_code"] == "15-1252.00")
+    key = service._with_key_skills(role, set())
+    assert key["trending"] and key["trending"] <= set(key["key_skills"])
+    plain = dict(role_weights := {n: w for n, w in role["tools"] + role["abilities"]})
+    for name in key["key_skills"]:
+        factor = service.TREND_WEIGHT if name in key["trending"] else 1.0
+        assert key["weights"][name] == pytest.approx(plain[name] * factor)
+
+
+def test_a_role_without_trend_data_is_scored_exactly_as_before():
+    role = next(r for r in service._roles() if r["onet_code"] == "15-2051.00")
+    key = service._with_key_skills(role, set())
+    assert not key["trending"] and all(key["weights"][n] == dict(role["tools"] + role["abilities"])[n] for n in key["key_skills"])
+
+
+def test_rising_skills_are_listed_first_and_flagged():
+    res = run(focus="15-1252.00")
+    flags = [o.rising for o in res.options]
+    assert any(flags) and flags == sorted(flags, reverse=True)  # every rising skill comes before every other
+    assert not any(o.rising for o in run(focus="15-2051.00").options)  # no trend data for that role's skills

@@ -31,6 +31,8 @@ A role has up to 10 key skills (6 tools and 4 abilities), each with an O\*NET im
 skills = Σ (importance × proficiency) ÷ Σ importance
 ```
 
+**Trend momentum.** A key skill whose demand the Occupations page forecasts to rise (evidence above low, US, 6 months) counts **twice** its importance, in the sum and in the divisor. Only roles with an occupation in the skill-demand pipeline have this (Software Developers, Data Scientists and Data Analysts today; the weight is `TREND_WEIGHT` in `jobs/service.py`). The score therefore moves when the demand forecast moves, and learning a rising skill adds more than learning an ordinary one. Each skill in the breakdown says whether it was counted double (`trending`).
+
 Close equivalents count too. Having Git covers GitHub and GitLab, Linux covers UNIX, and having Python covers the general "Programming" skill. If a learner has several equivalents, the best proficiency among them is used.
 
 Scores already stored on profiles (0.4, 0.7, or a resume's decimal) are rounded to the nearest of the three steps.

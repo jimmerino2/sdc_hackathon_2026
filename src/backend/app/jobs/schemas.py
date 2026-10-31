@@ -91,7 +91,8 @@ class SkillFit(BaseModel):
     """One of a role's key skills and how it counted towards the skills part of the match."""
 
     name: str
-    importance_share: float = Field(description="This skill's share of the role's key-skill importance, 0-1")
+    importance_share: float = Field(description="This skill's share of the role's key-skill importance, 0-1 (importance counts double for a trending skill)")
+    trending: bool = Field(False, description="Its demand is forecast to rise on the Occupations page, so it counts double in the skills part of the match")
     proficiency: float = Field(description="What it counted at: 0 missing, 0.33 Basic, 0.67 Good, 1 Strong")
     via: str | None = Field(None, description="The learner's skill it was counted through (e.g. Python for Programming); null if they hold it directly or lack it")
 
@@ -220,6 +221,7 @@ class SkillOption(BaseModel):
     gap_roles: list[str] = Field(description="Roles where it is a key skill the learner is missing")
     gains: list[SkillGain]
     demand: SkillDemand | None = Field(None, description="Null when the skill isn't tracked for an occupation with forecasts")
+    rising: bool = Field(False, description="Its demand is forecast to rise for this role on the Occupations page, so it is listed first; if it is one of the role's key skills it counts double in the match")
     emerging: bool = Field(False, description="The job-ad pipeline saw a rise that clears its evidence minimum (an observed rise, not a forecast)")
 
 
