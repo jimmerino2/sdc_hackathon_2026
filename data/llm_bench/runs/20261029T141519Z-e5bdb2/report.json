@@ -34,7 +34,7 @@
     "reasoning_tokens": 0,
     "cost_usd": 0.0975466,
     "cost_by_source": {
-      "reported": 0.0975466
+      "reported": 0.09754660000000001
     },
     "requests_without_usage": 0,
     "budget_usd": 2.0,

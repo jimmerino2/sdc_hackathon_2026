@@ -179,6 +179,6 @@ onMounted(load);
 .dim { opacity: .55; pointer-events: none; transition: opacity .2s; }
 .state { max-width: 560px; margin: 40px 0; display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
 .state .btn { display: inline-flex; align-items: center; gap: 8px; }
-.skel-cards { display: flex; flex-direction: column; gap: 12px; }
+.skel-cards { display: flex; flex-direction: column; gap: 24px; }
 .card-skel { height: 76px; border-radius: 16px; }
 </style>
