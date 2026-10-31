@@ -16,7 +16,8 @@ INFO = client.get("/methodology").json()
 
 
 def test_endpoint_describes_every_series():
-    assert {"btos_ai_use_rate", "worker_genai_use_rate", "frontier_time_horizon", "ai_mention_share", "role_postings"} <= set(INFO["forecasts"])
+    assert {"btos_ai_use_rate", "worker_genai_use_rate", "frontier_time_horizon", "role_postings"} <= set(INFO["forecasts"])
+    assert "ai_mention_share" not in INFO["forecasts"]
     assert "United States" in INFO["forecasts"]["btos_ai_use_rate"]["provenance"]["geography"]
     assert "US historical data" in INFO["geography"]["note"]
 

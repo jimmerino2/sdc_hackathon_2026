@@ -308,7 +308,7 @@ def main():
     args = ap.parse_args()
 
     data_dir = Path(args.data).parent
-    trained = train_all(args, data_dir)
+    trained = train_all(args, data_dir, signals=pd.read_csv(data_dir / "signals.csv", keep_default_na=False))
     manifest, out, jobs = trained["manifest"], trained["forecast"], trained["jobs"]
     horizons_meta, categories = trained["by_horizon"], trained["categories"]
 

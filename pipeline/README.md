@@ -47,3 +47,17 @@ Edit `crosswalk_source.csv` (one row per job × sector; split weights when a job
 ## Note on technology skills
 
 Software skills (Python, Excel, ...) have no O\*NET Element ID, so they use `skill_id = "tech:<slug>"`. C, C# and C++ share the slug `tech:c` (see `STRUCTURE.md`).
+
+## Syncing role forecasts from the app
+
+The **Sync** button on the Roles page runs `sync_trends.py` through `POST /forecast/sync` when `FORECAST_REFRESH_ENABLED=true`. It pulls Indeed, rebuilds `signals.csv` and `model_table_US.csv`, retrains the role forecasts and rewrites `manifest.json`, in about 10 seconds. A failed run keeps the current data. If the pull fails, the last copy in `data/raw` is used.
+
+After that, Sync forecasts worker adoption and business adoption again, side by side, if a table of theirs in `data/processed/forecasting` changed since the last run. That takes about 2.5 minutes. Nothing new is fetched for them, and a stale source or a failed run leaves the old forecast showing, which the page says. AI capability and skill trends are not part of it.
+
+Run `refresh.py` or `sync_trends.py` once first, because Sync needs `data/raw` if the network fails.
+
+To change one figure, edit its `value` in `data/processed/signals.csv` (keep one row per month) and press Sync. A change since the last sync is kept: nothing is pulled, the forecasts are retrained on it and the page says so. Press Sync again to pull and put the source's value back.
+
+To rewind the data, run `python pipeline/sync_trends.py --no-pull --until 2026-06`. Pressing Sync brings it back up to date.
+
+The rewind and the edits are not written to the Supabase table `forecast_signals`, which the quarter picker's retrain reads.

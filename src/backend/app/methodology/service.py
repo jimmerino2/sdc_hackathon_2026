@@ -37,11 +37,6 @@ EMPIRICAL = ("The 10th to 90th percentile of this pipeline's past out-of-sample 
 
 # What the outputs don't say: the definition of each target and what it leaves out.
 OUTLOOK_TEXT = {
-    "ai_mention_share": {
-        "title": "AI mentions in job ads", "population": "New job postings on Indeed", "denominator": "All new Indeed postings in the country",
-        "value_type": "Percentage of postings", "frequency": "Monthly", "geography": "9 countries, national level; no Malaysian series",
-        "limitations": ["Counts keyword mentions, not hires or skills an employer truly requires.", "Indeed postings only; no Malaysian series exists."],
-    },
     "btos_ai_use_rate": {
         "title": "Business AI adoption", "population": "US businesses answering the Census Business Trends and Outlook Survey", "denominator": "US businesses in the sector",
         "value_type": "Percentage of firms", "frequency": "Every two weeks", "geography": "United States only",

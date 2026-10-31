@@ -1,7 +1,4 @@
 """Ingestion: schema handling, missing data, point-in-time lookup, idempotence, failure safety."""
-import os
-import subprocess
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -48,59 +45,6 @@ def test_validate_rejects_duplicates_and_bad_values(ai_v):
     with pytest.raises(ValueError):
         V.validate(ai_v.assign(value=-1.0), 0, 100)
     V.validate(ai_v, 0, 100)
-
-
-def _git(repo, *a, when="2024-06-01T00:00:00Z"):
-    env = {**os.environ, "GIT_COMMITTER_DATE": when, "GIT_AUTHOR_DATE": when}
-    subprocess.run(["git", "-C", str(repo), *a], check=True, capture_output=True, env=env)
-
-
-@pytest.fixture
-def ai_repo(tmp_path):
-    """A throwaway git repo with three commits shaped like hiring-lab/ai-tracker (synthetic values)."""
-    r = tmp_path / "ait"
-    r.mkdir()
-    _git(r, "init", "-q")
-    _git(r, "config", "user.email", "t@t"); _git(r, "config", "user.name", "t")
-    days = pd.date_range("2024-01-01", "2024-02-29")
-    old = pd.DataFrame({"modified_date": [f"{d.day}/{d.month}/{d:%y}" for d in days],  # day-first, as in 2024
-                        "jobcountry": "US", "% of job postings": 2.0})
-    old.to_csv(r / "AI_posting_2024-02-29_clean.csv", index=False)
-    _git(r, "add", "-A"); _git(r, "commit", "-q", "-m", "v1", when="2024-03-05T00:00:00Z")
-    new = pd.DataFrame({"date": days.strftime("%Y-%m-%d"), "jobcountry": "US", "AI_share_postings": 3.0})
-    (r / "AI_posting_2024-02-29_clean.csv").unlink()
-    new.to_csv(r / "AI_posting.csv", index=False)
-    _git(r, "add", "-A"); _git(r, "commit", "-q", "-m", "v2")
-    _git(r, "commit", "-q", "--allow-empty", "-m", "readme only")
-    return r
-
-
-def test_build_reads_every_schema_and_keeps_each_vintage(ai_repo):
-    out = V.build_ai_share(ai_repo)
-    assert out["vintage_id"].nunique() == 2
-    first = out[out["available_at"] == out["available_at"].min()]
-    assert set(first["value"]) == {2.0} and set(out["value"]) == {2.0, 3.0}
-    assert first["schema_version"].iloc[0] == "modified_date|jobcountry|% of job postings"
-
-
-def test_build_is_idempotent(ai_repo):
-    pd.testing.assert_frame_equal(V.build_ai_share(ai_repo), V.build_ai_share(ai_repo))
-
-
-def test_unknown_schema_fails_loudly(ai_repo):
-    pd.DataFrame({"date": ["2024-03-01"], "jobcountry": ["US"], "new_metric": [1]}).to_csv(ai_repo / "AI_posting.csv",
-                                                                                          index=False)
-    _git(ai_repo, "commit", "-qam", "schema change")
-    with pytest.raises(ValueError, match="unexpected columns"):
-        V.build_ai_share(ai_repo)
-
-
-def test_failed_fetch_keeps_local_history(ai_repo, monkeypatch, capsys):
-    monkeypatch.setattr(V, "RAW", ai_repo.parent)
-    monkeypatch.setitem(V.REPOS, "ait", "https://invalid.invalid/none.git")
-    V.pull("ait")  # no remote: must warn, not raise or delete
-    assert "warning" in capsys.readouterr().out
-    assert V.build_ai_share(ai_repo)["vintage_id"].nunique() == 2
 
 
 def test_write_replaces_atomically(tmp_path, monkeypatch, ai_v):

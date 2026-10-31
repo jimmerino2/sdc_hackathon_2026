@@ -19,6 +19,7 @@ import { readProfileId } from '../api/profile';
 import { skillLabel } from '../data/skills';
 import { allNodes, completeLocally, learningLinks, progress, resolveNodes, resolveUnits, sectionCleared, type ResolvedSkill } from '../learn/skillState';
 import { prefersReducedMotion } from '../composables/useCountUp';
+import { useTallAside } from '../composables/useTallAside';
 import { loadRoleForecast, normalizeSkillName, type RoleForecast } from '../occupational/forecastMatch';
 import type { SkillRow } from '../api/occupational';
 import { loadRoadmap, openRoadmap, useFlow } from '../state';
@@ -54,6 +55,8 @@ const busyId = ref<string | null>(null);
 const error = ref<string | null>(null);
 const cleared = ref(false);
 const sideCard = ref<HTMLElement | null>(null);
+const side = ref<HTMLElement | null>(null);
+useTallAside(side, sideCard);
 
 /* ---------- demand forecast: a trend badge on tech skills that match the AI-prediction data ---------- */
 const roleForecast = ref<RoleForecast | null>(null);
@@ -344,7 +347,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <aside class="learn__side">
+      <aside ref="side" class="learn__side">
         <!-- IN-PROGRESS STATE: when roadmap is being worked on -->
         <template v-if="!isRoleReady">
           <div ref="sideCard" class="learn__sidecards">

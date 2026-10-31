@@ -18,7 +18,7 @@ def list_targets():
     return [service.summary(t) for t in service.targets()]
 
 
-# Example: http://127.0.0.1:8000/outlook/ai_mention_share?unit=US
+# Example: http://127.0.0.1:8000/outlook/worker_genai_use_rate?unit=00
 @router.get("/{target}", response_model=list[OutlookRow])
 def get_forecast(target: str, unit: str | None = Query(None, description="e.g. US, 54|new, 15, v1.1"),
                  h: int | None = Query(None, description="Horizon in the target's periods")):

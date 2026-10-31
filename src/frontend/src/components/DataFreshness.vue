@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import InfoDialog from './InfoDialog.vue';
+import { fetchQuarters } from '../api/forecast';
 import { fetchMethodology, type Methodology } from '../api/methodology';
 import { day } from '../occupational/format';
 import { SCENARIO_METRICS } from '../data/outlookScenarios';
@@ -9,7 +10,12 @@ import { SCENARIO_METRICS } from '../data/outlookScenarios';
 const props = defineProps<{ updated: string | null }>();
 
 const methodology = ref<Methodology | null>(null);
-onMounted(() => fetchMethodology().then((m) => { methodology.value = m; }).catch(() => {}));
+/** Whether this server lets Sync pull new data; otherwise it only scores the roles again. */
+const pulls = ref(false);
+onMounted(() => {
+  fetchMethodology().then((m) => { methodology.value = m; }).catch(() => {});
+  fetchQuarters().then((q) => { pulls.value = q.refresh_enabled; }).catch(() => {});
+});
 
 const forecast = (id: string) => methodology.value?.forecasts[id] ?? null;
 const rows = computed(() => [
@@ -23,7 +29,8 @@ const rows = computed(() => [
 
 <template>
   <InfoDialog title="How often this data updates">
-    <p>Sync scores your roles again with the latest data Jobee holds.</p>
+    <p v-if="pulls">Sync pulls the newest Indeed data, retrains the job demand forecasts and scores your roles again. Worker adoption and business adoption are forecast again if their data changed. The other rows are refreshed separately.</p>
+    <p v-else>Sync scores your roles again with the latest data Jobee holds.</p>
     <table>
       <thead><tr><th>Data</th><th>Updates</th><th>Latest</th></tr></thead>
       <tbody>

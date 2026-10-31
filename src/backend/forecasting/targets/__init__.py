@@ -1,6 +1,5 @@
 """One module per forecast target. Each exposes SPEC, which tells the shared engine how to load, cut and score it.
 
-  skill_demand          ai_mention_share       Indeed: % of job ads mentioning AI, country x month
   business_adoption     btos_ai_use_rate       Census BTOS: % of firms using AI, sector x fortnight, per wording
   occupation_adoption   worker_genai_use_rate  RPS: % of workers using GenAI, SOC major group x quarter
   capability_metr       frontier_time_horizon  METR 50% time horizon of the best model, per suite version x month
@@ -52,5 +51,5 @@ class TargetSpec:
 
 
 def all_specs() -> dict[str, TargetSpec]:
-    from . import business_adoption, capability_metr, occupation_adoption, skill_demand
-    return {m.SPEC.id: m.SPEC for m in (skill_demand, business_adoption, occupation_adoption, capability_metr)}
+    from . import business_adoption, capability_metr, occupation_adoption
+    return {m.SPEC.id: m.SPEC for m in (business_adoption, occupation_adoption, capability_metr)}

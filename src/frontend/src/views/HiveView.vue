@@ -378,7 +378,7 @@ const eventTag = (e: HiveEvent) => (e.kind === 'twist' ? 'Boss twist' : e.kind =
 </template>
 
 <style scoped>
-.hp { display: flex; flex-direction: column; gap: 20px; max-width: 1600px; }
+.hp { display: flex; flex-direction: column; gap: 20px; max-width: 1180px; }
 .hp__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .eyebrow { font-size: 13px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--orange); }
 .hp__sub { margin: 4px 0 0; color: var(--text-muted); font-size: 15px; line-height: 21px; font-weight: 600; }

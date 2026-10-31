@@ -112,7 +112,7 @@ const matchTooltip = 'Compatibility match based on your skills, interests, caree
 </template>
 
 <style scoped>
-.list { display: flex; flex-direction: column; gap: 12px; }
+.list { display: flex; flex-direction: column; gap: 24px; }
 /* drop-shadow follows the outline of the row and its sub card together, so the shadow steps in around the sub card. */
 .item { display: flex; flex-direction: column; filter: drop-shadow(0 4px 0 var(--line-strong)); }
 .item:has(.selected) { filter: drop-shadow(0 4px 0 var(--orange)); }

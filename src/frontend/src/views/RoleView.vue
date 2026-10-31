@@ -78,7 +78,7 @@ onMounted(async () => {
               <button v-if="checking" type="button" class="btn btn-primary" disabled>Checking…</button>
               <button v-else-if="checkFailed" type="button" class="btn btn-secondary" @click="checkRoadmap"><Icon name="refresh" :size="18" /> Try again</button>
               <button v-else-if="roadmap" type="button" class="btn btn-primary" @click="viewRoadmap"><Icon name="route" :size="18" /> View roadmap</button>
-              <button v-else type="button" class="btn btn-primary" @click="generateRoadmap"><Icon name="sparkles" :size="18" /> Generate roadmap</button>
+              <button v-else type="button" class="btn btn-primary" @click="generateRoadmap">Generate roadmap <Icon name="arrow" :size="18" /></button>
               <small v-if="checkFailed">Couldn’t check your roadmaps.</small>
               <small v-else-if="!checking && !roadmap">Takes about 15 seconds.</small>
               <RouterLink :to="{ ...go('suggested'), query: { view: 'simulate' } }" class="try">What if you learned a new skill?</RouterLink>

@@ -146,3 +146,25 @@ class RetrainOut(BaseModel):
     seconds: float = Field(description="How long the retrain took")
     cached: bool = Field(description="True if it had been done already, so this answer was instant")
     forecasts: list[JobForecast] = Field(description="The job's three scenarios, like GET /forecast/jobs")
+
+
+class SyncState(BaseModel):
+    as_of: str | None = Field(description="The date of the newest job postings data, YYYY-MM-DD")
+    forecast_from: str = Field(description="The month the forecasts start from, YYYY-MM")
+
+
+class AiSync(BaseModel):
+    target: str
+    name: str = Field(description="The name on the page, e.g. Worker adoption")
+    status: Literal["updated", "stale", "failed"] = Field(description="updated: its new forecast is served. stale or failed: the old forecast is still served")
+
+
+class SyncOut(BaseModel):
+    """What POST /forecast/sync did."""
+
+    pulled: bool = Field(description="True if the newest data was pulled from Indeed; false if the last local copy or a hand-edited signals.csv was used")
+    pull_problem: str | None = Field(description="Why the pull failed, if it did")
+    manual_edits: int = Field(description="Records of signals.csv changed by hand since the last sync. The forecasts were retrained on them")
+    before: SyncState
+    after: SyncState
+    ai: list[AiSync] = Field(default=[], description="The AI forecasts run again because their tables changed; empty if none changed")
