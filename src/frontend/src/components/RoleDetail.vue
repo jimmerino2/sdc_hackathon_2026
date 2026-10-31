@@ -15,6 +15,8 @@ import { formatSkip, parseSkip } from '../data/quarterPick';
 import { backendScenario, fetchJobForecasts, fetchQuarters, refreshForecastData, retrainForecast, type JobForecast, type JobHorizon, type Quarters, type Retrained } from '../api/forecast';
 import { fetchInterestReasons, type InterestReason, type JobMatch } from '../api/jobs';
 import { readProfileId } from '../api/profile';
+import { fetchRoleSdg, type RoleSdg, type SdgTargetNote } from '../api/sdg';
+import { SDG_GOALS } from '../data/interestSdgs';
 
 /** A role's AI outlook (the three-futures chart) and skill gap. Shared by the onboarding forecast page and the role page. */
 const props = defineProps<{
@@ -57,6 +59,33 @@ watch(() => props.onetCode, () => {
   reasons.value = {};
   reasonsStatus.value = 'idle';
   loadReasons();
+});
+
+/** The SDG targets the role and its skills serve (onet_roles_sdg / onet_skills_sdg). Null until loaded or if none. */
+const roleSdg = ref<RoleSdg | null>(null);
+async function loadSdg() {
+  const code = props.onetCode;
+  roleSdg.value = null;
+  try {
+    const r = await fetchRoleSdg(code);
+    if (code === props.onetCode) roleSdg.value = r;
+  } catch {
+    // Not fatal: the page works without the targets.
+  }
+}
+watch(() => props.onetCode, loadSdg, { immediate: true });
+/** The role's targets under one goal, for the "Why it was suggested" cards. */
+const targetsFor = (sdg: number): SdgTargetNote[] => roleSdg.value?.targets.filter((t) => t.sdg === sdg) ?? [];
+const sdgTile = (sdg: number) => `${base}sdg/goal-${String(sdg).padStart(2, '0')}.jpg`;
+const sdgColor = (sdg: number) => SDG_GOALS[sdg]?.color ?? 'var(--ink)';
+/** The role's key skills (the gap cards' chips) with the goal and targets each serves; skills to build first. */
+const skillSdgs = computed(() => {
+  const all = roleSdg.value?.skills ?? [];
+  const names = props.job ? [...props.job.skills_to_learn, ...props.job.skills_you_have] : [];
+  return names.flatMap((n) => {
+    const s = all.find((x) => x.skill_name === n);
+    return s ? [{ ...s, have: props.job!.skills_you_have.includes(n) }] : [];
+  });
 });
 
 /** What is shown: the stored forecast, or the retrained one for the quarters picked. */
@@ -358,6 +387,45 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
         />
       </aside>
 
+      <section v-if="roleSdg && !compact" class="sdg-row impact" aria-labelledby="impact-title">
+        <p class="eyebrow">Global goals</p>
+        <h2 id="impact-title" class="sdg-title">How {{ job?.title ?? title }} serves the SDGs</h2>
+        <div class="impact-goals">
+          <div class="impact-main">
+            <span class="impact-label">Main SDG</span>
+            <img class="sdg-tile" :src="sdgTile(roleSdg.main.sdg)" :alt="`UN Sustainable Development Goal ${roleSdg.main.sdg}: ${roleSdg.main.name}`" width="148" height="148" loading="lazy" />
+          </div>
+          <div v-if="roleSdg.relevant.length" class="impact-rel">
+            <span class="impact-label">Relevant SDGs</span>
+            <ul>
+              <li v-for="g in roleSdg.relevant" :key="g.sdg">
+                <img class="sdg-tile" :src="sdgTile(g.sdg)" :alt="`UN Sustainable Development Goal ${g.sdg}: ${g.name}`" width="112" height="112" loading="lazy" />
+              </li>
+            </ul>
+          </div>
+        </div>
+        <h3 class="impact-sub">Targets</h3>
+        <ul class="sdg-targets impact-targets">
+          <li v-for="t in roleSdg.targets" :key="t.code"><b :style="{ color: sdgColor(t.sdg) }">{{ t.code }}</b> {{ t.text }}</li>
+        </ul>
+        <template v-if="skillSdgs.length">
+          <h3 class="impact-sub">Your key skills and the goals they serve</h3>
+          <ul class="skill-sdgs">
+            <li v-for="s in skillSdgs" :key="s.skill_id" class="skill-sdg">
+              <div class="skill-sdg-head">
+                <span class="chip" :class="s.have ? 'chip-have' : 'chip-gap'"><Icon :name="s.have ? 'check' : 'sparkles'" :size="13" :stroke="s.have ? 3 : 2" /> <span>{{ skillLabel(s.skill_name) }}</span></span>
+                <span class="skill-sdg-goals">
+                  <img v-for="g in [s.main, ...s.relevant]" :key="g.sdg" :src="sdgTile(g.sdg)" :alt="`SDG ${g.sdg}: ${g.name}`" :title="`SDG ${g.sdg}: ${g.name}`" width="30" height="30" loading="lazy" />
+                </span>
+              </div>
+              <ul class="sdg-targets">
+                <li v-for="t in s.targets" :key="t.code"><b :style="{ color: sdgColor(t.sdg) }">{{ t.code }}</b> {{ t.text }}</li>
+              </ul>
+            </li>
+          </ul>
+        </template>
+      </section>
+
       <section v-if="job?.sdg_reasons?.length" class="sdg-row">
         <p class="eyebrow">Why it was suggested</p>
         <div v-if="fromInterests.length" class="sdg-group">
@@ -371,6 +439,9 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
                   <p v-if="reasons[`${r.sdg}:${i}`]" class="sdg-why">{{ reasons[`${r.sdg}:${i}`] }}</p>
                   <span v-else-if="reasonsStatus === 'loading'" class="skel sdg-why-skel" aria-hidden="true" />
                 </template>
+                <ul v-if="targetsFor(r.sdg).length" class="sdg-targets" :aria-label="`SDG ${r.sdg} targets`">
+                  <li v-for="t in targetsFor(r.sdg)" :key="t.code"><b :style="{ color: sdgColor(t.sdg) }">{{ t.code }}</b> {{ t.text }}</li>
+                </ul>
               </div>
             </li>
           </ul>
@@ -378,10 +449,13 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
         <div v-if="fromJob.length" class="sdg-group">
           <h2 class="sdg-title">Job features</h2>
           <ul class="sdg-list">
-            <li v-for="r in fromJob" :key="r.sdg" class="sdg-card">
+            <li v-for="r in fromJob" :key="r.sdg" class="sdg-card" :class="{ why: targetsFor(r.sdg).length }">
               <img class="sdg-tile" :src="`${base}sdg/goal-${String(r.sdg).padStart(2, '0')}.jpg`" :alt="`UN Sustainable Development Goal ${r.sdg}: ${r.name}`" width="132" height="132" loading="lazy" />
               <div class="sdg-from">
                 <span class="chip chip-gap"><Icon name="briefcase" :size="13" /> <span>{{ job.title }}</span></span>
+                <ul v-if="targetsFor(r.sdg).length" class="sdg-targets" :aria-label="`SDG ${r.sdg} targets`">
+                  <li v-for="t in targetsFor(r.sdg)" :key="t.code"><b :style="{ color: sdgColor(t.sdg) }">{{ t.code }}</b> {{ t.text }}</li>
+                </ul>
               </div>
             </li>
           </ul>
@@ -434,6 +508,23 @@ h1 { font-size: 34px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .sdg-why { font-size: 15px; font-weight: 600; line-height: 1.4; color: var(--muted); margin: 0 0 6px 4px; }
 .sdg-why-skel { display: block; width: 100%; height: 36px; border-radius: 10px; margin-bottom: 6px; }
 .sdg-credit { margin-top: 14px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.sdg-targets { list-style: none; margin: 0; padding: 0 0 0 4px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; font-weight: 600; line-height: 1.35; color: var(--muted); }
+.sdg-targets b { font-weight: 900; margin-right: 2px; }
+.impact-goals { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 28px; }
+.impact-main, .impact-rel { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.impact-main .sdg-tile { width: 148px; }
+.impact-rel ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 14px; }
+.impact-rel .sdg-tile { width: 112px; }
+.impact-label { padding: 6px 14px; border-radius: 10px; background: var(--ink); color: #fff; font-size: 15px; font-weight: 900; }
+.impact-sub { font-size: 19px; font-weight: 900; margin: 22px 0 10px; }
+.impact-targets { font-size: 16px; padding-left: 0; gap: 6px; color: var(--ink); }
+.skill-sdgs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.skill-sdg { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: 16px; background: #fff; border: 2px solid var(--line-strong, #e6e2da); }
+.skill-sdg-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.skill-sdg-head .chip { min-width: 0; white-space: normal; line-height: 1.25; font-size: 15px; }
+.skill-sdg-goals { display: flex; flex: none; gap: 4px; }
+.skill-sdg-goals img { width: 30px; height: 30px; border-radius: 6px; }
+@media (max-width: 560px) { .impact-main .sdg-tile { width: 120px; } .impact-rel .sdg-tile { width: 84px; } }
 .gap-row { grid-column: 1 / -1; margin-top: 12px; }
 .gap-row .b { margin-bottom: 18px; }
 .gap-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
