@@ -1,37 +1,75 @@
+import json
 from types import SimpleNamespace
+from urllib.parse import parse_qs, urlparse
 
-from app.roadmap import planner, service
+from app.roadmap import ai_skills, planner, service
 from app.roadmap.planner import PlanNode, PlanSection
+from app.roadmap.schemas import Source
 
-NAMES = {"a": "Python", "b": "SQL", "c": "Git", "d": "Docker"}
 PLAN = [PlanSection("Basics", [[PlanNode("a"), PlanNode("b", ["a"])], [PlanNode("c")]]), PlanSection("Ops", [[PlanNode("d")]])]
-CODE = "15-1252.00"
+G1, G2 = ai_skills.BY_ID["ai:prompt-engineering"], ai_skills.BY_ID["ai:rag"]
 
 
-def _guides(titles=("AI for basics", "AI for ops")):
-    return {i: {"skill_id": planner.ai_skill_id(CODE, t), "title": t, "description": "d", "steps": []} for i, t in enumerate(titles, start=1)}
+def _guides():
+    return {1: {"skill_id": G1.id, "title": G1.title, "description": "d"}, 2: {"skill_id": G2.id, "title": G2.title, "description": "d"}}
 
 
 def _rows(plan, guides):
     return {r["skill_id"]: r for r in service.detail_rows(planner.with_guides(plan, guides), "r", "x")}
 
 
+# ---------- the fixed list ----------
+
+def test_the_list_has_thirteen_distinct_skills_with_short_titles_and_lines():
+    cat = ai_skills.CATALOG
+    assert len(cat) == 13 and len({s.id for s in cat}) == 13 and len({s.title.lower() for s in cat}) == 13
+    assert all(len(s.title) <= 40 and len(s.description) <= planner.MAX_DESCRIPTION for s in cat)
+    assert all(planner.is_guide(s.id) for s in cat) and not planner.is_guide("2.A.1.a") and not planner.is_guide("tech:python")
+
+
+def test_each_skill_has_three_short_steps_and_two_youtube_videos():
+    for s in ai_skills.CATALOG:
+        assert len(s.steps) == 3 and all(0 < len(t) <= 90 for t in s.steps), s.id
+        assert len(s.videos) == 2 and len({v.url for v in s.videos}) == 2, s.id
+        for v in s.videos:
+            u = urlparse(v.url)
+            assert u.scheme == "https" and u.netloc == "www.youtube.com" and u.path == "/watch" and len(parse_qs(u.query)["v"][0]) == 11, v.url
+
+
+def test_no_video_is_used_by_two_skills():
+    urls = [v.url for s in ai_skills.CATALOG for v in s.videos]
+    assert len(urls) == len(set(urls))
+
+
+def test_a_roadmap_shows_an_ai_skill_with_its_fixed_steps_and_videos():
+    g = service._guide(G1.id, G1.title, "Line written for the role.")
+    assert g.description == "Line written for the role." and g.steps == list(G1.steps)
+    assert [(s.source_type, s.title, s.url) for s in g.sources] == [("video", v.title, v.url) for v in G1.videos] and [s.rank for s in g.sources] == [1, 2]
+    assert [Source(**s.model_dump()) for s in g.sources]
+    assert service._guide(G1.id, G1.title, None).description == G1.description  # nothing stored: the skill's own line
+
+
+def test_an_id_from_an_older_version_still_shows_with_what_is_stored():
+    g = service._guide("ai:0123456789ab", "Old title", "Old line.")
+    assert g.title == "Old title" and g.description == "Old line." and g.steps == [] and g.sources == []
+
+
+# ---------- where they go in the plan ----------
+
 def test_an_ai_skill_leads_the_first_unit_of_its_section_and_the_skills_wait_for_it():
-    g = _guides()
-    plan = planner.with_guides(PLAN, g)
+    plan = planner.with_guides(PLAN, _guides())
     first = plan[0].units[0]
-    assert first[0].skill_id == g[1]["skill_id"] and first[0].previous_nodes == []
-    assert all(n.previous_nodes[0] == g[1]["skill_id"] and n.previous_nodes_required for n in first[1:])
+    assert first[0].skill_id == G1.id and first[0].previous_nodes == []
+    assert all(n.previous_nodes[0] == G1.id and n.previous_nodes_required for n in first[1:])
     assert plan[0].units[1][0].previous_nodes == []  # later units open when the unit before is done, so they need no link
-    assert plan[1].units[0][0].skill_id == g[2]["skill_id"]
+    assert plan[1].units[0][0].skill_id == G2.id
 
 
 def test_nothing_in_a_section_is_open_until_its_ai_skill_is_done():
-    g = _guides()
-    rows = _rows(PLAN, g)
-    assert rows[g[1]["skill_id"]]["status"] == "available"
+    rows = _rows(PLAN, _guides())
+    assert rows[G1.id]["status"] == "available"
     assert rows["a"]["status"] == rows["b"]["status"] == rows["c"]["status"] == "locked"
-    assert rows[g[2]["skill_id"]]["status"] == "locked"  # the second section is not reached yet
+    assert rows[G2.id]["status"] == "locked"  # the second section is not reached yet
 
 
 def test_a_section_without_an_ai_skill_is_unchanged():
@@ -44,20 +82,15 @@ def test_the_input_plan_is_not_changed():
 
 
 def test_a_copied_plan_leaves_ai_skills_out():
-    gid = planner.ai_skill_id(CODE, "AI for basics")
     rows = [
-        {"skill_id": gid, "section": 1, "unit": 1, "previous_nodes": [], "previous_nodes_required": True},
-        {"skill_id": "a", "section": 1, "unit": 1, "previous_nodes": [gid], "previous_nodes_required": True},
+        {"skill_id": G1.id, "section": 1, "unit": 1, "previous_nodes": [], "previous_nodes_required": True},
+        {"skill_id": "a", "section": 1, "unit": 1, "previous_nodes": [G1.id], "previous_nodes_required": True},
     ]
     plan = service.plan_from_rows(rows)
     assert [n.skill_id for n in plan[0].units[0]] == ["a"] and plan[0].units[0][0].previous_nodes == []
 
 
-def test_the_same_title_for_the_same_role_is_the_same_skill():
-    assert planner.ai_skill_id(CODE, "AI for Basics") == planner.ai_skill_id(CODE, "  ai   for basics ")
-    assert planner.ai_skill_id(CODE, "AI for basics") != planner.ai_skill_id("15-2051.00", "AI for basics")
-    assert planner.is_guide(planner.ai_skill_id(CODE, "x")) and not planner.is_guide("2.A.1.a") and not planner.is_guide("tech:python")
-
+# ---------- choosing them ----------
 
 options_seen: dict = {}
 
@@ -70,117 +103,62 @@ def _model(monkeypatch, reply):
     return sent
 
 
-def write(plan=PLAN, existing=None):
-    return planner.write_guides("Role", CODE, plan, NAMES, existing)
+def pick(sections=3, existing=None):
+    return planner.choose_guides("Data Scientists", "Develop and apply models.", sections, existing)
 
 
-def test_the_model_writes_one_per_section_and_gets_the_skill_names(monkeypatch):
-    sent = _model(monkeypatch, '{"guides":[{"section":1,"title":"AI for web basics","description":"Use AI to explain Python and SQL.","steps":["Ask it to explain loops.","","Check the docs."]},'
-                               '{"section":2,"title":"AI for ops","description":"Use AI to learn Docker.","steps":[]},{"section":9,"title":"x","description":"y"}]}')
-    got = write()
-    assert set(got) == {1, 2}  # an unknown section is dropped
-    assert got[1]["title"] == "AI for web basics" and got[1]["steps"] == ["Ask it to explain loops.", "Check the docs."]
-    assert got[1]["skill_id"] == planner.ai_skill_id(CODE, "AI for web basics")
-    assert "Python" in sent[0][1]["content"] and "Docker" in sent[0][1]["content"]
+def test_the_model_picks_which_skills_and_in_what_order_and_writes_a_line_each(monkeypatch):
+    _model(monkeypatch, '{"skills":[{"id":"ai:prompt-engineering","description":"Ask AI for the analysis you mean."},{"id":"ai:rag","description":"Ground answers in your data."}]}')
+    got = pick(3)
+    assert list(got) == [1, 2]  # two of three sections get one: it decides how many
+    assert got[1] == {"skill_id": "ai:prompt-engineering", "title": "Prompt Engineering", "description": "Ask AI for the analysis you mean."}
+    assert got[2]["skill_id"] == "ai:rag"
 
 
-def test_a_section_the_model_skips_gets_the_fallback(monkeypatch):
-    _model(monkeypatch, '{"guides":[{"section":1,"title":"AI for web basics","description":"Use AI to explain Python and SQL."}]}')
-    got = write()
-    assert got[1]["title"] == "AI for web basics" and got[2]["title"] == "AI for Ops" and "Docker" in got[2]["description"]
+def test_the_model_sees_only_the_role_and_the_number_of_sections(monkeypatch):
+    sent = _model(monkeypatch, '{"skills":[{"id":"ai:rag"}]}')
+    pick(5)
+    seen = json.loads(sent[0][1]["content"])
+    assert set(seen) == {"role", "role_description", "sections", "catalog"} and seen["sections"] == 5 and seen["role"] == "Data Scientists"
+    assert len(seen["catalog"]) == 13 and set(seen["catalog"][0]) == {"id", "title", "about"}
 
 
-def test_when_the_model_is_unusable_every_section_still_gets_one_with_its_own_title(monkeypatch):
-    sent = _model(monkeypatch, "not json")
-    got = write()
-    assert [g["title"] for g in got.values()] == ["AI for Basics", "AI for Ops"]
-    assert len({g["skill_id"] for g in got.values()}) == 2
-    assert len(sent) == 2  # one retry
-
-
-def test_two_sections_never_share_a_skill(monkeypatch):
-    _model(monkeypatch, '{"guides":[{"section":1,"title":"AI study","description":"a"},{"section":2,"title":"ai  STUDY","description":"b"}]}')
-    got = write()
-    assert got[1]["skill_id"] != got[2]["skill_id"] and got[2]["title"] == "ai STUDY 2"
-
-
-def test_an_ai_skill_the_role_already_has_is_reused_not_rewritten(monkeypatch):
-    sent = _model(monkeypatch, '{"guides":[{"section":1,"title":"AI for web basics","description":"Fresh text.","steps":["new"]},{"section":2,"title":"AI for ops","description":"x"}]}')
-    old = {planner.norm_title("AI for web basics"): {"title": "AI for web basics", "description": "Stored text.", "steps": ["old"]}}
-    got = write(existing=old)
-    assert got[1]["description"] == "Stored text." and got[1]["steps"] == ["old"]
-    assert got[1]["skill_id"] == planner.ai_skill_id(CODE, "AI for web basics")
-    assert got[2]["description"] == "x"  # not stored before, so the model's own
-    assert "AI for web basics" in sent[0][1]["content"]  # the model is told which titles exist
-
-
-def test_a_section_with_no_known_skills_gets_none(monkeypatch):
-    _model(monkeypatch, '{"guides":[]}')
-    assert write([PlanSection("Empty", [[PlanNode("zzz")]])]) == {}
-
-
-def test_at_most_the_stored_number_of_sections_get_one(monkeypatch):
-    _model(monkeypatch, "not json")
-    many = [PlanSection(f"S{i}", [[PlanNode("a")]]) for i in range(12)]
-    assert set(write(many)) == set(range(1, planner.MAX_GUIDES + 1))
-
-
-def test_details_are_kept_short():
-    long = "word " * 100
-    got = planner.sanitize_guides({"guides": [{"section": 1, "title": "t", "description": long, "steps": [long, "b", "c", "d", "e"]}]}, [1])[1]
-    assert len(got["description"]) <= planner.MAX_DESCRIPTION
-    assert len(got["steps"]) == planner.MAX_STEPS and all(len(s) <= planner.MAX_STEP for s in got["steps"])
-    fb = planner.fallback_guide("Basics", ["Python", "SQL"])
-    assert len(fb["description"]) <= planner.MAX_DESCRIPTION and len(fb["steps"]) <= planner.MAX_STEPS and all(len(s) <= planner.MAX_STEP for s in fb["steps"])
-
-
-def test_the_model_is_asked_without_thinking_and_with_a_small_output(monkeypatch):
-    _model(monkeypatch, "not json")
-    write()
+def test_it_is_asked_without_thinking_and_with_a_small_output(monkeypatch):
+    _model(monkeypatch, '{"skills":[{"id":"ai:rag"}]}')
+    pick()
     assert options_seen == {"reasoning": "off", "max_tokens": planner.GUIDE_MAX_TOKENS}
 
 
-HITS = {"Python": {"uri": "u/python", "title": "Python (computer programming)"}, "SQL": {"uri": "u/sql", "title": "SQL"},
-        "Git": {"uri": "u/git", "title": "Git"}, "Docker": {"uri": "u/docker", "title": "Docker"}}
+def test_unknown_ids_repeats_and_more_than_the_sections_are_dropped(monkeypatch):
+    _model(monkeypatch, '{"skills":[{"id":"ai:made-up"},{"id":"ai:rag"},{"id":"ai:rag"},{"id":"ai:mcp"},{"id":"ai:agents-md"}]}')
+    assert [g["skill_id"] for g in pick(2).values()] == ["ai:rag", "ai:mcp"]
 
 
-def sourced(guides, find=lambda n: HITS.get(n)):
-    return planner.attach_sources(PLAN, guides, NAMES, find, lambda uri: f"https://esco.test/?uri={uri}")
+def test_a_missing_or_long_line_falls_back_to_the_skills_own_or_is_cut(monkeypatch):
+    _model(monkeypatch, '{"skills":[{"id":"ai:rag"},{"id":"ai:mcp","description":"' + "word " * 100 + '"}]}')
+    got = pick(2)
+    assert got[1]["description"] == ai_skills.BY_ID["ai:rag"].description and len(got[2]["description"]) <= planner.MAX_DESCRIPTION
 
 
-def test_each_ai_skill_gets_its_own_esco_pages_then_a_taxonomy_reference():
-    got = sourced(_guides())
-    one, two = got[1]["sources"], got[2]["sources"]
-    assert [s["title"] for s in one] == ["ESCO: Python (computer programming)", "ESCO: SQL", "ESCO skills services and API"]
-    assert [s["title"] for s in two] == ["ESCO: Docker", "Lightcast skills taxonomy"]
-    assert [s["rank"] for s in one] == [1, 2, 3] and all(s["source_type"] == "reference" for s in one)
-    assert not {s["url"] for s in one} & {s["url"] for s in two}  # none shared
+def test_a_line_the_role_already_has_is_kept(monkeypatch):
+    _model(monkeypatch, '{"skills":[{"id":"ai:rag","description":"New line."},{"id":"ai:mcp","description":"Fresh."}]}')
+    got = pick(2, {"ai:rag": "Stored line."})
+    assert got[1]["description"] == "Stored line." and got[2]["description"] == "Fresh."
 
 
-def test_an_esco_page_is_used_once_in_a_roadmap():
-    same = {"uri": "u/x", "title": "X"}
-    got = sourced(_guides(), lambda n: same)
-    assert [s["title"] for s in got[1]["sources"]][0] == "ESCO: X"
-    assert not any(s["title"] == "ESCO: X" for s in got[2]["sources"])
+def test_when_the_model_is_unusable_the_fixed_order_is_used_one_per_section(monkeypatch):
+    sent = _model(monkeypatch, "not json")
+    got = pick(4)
+    assert [g["skill_id"] for g in got.values()] == [s.id for s in ai_skills.CATALOG[:4]]
+    assert all(g["description"] == ai_skills.BY_ID[g["skill_id"]].description for g in got.values())
+    assert len(sent) == 2  # one retry
 
 
-def test_when_esco_has_nothing_every_ai_skill_still_has_a_source():
-    got = sourced(_guides(), lambda n: None)
-    assert [len(g["sources"]) for g in got.values()] == [1, 1]
-    assert got[1]["sources"][0]["url"] != got[2]["sources"][0]["url"]  # the three taxonomies are handed out in turn
-    assert all(s["url"].startswith("https://") for g in got.values() for s in g["sources"])
+def test_a_long_roadmap_never_gets_more_than_the_list_has(monkeypatch):
+    _model(monkeypatch, "not json")
+    assert len(pick(20)) == 13
 
 
-def test_a_reused_ai_skill_keeps_the_sources_it_was_written_with():
-    g = _guides()
-    g[1]["sources"] = [{"source_type": "reference", "rank": 1, "title": "Old", "url": "https://old.test", "duration_minutes": None}]
-    got = sourced(g)
-    assert got[1]["sources"][0]["title"] == "Old" and len(got[1]["sources"]) == 1
-    assert got[2]["sources"][0]["title"] == "ESCO: Docker"
-
-
-def test_sources_fit_the_roadmaps_own_source_schema():
-    from app.roadmap.schemas import Source
-
-    for g in sourced(_guides()).values():
-        assert [Source(**s) for s in g["sources"]]
+def test_no_sections_no_skills(monkeypatch):
+    sent = _model(monkeypatch, "not json")
+    assert pick(0) == {} and not sent

@@ -10,8 +10,8 @@ from app.challenge.schemas import Challenge
 class Source(BaseModel):
     """One place to learn a skill (a row of skill_sources)."""
 
-    source_type: Literal["project", "certificate", "video", "activity", "reference"] = Field(
-        description="project = build something, certificate = a credential or course, video = watch, activity = practice, reference = read (a taxonomy or definition page)"
+    source_type: Literal["project", "certificate", "video", "activity"] = Field(
+        description="project = build something, certificate = a credential or course, video = watch, activity = practice"
     )
     rank: int = Field(description="1 = first pick")
     title: str
@@ -20,12 +20,12 @@ class Source(BaseModel):
 
 
 class Guide(BaseModel):
-    """What the model wrote for an AI study guide node (roadmap_detail.guide)."""
+    """What a roadmap shows for an AI skill node: the line written for the role, and the skill's fixed steps and videos (ai_skills.py)."""
 
     title: str
-    description: str = Field(description="How AI can help the learner study this section's skills")
-    steps: list[str] = Field(default_factory=list, description="Concrete things to do, in order")
-    sources: list[Source] = Field(default_factory=list, description="Where to read more, if any; empty when the guide is only the AI's description")
+    description: str = Field(description="How this AI skill helps the learner in this role, written for the role")
+    steps: list[str] = Field(default_factory=list, description="Concrete things to do, in order; fixed for each AI skill")
+    sources: list[Source] = Field(default_factory=list, description="Where to learn it: fixed YouTube videos")
 
 
 class Node(BaseModel):

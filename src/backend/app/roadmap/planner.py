@@ -1,14 +1,13 @@
 """Turns a role's skills into a roadmap plan (sections -> units -> nodes with prerequisites) using an LLM."""
-import hashlib
 import json
 import re
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
 from fastapi import HTTPException
 from openai import OpenAI
 
 from app.config import get_settings
+from app.roadmap import ai_skills
 
 MAX_OUTPUT_TOKENS = 12000  # a 50-node plan is ~4k tokens; the rest is headroom for model reasoning
 MIN_IMPORTANCE = 2.25  # candidates must be strictly above this; the model then trims further
@@ -300,161 +299,71 @@ def _plan_with_openrouter(role_title: str, role_description: str | None, skills:
     raise HTTPException(status_code=502, detail=f"model returned an unusable roadmap: {error}")
 
 
-# ---------- AI skills: one per section, first in the section's first unit; its skills wait for it ----------
-GUIDE_PREFIX = "ai:"  # skill_id of an AI skill: "ai:" and a short hash of the role and the title, so the same title for the same role is the same skill
-MAX_GUIDES = 8  # at most this many sections get one
-GUIDE_MINUTES = 20  # how long one is planned to take; it has no resource that states a length
-MAX_EXISTING = 30  # titles of the role's earlier AI skills shown to the model, so it can reuse one
-MAX_DESCRIPTION, MAX_STEP, MAX_STEPS = 160, 90, 3  # an AI skill's details are kept short
+# ---------- AI skills: chosen from a fixed list (ai_skills.py), one per section, first in the section's first unit; its skills wait for it ----------
+GUIDE_PREFIX = ai_skills.PREFIX  # every AI skill's skill_id starts with it
+GUIDE_MINUTES = 20  # how long one is planned to take; its videos' lengths aren't known
+MAX_DESCRIPTION = 160  # the line written for a role is kept short
+GUIDE_MAX_TOKENS = 1500  # at most a dozen one-line descriptions
+GUIDE_REASONING = "off"  # a quick pick and a line each: it answers without thinking first, speed over polish
+ROLE_DESCRIPTION_CHARS = 300  # how much of the role's description the model sees
 
-GUIDE_MAX_TOKENS = 3000  # eight short AI skills fit well inside this
-GUIDE_REASONING = "off"  # the model only has to name and describe them, so it answers without thinking first: speed over polish
+GUIDE_PROMPT = """You choose which AI skills to add to a learning roadmap for one job role, and write one line on each for that role.
 
-# The sources of an AI skill are never written by the model, which would invent links. Each one gets the real ESCO page of up to
-# SOURCE_LOOKUPS skills of its section (a page is used once in a roadmap, so they differ from skill to skill), then one of these
-# skills taxonomies, handed out in turn by section so there is always at least one source. Entries are (title, url).
-SOURCE_LOOKUPS = 2
-TAXONOMY_SOURCES = [
-    ("ESCO skills services and API", "https://esco.ec.europa.eu/en/use-esco/use-esco-services-api"),
-    ("Lightcast skills taxonomy", "https://lightcast.io/taxonomies/skills-taxonomy"),
-    ("WEF Global Skills Taxonomy", "https://initiatives.weforum.org/reskilling-revolution/gst"),
-]
+You get the role, how many sections the roadmap has (sections), and the AI skills you may use (catalog: id, title, about). Each skill you pick becomes the first step of one section, in the order you list them: the first skill goes to section 1, the next to section 2, and so on.
 
-
-def _source(rank: int, title: str, url: str) -> dict:
-    return {"source_type": "reference", "rank": rank, "title": title, "url": url, "duration_minutes": None}
-
-
-def taxonomy_source(number: int, rank: int = 1) -> dict:
-    """The taxonomy reference for a section (1, 2, 3, ... take the three in turn)."""
-    title, url = TAXONOMY_SOURCES[(number - 1) % len(TAXONOMY_SOURCES)]
-    return _source(rank, title, url)
-
-
-def attach_sources(plan: Plan, guides: dict[int, dict], names: dict[str, str], find, page) -> dict[int, dict]:
-    """The guides with their sources: the ESCO page of up to SOURCE_LOOKUPS of the section's skills, then a taxonomy reference.
-
-    `find(name)` gives {"uri", "title"} or None and `page(uri)` the link (see esco.py); they are looked up together. A guide that
-    already has sources (a reused one) keeps them. An ESCO page already used for another guide is left out, so each differs."""
-    todo = {i: g for i, g in guides.items() if not g.get("sources")}
-    picks = {i: [names[n.skill_id] for unit in plan[i - 1].units for n in unit if n.skill_id in names][:SOURCE_LOOKUPS] for i in todo}
-    wanted = list(dict.fromkeys(n for ns in picks.values() for n in ns))
-    with ThreadPoolExecutor(max_workers=8) as pool:
-        found = dict(zip(wanted, pool.map(find, wanted)))
-    used: set[str] = set()
-    out = dict(guides)
-    for i in sorted(todo):
-        sources = []
-        for name in picks[i]:
-            hit = found.get(name)
-            if hit and hit["uri"] not in used:
-                used.add(hit["uri"])
-                sources.append(_source(len(sources) + 1, f"ESCO: {hit['title']}", page(hit["uri"])))
-        out[i] = {**todo[i], "sources": [*sources, taxonomy_source(i, len(sources) + 1)]}
-    return out
-
-GUIDE_PROMPT = """You write short "AI skills" for a learning roadmap. For each section you get its title and the skills in it. An AI skill teaches the learner how to use AI tools (a chat assistant, a coding assistant) to learn and simplify THOSE skills, so they learn faster and understand more, not so the AI does the work for them.
-
-For every section write:
-- title: a short name, at most 40 characters, e.g. "AI-assisted web basics". Name the area, not "AI skill". Two sections never share a title.
-- description: ONE or two short plain sentences, under 150 characters in all, on how AI helps with this section's skills. Name a real skill from the section.
-- steps: exactly 3, each under 80 characters and starting with a verb, e.g. "Ask an AI to explain loops, then explain them back." Make one check the AI's answer against a trusted source and one practise without it.
-
-existing_titles lists AI skills already written for this role. When one of them fits a section, use its exact title for that section instead of a new one.
-
-Rules: do not give URLs or name specific products as the only option. Write for a beginner. No hype.
+- Pick between 1 and `sections` skills, each at most once, using only ids from the catalog. A longer roadmap can take more of them, a short one fewer; leave out any that don't matter for this role.
+- Order them as a learner should meet them: what AI is and how to ask it first, then the skills most useful for this role, then checking and safeguarding AI.
+- For each, write description: ONE short sentence, under 150 characters, on how that skill helps someone working as this role. Name the role's own kind of work. No hype.
 
 Reply with JSON only, no prose and no code fences, in exactly this shape:
-{"guides":[{"section":1,"title":"...","description":"...","steps":["...","..."]}]}
-Use only the section numbers you were given, once each."""
+{"skills":[{"id":"ai:...","description":"..."}]}"""
 
 
 def is_guide(skill_id: str) -> bool:
     return skill_id.startswith(GUIDE_PREFIX)
 
 
-def norm_title(title: str) -> str:
-    """A title as compared for sameness: lower case, one space between words."""
-    return " ".join(title.lower().split())
-
-
-def ai_skill_id(onet_code: str, title: str) -> str:
-    """The skill_id of the AI skill with this title for this role: the same title always gives the same id."""
-    return GUIDE_PREFIX + hashlib.sha1(f"{onet_code}|{norm_title(title)}".encode()).hexdigest()[:12]
-
-
 def _clean(value, limit: int) -> str:
     return " ".join(str(value or "").split())[:limit]
 
 
-def sanitize_guides(raw: dict, sections: list[int]) -> dict[int, dict]:
-    """The usable AI skills by section number: known sections only, each once, with a title and a description."""
-    out: dict[int, dict] = {}
-    for g in raw.get("guides", []):
-        if not isinstance(g, dict):
-            continue
-        try:
-            number = int(g.get("section"))
-        except (TypeError, ValueError):
-            continue
-        title, description = _clean(g.get("title"), 40), _clean(g.get("description"), MAX_DESCRIPTION)
-        steps = [s for s in (_clean(x, MAX_STEP) for x in g.get("steps") or []) if s][:MAX_STEPS]
-        if number in sections and number not in out and title and description:
-            out[number] = {"title": title, "description": description, "steps": steps}
+def sanitize_choice(raw: dict, sections: int) -> list[tuple[str, str]]:
+    """The model's pick as (skill id, description) in its order: ids from the catalog only, each once, at most one per section.
+    A description that is missing becomes empty (the caller then uses the skill's own line)."""
+    out: list[tuple[str, str]] = []
+    for s in raw.get("skills", []):
+        if isinstance(s, dict) and s.get("id") in ai_skills.BY_ID and s["id"] not in {i for i, _ in out}:
+            out.append((s["id"], _clean(s.get("description"), MAX_DESCRIPTION)))
     if not out:
-        raise ValueError("no usable guides")
-    return out
+        raise ValueError("no usable skills")
+    return out[:sections]
 
 
-def fallback_guide(section_title: str, skill_names: list[str]) -> dict:
-    """When the model can't be used: an AI skill built from the section's own title and skill names."""
-    shown = ", ".join(skill_names[:3])
-    return {
-        "title": _clean(f"AI for {section_title}", 40),
-        "description": _clean(f"Use an AI as a study buddy for {shown}: have it explain and quiz you, then check it against a trusted source.", MAX_DESCRIPTION),
-        "steps": [
-            _clean(f"Ask an AI to explain {skill_names[0]}, then explain it back.", MAX_STEP),
-            "Answer its practice questions before it marks them.",
-            "Check what it says against the official docs.",
-        ],
-    }
+def choose_guides(role_title: str, role_description: str | None, sections: int, existing: dict[str, str] | None = None) -> dict[int, dict]:
+    """The AI skills for a roadmap of this many sections, by section number, each {skill_id, title, description}.
 
-
-def write_guides(role_title: str, onet_code: str, plan: Plan, names: dict[str, str], existing: dict[str, dict] | None = None) -> dict[int, dict]:
-    """An AI skill for each section of the plan (at most MAX_GUIDES), by section number, each {skill_id, title, description, steps}.
-
-    `names` maps skill_id -> skill name; `existing` is the role's earlier AI skills by normalised title (see norm_title). A title that
-    matches one of them takes that skill's stored description and steps, so nothing the model already wrote for the role is rewritten.
-    Titles are made different across sections, since a roadmap holds each skill once. Never raises: if the model can't be used, every
-    section gets the plain fallback, so a roadmap always has them.
+    The model sees only the role and the number of sections, and picks which of the fixed skills to include and in what order. Its one-line
+    description for the role is used unless the role already has this skill stored (`existing`: skill_id -> description), whose line is kept.
+    Never raises: if the model can't be used, the first `sections` skills in the fixed order are used, each with its own line.
     """
-    existing = existing or {}
-    sections = {i: [names[n.skill_id] for unit in sec.units for n in unit if n.skill_id in names] for i, sec in enumerate(plan[:MAX_GUIDES], start=1)}
-    sections = {i: ns for i, ns in sections.items() if ns}
-    if not sections:
+    if sections < 1:
         return {}
-    fallback = {i: fallback_guide(plan[i - 1].title, ns) for i, ns in sections.items()}
+    catalog = [{"id": s.id, "title": s.title, "about": s.about} for s in ai_skills.CATALOG]
+    messages = [
+        {"role": "system", "content": GUIDE_PROMPT},
+        {"role": "user", "content": json.dumps({"role": role_title, "role_description": (role_description or "")[:ROLE_DESCRIPTION_CHARS], "sections": sections, "catalog": catalog})},
+    ]
     try:
         _require_openrouter()
-        listing = {"sections": [{"section": i, "title": plan[i - 1].title, "skills": ns} for i, ns in sections.items()],
-                   "existing_titles": [e["title"] for e in list(existing.values())[:MAX_EXISTING]]}
-        messages = [{"role": "system", "content": GUIDE_PROMPT}, {"role": "user", "content": f"Role: {role_title}\n\n{json.dumps(listing)}"}]
-        written = _chat_json(messages, lambda raw: sanitize_guides(raw, list(sections)), "AI skill list", reasoning=GUIDE_REASONING, max_tokens=GUIDE_MAX_TOKENS)
+        picked = _chat_json(messages, lambda raw: sanitize_choice(raw, sections), "AI skill choice", reasoning=GUIDE_REASONING, max_tokens=GUIDE_MAX_TOKENS)
     except HTTPException as e:
-        print(f"AI skills fell back ({e.detail})")
-        written = {}
-    out: dict[int, dict] = {}
-    taken: set[str] = set()
-    for i in sections:
-        g = {**fallback[i], **written.get(i, {})}
-        if norm_title(g["title"]) in taken:  # two sections with one title: the second is told apart by its number
-            g["title"] = f"{g['title'][:36]} {i}"
-        taken.add(norm_title(g["title"]))
-        old = existing.get(norm_title(g["title"]))
-        if old:
-            g = {**g, "description": old["description"], "steps": old["steps"], "sources": old.get("sources") or []}
-        out[i] = {**g, "skill_id": ai_skill_id(onet_code, g["title"])}
-    return out
+        print(f"AI skills fell back to the fixed order ({e.detail})")
+        picked = [(s.id, "") for s in ai_skills.CATALOG[:sections]]
+    existing = existing or {}
+    return {
+        number: {"skill_id": sid, "title": ai_skills.BY_ID[sid].title, "description": existing.get(sid) or text or ai_skills.BY_ID[sid].description}
+        for number, (sid, text) in enumerate(picked, start=1)
+    }
 
 
 def with_guides(plan: Plan, guides: dict[int, dict]) -> Plan:
