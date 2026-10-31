@@ -12,7 +12,7 @@ import { go } from '../router';
       <div class="copy">
         <h1>Get ready for how AI is changing your next tech role.</h1>
         <div class="ctas">
-          <RouterLink :to="go('bee')" class="btn btn-primary">Get started</RouterLink>
+          <RouterLink :to="go('name')" class="btn btn-primary">Get started</RouterLink>
           <RouterLink :to="go('login')" class="btn btn-secondary">I already have an account</RouterLink>
         </div>
       </div>

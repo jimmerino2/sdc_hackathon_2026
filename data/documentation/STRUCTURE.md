@@ -25,6 +25,7 @@ All tables live in `data/processed/` and are rebuilt with `python pipeline/refre
 | `ai_exposure.csv`      | **The AI meter:** how much AI is already used for each job's work                                                           |
 | `my_vacancies.csv`     | **The Malaysia context:** online job vacancies in Malaysia by occupation group and industry (display only, not a model input) |
 | `onet_to_my_group.csv` | **The Malaysia translator:** which Malaysian occupation group each of the 46 jobs belongs to                                |
+| `onet_roles_sdg.csv`, `onet_skills_sdg.csv` | **The global goals:** which UN SDGs and SDG targets each job and each skill serves (shown on the role page) |
 
 ---
 
@@ -174,6 +175,23 @@ One row per **job**. 46 rows. Hand-written in `pipeline/jmi_group_map_source.csv
 | `rationale`           | Ours   | text | Short reason for the mapping                                                                                           |
 
 Join: `onet_to_my_group.my_occupation_group` = `my_vacancies.group` where `group_type = 'occupation'`. Several jobs share one group (21 map to Professionals), so this is context for the group, not a per-job number.
+
+---
+
+## 8b. `onet_roles_sdg.csv` and `onet_skills_sdg.csv`
+
+One row per **job** (46 rows) and one per **skill** (273 rows: every `skill_id` in `onet_role_skills.csv`). Hand-mapped. Loaded into the Supabase tables `onet_roles_sdg` and `onet_skills_sdg` (`migrations/0026_onet_sdg_targets.sql`), where the text columns are parsed into goal numbers and a `targets` jsonb array of `{code, sdg, text}`.
+
+| Column              | Source | Type | Derived from                                                                                                  |
+| ------------------- | ------ | ---- | ------------------------------------------------------------------------------------------------------------- |
+| `onet_id`           | O\*NET | text | The job's `onet_code`, or the skill's `skill_id` in `onet_role_skills.csv`                                    |
+| `sdgs_and_sub_sdgs` | Ours   | text | The next three columns in one line                                                                            |
+| `role_title` / `skill_name`, `skill_type` | O\*NET | text | Same as `onet_roles.csv` / `onet_role_skills.csv`                                                    |
+| `main_sdg`          | Ours   | text | The goal the work serves most, e.g. `SDG 8: Decent Work and Economic Growth`                                  |
+| `relevant_sdgs`     | Ours   | text | The other goals, e.g. `SDG 12 (Responsible Consumption and Production), SDG 9 (...)`                          |
+| `targets`           | Ours   | text | SDG targets separated by ` · `, each a UN target code then how the work serves it, e.g. `8.2 productivity through market innovation` |
+
+`onet_roles.sdg` (migration 0014) keeps the weighted goals the job matching uses (up to 3 per job); these files can list more relevant goals and say which targets the work serves.
 
 ---
 
