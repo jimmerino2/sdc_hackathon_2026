@@ -81,6 +81,7 @@ def _roles() -> list[dict]:
             "onet_code": code, "title": title,
             "tools": list(zip(*[ranked[ranked["skill_type"] == "tech"][c] for c in ("skill_name", "importance")])),
             "abilities": list(zip(*[ranked[ranked["skill_type"] == "skill"][c] for c in ("skill_name", "importance")])),
+            "knowledge": list(zip(*[ranked[ranked["skill_type"] == "knowledge"][c] for c in ("skill_name", "importance")])),
         })
     return out
 

@@ -68,7 +68,28 @@ class RoadmapCreate(BaseModel):
     profile_id: UUID = Field(description="The profile_id returned from POST /profile")
     onet_code: str = Field(description="O*NET code, e.g. 15-2051.00")
     replace: bool = Field(False, description="Rebuild if a roadmap already exists (discards its progress)")
+    skills: list[str] | None = Field(None, max_length=20, description="The skills to build the roadmap from, by name (from POST /roadmap/skills, as the learner adjusted them). The model then only arranges them into sections, units and prerequisites. Leave out and it chooses and arranges them itself")
     priority_skills: list[str] = Field(default_factory=list, max_length=30, description="Skill names to bring forward, e.g. from the What-If simulator; the plan's skills don't change, only the order of its sections and units")
+
+
+class SkillSelectionIn(BaseModel):
+    profile_id: UUID = Field(description="The profile_id returned from POST /profile")
+    onet_code: str = Field(description="O*NET code, e.g. 15-2051.00")
+
+
+class SelectedSkill(BaseModel):
+    skill_id: str
+    skill_name: str
+    skill_type: Literal["skill", "knowledge", "tech"]
+
+
+class SkillSelection(BaseModel):
+    """The skills proposed for a learner's roadmap: a plain list, not yet arranged into sections or ordered."""
+
+    onet_code: str
+    title: str
+    skills: list[SelectedSkill]
+    source: Literal["ai", "fallback"] = Field(description="'ai' = the model chose them; 'fallback' = the model could not be used, so the role's most important skills the learner lacks were taken")
 
 
 class RoadmapSummary(BaseModel):

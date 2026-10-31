@@ -177,15 +177,16 @@ async function readBuild(res: Response, onEvent?: (event: RoadmapEvent) => void)
  * onEvent hears the build's progress, and `building` first when there is something to build; with a roadmap already
  * there it never fires. A server that can't stream (an older one) gets the plain request instead.
  * prioritySkills only matter for a new roadmap: an existing one and its progress are left as they are.
+ * `skills` (names) are the learner's final list: the model then only arranges them, instead of choosing.
  */
-export async function ensureRoadmap(profileId: string, onetCode: string, onEvent?: (event: RoadmapEvent) => void, prioritySkills: string[] = []): Promise<Roadmap> {
+export async function ensureRoadmap(profileId: string, onetCode: string, onEvent?: (event: RoadmapEvent) => void, prioritySkills: string[] = [], skills: string[] | null = null): Promise<Roadmap> {
   const existing = await getRoadmap(profileId, onetCode);
   if (existing) return existing;
   onEvent?.({ type: 'building' });
   const init: RequestInit = {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ profile_id: profileId, onet_code: onetCode, priority_skills: prioritySkills }),
+    body: JSON.stringify({ profile_id: profileId, onet_code: onetCode, priority_skills: prioritySkills, skills }),
   };
   let res = await call('/stream', init);
   if (res.status === 404 || res.status === 405) res = await call('', init);
@@ -332,5 +333,24 @@ export interface LearnedSkill {
 export async function fetchLearnedSkills(profileId: string): Promise<LearnedSkill[]> {
   const res = await call(`/learned?profile_id=${encodeURIComponent(profileId)}`);
   if (!res.ok) throw new RoadmapError('Jobee couldn’t load the skills you’ve learned. Try again in a moment.');
+  return res.json();
+}
+
+/** The skills proposed for a roadmap: a plain list, not yet arranged. `source` is "fallback" when the model couldn't be used. */
+export interface SkillSelection {
+  onet_code: string;
+  title: string;
+  skills: { skill_id: string; skill_name: string; skill_type: 'skill' | 'knowledge' | 'tech' }[];
+  source: 'ai' | 'fallback';
+}
+
+/** Step one of a roadmap: which skills to include for this learner and role. Nothing is saved. */
+export async function suggestRoadmapSkills(profileId: string, onetCode: string): Promise<SkillSelection> {
+  const res = await call('/skills', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ profile_id: profileId, onet_code: onetCode }),
+  });
+  if (!res.ok) throw new RoadmapError('Jobee couldn’t pick skills for this role just now.');
   return res.json();
 }

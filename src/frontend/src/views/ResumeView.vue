@@ -229,7 +229,8 @@ function undoRemove() {
 </script>
 
 <template>
-  <FlowShell :progress="3" next="skills" back="outcome" :mood="mood" gear="glasses" :wide="split" :next-disabled="!resume || reading">
+  <!-- With a resume the skill check is optional, so Continue goes straight on to the analysis. -->
+  <FlowShell :progress="3" :next="resume ? 'loading' : 'skills'" :next-label="resume ? 'Analyze my profile' : undefined" back="outcome" :mood="mood" gear="glasses" :wide="split" :next-disabled="!resume || reading">
     <template #bubble>{{ bubble }}</template>
 
     <!-- The flower game stays out of the header, footer and content, so it only has the side margins (wide screens only). -->
@@ -318,7 +319,8 @@ function undoRemove() {
     </div>
 
     <template #skip>
-      <button type="button" class="skip" @click="skip">No resume? Skip</button>
+      <RouterLink v-if="resume" :to="go('skills')" class="skip">Rate my skills too</RouterLink>
+      <button v-else type="button" class="skip" @click="skip">No resume? Skip</button>
     </template>
   </FlowShell>
 </template>

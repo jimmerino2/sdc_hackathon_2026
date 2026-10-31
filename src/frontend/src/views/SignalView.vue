@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router';
 import FlowShell from '../components/FlowShell.vue';
 import RoleDetail from '../components/RoleDetail.vue';
 import { SOFTWARE_DEVELOPERS_ONET } from '../api/forecast';
-import { useFlow } from '../state';
+import { loadSkillPlan, useFlow } from '../state';
 
 const route = useRoute();
 const { state } = useFlow();
@@ -12,10 +12,16 @@ const { state } = useFlow();
 const onetCode = computed(() => (route.query.role as string | undefined) ?? state.value.chosenRoleId ?? SOFTWARE_DEVELOPERS_ONET);
 /** This role's match from the roles page. Missing after a refresh. */
 const job = computed(() => state.value.jobs.data?.jobs.find((j) => j.onet_code === onetCode.value));
+
+/** Leaving the forecast: lock in the role and start choosing its skills while the next page loads. */
+function pickRole() {
+  state.value.chosenRoleId = onetCode.value;
+  void loadSkillPlan(state.value);
+}
 </script>
 
 <template>
-  <FlowShell next="gap" back="roles" gear="glasses" @next="state.chosenRoleId = onetCode">
+  <FlowShell next="gap" back="roles" gear="glasses" @next="pickRole">
     <template #bubble>Here’s how demand for {{ job?.title ?? 'this role' }} could change over the next year.</template>
     <RoleDetail :onet-code="onetCode" :job="job" compact />
   </FlowShell>

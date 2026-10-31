@@ -11,7 +11,7 @@ from app.jobs.service import _expand
 from app.profile import service as profiles
 from app.roadmap import planner
 from app.roadmap.planner import Plan, PlanNode, PlanSection
-from app.roadmap.schemas import CurrentStep, LearnedSkill, Node, Roadmap, RoadmapSummary, Section, Source, Unit
+from app.roadmap.schemas import CurrentStep, LearnedSkill, Node, Roadmap, RoadmapSummary, SelectedSkill, Section, SkillSelection, Source, Unit
 
 
 def _role(db: Client, onet_code: str) -> dict:
@@ -325,14 +325,46 @@ def detail_rows(plan: Plan, roadmap_id: str, onet_code: str, done: dict[str, str
     return details
 
 
-def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool, priority_skills: list[str] | None = None, on_event: Callable[[dict], None] | None = None) -> Roadmap:
+def suggest_skills(db: Client, profile_id: str, onet_code: str) -> SkillSelection:
+    """The skills to include in this learner's roadmap for a role, as a plain list (no sections, no order).
+
+    The model picks them from the role's O*NET skills, seeing what the learner already knows; skills they know well are
+    left out. If the model can't be used, the role's most important skills they lack are taken instead (source "fallback").
+    """
+    try:
+        profile = profiles.get_profile(db, profile_id)
+    except profiles.ProfileError as e:
+        raise HTTPException(e.status_code, e.message) from e
+    role = _role(db, onet_code)
+    rows = db.table("onet_role_skills").select("skill_id,skill_name,skill_type,importance,level,forecast_demand").eq("onet_code", onet_code).execute().data
+    relevant = planner.candidates(rows)
+    if not relevant:
+        raise HTTPException(status_code=422, detail=f"no skills above importance {planner.MIN_IMPORTANCE} for {onet_code}")
+    levels = learner_levels(profile)
+    have = {s["skill_id"]: levels[s["skill_name"].lower()] for s in relevant if levels.get(s["skill_name"].lower())}
+    try:
+        ids, source = planner.select_skills(role["title"], role["description"], relevant, {"stage": profile.stage, "have": have}), "ai"
+    except HTTPException as e:
+        print(f"skill selection for {onet_code} fell back ({e.detail})")
+        ids, source = planner.fallback_selection(relevant, have), "fallback"
+    ids = [i for i in ids if have.get(i, 0) < planner.OWNED_LEVEL]  # the model was told, but this is the rule
+    by_id = {s["skill_id"]: s for s in relevant}
+    return SkillSelection(
+        onet_code=onet_code, title=role["title"], source=source,
+        skills=[SelectedSkill(skill_id=i, skill_name=by_id[i]["skill_name"], skill_type=by_id[i]["skill_type"]) for i in ids],
+    )
+
+
+def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool, priority_skills: list[str] | None = None, on_event: Callable[[dict], None] | None = None,
+                   skills: list[str] | None = None) -> Roadmap:
     """Store a roadmap for this profile and return it.
 
     The model plans it for this learner: it sees their skills and stage, so it spends the plan on their gaps. Skills
     they already know well start completed (decided here from their profile, not left to the model), and a rebuild
     keeps the progress they had made. If the model can't be reached, the newest roadmap anyone has for the role is
     copied instead, so the page still works. A tech role's roadmap then gets its Bonus Quests, written for this learner.
-    priority_skills (names) only change the order.
+    priority_skills (names) only change the order. With `skills` (names, as the learner settled them after POST /roadmap/skills) the
+    model only arranges exactly those skills; it doesn't choose, and if it can't be used they are grouped by type instead.
 
     on_event hears the progress for a page to show: `role` (title, onet_code), `plan` (reused: the plan was copied, not
     planned for this learner; already_known: how many skills start completed) and `roadmap` (the stored roadmap, before the
@@ -353,22 +385,32 @@ def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool, p
     if mine(db.table("roadmap").select("roadmap_id")).limit(1).execute().data and not replace:
         raise HTTPException(status_code=409, detail="this profile already has a roadmap for that role; send replace=true to rebuild it")
 
-    skills = db.table("onet_role_skills").select("skill_id,skill_name,skill_type,importance,level,forecast_demand").eq("onet_code", onet_code).execute().data
-    relevant = planner.candidates(skills)
+    rows = db.table("onet_role_skills").select("skill_id,skill_name,skill_type,importance,level,forecast_demand").eq("onet_code", onet_code).execute().data
+    if skills:
+        wanted = {n.lower() for n in skills}
+        relevant = [r for r in rows if r["skill_name"].lower() in wanted]  # chosen skills count whatever their importance
+    else:
+        relevant = planner.candidates(rows)
     if not relevant:
-        raise HTTPException(status_code=422, detail=f"no skills above importance {planner.MIN_IMPORTANCE} for {onet_code}")
+        raise HTTPException(status_code=422, detail=f"no skills to build a roadmap from for {onet_code}")
     levels = learner_levels(profile)
     have = {s["skill_id"]: levels[s["skill_name"].lower()] for s in relevant if levels.get(s["skill_name"].lower())}
     learner = {"stage": profile.stage, "have": have}
     markable = _has_priority_column(db)
     try:
-        plan, reused = planner.build_plan(role["title"], role["description"], relevant, learner), False
+        if skills:
+            plan, reused = planner.organize_plan(role["title"], role["description"], relevant, learner), False
+        else:
+            plan, reused = planner.build_plan(role["title"], role["description"], relevant, learner), False
     except HTTPException as e:
-        # The model is down or gave nothing usable: fall back to a copy of someone's plan rather than no roadmap.
-        plan = _existing_plan(db, onet_code, markable)
+        # The model is down or gave nothing usable. With a chosen list, group those skills by type; otherwise fall
+        # back to a copy of someone's plan rather than no roadmap.
+        plan = planner.fallback_plan(relevant) if skills else _existing_plan(db, onet_code, markable)
         if plan is None:
             raise e
-        reused = True
+        reused = not skills
+    if skills:
+        plan = planner.complete_plan(plan, relevant)  # every chosen skill is on the roadmap, whichever way it was arranged
 
     # Already done: what the learner knows well, plus what they had completed if this is a rebuild.
     now = datetime.now(timezone.utc).isoformat()
@@ -383,6 +425,7 @@ def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool, p
     emit({"type": "plan", "reused": reused, "already_known": known})
 
     priority = sorted(set(priority_skills or [])) if markable else []
+    chosen = sorted(skills) if skills and markable else []  # marks a roadmap built from one learner's list, so it is never copied for others
     if priority:
         rows = db.table("onet_role_skills").select("skill_id").eq("onet_code", onet_code).in_("skill_name", priority).execute().data
         plan = prioritised(plan, {r["skill_id"] for r in rows})
@@ -394,8 +437,8 @@ def create_roadmap(db: Client, profile_id: str, onet_code: str, replace: bool, p
     section, unit = min(open_units) if open_units else (len(plan), len(plan[-1].units))
     roadmap = {"roadmap_id": roadmap_id, "profile_id": profile_id, "onet_code": onet_code, "section": section, "unit": unit,
                "status": "available" if open_units else "completed", "section_titles": [s.title for s in plan]}
-    if priority:
-        roadmap["priority_skills"] = priority
+    if priority or chosen:
+        roadmap["priority_skills"] = priority or chosen
 
     # No transaction support in the client: if a write fails, remove the partial roadmap.
     mine(db.table("roadmap").delete()).execute()  # details go with it (on delete cascade)

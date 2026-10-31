@@ -23,9 +23,9 @@ const props = defineProps<{
 }>();
 
 const { state, key } = useFlow();
-const { metrics, metricTarget, pct, ranked, rankColor } = useScenarioProbabilities();
-/** The 3 AI-future scenarios, most likely first. */
-const rankedScenarios = computed(() => ranked.value.map((k) => scenarios.find((s) => s.key === k)!));
+const { metrics, metricTarget, pct } = useScenarioProbabilities();
+/** Each future keeps its place (accelerates, steady, slows) and its colour, whatever its chance is. */
+const chanceColor = { accelerates: '#2e7d4f', steady: 'var(--amber-ink)', slows: '#c62828' } as const;
 const base = import.meta.env.BASE_URL;
 /** The role's SDGs that one of the learner's interests points at, and the ones that come from the role itself. */
 const fromInterests = computed(() => props.job?.sdg_reasons?.filter((r) => r.interests.length) ?? []);
@@ -206,11 +206,11 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
             >{{ m.label }}</button>
           </div>
         </div>
-        <button v-for="s in rankedScenarios" :key="s.key" class="option sc" :class="{ selected: state.scenario === s.key }" @click="state.scenario = s.key">
+        <button v-for="s in scenarios" :key="s.key" class="option sc" :class="{ selected: state.scenario === s.key }" @click="state.scenario = s.key">
           <span class="ic" :class="trendOf(s.key).cls"><Icon :name="trendOf(s.key).icon" :size="22" :stroke="2.6" /></span>
           <span>
             <span class="pills">
-              <em v-if="pct(s.key) != null" class="pill pill-chance" :style="{ '--rc': rankColor(s.key) ?? 'var(--line-strong)' }">{{ pct(s.key) }}% chance</em>
+              <em v-if="pct(s.key) != null" class="pill pill-chance" :style="{ '--rc': chanceColor[s.key] }">{{ pct(s.key) }}% chance</em>
               <em class="pill" :class="{ 'pill-yellow': state.scenario === s.key }">{{ outcome(s.key) }}</em>
             </span>
             <h3>{{ s.title }}</h3><p>{{ s.blurb }}</p>

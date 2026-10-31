@@ -8,12 +8,14 @@ export interface ScenarioMetric {
   unit: string;
   /** Short label for the metric picker. */
   label: string;
+  /** One plain sentence on what the metric measures, for the explainer. */
+  about: string;
 }
 
 export const SCENARIO_METRICS: ScenarioMetric[] = [
-  { target: 'frontier_time_horizon', unit: 'v1.1', label: 'AI capability' },
-  { target: 'btos_ai_use_rate', unit: 'US|new', label: 'Business adoption' },
-  { target: 'worker_genai_use_rate', unit: '00', label: 'Worker adoption' },
+  { target: 'frontier_time_horizon', unit: 'v1.1', label: 'AI capability', about: 'How long a task the best AI models can finish on their own, mostly software tasks.' },
+  { target: 'btos_ai_use_rate', unit: 'US|new', label: 'Business adoption', about: 'The share of US businesses that used AI in the last two weeks.' },
+  { target: 'worker_genai_use_rate', unit: '00', label: 'Worker adoption', about: 'The share of US workers who use generative AI for their job.' },
 ];
 
 export const DEFAULT_SCENARIO_METRIC = 'frontier_time_horizon';

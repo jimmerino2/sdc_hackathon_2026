@@ -138,8 +138,9 @@ class SimulatedSkill(SkillScore):
 
 class SimulateRequest(BaseModel):
     profile_id: UUID = Field(description="The profile_id returned from POST /profile")
-    skills: list[SimulatedSkill] = Field(default_factory=list, max_length=12, description="Skills to try, by O*NET name; empty gives the baseline and the skill options")
+    skills: list[SimulatedSkill] = Field(default_factory=list, max_length=20, description="Skills to try, by O*NET name; empty gives the baseline and the skill options")
     horizon: Literal[3, 6, 9, 12] = 12
+    focus_role: str | None = Field(None, description="O*NET code of the role the skill options are for; leave out for the best match under AI accelerates")
 
 
 class SkillChange(BaseModel):
@@ -229,4 +230,5 @@ class SimulateResponse(BaseModel):
     coverage_after: float = Field(description="The same share on the simulated profile")
     summary: list[ScenarioSummary]
     roles: list[RoleComparison] = Field(description="Every matched role, best simulated match first under AI accelerates")
-    options: list[SkillOption] = Field(description="Every skill the roles list, each measured on its own against the current profile, best first; only sent when no skills are being tried")
+    focus_role: str = Field(description="O*NET code of the role the options are for")
+    options: list[SkillOption] = Field(description="The skills O*NET links to the focus role, each measured on its own against the current profile for that role, best first; only sent when no skills are being tried")

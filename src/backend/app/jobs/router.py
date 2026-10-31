@@ -75,7 +75,7 @@ def suggested(profile_id: UUID = Query(description="The profile_id returned from
 
 @router.post("/simulate", response_model=SimulateResponse)
 def simulate(body: SimulateRequest, db: Client = Depends(get_supabase_admin)):
-    """What if the learner had these skills? Runs the same matching as GET /jobs/recommend on the profile as it is and on a copy with the skills added, and returns both under every AI scenario, why each role moved, and which skills would help most. Nothing is saved: the profile and its suggested roles are left alone. 404 if there is no such profile; 409 if it has no skills; 422 if a skill isn't one the roles use."""
+    """What if the learner had these skills? Runs the same matching as GET /jobs/recommend on the profile as it is and on a copy with the skills added, and returns both under every AI scenario, why each role moved, and which skills would help most. Nothing is saved: the profile and its suggested roles are left alone. 404 if there is no such profile; 409 if it has no skills; 422 if a skill isn't one the roles use or the focus role isn't a matched role. Without skills it also lists the skills O*NET links to the focus role (default: the best match) as options."""
     try:
         profile = profiles.get_profile(db, body.profile_id)
     except profiles.ProfileError as e:
@@ -89,6 +89,8 @@ def simulate(body: SimulateRequest, db: Client = Depends(get_supabase_admin)):
         print(f"Interests not used: {e}")
         picked = []
     try:
-        return simulator.simulate(str(body.profile_id), skills, profile.stage, picked, body.skills, body.horizon)
+        return simulator.simulate(str(body.profile_id), skills, profile.stage, picked, body.skills, body.horizon, body.focus_role)
     except simulator.UnknownSkill as e:
         raise HTTPException(422, f"Not a skill the roles use: {e}")
+    except simulator.UnknownRole as e:
+        raise HTTPException(422, f"Not one of the matched roles: {e}")

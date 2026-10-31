@@ -4,7 +4,7 @@ import { DEFAULT_SCENARIO_METRIC } from './data/outlookScenarios';
 import { DEFAULT_SKILLS, LEVEL_SCORES, levelFromScore, mergeSkills, SKILL_CHECK_SIZE } from './data/skills';
 import type { SkillScore } from './api/resume';
 import { fetchRecommendations, JobsError, type Recommendations } from './api/jobs';
-import { ensureRoadmap, getRoadmap, RoadmapError, type Roadmap, type RoadmapEvent } from './api/roadmap';
+import { ensureRoadmap, getRoadmap, RoadmapError, suggestRoadmapSkills, type Roadmap, type RoadmapEvent } from './api/roadmap';
 import { clearOnboarded, clearSession, markLoggedIn, markOnboarded, readProfileId, saveProfileId, stageForWho, type Profile } from './api/profile';
 import { bee, BEES, type BeeName } from './bee';
 
@@ -33,6 +33,10 @@ interface FlowState {
   roadmap: { status: 'idle' | 'loading' | 'done' | 'error'; data: Roadmap | null; error: string | null };
   /** Skills from the What-If simulator to bring forward if the roadmap is built now. */
   roadmapPriority: string[];
+  /** The skills proposed for the chosen role (step one of the roadmap), fetched when the learner leaves the forecast page. */
+  skillPlan: { status: 'idle' | 'loading' | 'done' | 'error'; role: string | null; skills: string[] };
+  /** The learner's final skill list, set on the skills page; the roadmap is built from exactly these. Null = let the model choose. */
+  roadmapSkills: string[] | null;
 }
 
 const store = reactive<Record<PersonaKey, FlowState>>({
@@ -60,6 +64,8 @@ function init(k: PersonaKey): FlowState {
     suggested: null,
     roadmap: { status: 'idle', data: null, error: null },
     roadmapPriority: [],
+    skillPlan: { status: 'idle', role: null, skills: [] },
+    roadmapSkills: null,
   };
 }
 
@@ -71,6 +77,7 @@ export function resetPersona(k: PersonaKey) {
 export function openRoadmap(s: FlowState, onetCode: string, prioritySkills: string[] = []) {
   s.chosenRoleId = onetCode;
   s.roadmapPriority = prioritySkills;
+  s.roadmapSkills = null;
   s.roadmap = { status: 'idle', data: null, error: null };
 }
 
@@ -110,6 +117,28 @@ export async function loadJobs(s: FlowState) {
   }
 }
 
+/**
+ * Step one of the roadmap: ask for the list of skills to include for the chosen role and keep it in state.skillPlan.
+ * Starts once per role (a second call while it runs or after it finished does nothing). Never throws; on a failure the
+ * status is 'error' and the roadmap is later built the old way, with the model choosing.
+ */
+export async function loadSkillPlan(s: FlowState) {
+  const role = s.chosenRoleId;
+  s.profileId ??= readProfileId();
+  if (!role || !s.profileId) return;
+  if (s.skillPlan.role === role && s.skillPlan.status !== 'error') return;
+  s.skillPlan = { status: 'loading', role, skills: [] };
+  s.roadmapSkills = null;
+  try {
+    const sel = await suggestRoadmapSkills(s.profileId, role);
+    if (s.skillPlan.role !== role) return; // another role was picked meanwhile
+    s.skillPlan = { status: 'done', role, skills: sel.skills.map((x) => x.skill_name) };
+  } catch (e) {
+    console.error(e);
+    if (s.skillPlan.role === role) s.skillPlan = { status: 'error', role, skills: [] };
+  }
+}
+
 /** Load the chosen role's roadmap into state.roadmap, building it first if needed (onEvent hears the build). Never throws. */
 export async function loadRoadmap(s: FlowState, onEvent?: (event: RoadmapEvent) => void) {
   s.profileId ??= readProfileId();
@@ -132,7 +161,7 @@ export async function loadRoadmap(s: FlowState, onEvent?: (event: RoadmapEvent) 
       markOnboarded();
       return;
     }
-    s.roadmap = { status: 'done', data: await ensureRoadmap(s.profileId, s.chosenRoleId, onEvent, s.roadmapPriority), error: null };
+    s.roadmap = { status: 'done', data: await ensureRoadmap(s.profileId, s.chosenRoleId, onEvent, s.roadmapPriority, s.roadmapSkills), error: null };
     markOnboarded();
   } catch (e) {
     console.error(e);

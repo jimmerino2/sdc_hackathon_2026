@@ -9,28 +9,35 @@ import { JobsError, simulateSkills, type RoleComparison, type SimulateResult, ty
 import { listRoadmaps, type RoadmapSummary } from '../api/roadmap';
 import { readProfileId } from '../api/profile';
 import { scenarios } from '../data/flows';
-import { LEVEL_SCORES, skillLabel } from '../data/skills';
+import { skillLabel } from '../data/skills';
 import { go } from '../router';
 import { openRoadmap, useFlow } from '../state';
 
 /** "What if you learned a new skill?" Tap a skill and every role's bar grows. Every number comes from POST /jobs/simulate,
  *  which runs the real matching on a temporary copy of the profile. Nothing here is saved. */
+const props = defineProps<{
+  /** Inside onboarding: the role is already chosen, the skills picked go to its pathway, and the flow's own button moves on. */
+  embedded?: boolean;
+  /** Skill names to start with already added, e.g. the list Jobee proposed for the role. Only those in the list below are used. */
+  preselect?: string[];
+}>();
 const router = useRouter();
 const { state } = useFlow();
 
 const SUGGESTED = 12; // skills shown before searching
-const MAX_PICKS = 12; // what POST /jobs/simulate accepts
+const MAX_PICKS = 20; // what POST /jobs/simulate accepts, and the most a roadmap holds
 const REMAINING_SHOWN = 4;
-const LEVELS = [{ name: 'Basic', score: LEVEL_SCORES[1] }, { name: 'Good', score: LEVEL_SCORES[2] }, { name: 'Strong', score: LEVEL_SCORES[3] }];
 
-const picked = ref<Record<string, number>>({}); // skill name -> simulated score
+const picked = ref<Record<string, number>>({}); // skill name -> what it counts as (every added skill counts the same: learned)
 const result = ref<SimulateResult | null>(null);
 const options = ref<SkillOption[]>([]); // kept from the first answer, so the list doesn't reshuffle while choosing
 const status = ref<'loading' | 'ready' | 'error'>('loading');
 const busy = ref(false);
 const error = ref('');
 const open = ref<string | null>(null);
-const target = ref<string | null>(null);
+/** The role the skill options are for: the one chosen in onboarding, else whichever the learner picks (the best match to start). */
+const focus = ref<string | null>(props.embedded ? state.value.chosenRoleId : null);
+let optionsFor: string | null = null;
 const roadmaps = ref<Record<string, RoadmapSummary>>({});
 const query = ref('');
 const showAll = ref(false);
@@ -52,10 +59,15 @@ async function run() {
   const mine = ++latest;
   busy.value = true;
   try {
-    const res = await simulateSkills(id, pickedList.value);
+    const res = await simulateSkills(id, pickedList.value, focus.value);
     if (mine !== latest) return; // a newer choice is already on its way
     result.value = res;
-    if (!options.value.length) options.value = res.options;
+    if (res.options.length) {
+      options.value = res.options;
+      optionsFor = res.focus_role;
+      applyPreselect();
+    }
+    focus.value ??= res.focus_role;
     status.value = 'ready';
     error.value = '';
   } catch (e) {
@@ -66,7 +78,32 @@ async function run() {
     if (mine === latest) busy.value = false;
   }
 }
+/** Add the proposed skills once, when the list first arrives; after that the learner's own choices stand. */
+let preselected = false;
+function applyPreselect() {
+  if (preselected || !props.preselect?.length) return;
+  preselected = true;
+  const wanted = new Set(props.preselect.map((n) => n.toLowerCase()));
+  for (const o of options.value) if (wanted.has(o.name.toLowerCase()) && Object.keys(picked.value).length < MAX_PICKS) picked.value[o.name] = o.trial;
+}
+
+/** A different role: its linked skills replace the list. The tried skills stay, since they count for every role. */
+watch(focus, async (code) => {
+  const id = state.value.profileId ?? readProfileId();
+  if (!code || !id || code === optionsFor) return;
+  try {
+    const res = await simulateSkills(id, [], code);
+    if (focus.value !== code) return;
+    options.value = res.options;
+    optionsFor = code;
+    query.value = '';
+    showAll.value = false;
+  } catch (e) {
+    error.value = e instanceof JobsError ? e.message : 'Jobee couldn’t load the skills for that role. Try again in a moment.';
+  }
+});
 watch(picked, () => {
+  if (props.embedded) state.value.roadmapSkills = Object.keys(picked.value).length ? Object.keys(picked.value) : null; // the roadmap is built from exactly these
   clearTimeout(timer);
   timer = setTimeout(run, 200);
 }, { deep: true });
@@ -86,11 +123,9 @@ function reset() {
 }
 const optionOf = (name: string) => options.value.find((o) => o.name === name);
 /** A level at or below what the learner already has adds nothing, so it isn't offered. */
-const levelsFor = (name: string) => LEVELS.filter((l) => l.score > (optionOf(name)?.current ?? 0));
 const gainOf = (o: SkillOption) => o.gains.find((g) => g.scenario === scenario.value)?.best_change ?? 0;
 const rising = (o: SkillOption) => o.emerging || o.demand?.direction === 'rising';
 const bestRoleOf = (o: SkillOption) => o.gains.find((g) => g.scenario === scenario.value)?.best_role;
-const levelOf = (o: SkillOption) => LEVELS.find((l) => l.score === o.trial)?.name;
 /** Real skills from this learner's list, so the explanation matches the tiles on the page. */
 const sampleUp = computed(() => [...options.value].sort((a, b) => gainOf(b) - gainOf(a)).find((o) => gainOf(o) > 0));
 const sampleNone = computed(() => options.value.find((o) => gainOf(o) === 0));
@@ -110,7 +145,7 @@ const best = computed(() => [...roles.value].sort((a, b) => at(b).change - at(a)
 const improved = computed(() => roles.value.filter((r) => at(r).change > 0).length);
 const newTop = computed(() => (summary.value && summary.value.current_top !== summary.value.simulated_top ? summary.value.simulated_top : null));
 
-const chosen = computed(() => roles.value.find((r) => r.onet_code === (target.value ?? best.value?.onet_code)) ?? null);
+const chosen = computed(() => roles.value.find((r) => r.onet_code === (focus.value ?? best.value?.onet_code)) ?? null);
 const hasRoadmap = computed(() => !!chosen.value && !!roadmaps.value[chosen.value.onet_code]);
 /** Build these skills: the existing roadmap flow, with the simulated skills brought forward. */
 function build() {
@@ -128,8 +163,10 @@ function build() {
 
 <template>
   <div class="sim">
-    <h1>What if you learned a new skill?</h1>
-    <p class="lead">Tap a skill. Watch your role matches change. Nothing is saved.</p>
+    <template v-if="!embedded">
+      <h1>What if you learned a new skill?</h1>
+      <p class="lead">Tap a skill. Watch your role matches change. Nothing is saved.</p>
+    </template>
 
     <div v-if="status === 'loading'" class="skel card load" aria-busy="true" aria-label="Loading" />
     <div v-else-if="status === 'error'" class="state">
@@ -158,7 +195,7 @@ function build() {
           <li v-for="r in roles" :key="r.onet_code">
             <button type="button" class="rrow" :aria-expanded="open === r.onet_code" @click="open = open === r.onet_code ? null : r.onet_code">
               <span class="rtop">
-                <span class="rname">{{ r.title }}<em v-if="moved(r)" :class="moved(r) > 0 ? 'trend-up' : 'trend-down'">{{ moved(r) > 0 ? '▲' : '▼' }}{{ Math.abs(moved(r)) }}</em></span>
+                <span class="rname">{{ r.title }}<em v-if="embedded && r.onet_code === state.chosenRoleId" class="mine">your pick</em><em v-if="moved(r)" :class="moved(r) > 0 ? 'trend-up' : 'trend-down'">{{ moved(r) > 0 ? '▲' : '▼' }}{{ Math.abs(moved(r)) }}</em></span>
                 <span class="rval">
                   <b>{{ at(r).simulated_percent }}%</b>
                   <em v-if="at(r).change" class="delta" :class="at(r).change > 0 ? 'up' : 'down'">{{ at(r).change > 0 ? '+' : '' }}{{ at(r).change }}</em>
@@ -198,15 +235,22 @@ function build() {
           <button v-if="hasPicks" type="button" class="link" @click="reset">Clear</button>
         </div>
 
-        <ul v-if="hasPicks" class="picked">
-          <li v-for="s in pickedList" :key="s.name">
-            <span class="pname">{{ skillLabel(s.name) }}</span>
-            <span class="levels" role="group" :aria-label="`Level for ${skillLabel(s.name)}`">
-              <button v-for="l in levelsFor(s.name)" :key="l.name" type="button" :class="{ on: picked[s.name] === l.score }" :aria-pressed="picked[s.name] === l.score" @click="picked[s.name] = l.score">{{ l.name }}</button>
-            </span>
-            <button type="button" class="rm" :aria-label="`Remove ${skillLabel(s.name)}`" @click="delete picked[s.name]"><Icon name="x" :size="14" /></button>
-          </li>
-        </ul>
+        <div v-if="hasPicks" class="added">
+          <p class="sub">{{ pickedList.length }} {{ pickedList.length === 1 ? 'skill' : 'skills' }} added</p>
+          <ul class="picked">
+            <li v-for="s in pickedList" :key="s.name">
+              <span class="pname">{{ skillLabel(s.name) }}</span>
+              <button type="button" class="rm" :aria-label="`Remove ${skillLabel(s.name)}`" @click="delete picked[s.name]"><Icon name="x" :size="12" /></button>
+            </li>
+          </ul>
+        </div>
+
+        <label v-if="!embedded" class="target"><span>Skills for</span>
+          <select v-model="focus">
+            <option v-for="r in roles" :key="r.onet_code" :value="r.onet_code">{{ r.title }}</option>
+          </select>
+        </label>
+        <p v-else-if="chosen" class="muted">Skills O*NET links to {{ chosen.title }}.</p>
 
         <label class="search">
           <Icon name="search" :size="16" />
@@ -230,7 +274,7 @@ function build() {
           <InfoDialog title="Where these numbers come from" label="Where do these numbers come from?">
             <div v-if="sampleUp" class="ex">
               <span class="tile"><span class="tname">{{ skillLabel(sampleUp.name) }}</span><b class="tgain">+{{ gainOf(sampleUp) }}</b></span>
-              <p>Learning {{ skillLabel(sampleUp.name) }} to {{ levelOf(sampleUp) }} adds {{ gainOf(sampleUp) }} points to {{ bestRoleOf(sampleUp) }}. Jobee reran your real match to get this.</p>
+              <p>Learning {{ skillLabel(sampleUp.name) }} adds {{ gainOf(sampleUp) }} points to {{ bestRoleOf(sampleUp) }}. Jobee reran your real match to get this.</p>
             </div>
             <div v-if="sampleNone" class="ex">
               <span class="tile"><span class="tname">{{ skillLabel(sampleNone.name) }}</span><span class="tnone">–</span></span>
@@ -244,14 +288,11 @@ function build() {
             </dl>
           </InfoDialog>
         </div>
-        <p v-if="atLimit" class="muted">You can try {{ MAX_PICKS }} skills at a time.</p>
+        <p v-if="atLimit" class="muted">A roadmap holds up to {{ MAX_PICKS }} skills. Remove one to add another.</p>
 
-        <div v-if="hasPicks" class="next">
-          <label class="target"><span>Learn these for</span>
-            <select :value="chosen?.onet_code" @change="target = ($event.target as HTMLSelectElement).value">
-              <option v-for="r in roles" :key="r.onet_code" :value="r.onet_code">{{ r.title }}</option>
-            </select>
-          </label>
+        <p v-if="embedded && hasPicks" class="muted">These skills will come first in your pathway.</p>
+        <div v-if="hasPicks && !embedded" class="next">
+          <span class="muted for">Learn these for <b>{{ chosen?.title }}</b></span>
           <button type="button" class="btn btn-primary" @click="build"><Icon name="route" :size="18" /> {{ hasRoadmap ? 'Open my roadmap' : 'Build these skills' }}</button>
         </div>
       </section>
@@ -287,6 +328,7 @@ h2 { font-size: 17px; font-weight: 900; }
 .rtop { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .rname { min-width: 0; font-size: 14px; font-weight: 800; }
 .rname em { margin-left: 6px; font-size: 11px; font-weight: 900; font-style: normal; }
+.rname em.mine { padding: 1px 7px; border-radius: 999px; background: var(--yellow); color: var(--ink); text-transform: uppercase; letter-spacing: .06em; font-size: 10px; }
 .rval { flex: none; display: inline-flex; align-items: center; gap: 6px; font-size: 15px; font-variant-numeric: tabular-nums; }
 .rval b { font-weight: 900; }
 .delta { padding: 1px 7px; border-radius: 999px; font-size: 12px; font-weight: 900; font-style: normal; }
@@ -312,13 +354,11 @@ h2 { font-size: 17px; font-weight: 900; }
 .picker { display: flex; flex-direction: column; gap: 12px; }
 .row-head { display: flex; justify-content: space-between; align-items: center; }
 .picked, .tiles { list-style: none; }
-.picked { display: flex; flex-direction: column; gap: 6px; }
-.picked li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 8px 6px 12px; border-radius: 12px; background: var(--cream); }
-.pname { flex: 1; min-width: 80px; font-size: 13px; font-weight: 900; }
-.levels { display: inline-flex; padding: 3px; border-radius: 10px; background: #fff; }
-.levels button { padding: 4px 9px; border-radius: 8px; font-size: 11px; font-weight: 900; color: var(--muted); }
-.levels button.on { background: var(--ink); color: var(--yellow); }
-.rm { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #fff; }
+.added { max-height: 168px; overflow-y: auto; }
+.picked { display: flex; flex-wrap: wrap; gap: 6px; }
+.picked li { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 10px; border-radius: 999px; background: var(--cream); }
+.pname { font-size: 12px; font-weight: 900; }
+.rm { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #fff; }
 .search { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border: 2px solid var(--line-strong); border-radius: 12px; color: var(--muted); background: #fff; }
 .search input { flex: 1; min-width: 0; border: 0; outline: 0; font: inherit; font-size: 14px; font-weight: 700; color: var(--ink); background: transparent; }
 .sub { font-size: 12px; font-weight: 800; color: var(--muted); }
@@ -340,6 +380,8 @@ h2 { font-size: 17px; font-weight: 900; }
 .src dd { font-weight: 600; color: var(--muted); }
 .next { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; padding-top: 12px; border-top: 2px solid var(--line); }
 .next .btn { display: inline-flex; align-items: center; gap: 8px; }
+.for { flex: 1; min-width: 170px; }
+.for b { color: var(--ink); }
 .target { flex: 1; min-width: 170px; display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 800; color: var(--muted); }
 .target select { font: inherit; font-size: 14px; font-weight: 700; color: var(--ink); padding: 8px 10px; border: 2px solid var(--line-strong); border-radius: 12px; background: #fff; width: 100%; }
 @media (max-width: 860px) {

@@ -9,7 +9,7 @@ from supabase import Client
 
 from app.deps import get_supabase_admin
 from app.roadmap import service
-from app.roadmap.schemas import LearnedSkill, Roadmap, RoadmapCreate, RoadmapSummary
+from app.roadmap.schemas import LearnedSkill, Roadmap, RoadmapCreate, RoadmapSummary, SkillSelection, SkillSelectionIn
 
 router = APIRouter(prefix="/roadmap", tags=["roadmap"])
 
@@ -48,6 +48,18 @@ def get_roadmap(
     return service.get_roadmap(db, str(profile_id), onet_code)
 
 
+@router.post("/skills", response_model=SkillSelection)
+def suggest_skills(body: SkillSelectionIn, db: Client = Depends(get_supabase_admin)):
+    """Step one of a roadmap: which skills to include, as a plain list. No sections, no order, nothing saved.
+
+    The AI model (AI_MODEL_MODE) picks from the role's O*NET skills, seeing what the learner already knows, and leaves out
+    skills they know well. If it can't be used the role's most important skills the learner lacks are returned instead
+    (`source` says which). The learner can adjust the list (the What-If simulator shows what it does to their matches), then
+    send it back to POST /roadmap as `skills` to have it arranged. 404 if the profile or role doesn't exist.
+    """
+    return service.suggest_skills(db, str(body.profile_id), body.onet_code)
+
+
 @router.post("", response_model=Roadmap, status_code=201)
 def create_roadmap(body: RoadmapCreate, db: Client = Depends(get_supabase_admin)):
     """Build and store a role's roadmap for a profile.
@@ -59,7 +71,7 @@ def create_roadmap(body: RoadmapCreate, db: Client = Depends(get_supabase_admin)
     Quests (one project per two sections, themed on their interests' SDGs), about 10 seconds more. Needs SUPABASE_SERVICE_KEY. Returns 404 if the profile
     does not exist, and 409 if it already has a roadmap for the role unless replace=true. With priority_skills, the sections and units holding those skills come first (needs migration 0023; ignored without it).
     """
-    return service.create_roadmap(db, str(body.profile_id), body.onet_code, body.replace, body.priority_skills)
+    return service.create_roadmap(db, str(body.profile_id), body.onet_code, body.replace, body.priority_skills, skills=body.skills)
 
 
 @router.post("/stream")
@@ -76,7 +88,7 @@ def create_roadmap_stream(body: RoadmapCreate, db: Client = Depends(get_supabase
 
     def work():
         try:
-            events.put({"type": "result", **service.create_roadmap(db, str(body.profile_id), body.onet_code, body.replace, body.priority_skills, on_event=events.put).model_dump(mode="json")})
+            events.put({"type": "result", **service.create_roadmap(db, str(body.profile_id), body.onet_code, body.replace, body.priority_skills, on_event=events.put, skills=body.skills).model_dump(mode="json")})
         except HTTPException as e:
             events.put({"type": "failed", "status": e.status_code, "message": str(e.detail)})
         except Exception as e:  # keeps the stream from hanging

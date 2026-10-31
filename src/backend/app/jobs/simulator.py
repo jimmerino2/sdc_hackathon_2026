@@ -11,8 +11,8 @@ from app.jobs.schemas import RoleComparison, ScenarioComparison, ScenarioSummary
 from app.occupational import service as occupational
 from app.resume.schemas import SkillScore
 
-GOOD = 0.67  # options are measured at this level, or the next one up for a skill the learner already has
-LEVEL_NAMES = {0.33: "Basic", 0.67: "Good", 1.0: "Strong"}
+MIN_IMPORTANCE = 2.25  # a skill counts as linked to a role only above this O*NET importance (the roadmap uses the same cut-off); O*NET rates every subject area for every role, most of them near zero
+LEARNED = 1.0  # every skill the learner adds counts the same: fully learned, with no Basic / Good / Strong choice
 DEMAND_COUNTRY, DEMAND_HORIZON = "US", 6  # the occupational pipeline's biggest sample and middle horizon
 # O*NET role -> the occupational pipeline's occupation with forecasts for it. The other roles have none.
 OCCUPATIONS = {"15-1252.00": "software_engineer", "15-2051.00": "data_scientist", "15-2051.01": "data_analyst"}
@@ -23,6 +23,10 @@ REGISTRY_NAMES = {
 }
 
 
+class UnknownRole(ValueError):
+    """A focus role that is not one of the matched roles."""
+
+
 class UnknownSkill(ValueError):
     """A simulated skill that no matched role uses, so it could not change anything."""
 
@@ -30,7 +34,17 @@ class UnknownSkill(ValueError):
 @lru_cache
 def _catalogue() -> dict[str, str]:
     """Every skill the matched roles list: lower case -> O*NET name."""
-    return {n.lower(): n for r in service._roles() for n, _ in r["tools"] + r["abilities"]}
+    return {n.lower(): n for r in service._roles() for n in _relevant(r)}
+
+
+def _relevant(role: dict) -> list[str]:
+    """A role's tools, abilities and knowledge areas that matter for it (importance above MIN_IMPORTANCE), by name."""
+    return [n for n, importance in role["tools"] + role["abilities"] + role["knowledge"] if importance > MIN_IMPORTANCE]
+
+
+def _linked(code: str) -> set[str]:
+    """The skills O*NET links to one role, by name: the ones that matter for it, not every area O*NET rates."""
+    return {n for r in service._roles() if r["onet_code"] == code for n in _relevant(r)}
 
 
 def _names(xs: list[str]) -> str:
@@ -102,33 +116,34 @@ def _emerging() -> set[str]:
     return {n.lower() for n in e["name"]}
 
 
-def _gain(baseline: list[dict], own: dict[str, float], name: str, trial: float, stage: str, picked: list[Interest], forecasts: dict) -> list[SkillGain]:
-    """This one skill added on its own, through the matching engine, against the baseline."""
+def _gain(baseline: list[dict], own: dict[str, float], name: str, trial: float, stage: str, picked: list[Interest], forecasts: dict, focus: str) -> list[SkillGain]:
+    """This one skill added on its own, through the matching engine, against the baseline: the change for the focus role."""
     scored = {t["role"]["onet_code"]: t for t in service.score_roles({**own, name.lower(): trial}, stage, picked, forecasts)}
+    role = next(t for t in baseline if t["role"]["onet_code"] == focus)
     out = []
     for scenario, _ in service.SCENARIOS:
-        moves = [(_match(scored[t["role"]["onet_code"]], scenario)[0] - _match(t, scenario)[0], t["role"]["title"]) for t in baseline]
-        best = max(moves, key=lambda m: m[0])
-        out.append(SkillGain(scenario=scenario, average_change=round(sum(m[0] for m in moves) / len(moves), 2), best_change=best[0], best_role=best[1]))
+        change = _match(scored[focus], scenario)[0] - _match(role, scenario)[0]
+        out.append(SkillGain(scenario=scenario, average_change=float(change), best_change=change, best_role=role["role"]["title"]))
     return out
 
 
-def _options(baseline: list[dict], own: dict[str, float], stage: str, picked: list[Interest], forecasts: dict) -> list[SkillOption]:
-    """Every skill the roles list that the learner hasn't maxed out, best first. Skills outside every role's key skills
-    stay in the list with gains of 0: that is the real answer for them, and the page says so."""
+def _options(baseline: list[dict], own: dict[str, float], stage: str, picked: list[Interest], forecasts: dict, focus: str) -> list[SkillOption]:
+    """The skills O*NET links to the focus role that the learner hasn't maxed out, best first. A linked skill outside the
+    role's 10 key skills stays in the list with a gain of 0: that is the real answer for it, and the page says so."""
     expanded = service._expand(own)
     tied: dict[str, list[str]] = {}  # candidate -> roles where it is a key skill the learner is missing
     for t in baseline:
         for n in t["missing"]:
             tied.setdefault(n, []).append(t["role"]["title"])
-    names = [n for n in sorted(_catalogue().values()) if expanded.get(n.lower(), 0.0) < 1.0]
-    listing = {n: sum(n in {x for x, _ in r["tools"] + r["abilities"]} for r in service._roles()) for n in names}
+    linked = _linked(focus)
+    names = [n for n in sorted(_catalogue().values()) if n in linked and expanded.get(n.lower(), 0.0) < 1.0]
+    listing = {n: sum(n in _relevant(r) for r in service._roles()) for n in names}
     demand, emerging = _demand(), _emerging()
     out = []
     for name in names:
         current = expanded.get(name.lower(), 0.0)
-        trial = max(GOOD, next((v for v in LEVEL_NAMES if v > current), 1.0))
-        gains = _gain(baseline, own, name, trial, stage, picked, forecasts)
+        trial = LEARNED
+        gains = _gain(baseline, own, name, trial, stage, picked, forecasts, focus)
         key = REGISTRY_NAMES.get(name.lower(), name.lower())
         rows = [r for r in demand.get(key, []) if r["occupation"] in OCCUPATIONS.values()]
         d = next((r for r in rows if r["evidence"] != "low"), rows[0] if rows else None)
@@ -137,11 +152,11 @@ def _options(baseline: list[dict], own: dict[str, float], stage: str, picked: li
             demand=d and SkillDemand(occupation=d["occupation"], direction=d["direction"], last_share=d["last_share_3m"], forecast=d["forecast"],
                                      target_month=d["target_month"], evidence=d["evidence"]),
         ))
-    out.sort(key=lambda o: (-max(g.average_change for g in o.gains), -max(g.best_change for g in o.gains)))
+    out.sort(key=lambda o: -max(g.best_change for g in o.gains))
     return out
 
 
-def simulate(profile_id: str, skills: list[SkillScore], stage: str, picked: list[Interest], tried: list[SimulatedSkill], horizon: int) -> SimulateResponse:
+def simulate(profile_id: str, skills: list[SkillScore], stage: str, picked: list[Interest], tried: list[SimulatedSkill], horizon: int, focus_role: str | None = None) -> SimulateResponse:
     """The current profile against a copy with `tried` added. A skill the learner already has stays at the higher level."""
     catalogue = _catalogue()
     unknown = [s.name for s in tried if s.name.lower() not in catalogue]
@@ -150,6 +165,9 @@ def simulate(profile_id: str, skills: list[SkillScore], stage: str, picked: list
     own = service.graded(skills)
     forecasts = service.outlooks(horizon)
     baseline = service.score_roles(own, stage, picked, forecasts)
+    if focus_role is not None and focus_role not in {t["role"]["onet_code"] for t in baseline}:
+        raise UnknownRole(focus_role)
+    focus = focus_role or min(baseline, key=lambda t: _match(t, service.HEADLINE)[1])["role"]["onet_code"]
     simulated = service.score_roles(service.graded([*skills, *tried]), stage, picked, forecasts)
     before = {t["role"]["onet_code"]: t for t in baseline}
     icons = service._role_icons()
@@ -176,4 +194,5 @@ def simulate(profile_id: str, skills: list[SkillScore], stage: str, picked: list
                                current_top_percent=_match(top(baseline, s), s)[0], simulated_top_percent=_match(top(simulated, s), s)[0])
                for s, tab in service.SCENARIOS]
     return SimulateResponse(profile_id=profile_id, horizon_months=horizon, coverage_before=_coverage(baseline), coverage_after=_coverage(simulated),
-                            summary=summary, roles=roles, options=[] if tried else _options(baseline, own, stage, picked, forecasts))
+                            summary=summary, roles=roles, focus_role=focus,
+                            options=[] if tried else _options(baseline, own, stage, picked, forecasts, focus))

@@ -21,8 +21,8 @@ def no_supabase(monkeypatch):
     monkeypatch.setattr(service, "_role_sdgs", lambda: {})
 
 
-def run(tried=(), stage="fresh"):
-    return simulator.simulate("p", SKILLS, stage, [], [SimulatedSkill(**t) for t in tried], 12)
+def run(tried=(), stage="fresh", focus=None):
+    return simulator.simulate("p", SKILLS, stage, [], [SimulatedSkill(**t) for t in tried], 12, focus)
 
 
 def test_shares_add_up_to_one_and_keep_the_relative_weights():
@@ -123,19 +123,35 @@ def test_options_never_offer_a_skill_at_the_learner_level_and_are_real_gains():
     assert all(o.trial > o.current for o in res.options)
     for o in res.options[:5]:
         assert max(g.best_change for g in o.gains) > 0
-        one = run([{"name": o.name, "score": o.trial}])
+        one = run([{"name": o.name, "score": o.trial}], focus=res.focus_role)
         best = next(g for g in o.gains if g.scenario == "Rapid AI")
-        assert max(next(s for s in r.scenarios if s.scenario == "Rapid AI").change for r in one.roles) == best.best_change
+        focus_role = next(r for r in one.roles if r.onet_code == res.focus_role)
+        assert next(s for s in focus_role.scenarios if s.scenario == "Rapid AI").change == best.best_change
 
 
-def test_options_cover_every_skill_and_a_zero_gain_is_a_real_zero():
+def test_options_are_only_the_skills_onet_links_to_the_focus_role():
+    top = run()
+    codes = [r.onet_code for r in top.roles]
+    assert top.focus_role in codes  # the default is one of the matched roles
+    for code in codes[:3]:
+        res = run(focus=code)
+        assert res.focus_role == code and res.options
+        assert {o.name for o in res.options} <= simulator._linked(code) <= set(simulator._catalogue().values())
+        assert {g.best_role for o in res.options for g in o.gains} == {next(r.title for r in res.roles if r.onet_code == code)}
+
+
+def test_a_zero_gain_is_a_real_zero_for_the_focus_role():
     res = run()
-    assert len(res.options) > 150
-    assert {o.name for o in res.options} <= set(simulator._catalogue().values())
     still = next(o for o in reversed(res.options) if max(g.best_change for g in o.gains) == 0)
-    one = run([{"name": still.name, "score": still.trial}])
-    assert all(s.change == 0 for r in one.roles for s in r.scenarios)
+    one = run([{"name": still.name, "score": still.trial}], focus=res.focus_role)
+    focus_role = next(r for r in one.roles if r.onet_code == res.focus_role)
+    assert all(s.change == 0 for s in focus_role.scenarios)
     assert one.options == []
+
+
+def test_an_unmatched_focus_role_is_refused():
+    with pytest.raises(simulator.UnknownRole):
+        run(focus="99-9999.99")
 
 
 def test_unknown_skill_is_refused():

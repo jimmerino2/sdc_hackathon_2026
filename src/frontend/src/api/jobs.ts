@@ -150,6 +150,8 @@ export interface SimulateResult {
   coverage_after: number;
   summary: { scenario: ScenarioOutlook['scenario']; tab: string; current_top: string; simulated_top: string; current_top_percent: number; simulated_top_percent: number }[];
   roles: RoleComparison[];
+  /** The role the options are for. */
+  focus_role: string;
   options: SkillOption[];
 }
 
@@ -170,13 +172,14 @@ export async function fetchRecommendations(profileId: string): Promise<Recommend
 }
 
 /** The matches now against the same profile with these skills added. Nothing is saved. */
-export async function simulateSkills(profileId: string, skills: { name: string; score: number }[]): Promise<SimulateResult> {
+/** `focusRole` (an O*NET code) picks the role the skill options are for; leave it out for the best match. */
+export async function simulateSkills(profileId: string, skills: { name: string; score: number }[], focusRole?: string | null): Promise<SimulateResult> {
   let res: Response;
   try {
     res = await fetch(`${API_URL}/jobs/simulate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ profile_id: profileId, skills }),
+      body: JSON.stringify({ profile_id: profileId, skills, focus_role: focusRole ?? null }),
     });
   } catch {
     throw new JobsError('Couldn’t reach Jobee. Check your connection and try again.');
