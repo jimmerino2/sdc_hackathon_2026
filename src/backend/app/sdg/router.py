@@ -1,9 +1,15 @@
 from fastapi import APIRouter, HTTPException
 
 from app.sdg import service
-from app.sdg.schemas import RoleSdg
+from app.sdg.schemas import RoleSdg, SkillSdg
 
 router = APIRouter(prefix="/sdg", tags=["sdg"])
+
+
+@router.get("/skills", response_model=list[SkillSdg])
+def skills_sdg():
+    """The SDGs and targets of every O*NET skill, knowledge area and tool on record, so a skill shown anywhere can show its targets."""
+    return service.all_skills()
 
 
 @router.get("/roles/{onet_code}", response_model=RoleSdg)
