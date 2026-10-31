@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import Bubble from './Bubble.vue';
 import ChartWatcher from './ChartWatcher.vue';
+import MascoMap from './MascoMap.vue';
 import ForecastInfo from './ForecastInfo.vue';
 import Icon from './Icon.vue';
 import QuarterPicker from './QuarterPicker.vue';
 import ScenarioPanel from './ScenarioPanel.vue';
 import { scenarios, type ScenarioKey } from '../data/flows';
-import { skillLabel } from '../data/skills';
 import { useFlow } from '../state';
-import { personaCopy } from '../data/personaCopy';
 import { month } from '../occupational/format';
 import { formatSkip, parseSkip } from '../data/quarterPick';
 import { backendScenario, fetchJobForecasts, fetchQuarters, refreshForecastData, retrainForecast, type JobForecast, type JobHorizon, type Quarters, type Retrained } from '../api/forecast';
@@ -258,11 +256,16 @@ const demand = computed(() =>
   status.value === 'ready' ? (Object.fromEntries(scenarios.map((s) => [s.key, { text: outcome(s.key), trend: trendOf(s.key) }])) as Record<ScenarioKey, { text: string; trend: string }>) : undefined,
 );
 const title = computed(() => meta.value?.title ?? 'This role');
-const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
 </script>
 
 <template>
   <div class="wrap" :class="{ compact, split: pickQuarter && quarters }">
+      <section v-if="!compact" class="gap-row">
+        <p class="eyebrow">Where it sits</p>
+        <h1>{{ title }}</h1>
+        <MascoMap :onet-code="onetCode" :title="job?.title ?? title" />
+      </section>
+
       <section class="left">
         <h1 v-if="!compact">Here’s the AI outlook for {{ title }}</h1>
         <div class="card chart">
@@ -314,35 +317,6 @@ const firstName = computed(() => state.value.name.trim().split(/\s+/)[0] ?? '');
         <ChartWatcher v-if="!compact" class="bub">Nobody knows the future for sure, so I plan for all three.</ChartWatcher>
         <ScenarioPanel :demand="demand" />
         <slot name="actions" />
-      </section>
-
-      <section v-if="!compact" class="gap-row">
-        <p class="eyebrow">Your skill gap</p>
-        <h1 v-if="!compact">Here’s how close you are to {{ title }}</h1>
-        <template v-if="job">
-          <h2 v-if="compact" class="gap-title">{{ job.skills_owned }} of {{ job.skills_total }} key skills already yours</h2>
-          <Bubble v-else class="b" :size="60">
-            You already have {{ job.skills_owned }} of {{ job.skills_total }} key skills.
-            Let’s close the rest{{ firstName ? `, ${firstName}` : '' }}.
-          </Bubble>
-          <div class="gap-cards">
-            <div class="card block">
-              <div class="head"><h2>{{ compact ? personaCopy[key].haveTitle : 'Already yours' }}</h2><span class="pill pill-dark">{{ job.skills_you_have.length }} skills</span></div>
-              <div v-if="job.skills_you_have.length" class="chips">
-                <span v-for="s in job.skills_you_have" :key="s" class="chip chip-have"><Icon name="check" :size="14" :stroke="3" /> {{ skillLabel(s) }}</span>
-              </div>
-              <p v-else class="empty">None of this role’s key skills yet. Everyone starts somewhere.</p>
-            </div>
-            <div class="card block">
-              <div class="head"><h2>{{ compact ? personaCopy[key].gapTitle : 'Close your gap' }}</h2><span class="pill">{{ job.skills_to_learn.length }} to build</span></div>
-              <div v-if="job.skills_to_learn.length" class="chips">
-                <span v-for="s in job.skills_to_learn" :key="s" class="chip chip-gap"><Icon name="sparkles" :size="14" /> {{ skillLabel(s) }}</span>
-              </div>
-              <p v-else class="empty">You already cover every key skill for this role.</p>
-            </div>
-          </div>
-        </template>
-        <p v-else class="empty">Pick this role from your matches to see which skills you already have and which to build.</p>
       </section>
 
       <aside v-if="pickQuarter && quarters" class="aside" aria-label="Choose the data the forecast is trained on">
@@ -434,15 +408,9 @@ h1 { font-size: 34px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .sdg-why { font-size: 15px; font-weight: 600; line-height: 1.4; color: var(--muted); margin: 0 0 6px 4px; }
 .sdg-why-skel { display: block; width: 100%; height: 36px; border-radius: 10px; margin-bottom: 6px; }
 .sdg-credit { margin-top: 14px; font-size: 13px; font-weight: 600; color: var(--muted); }
-.gap-row { grid-column: 1 / -1; margin-top: 12px; }
-.gap-row .b { margin-bottom: 18px; }
-.gap-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.block { padding: 20px 22px; }
-.head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-.head h2 { font-weight: 900; font-size: 19px; }
-.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.gap-row { grid-column: 1 / -1; }
 .empty { font-size: 15px; font-weight: 700; color: var(--muted); }
-@media (max-width: 900px) { .wrap, .gap-cards { grid-template-columns: 1fr; } .bub { display: none; } }
+@media (max-width: 900px) { .wrap, .bub { display: none; } }
 
 /* The chart and the futures on the left, the data panel beside them; on a narrow screen the panel sits between the two. */
 .wrap.split { grid-template-columns: minmax(0, 1fr) 320px; grid-template-areas: 'left aside' 'right aside'; align-items: start; column-gap: 24px; }
