@@ -4,8 +4,8 @@ Usage (from src/backend):
     python -m forecasting.run                          # every target, fetching new data first
     python -m forecasting.run --target btos_ai_use_rate --no-pull
     python -m forecasting.run --skip-ingest            # use the point-in-time tables as they are
-Targets: ai_mention_share (skill demand), btos_ai_use_rate (business adoption), worker_genai_use_rate
-(occupation adoption). They are separate models with separate sources; none feeds another.
+Targets: btos_ai_use_rate (business adoption), worker_genai_use_rate (occupation adoption). They are separate models
+with separate sources; none feeds another.
 
 Outputs in src/backend/forecasting/output/<target>/ (nothing is overwritten except the two "current" pointers):
   runs/<run_id>/backtest.csv.gz   every scored prediction: origin, horizon, candidate, feature set, unit, outcome

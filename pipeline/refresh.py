@@ -32,19 +32,19 @@ REPOS = {"jpt_repo": "https://github.com/hiring-lab/job_postings_tracker.git",
          "ait_repo": "https://github.com/hiring-lab/ai-tracker.git"}
 
 
-def run(*args: str) -> None:
+def run(*args: str, timeout: float | None = None) -> None:
     print("$", " ".join(args))
-    subprocess.run(list(args), check=True, cwd=ROOT)
+    subprocess.run(list(args), check=True, cwd=ROOT, timeout=timeout)
 
 
-def pull() -> None:
+def pull(timeout: float | None = None) -> None:
     RAW.mkdir(parents=True, exist_ok=True)
     for name, url in REPOS.items():
         d = RAW / name
         if (d / ".git").exists():
-            run("git", "-C", str(d), "pull", "--ff-only")
+            run("git", "-C", str(d), "pull", "--ff-only", timeout=timeout)
         else:
-            run("git", "clone", "--depth=1", url, str(d))
+            run("git", "clone", "--depth=1", url, str(d), timeout=timeout)
 
 
 def manifest(geo: str) -> dict:

@@ -16,6 +16,7 @@ import { fetchInterestReasons, type InterestReason, type JobMatch } from '../api
 import { readProfileId } from '../api/profile';
 import { fetchRoleSdg, type RoleSdg, type SdgTargetNote } from '../api/sdg';
 import { SDG_GOALS } from '../data/interestSdgs';
+import { mascoRoles } from '../data/masco';
 
 /** A role's AI outlook (the three-futures chart) and skill gap. Shared by the onboarding forecast page and the role page. */
 const props = defineProps<{
@@ -328,18 +329,45 @@ const demand = computed(() =>
   status.value === 'ready' ? (Object.fromEntries(scenarios.map((s) => [s.key, { text: outcome(s.key), trend: trendOf(s.key) }])) as Record<ScenarioKey, { text: string; trend: string }>) : undefined,
 );
 const title = computed(() => meta.value?.title ?? 'This role');
+
+/** The role page's tabs; onboarding (compact) shows the forecast alone. */
+const TABS = [
+  { key: 'forecast', label: 'AI outlook' },
+  { key: 'sits', label: 'Where it sits' },
+  { key: 'sdg', label: 'SDGs' },
+] as const;
+const tab = ref<(typeof TABS)[number]['key']>('forecast');
+/** Whether eMASCO has an entry for this O*NET job. */
+const hasMasco = computed(() => !!mascoRoles[props.onetCode]?.minors?.length);
 </script>
 
 <template>
   <div class="wrap" :class="{ compact, split: pickQuarter && quarters }">
-      <section v-if="!compact" class="gap-row">
+      <div v-if="!compact" class="tabs-bar">
+       <div class="btn-group" role="tablist" aria-label="Role details">
+        <button
+          v-for="t in TABS"
+          :id="`tab-${t.key}`"
+          :key="t.key"
+          type="button"
+          role="tab"
+          :class="{ on: tab === t.key }"
+          :aria-selected="tab === t.key"
+          :aria-controls="`panel-${t.key}`"
+          @click="tab = t.key"
+        >{{ t.label }}</button>
+       </div>
+      </div>
+
+      <section v-if="!compact" v-show="tab === 'sits'" id="panel-sits" role="tabpanel" aria-labelledby="tab-sits" class="gap-row">
         <p class="eyebrow">Where it sits</p>
-        <h1>{{ title }}</h1>
-        <MascoMap :onet-code="onetCode" :title="job?.title ?? title" />
+        <h1>Where {{ title }} sits</h1>
+        <MascoMap v-if="hasMasco" :onet-code="onetCode" :title="job?.title ?? title" />
+        <p v-else class="empty card no-data">No data found for this O*NET job on eMASCO.</p>
       </section>
 
-      <section class="left">
-        <h1 v-if="!compact">Here’s the AI outlook for {{ title }}</h1>
+      <section v-show="compact || tab === 'forecast'" id="panel-forecast" :role="compact ? undefined : 'tabpanel'" aria-labelledby="tab-forecast" class="left">
+        <template v-if="!compact"><p class="eyebrow">AI outlook</p><h1>Here’s the AI outlook for {{ title }}</h1></template>
         <div class="card chart">
           <small>{{ title }} · {{ useModel ? 'machine-learning forecast' : 'demand outlook' }}</small>
           <h2>Three possible futures, next 12 months</h2>
@@ -385,7 +413,7 @@ const title = computed(() => meta.value?.title ?? 'This role');
           </template>
         </div>
       </section>
-      <section class="right">
+      <section v-show="compact || tab === 'forecast'" class="right">
         <ChartWatcher v-if="!compact" class="bub">Nobody knows the future for sure, so I plan for all three.</ChartWatcher>
         <ScenarioPanel :demand="demand" />
         <slot name="actions" />
@@ -404,9 +432,13 @@ const title = computed(() => meta.value?.title ?? 'This role');
         />
       </aside>
 
-      <section v-if="goals.length" class="sdg-row impact" aria-labelledby="impact-title">
-        <p class="eyebrow">Global goals</p>
-        <h2 id="impact-title" class="sdg-title">How {{ job?.title ?? title }} serves the SDGs</h2>
+      <section v-if="!compact && !goals.length" v-show="tab === 'sdg'" id="panel-sdg" role="tabpanel" aria-labelledby="tab-sdg" class="sdg-row">
+        <p class="empty card no-data">No SDG data found for this role.</p>
+      </section>
+
+      <section v-if="goals.length" v-show="compact || tab === 'sdg'" id="panel-sdg" :role="compact ? undefined : 'tabpanel'" aria-labelledby="tab-sdg" class="sdg-row impact">
+        <p class="eyebrow">SDGs</p>
+        <h1 id="impact-title">How {{ job?.title ?? title }} serves the SDGs</h1>
         <div class="impact-goals">
           <div class="impact-group">
             <span class="impact-label">Main SDG</span>
@@ -474,6 +506,7 @@ const title = computed(() => meta.value?.title ?? 'This role');
 <style scoped>
 .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 28px; }
 h1 { font-size: 34px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
+.eyebrow { margin: 0; }
 
 .compact { gap: 24px; }
 .chart-skel { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
@@ -499,8 +532,7 @@ h1 { font-size: 34px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .fi-gap { margin-top: 12px; }
 .right { display: flex; flex-direction: column; gap: 14px; }
 .bub { margin-bottom: 8px; flex-direction: row-reverse; }
-.sdg-row { grid-column: 1 / -1; margin-top: 12px; }
-.sdg-title { font-size: 23px; font-weight: 900; margin: 4px 0 16px; line-height: 1.2; }
+.sdg-row { grid-column: 1 / -1; }
 .sdg-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 14px; }
 .sdg-tile { display: block; width: 112px; height: auto; border-radius: 12px; box-shadow: 0 4px 0 rgba(30, 30, 30, .12); }
 .sdg-tile.main { width: 148px; }
@@ -529,6 +561,9 @@ h1 { font-size: 34px; font-weight: 900; margin: 6px 0 22px; line-height: 1.15; }
 .skill-tip .sdg-targets { font-size: 15px; gap: 6px; color: var(--muted); }
 @media (max-width: 560px) { .sdg-tile { width: 84px; } .sdg-tile.main { width: 120px; } .fit, .targets-card { padding: 16px; } }
 .gap-row { grid-column: 1 / -1; }
+.tabs-bar { grid-column: 1 / -1; display: flex; min-width: 0; }
+.gap-row, .sdg-row, .right { min-width: 0; max-width: 100%; }
+.no-data { padding: 20px 22px; max-width: 760px; }
 .empty { font-size: 15px; font-weight: 700; color: var(--muted); }
 @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } .bub { display: none; } }
 

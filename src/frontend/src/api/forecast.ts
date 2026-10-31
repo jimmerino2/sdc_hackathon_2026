@@ -155,3 +155,42 @@ export async function refreshForecastData(): Promise<void> {
   const res = await fetch(`${API_URL}/forecast/refresh`, { method: 'POST' });
   if (!res.ok) throw new ForecastError('Refreshing isn’t turned on for this server.');
 }
+
+export interface SyncState {
+  as_of: string | null;
+  forecast_from: string;
+}
+
+export interface AiSync {
+  target: string;
+  /** The name on the page, like Worker adoption. */
+  name: string;
+  /** Only `updated` means a new forecast is showing. */
+  status: 'updated' | 'stale' | 'failed';
+}
+
+/** What a sync did to the trend data. */
+export interface TrendSync {
+  /** False if Indeed couldn't be reached, or the data was edited by hand and nothing was pulled. */
+  pulled: boolean;
+  /** Figures edited by hand in signals.csv, so the page can say so. */
+  manual_edits: number;
+  before: SyncState;
+  after: SyncState;
+  /** The AI forecasts run again because their tables changed. */
+  ai: AiSync[];
+}
+
+/** Pulls the newest trend data, retrains the role forecasts and any AI forecast whose data changed. Null where the server doesn't allow it: the roles are then only scored again. */
+export async function syncTrends(): Promise<TrendSync | null> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/forecast/sync`, { method: 'POST' });
+  } catch {
+    throw new ForecastError('Couldn’t reach the forecast service.');
+  }
+  if (res.status === 403) return null;
+  if (res.ok) return res.json();
+  const detail = await res.json().then((b) => (typeof b?.detail === 'string' ? b.detail : null)).catch(() => null);
+  throw new ForecastError(detail ?? 'The sync failed, so the current data was kept.');
+}

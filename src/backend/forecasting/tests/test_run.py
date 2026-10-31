@@ -7,9 +7,9 @@ import pandas as pd
 import pytest
 
 from forecasting import run
-from forecasting.targets import all_specs, skill_demand
+from forecasting.targets import all_specs, occupation_adoption
 
-SPEC = skill_demand.SPEC
+SPEC = occupation_adoption.SPEC
 OUTPUT = Path(run.__file__).parent / "output"
 
 
@@ -23,8 +23,8 @@ def _sel(holdout_n=10, insufficient=False):
     return pd.DataFrame(rows)
 
 
-FRESH = {"indeed_ai_tracker": {"status": "fresh"}}
-STALE = {"indeed_ai_tracker": {"status": "stale"}}
+FRESH = {"rps_genai": {"status": "fresh"}}
+STALE = {"rps_genai": {"status": "stale"}}
 
 
 @pytest.fixture
@@ -45,7 +45,7 @@ def test_rejected_run_keeps_the_last_accepted_model(out):
     _issue(out, "bad", "ridge")
     reg = run.promote(SPEC, out, "bad", "t2", _sel(holdout_n=2), STALE, "v2")
     assert all(e["run_id"] == "good" for e in reg["promoted"].values())
-    assert [a["accepted"] for a in reg["attempts"]] == [True] * 3 + [False] * 3
+    assert [a["accepted"] for a in reg["attempts"]] == [True] * len(SPEC.horizons) + [False] * len(SPEC.horizons)
     assert "target source is stale" in reg["attempts"][-1]["rejected_because"]
     assert set(pd.read_csv(out / "latest_forecast.csv")["run_id"]) == {"good"}
 

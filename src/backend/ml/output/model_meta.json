@@ -2,7 +2,7 @@
   "data_file": "model_table_US.csv",
   "data_as_of": {
     "ai_postings_share": "2026-09-30",
-    "job_postings_index": "2026-10-09"
+    "job_postings_index": "2026-10-23"
   },
   "ai_exposure_as_of": "2026-06-26",
   "is_proxy_geo": true,
@@ -111,8 +111,8 @@
         "scores": {
           "LightGBM": {
             "MAPE %": 4.43,
-            "MAE": 4.71,
-            "direction %": 47.2
+            "MAE": 4.7,
+            "direction %": 47.9
           },
           "flat (index unchanged)": {
             "MAPE %": 3.76,
@@ -133,15 +133,15 @@
       },
       "interval_growth_q10_q90": {
         "model": [
-          -0.028348800447052663,
-          0.08910585945318408
+          -0.029846893682237793,
+          0.08960821085406719
         ],
         "yoy_headline": [
-          -0.03956874261407993,
-          0.08018311994073811
+          -0.03960268115104816,
+          0.08018099856169038
         ]
       },
-      "baseline_growth": 0.00029651529386769273,
+      "baseline_growth": 0.0002969288389936704,
       "model_status": "indicative"
     },
     "6": {
@@ -153,9 +153,9 @@
         ],
         "scores": {
           "LightGBM": {
-            "MAPE %": 6.32,
-            "MAE": 6.66,
-            "direction %": 52.3
+            "MAPE %": 6.42,
+            "MAE": 6.77,
+            "direction %": 51.6
           },
           "flat (index unchanged)": {
             "MAPE %": 5.23,
@@ -165,26 +165,26 @@
           "yoy (last year's pace repeats)": {
             "MAPE %": 6.55,
             "MAE": 6.75,
-            "direction %": 51.2
+            "direction %": 51.1
           },
           "constant (mean train growth)": {
             "MAPE %": 5.22,
             "MAE": 5.52,
-            "direction %": 50.2
+            "direction %": 50.0
           }
         }
       },
       "interval_growth_q10_q90": {
         "model": [
-          -0.0354139334615461,
-          0.1288168634443483
+          -0.03253205052385384,
+          0.13314168519890898
         ],
         "yoy_headline": [
           -0.045747034148567914,
-          0.13484799834430283
+          0.13484020017691098
         ]
       },
-      "baseline_growth": -0.007345690453755839,
+      "baseline_growth": -0.0073444606907752735,
       "model_status": "indicative"
     },
     "9": {
@@ -196,9 +196,9 @@
         ],
         "scores": {
           "LightGBM": {
-            "MAPE %": 7.82,
-            "MAE": 8.15,
-            "direction %": 58.3
+            "MAPE %": 7.83,
+            "MAE": 8.12,
+            "direction %": 57.8
           },
           "flat (index unchanged)": {
             "MAPE %": 6.64,
@@ -219,15 +219,15 @@
       },
       "interval_growth_q10_q90": {
         "model": [
-          -0.04827601169144814,
-          0.16456165097323747
+          -0.0474085870977196,
+          0.16280899274709928
         ],
         "yoy_headline": [
-          -0.0441305387394162,
-          0.18007819168810046
+          -0.04413149651213839,
+          0.18014089239818903
         ]
       },
-      "baseline_growth": -0.018762206539634157,
+      "baseline_growth": -0.018759215213096956,
       "model_status": "indicative"
     },
     "12": {
@@ -239,12 +239,12 @@
         ],
         "scores": {
           "LightGBM": {
-            "MAPE %": 8.43,
-            "MAE": 8.64,
-            "direction %": 64.9
+            "MAPE %": 8.34,
+            "MAE": 8.55,
+            "direction %": 64.5
           },
           "flat (index unchanged)": {
-            "MAPE %": 7.78,
+            "MAPE %": 7.79,
             "MAE": 8.04,
             "direction %": NaN
           },
@@ -262,15 +262,15 @@
       },
       "interval_growth_q10_q90": {
         "model": [
-          -0.05935317219368575,
-          0.17430237589655673
+          -0.06247641074325522,
+          0.1704633573935626
         ],
         "yoy_headline": [
-          -0.04381509087378362,
-          0.22011191347878337
+          -0.0439426970230085,
+          0.2202150415883628
         ]
       },
-      "baseline_growth": -0.03957862550381749,
+      "baseline_growth": -0.039573238172894744,
       "model_status": "indicative"
     }
   }

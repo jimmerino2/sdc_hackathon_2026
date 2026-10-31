@@ -34,8 +34,6 @@ interface Card {
   /** What one series is, in words, for the selected unit's name. */
   series?: (name: string) => string;
   minutes?: boolean;
-  /** Units are country codes. */
-  countries?: boolean;
 }
 
 const cards: Card[] = [
@@ -45,13 +43,6 @@ const cards: Card[] = [
     blurb: 'Task size is measured in human work: how long a skilled person needs for the task. The headline number is the biggest task the best measured AI model completes successfully half the time (not how long the AI takes). Mostly software tasks. Source: METR, via Epoch AI.',
     names: { 'v1.0': 'the best measured models (METR suite v1.0)', 'v1.1': 'the best measured models (METR suite v1.1)' },
     defaultUnit: 'v1.1', minutes: true,
-  },
-  {
-    target: 'ai_mention_share', eyebrow: 'AI in job ads', title: 'How many job ads mention AI?',
-    short: 'Share of new Indeed job postings whose description mentions AI terms, by country.',
-    blurb: 'Share of new Indeed postings whose description mentions AI terms. It counts mentions, not hires. Source: Indeed Hiring Lab AI Tracker.',
-    defaultUnit: 'US', pickerLabel: 'Country', plural: 'countries', countries: true,
-    series: (n) => `the share of Indeed postings in ${n} mentioning AI, month by month`,
   },
   {
     target: 'btos_ai_use_rate', eyebrow: 'Business adoption', title: 'How many US businesses use AI?',
@@ -114,7 +105,7 @@ function units(c: Card): string[] {
   return [...new Set((rows.value[c.target] ?? []).map((r) => r.unit))];
 }
 function unitName(c: Card, u: string): string {
-  return c.names?.[c.key ? c.key(u) : u] ?? (c.countries ? new Intl.DisplayNames(['en'], { type: 'region' }).of(u) ?? u : u);
+  return c.names?.[c.key ? c.key(u) : u] ?? u;
 }
 function selectedUnit(c: Card): string | undefined {
   const all = rows.value[c.target] ?? [];
