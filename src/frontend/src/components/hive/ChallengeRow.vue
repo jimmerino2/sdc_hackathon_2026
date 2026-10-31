@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import Icon from "../Icon.vue";
+import AiAssist from "./AiAssist.vue";
 import ChallengeDetail from "./ChallengeDetail.vue";
 import Stinger from "./Stinger.vue";
 import type { RoadmapChallenge } from "../../api/roadmap";
@@ -120,6 +121,7 @@ const meta = computed(() => `${c.value.role_title} · ${complete.value ? "Comple
       :error="error"
       @submit="(u) => emit('submit', u)"
     />
+    <AiAssist v-if="open" class="crow__assist" :challenge="c" />
   </section>
 </template>
 
@@ -415,6 +417,9 @@ const meta = computed(() => `${c.value.role_title} · ${complete.value ? "Comple
 .crow :deep(.jb-quest__body) {
   border-top: 2px solid var(--line);
 }
+.crow__assist {
+  margin: 0 22px 18px;
+}
 
 @keyframes crow-pulse {
   50% {
@@ -442,6 +447,11 @@ const meta = computed(() => `${c.value.role_title} · ${complete.value ? "Comple
   }
   .crow__track {
     padding-left: 18px;
+  }
+}
+@media (max-width: 760px) {
+  .crow__assist {
+    margin: 0 16px 16px;
   }
 }
 @media (max-width: 560px) {

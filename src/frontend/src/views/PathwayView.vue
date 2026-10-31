@@ -14,6 +14,7 @@ import ForecastCard from '../components/learn/ForecastCard.vue';
 import BeeGuide from '../components/learn/BeeGuide.vue';
 import ChallengeBanner from '../components/learn/ChallengeBanner.vue';
 import NextMoveCard from '../components/learn/NextMoveCard.vue';
+import AiFluencySection from '../components/learn/AiFluencySection.vue';
 import { completeNode, deleteRoadmap, fetchRoadmapSummaries, RoadmapError, type RoadmapNode, type RoadmapSource, type RoadmapSummary } from '../api/roadmap';
 import { readProfileId } from '../api/profile';
 import { skillLabel } from '../data/skills';
@@ -30,6 +31,8 @@ const { state } = useFlow();
 const route = useRoute();
 /** Development only (never in a production build): ?share shows the LinkedIn card before the role is complete, to try it out. */
 const devShare = computed(() => import.meta.env.DEV && route.query.share !== undefined);
+/** The optional AI Fluency section is on screen in place of the roadmap, which stays loaded behind it. */
+const fluency = computed(() => route.query.section === 'ai-fluency');
 
 const typeLabel = { tech: 'Tool', skill: 'Ability', knowledge: 'Knowledge' } as const;
 const sourceLabel: Record<RoadmapSource['source_type'] | 'link', string> = {
@@ -299,7 +302,11 @@ watch([() => roadmapTabs.value, activeCode], () => nextTick(() => {
 
 <template>
   <div class="tab">
-    <div v-if="roadmapTabs.length" class="jb rmbar">
+    <nav class="btn-group learnswitch" aria-label="Learn">
+      <RouterLink :to="go('pathway')" :class="{ on: !fluency }" :aria-current="fluency ? undefined : 'page'">My roadmap</RouterLink>
+      <RouterLink :to="{ ...go('pathway'), query: { section: 'ai-fluency' } }" :class="{ on: fluency }" :aria-current="fluency ? 'page' : undefined">AI Fluency</RouterLink>
+    </nav>
+    <div v-if="!fluency && roadmapTabs.length" class="jb rmbar">
       <div class="rmbar__strip">
       <button v-if="canPrev || canNext" type="button" class="rmbar__nav" :disabled="!canPrev" aria-label="Previous roadmaps" @click="pageTabs(-1)">
         <Icon name="chevron" :size="18" class="rmbar__prev" />
@@ -329,7 +336,7 @@ watch([() => roadmapTabs.value, activeCode], () => nextTick(() => {
         <Icon name="trash" :size="16" /> Delete
       </button>
     </div>
-    <div v-if="confirming && roadmap" class="jb rmconfirm" role="alertdialog" aria-label="Delete this roadmap">
+    <div v-if="!fluency && confirming && roadmap" class="jb rmconfirm" role="alertdialog" aria-label="Delete this roadmap">
       <p>Delete the <b>{{ roadmap.title }}</b> roadmap? Your progress on it is lost. You can build it again from Roles.</p>
       <div class="rmconfirm__act">
         <button type="button" class="jb-btn jb-btn--ink" :disabled="deleting" @click="confirming = false">Keep it</button>
@@ -338,7 +345,9 @@ watch([() => roadmapTabs.value, activeCode], () => nextTick(() => {
       <p v-if="deleteError" class="rmconfirm__err" role="alert">{{ deleteError }}</p>
     </div>
 
-    <div v-if="empty && !roadmap" class="learn__state">
+    <AiFluencySection v-if="fluency" :profile-id="profileId()" :role-code="activeCode" />
+
+    <div v-else-if="empty && !roadmap" class="learn__state">
       <Bubble :size="64">No roadmaps left. Pick a role and I’ll build you a new one.</Bubble>
       <RouterLink :to="go('suggested')" class="btn btn-primary">Go to my roles</RouterLink>
     </div>
@@ -461,3 +470,7 @@ watch([() => roadmapTabs.value, activeCode], () => nextTick(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.learnswitch { margin-bottom: 18px; }
+</style>
